@@ -96,8 +96,32 @@ def register_routes(context):
                     "guest_team_league": None,
                     "note": "Giao hữu đã được Admin tắt. Phòng đã trở về trạng thái chờ.",
                     "updated_at": now_iso(),
-                }).eq("status", "friendly_playing"),
+                }).eq("status", "friendly_playing").neq("team_tier", FRIENDLY_RANDOM3_MODE),
                 "disable_active_friendly_rooms",
+                attempts=2,
+            )
+
+
+        # Khi tắt riêng Random 3 chọn 1, hủy cả lượt chọn đang chờ và trận Random 3 đang chạy.
+        if previous_features.get("friendly_random3_enabled", True) and not features.get("friendly_random3_enabled", False):
+            execute_query(
+                db.table("match_rooms").update({
+                    "status": "waiting_ready",
+                    "match_mode": "ranked",
+                    "team_tier": None,
+                    "host_team": None,
+                    "guest_team": None,
+                    "host_team_overall": None,
+                    "guest_team_overall": None,
+                    "host_team_logo_url": None,
+                    "guest_team_logo_url": None,
+                    "host_team_league": None,
+                    "guest_team_league": None,
+                    "match_id": None,
+                    "note": "Random 3 chọn 1 đã được Admin tắt. Phòng đã trở về trạng thái chờ.",
+                    "updated_at": now_iso(),
+                }).eq("team_tier", FRIENDLY_RANDOM3_MODE),
+                "disable_random3_friendly_rooms",
                 attempts=2,
             )
 

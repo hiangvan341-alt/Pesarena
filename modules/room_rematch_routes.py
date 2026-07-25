@@ -34,6 +34,23 @@ def register_routes(context):
             flash("Bạn chưa Sẵn Sàng nên có thể rời phòng mà không bị trừ RP.", "warning")
             return redirect(url_for("room_detail", room_id=room_id))
 
+        # Mọi chế độ giao hữu đều cho phép rời phòng an toàn:
+        # không tạo lịch sử, không cộng/trừ RP và không tính bỏ cuộc.
+        if room.get("match_mode") == MATCH_MODE_FRIENDLY or room.get("status") == "friendly_playing":
+            execute_query(
+                db.table("match_rooms").update({
+                    "guest_user_id": None, "guest_ready": False, "guest_team": None,
+                    "guest_team_overall": None, "guest_team_logo_url": None, "guest_team_league": None,
+                    "host_team": None, "host_team_overall": None, "host_team_logo_url": None, "host_team_league": None,
+                    "status": "waiting_ready", "match_id": None, "match_mode": MATCH_MODE_RANKED,
+                    "team_tier": SMART_RANDOM_MODE, "note": "Khách đã rời trận giao hữu. Không trừ RP.",
+                    "state_expires_at": None, "updated_at": now_iso(),
+                }).eq("id", room_id),
+                "guest_leave_random3_friendly",
+            )
+            flash("Bạn đã rời trận giao hữu. Không bị trừ RP và không lưu lịch sử.", "success")
+            return redirect(url_for("dashboard"))
+
         original_status = room.get("status")
         reason = f'{user["display_name"]} đã chủ động bỏ cuộc và bị trừ {ROOM_ABANDON_PENALTY} RP.'
         result = execute_query(
@@ -100,16 +117,26 @@ def register_routes(context):
             flash("Chỉ Chủ Phòng mới có thể dùng chức năng này.", "danger")
             return redirect(url_for("room_detail", room_id=room_id))
 
-        if room.get("status") != "waiting_ready":
-            flash("Phòng không còn ở trạng thái chờ Sẵn Sàng.", "warning")
+        original_status = room.get("status")
+        allowed_statuses = {"waiting_ready", "playing"}
+        if original_status not in allowed_statuses:
+            flash("Phòng hiện không ở trạng thái Chủ phòng có thể bỏ cuộc.", "warning")
             return redirect(url_for("room_detail", room_id=room_id))
 
-        if not room.get("guest_user_id") or not bool(room.get("guest_ready")):
+        if not room.get("guest_user_id"):
+            flash("Phòng chưa có đối thủ nên bạn có thể đóng phòng mà không bị trừ RP.", "warning")
+            return redirect(url_for("room_detail", room_id=room_id))
+
+        if original_status == "waiting_ready" and not bool(room.get("guest_ready")):
             flash("Khách chưa Sẵn Sàng nên bạn có thể đóng phòng mà không bị trừ RP.", "warning")
             return redirect(url_for("room_detail", room_id=room_id))
 
-        reason = f'{user["display_name"]} đã rời phòng sau khi khách Sẵn Sàng và bị trừ {ROOM_ABANDON_PENALTY} RP.'
-        result = execute_query(
+        if original_status == "playing":
+            reason = f'{user["display_name"]} đã rời phòng khi trận đang thi đấu và bị trừ {ROOM_ABANDON_PENALTY} RP.'
+        else:
+            reason = f'{user["display_name"]} đã rời phòng sau khi khách Sẵn Sàng và bị trừ {ROOM_ABANDON_PENALTY} RP.'
+
+        query = (
             db.table("match_rooms").update({
                 "status": "cancelled",
                 "guest_ready": False,
@@ -118,10 +145,12 @@ def register_routes(context):
                 "updated_at": now_iso(),
             })
             .eq("id", room_id)
-            .eq("status", "waiting_ready")
-            .eq("guest_ready", True),
-            "host_forfeit_after_guest_ready",
+            .eq("status", original_status)
         )
+        if original_status == "waiting_ready":
+            query = query.eq("guest_ready", True)
+
+        result = execute_query(query, "host_forfeit_room")
 
         # Nếu khách vừa Hủy Sẵn Sàng hoặc request khác đã xử lý phòng, không trừ RP.
         if not (result.data or []):
@@ -140,14 +169,14 @@ def register_routes(context):
         create_user_notification(
             room.get("guest_user_id"),
             "🚪 Chủ phòng đã bỏ cuộc",
-            f'{user["display_name"]} đã thoát sau khi bạn Sẵn Sàng và bị trừ {ROOM_ABANDON_PENALTY} RP. Bạn không bị cộng hoặc trừ RP.',
+            f'{user["display_name"]} đã thoát phòng và bị trừ {ROOM_ABANDON_PENALTY} RP. Bạn không bị cộng hoặc trừ RP.',
             "/matches",
             "host_forfeit",
         )
         create_user_notification(
             user["id"],
             "⚠️ Bạn đã bỏ cuộc",
-            f"Bạn bị trừ {ROOM_ABANDON_PENALTY} RP và được tính một trận thua vì rời phòng sau khi khách đã Sẵn Sàng.",
+            f"Bạn bị trừ {ROOM_ABANDON_PENALTY} RP và được tính một trận thua do rời phòng khi trận đã cam kết.",
             "/matches",
             "room_forfeit_penalty",
         )

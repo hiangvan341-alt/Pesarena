@@ -1,4 +1,4 @@
-"""Kiểm thử nhanh công thức RP RP_V1.12.0. Chạy: python test_rp_engine.py"""
+"""Kiểm thử nhanh công thức RP RP_V1.13.0. Chạy: python test_rp_engine.py"""
 import random
 from modules.rp_engine import calculate_deltas, validate_deltas
 from modules.rp_formula import RP_FORMULA_VERSION
@@ -39,6 +39,12 @@ def run():
         assert min(deductions) == minimum
         assert max(deductions) == maximum
 
+    recovering_first = dict(regular, loss_streak=5, loss_recovery_win_step=1)
+    recovering_second = dict(regular, loss_streak=0, loss_recovery_win_step=2)
+    recovering_third = dict(regular, loss_streak=0, loss_recovery_win_step=0)
+    assert calculate(recovering_first, regular, 1, 0, 1)[0] == 17
+    assert calculate(recovering_second, regular, 1, 0, 1)[0] == 19
+    assert calculate(recovering_third, regular, 1, 0, 1)[0] >= 20
 
     assert calculate({"rank_points": 900}, {"rank_points": 1200}, 0, 0) == (5, 0)
     assert calculate({"rank_points": 1200}, {"rank_points": 900}, 0, 0) == (0, 5)
@@ -47,8 +53,8 @@ def run():
         raise AssertionError("Delta thua bằng 0 phải bị từ chối")
     except ValueError:
         pass
-    assert RP_FORMULA_VERSION == "RP_V1.12.0"
-    print("OK - RP Engine RP_V1.12.0")
+    assert RP_FORMULA_VERSION == "RP_V1.13.0"
+    print("OK - RP Engine RP_V1.13.0")
 
 
 if __name__ == "__main__":

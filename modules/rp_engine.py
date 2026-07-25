@@ -13,6 +13,8 @@ from modules.rp_formula import (
     LOSS_STREAK_RANGES,
     LOSS_STREAK_SEVEN_PLUS_RANGE,
     LOSS_STREAK_START,
+    LOSS_RECOVERY_MIN_STREAK,
+    LOSS_RECOVERY_WIN_POINTS,
     MAX_POSITIVE_POINTS_PER_MATCH,
     PLACEMENT_LOSS_RANGE,
     PLACEMENT_MATCHES,
@@ -52,6 +54,13 @@ def _randint(rng, minimum: int, maximum: int) -> int:
 
 
 def _winner_points(winner: Mapping, rng) -> int:
+    # Giảm RP tạm thời khi người chơi vừa thoát chuỗi thua >= 5 trận.
+    recovery_step = int(winner.get("loss_recovery_win_step", 0) or 0)
+    if recovery_step <= 0 and int(winner.get("loss_streak", 0) or 0) >= LOSS_RECOVERY_MIN_STREAK:
+        recovery_step = 1
+    if recovery_step in LOSS_RECOVERY_WIN_POINTS:
+        return int(LOSS_RECOVERY_WIN_POINTS[recovery_step])
+
     matches = int(winner.get("total_matches", 0) or 0)
     points = _randint(rng, *WIN_BASE_RANGE)
     points += _randint(rng, *WIN_VARIATION_RANGE)

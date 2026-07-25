@@ -62,7 +62,7 @@ from modules.win_streaks import (
 load_dotenv()
 
 APP_NAME = "PES Arena – Bản Lĩnh Sân Cỏ"
-APP_VERSION = "Collap_V1.14.4"
+APP_VERSION = "Collap_V1.14.8"
 DEFAULT_POINTS = 1000
 DEVICE_COOKIE_NAME = "rankzone_device_id"
 COOLDOWN_MINUTES = 3
@@ -591,7 +591,7 @@ LEGACY_ADMIN_PERMISSION_FIELDS = {
 SYSTEM_FEATURE_DEFAULTS = {
     "dashboard_enabled": False,
     "public_ranking_enabled": True,
-    "friendly_enabled": True, "lobby_chat_enabled": True, "room_chat_enabled": True,
+    "friendly_enabled": True, "friendly_random3_enabled": True, "lobby_chat_enabled": True, "room_chat_enabled": True,
     "registration_codes_enabled": True, "announcements_enabled": True,
 }
 
@@ -934,6 +934,44 @@ def get_current_loss_streak(user_id):
     return streak
 
 
+def get_loss_recovery_win_step(user_id):
+    """Trả 1/2 nếu người chơi đang ở trận thắng phục hồi sau >=5 trận thua."""
+    if not user_id or db is None:
+        return 0
+    try:
+        result = execute_query(
+            db.table("matches")
+            .select("player1_id,player2_id,score1,score2,status,created_at")
+            .or_(f"player1_id.eq.{user_id},player2_id.eq.{user_id}")
+            .eq("status", "confirmed")
+            .order("created_at", desc=True)
+            .limit(30),
+            f"get_loss_recovery:{user_id}", attempts=2,
+        )
+    except Exception as exc:
+        print(f"get_loss_recovery warning user={user_id}: {type(exc).__name__}: {exc}")
+        return 0
+    outcomes = []
+    for match in result.data or []:
+        s1, s2 = _safe_int(match.get("score1"), -1), _safe_int(match.get("score2"), -1)
+        if s1 < 0 or s2 < 0 or s1 == s2:
+            break
+        is_p1 = str(match.get("player1_id")) == str(user_id)
+        won = (is_p1 and s1 > s2) or ((not is_p1) and s2 > s1)
+        outcomes.append("win" if won else "loss")
+    recent_wins = 0
+    for outcome in outcomes:
+        if outcome != "win": break
+        recent_wins += 1
+    if recent_wins not in (0, 1):
+        return 0
+    prior_losses = 0
+    for outcome in outcomes[recent_wins:]:
+        if outcome != "loss": break
+        prior_losses += 1
+    return recent_wins + 1 if prior_losses >= 5 else 0
+
+
 def calculate_deltas(player_a, player_b, score_a: int, score_b: int, team_a=None, team_b=None,
                      team_overall_a=None, team_overall_b=None, team_tier_a=None, team_tier_b=None,
                      rng=None):
@@ -942,6 +980,8 @@ def calculate_deltas(player_a, player_b, score_a: int, score_b: int, team_a=None
     player_b_for_rp = dict(player_b or {})
     player_a_for_rp["loss_streak"] = get_current_loss_streak(player_a_for_rp.get("id"))
     player_b_for_rp["loss_streak"] = get_current_loss_streak(player_b_for_rp.get("id"))
+    player_a_for_rp["loss_recovery_win_step"] = get_loss_recovery_win_step(player_a_for_rp.get("id"))
+    player_b_for_rp["loss_recovery_win_step"] = get_loss_recovery_win_step(player_b_for_rp.get("id"))
     return calculate_ranked_deltas(
         player_a_for_rp, player_b_for_rp, score_a, score_b, get_rank_level=get_rank_level,
         team_a=team_a, team_b=team_b, team_overall_a=team_overall_a,
@@ -1144,6 +1184,56 @@ RECENT_TEAM_EXCLUSION_COUNT = 5
 HOST_XP_FACTOR = 0.95
 MATCH_MODE_RANKED = "ranked"
 MATCH_MODE_FRIENDLY = "friendly"
+FRIENDLY_RANDOM3_MODE = "random3_pick1"
+FRIENDLY_RANDOM3_NOTE_PREFIX = "FRIENDLY_RANDOM3:"
+
+FRIENDLY_RANDOM3_ALLOWED_TIERS = ("S+", "S", "A+")
+FRIENDLY_RANDOM3_TIER_LABEL = "S+ / S / A+"
+
+
+def build_friendly_random3_state():
+    """Chia 3 CLB cho mỗi bên từ nhóm mạnh S+, S và A+; người chơi không chọn Tier."""
+    allowed = set(FRIENDLY_RANDOM3_ALLOWED_TIERS)
+    teams = [
+        team for team in _all_random_teams()
+        if str(team.get("tier") or "").strip().upper() in allowed
+    ]
+    if len(teams) < 6:
+        raise ValueError("Cần ít nhất 6 CLB thuộc Tier S+, S hoặc A+ để dùng Random 3 chọn 1.")
+    picked = random.sample(teams, 6)
+
+    def pack(team):
+        return {
+            "name": team.get("display"),
+            "overall": int(team.get("overall") or 0),
+            "total_stats": int(team.get("total_stats") or 0),
+            "tier": str(team.get("tier") or "").strip().upper(),
+            "logo": team.get("logo_url") or "",
+            "league": team.get("league") or "",
+        }
+
+    return {
+        "mode": FRIENDLY_RANDOM3_MODE,
+        "tier": FRIENDLY_RANDOM3_TIER_LABEL,
+        "allowed_tiers": list(FRIENDLY_RANDOM3_ALLOWED_TIERS),
+        "host_options": [pack(team) for team in picked[:3]],
+        "guest_options": [pack(team) for team in picked[3:]],
+        "host_choice": None,
+        "guest_choice": None,
+    }
+
+def encode_friendly_random3_state(state):
+    return FRIENDLY_RANDOM3_NOTE_PREFIX + json.dumps(state, ensure_ascii=False, separators=(",", ":"))
+
+def decode_friendly_random3_state(note):
+    text = str(note or "")
+    if not text.startswith(FRIENDLY_RANDOM3_NOTE_PREFIX):
+        return None
+    try:
+        data = json.loads(text[len(FRIENDLY_RANDOM3_NOTE_PREFIX):])
+        return data if data.get("mode") == FRIENDLY_RANDOM3_MODE else None
+    except Exception:
+        return None
 
 
 def get_rank_level(points: int) -> int:
@@ -2681,6 +2771,11 @@ def enrich_room(room):
     room["rematch_declined"] = room["rematch_host_declined"] or room["rematch_guest_declined"]
     room["match_mode"] = room.get("match_mode") or MATCH_MODE_RANKED
     room["friendly_tier"] = room.get("friendly_tier") or "A"
+    random3_state = decode_friendly_random3_state(room.get("note"))
+    room["friendly_random3"] = random3_state
+    room["friendly_random3_active"] = bool(random3_state)
+    room["friendly_random3_host_chosen"] = bool(random3_state and random3_state.get("host_choice") is not None)
+    room["friendly_random3_guest_chosen"] = bool(random3_state and random3_state.get("guest_choice") is not None)
     room["host_team_league"] = room.get("host_team_league") or ""
     room["guest_team_league"] = room.get("guest_team_league") or ""
     room["host_team_league_logo_url"] = room.get("host_team_league_logo_url") or get_league_logo_url(room["host_team_league"])
@@ -2712,7 +2807,7 @@ def enrich_room(room):
     else:
         room["timeout_label"] = ""
 
-    room["match_mode_label"] = "Xếp hạng (Rank)" if room.get("match_mode") != MATCH_MODE_FRIENDLY else f"Giao hữu Tier {room.get('friendly_tier') or ''}".strip()
+    room["match_mode_label"] = ("Random 3 chọn 1" if room.get("friendly_random3_active") else ("Xếp hạng (Rank)" if room.get("match_mode") != MATCH_MODE_FRIENDLY else f"Giao hữu Tier {room.get('friendly_tier') or ''}".strip()))
     room["battle_label"] = "Trận đấu xếp hạng" if room.get("match_mode") != MATCH_MODE_FRIENDLY else "Trận đấu giao hữu"
     room["start_countdown_seconds"] = 0
     room["match_elapsed_seconds"] = 0

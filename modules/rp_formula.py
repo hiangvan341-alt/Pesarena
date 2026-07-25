@@ -6,7 +6,7 @@ Supabase hoặc dữ liệu người dùng. Mọi thay đổi công thức RP ph
 """
 from __future__ import annotations
 
-RP_FORMULA_VERSION = "RP_V1.12.0"
+RP_FORMULA_VERSION = "RP_V1.13.0"
 RP_FORMULA_NAME = "PES Arena RP – Biến thiên có kiểm soát"
 RP_RANDOM_SEED_NAMESPACE = f"PES_ARENA|{RP_FORMULA_VERSION}"
 
@@ -19,6 +19,10 @@ WIN_VARIATION_RANGE = (-1, 3)
 PLACEMENT_WIN_BONUS_RANGE = (1, 4)
 PLACEMENT_WIN_TOTAL_RANGE = (22, 29)
 HOST_WIN_FACTOR = 0.95
+
+# Phục hồi sau chuỗi thua từ 5 trận: thắng lần 1/2 nhận RP cố định.
+LOSS_RECOVERY_MIN_STREAK = 5
+LOSS_RECOVERY_WIN_POINTS = {1: 17, 2: 19}
 
 # Người thua
 PLACEMENT_LOSS_RANGE = (14, 19)
@@ -52,6 +56,8 @@ def formula_summary() -> dict:
             "placement_bonus": list(PLACEMENT_WIN_BONUS_RANGE),
             "placement_total": list(PLACEMENT_WIN_TOTAL_RANGE),
             "host_factor": HOST_WIN_FACTOR,
+            "loss_recovery_min_streak": LOSS_RECOVERY_MIN_STREAK,
+            "loss_recovery_win_points": dict(LOSS_RECOVERY_WIN_POINTS),
         },
         "loser": {
             "placement": list(PLACEMENT_LOSS_RANGE),

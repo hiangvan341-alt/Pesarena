@@ -28,6 +28,9 @@ def register_routes(context):
         if not room.get("guest_ready"):
             flash("Đội khách chưa sẵn sàng. Hãy chờ khách bấm Sẵn sàng.", "warning")
             return redirect(url_for("room_detail", room_id=room_id))
+        if decode_friendly_random3_state(room.get("note")):
+            flash("Phòng đang ở bước Random 3 chọn 1. Hãy hoàn tất lựa chọn hiện tại.", "warning")
+            return redirect(url_for("room_detail", room_id=room_id))
         if room.get("match_id") or room.get("host_team") or room.get("guest_team"):
             flash("Phòng đã được quay đội hoặc đã tạo trận.", "warning")
             return redirect(url_for("room_detail", room_id=room_id))
@@ -128,17 +131,73 @@ def register_routes(context):
         return redirect(url_for("room_detail", room_id=room_id))
 
 
+    @app.route("/room/<room_id>/start-random3-friendly", methods=["POST"])
+    @login_required
+    def room_start_random3_friendly(room_id):
+        user = current_user()
+        room = get_room(room_id)
+        if not room or (user["id"] != room.get("host_user_id") and not is_admin_user(user)):
+            flash("Chỉ chủ phòng mới được mở chế độ này.", "danger")
+            return redirect(url_for("room_detail", room_id=room_id))
+        if room.get("status") != "waiting_ready" or not room.get("guest_user_id") or not room.get("guest_ready"):
+            flash("Cần đủ hai người và khách đã Sẵn sàng.", "warning")
+            return redirect(url_for("room_detail", room_id=room_id))
+        if not system_feature_enabled("friendly_random3_enabled"):
+            flash("Chế độ Random 3 chọn 1 đang tạm tắt.", "warning")
+            return redirect(url_for("room_detail", room_id=room_id))
+        try:
+            state = build_friendly_random3_state()
+        except ValueError as exc:
+            flash(str(exc), "warning")
+            return redirect(url_for("room_detail", room_id=room_id))
+        execute_query(db.table("match_rooms").update({"match_mode": MATCH_MODE_FRIENDLY, "friendly_tier": state["tier"], "team_tier": FRIENDLY_RANDOM3_MODE, "note": encode_friendly_random3_state(state), "updated_at": now_iso()}).eq("id", room_id).eq("status", "waiting_ready"), "start_random3_friendly")
+        flash("Đã random 3 CLB thuộc Tier S+, S và A+ cho mỗi người. Hãy chọn 1 CLB.", "success")
+        return redirect(url_for("room_detail", room_id=room_id))
+
+    @app.route("/room/<room_id>/choose-random3-friendly", methods=["POST"])
+    @login_required
+    def room_choose_random3_friendly(room_id):
+        user = current_user()
+        room = get_room(room_id)
+        state = decode_friendly_random3_state(room.get("note") if room else None)
+        if not system_feature_enabled("friendly_random3_enabled"):
+            flash("Chế độ Random 3 chọn 1 đang tạm tắt.", "warning")
+            return redirect(url_for("room_detail", room_id=room_id))
+        if not room or not state or room.get("status") != "waiting_ready":
+            flash("Lượt chọn CLB không còn hiệu lực.", "warning")
+            return redirect(url_for("room_detail", room_id=room_id))
+        side = "host" if user["id"] == room.get("host_user_id") else "guest" if user["id"] == room.get("guest_user_id") else None
+        if not side and not is_admin_user(user):
+            flash("Bạn không thuộc phòng này.", "danger")
+            return redirect(url_for("rooms"))
+        side = side or (request.form.get("side") or "host")
+        try: idx = int(request.form.get("choice_index", -1))
+        except Exception: idx = -1
+        options = state.get(f"{side}_options") or []
+        if idx not in range(len(options)):
+            flash("Lựa chọn CLB không hợp lệ.", "warning")
+            return redirect(url_for("room_detail", room_id=room_id))
+        state[f"{side}_choice"] = idx
+        update = {"note": encode_friendly_random3_state(state), "updated_at": now_iso()}
+        if state.get("host_choice") is not None and state.get("guest_choice") is not None:
+            h=state["host_options"][state["host_choice"]]; g=state["guest_options"][state["guest_choice"]]
+            update.update({"host_team":h["name"],"guest_team":g["name"],"host_team_overall":h["overall"],"guest_team_overall":g["overall"],"host_team_logo_url":h["logo"] or None,"guest_team_logo_url":g["logo"] or None,"host_team_league":h["league"] or None,"guest_team_league":g["league"] or None,"status":"friendly_playing","match_id":None,"note":f"Giao hữu Random 3 chọn 1 ({state['tier']}); không lưu lịch sử và không tính RP."})
+        execute_query(db.table("match_rooms").update(update).eq("id", room_id).eq("status", "waiting_ready"), "choose_random3_friendly")
+        flash("Đã khóa lựa chọn của bạn." if update.get("status") != "friendly_playing" else "Cả hai đã chọn xong. Trận giao hữu bắt đầu!", "success")
+        return redirect(url_for("room_detail", room_id=room_id))
+
     @app.route("/room/<room_id>/reroll-friendly", methods=["POST"])
     @login_required
     def room_reroll_friendly(room_id):
-        if not system_feature_enabled("friendly_enabled"):
-            flash("Tính năng Giao hữu đang tạm tắt.", "warning")
-            return redirect(url_for("room_detail", room_id=room_id))
         user = current_user()
         room = get_room(room_id)
         if not room:
             flash("Không tìm thấy phòng.", "danger")
             return redirect(url_for("dashboard"))
+        required_feature = "friendly_random3_enabled" if room.get("team_tier") == FRIENDLY_RANDOM3_MODE else "friendly_enabled"
+        if not system_feature_enabled(required_feature):
+            flash("Chế độ giao hữu này đang tạm tắt.", "warning")
+            return redirect(url_for("room_detail", room_id=room_id))
         if user["id"] != room.get("host_user_id") and not is_admin_user(user):
             flash("Chỉ chủ phòng mới được quay lại đội giao hữu.", "danger")
             return redirect(url_for("room_detail", room_id=room_id))
@@ -178,14 +237,15 @@ def register_routes(context):
     @app.route("/room/<room_id>/finish-friendly", methods=["POST"])
     @login_required
     def room_finish_friendly(room_id):
-        if not system_feature_enabled("friendly_enabled"):
-            flash("Tính năng Giao hữu đang tạm tắt.", "warning")
-            return redirect(url_for("room_detail", room_id=room_id))
         user = current_user()
         room = get_room(room_id)
         if not room:
             flash("Không tìm thấy phòng.", "danger")
             return redirect(url_for("dashboard"))
+        required_feature = "friendly_random3_enabled" if room.get("team_tier") == FRIENDLY_RANDOM3_MODE else "friendly_enabled"
+        if not system_feature_enabled(required_feature):
+            flash("Chế độ giao hữu này đang tạm tắt.", "warning")
+            return redirect(url_for("room_detail", room_id=room_id))
         if user["id"] not in [room.get("host_user_id"), room.get("guest_user_id")] and not is_admin_user(user):
             flash("Bạn không thuộc phòng này.", "danger")
             return redirect(url_for("dashboard"))

@@ -149,11 +149,11 @@ def apply_match_result(match):
             except Exception as exc:
                 print(f"get_result_host warning match={match.get('id')}: {type(exc).__name__}: {exc}")
         if str(host_user_id or "") == str(player1_id) and score1 > score2:
-            delta1 = _safe_int(apply_host_xp_factor(delta1, match.get("host_xp_factor", HOST_WIN_FACTOR)))
+            delta1 = delta1 if delta1 in (17, 19) else _safe_int(apply_host_xp_factor(delta1, match.get("host_xp_factor", HOST_WIN_FACTOR)))
             if _safe_int(player1.get("total_matches")) < PLACEMENT_MATCHES:
                 delta1 = max(22, min(29, delta1))
         elif str(host_user_id or "") == str(player2_id) and score2 > score1:
-            delta2 = _safe_int(apply_host_xp_factor(delta2, match.get("host_xp_factor", HOST_WIN_FACTOR)))
+            delta2 = delta2 if delta2 in (17, 19) else _safe_int(apply_host_xp_factor(delta2, match.get("host_xp_factor", HOST_WIN_FACTOR)))
             if _safe_int(player2.get("total_matches")) < PLACEMENT_MATCHES:
                 delta2 = max(22, min(29, delta2))
 

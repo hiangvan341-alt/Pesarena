@@ -148,6 +148,7 @@ def _initial_player_state(
         "goals_against": max(0, _int(user.get("goals_against")) - _int(confirmed_stats.get("goals_against"))),
         "streak": initial_streak,
         "loss_streak": initial_loss_streak,
+        "loss_recovery_win_step": 0,
     }
 
 
@@ -163,11 +164,18 @@ def _apply_state(state: dict[str, Any], delta: int, goals_for: int, goals_agains
     state["goals_for"] = _int(state.get("goals_for")) + _int(goals_for)
     state["goals_against"] = _int(state.get("goals_against")) + _int(goals_against)
     if won:
+        previous_losses = _int(state.get("loss_streak"))
+        previous_recovery = _int(state.get("loss_recovery_win_step"))
         state["streak"] = _int(state.get("streak")) + 1
         state["loss_streak"] = 0
+        if previous_losses >= 5:
+            state["loss_recovery_win_step"] = 2
+        elif previous_recovery == 2:
+            state["loss_recovery_win_step"] = 0
     elif lost:
         state["streak"] = 0
         state["loss_streak"] = _int(state.get("loss_streak")) + 1
+        state["loss_recovery_win_step"] = 0
     else:
         # Giữ chuỗi thắng qua trận hòa như logic hiện hành; chuỗi thua kết thúc.
         state["loss_streak"] = 0
@@ -280,11 +288,11 @@ def build_replay_plan(
         host_id = str(match.get("host_user_id") or host_by_match.get(match_id) or "")
         factor = match.get("host_xp_factor", host_win_factor)
         if host_id == p1_id and score1 > score2:
-            delta1 = _int(apply_host_factor(delta1, factor))
+            delta1 = delta1 if delta1 in (17, 19) else _int(apply_host_factor(delta1, factor))
             if _int(player1.get("total_matches")) < placement_matches:
                 delta1 = max(22, min(29, delta1))
         elif host_id == p2_id and score2 > score1:
-            delta2 = _int(apply_host_factor(delta2, factor))
+            delta2 = delta2 if delta2 in (17, 19) else _int(apply_host_factor(delta2, factor))
             if _int(player2.get("total_matches")) < placement_matches:
                 delta2 = max(22, min(29, delta2))
 
