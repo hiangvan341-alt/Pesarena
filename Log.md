@@ -1,7 +1,7 @@
-# Collap_V1.14.2
+# Collap_V1.14.3
 
-- `app.py` khoảng dòng 65, 591–600 và 4530–4545.
-- Bổ sung `public_ranking_enabled` vào cấu hình tính năng hệ thống để công tắc Admin được lưu đúng.
-- Khi Admin tắt **BXH công khai**, khách chưa đăng nhập truy cập `/`, `/ranking` hoặc `/bxh` sẽ được chuyển tới trang đăng nhập và nhận thông báo.
-- Người đã đăng nhập vẫn xem BXH bình thường.
-- Giữ nguyên API, RP, phòng đấu, animation và polling của `Collap_V1.14.1`.
+- `templates/room_detail.html`: đổi khối Thông tin phòng đấu + Lịch sử đấu từ hàng dưới thành cột bên phải.
+- `templates/_room_live_content.html`: đồng bộ cột phải khi polling cập nhật phòng.
+- `templates/partials/room_dynamic_state.html`: đồng bộ cột phải và bổ sung Lịch sử đấu trong phần trạng thái động.
+- `static/style.css`: làm gọn khung chủ/khách, cụm trung tâm; tạo bố cục 4 cột trên desktop và tự hạ xuống dưới trên tablet/mobile.
+- Khác V1.14.2: chỉ thay bố cục giao diện phòng, giữ nguyên API, RP, xử lý kết quả và polling.
