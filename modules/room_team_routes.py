@@ -150,7 +150,7 @@ def register_routes(context):
         except ValueError as exc:
             flash(str(exc), "warning")
             return redirect(url_for("room_detail", room_id=room_id))
-        execute_query(db.table("match_rooms").update({"match_mode": MATCH_MODE_FRIENDLY, "friendly_tier": state["tier"], "team_tier": FRIENDLY_RANDOM3_MODE, "note": encode_friendly_random3_state(state), "updated_at": now_iso()}).eq("id", room_id).eq("status", "waiting_ready"), "start_random3_friendly")
+        execute_query(db.table("match_rooms").update({"match_mode": MATCH_MODE_RANKED, "friendly_tier": None, "team_tier": FRIENDLY_RANDOM3_MODE, "note": encode_friendly_random3_state(state), "updated_at": now_iso()}).eq("id", room_id).eq("status", "waiting_ready"), "start_random3_ranked")
         flash("Đã random 3 CLB thuộc Tier S+, S và A+ cho mỗi người. Hãy chọn 1 CLB.", "success")
         return redirect(url_for("room_detail", room_id=room_id))
 
@@ -179,11 +179,49 @@ def register_routes(context):
             return redirect(url_for("room_detail", room_id=room_id))
         state[f"{side}_choice"] = idx
         update = {"note": encode_friendly_random3_state(state), "updated_at": now_iso()}
+        match = None
         if state.get("host_choice") is not None and state.get("guest_choice") is not None:
-            h=state["host_options"][state["host_choice"]]; g=state["guest_options"][state["guest_choice"]]
-            update.update({"host_team":h["name"],"guest_team":g["name"],"host_team_overall":h["overall"],"guest_team_overall":g["overall"],"host_team_logo_url":h["logo"] or None,"guest_team_logo_url":g["logo"] or None,"host_team_league":h["league"] or None,"guest_team_league":g["league"] or None,"status":"friendly_playing","match_id":None,"note":f"Giao hữu Random 3 chọn 1 ({state['tier']}); không lưu lịch sử và không tính RP."})
-        execute_query(db.table("match_rooms").update(update).eq("id", room_id).eq("status", "waiting_ready"), "choose_random3_friendly")
-        flash("Đã khóa lựa chọn của bạn." if update.get("status") != "friendly_playing" else "Cả hai đã chọn xong. Trận giao hữu bắt đầu!", "success")
+            h = state["host_options"][state["host_choice"]]
+            g = state["guest_options"][state["guest_choice"]]
+            match_result = execute_query(
+                db.table("matches").insert({
+                    "player1_id": room["host_user_id"],
+                    "player2_id": room["guest_user_id"],
+                    "team1": h["name"],
+                    "team2": g["name"],
+                    "team1_overall": h["overall"],
+                    "team2_overall": g["overall"],
+                    "team1_logo_url": h["logo"] or None,
+                    "team2_logo_url": g["logo"] or None,
+                    "team1_league": h["league"] or None,
+                    "team2_league": g["league"] or None,
+                    "host_xp_factor": HOST_XP_FACTOR,
+                    "status": "playing",
+                    "note": "Random 3 chọn 1 - trận xếp hạng tính RP.",
+                    "updated_at": now_iso(),
+                }),
+                "create_random3_ranked_match",
+            )
+            match = match_result.data[0] if match_result.data else None
+            if not match:
+                flash("Không thể tạo trận Random 3 chọn 1. Vui lòng thử lại.", "danger")
+                return redirect(url_for("room_detail", room_id=room_id))
+            update.update({
+                "host_team": h["name"], "guest_team": g["name"],
+                "host_team_overall": h["overall"], "guest_team_overall": g["overall"],
+                "host_team_logo_url": h["logo"] or None, "guest_team_logo_url": g["logo"] or None,
+                "host_team_league": h["league"] or None, "guest_team_league": g["league"] or None,
+                "status": "playing", "match_id": match["id"], "match_mode": MATCH_MODE_RANKED,
+                "team_tier": FRIENDLY_RANDOM3_MODE,
+                "note": "Random 3 chọn 1 - trận xếp hạng tính RP.",
+                "state_expires_at": None,
+            })
+        result = execute_query(db.table("match_rooms").update(update).eq("id", room_id).eq("status", "waiting_ready"), "choose_random3_ranked")
+        if match and not (result.data or []):
+            execute_query(db.table("matches").delete().eq("id", match["id"]).eq("status", "playing"), "rollback_random3_ranked_match", attempts=1)
+            flash("Trạng thái phòng vừa thay đổi. Trận chưa được bắt đầu.", "warning")
+            return redirect(url_for("room_detail", room_id=room_id))
+        flash("Đã khóa lựa chọn của bạn." if update.get("status") != "playing" else "Cả hai đã chọn xong. Trận tính RP bắt đầu!", "success")
         return redirect(url_for("room_detail", room_id=room_id))
 
     @app.route("/room/<room_id>/reroll-friendly", methods=["POST"])

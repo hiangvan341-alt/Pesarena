@@ -1,7 +1,7 @@
-# Collap_V1.14.11
+# Collap_V1.14.12
 
-- `modules/room_rematch_routes.py` — khoảng dòng 25–170: cho Chủ phòng bỏ cuộc hợp lệ khi trận Rank đang `playing`; khóa theo trạng thái cũ để tránh trừ RP hai lần; mọi trận giao hữu thoát không trừ RP và không tạo lịch sử.
-- `templates/room_detail.html` — khoảng dòng 429–492: sửa nút thoát giao hữu thành thoát an toàn; thêm nút bỏ cuộc cho Chủ phòng khi Rank đang thi đấu.
-- `templates/_room_live_content.html` — khoảng dòng 389–452: đồng bộ nút thoát khi giao diện phòng cập nhật trực tiếp.
-- `templates/partials/room_dynamic_state.html` — khoảng dòng 345–410: đồng bộ nút thoát khi polling cập nhật trạng thái phòng.
-- Khác `Collap_V1.14.10`: Chủ phòng không còn bị kẹt trong trạng thái `playing`; giao hữu thường và Random 3 chọn 1 đều không còn cảnh báo/trừ 20 RP khi thoát.
+- `modules/room_team_routes.py` khoảng dòng 134–235: chuyển Random 3 chọn 1 từ giao hữu sang trận xếp hạng; tạo match khi hai bên chọn xong và gắn vào luồng tính RP.
+- `modules/admin_system_routes.py` khoảng dòng 105–125: khi Admin tắt Random 3 chọn 1 chỉ hủy lượt chọn chưa bắt đầu; trận RP đang thi đấu vẫn được hoàn tất.
+- `app.py` khoảng dòng 2810: giữ nhãn Random 3 chọn 1 trong suốt trận đấu.
+- `templates/room_detail.html`, `templates/_room_live_content.html`, `templates/partials/room_dynamic_state.html`: cập nhật mô tả thành tính RP và lưu lịch sử.
+- Khác V1.14.11: Random 3 chọn 1 không còn là giao hữu; kết quả đi qua nhập kết quả, xác nhận, tranh chấp, lịch sử và công thức RP hiện tại.

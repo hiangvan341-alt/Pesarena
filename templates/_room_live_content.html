@@ -362,7 +362,7 @@
                 {% if system_features.friendly_random3_enabled %}
                 <form method="post" action="{{ url_for('room_start_random3_friendly', room_id=room.id) }}" class="room-mode-card random3-mode-card" data-room-async="1" onsubmit="const b=this.querySelector('button'); b.disabled=true; b.textContent='Đang chia 3 CLB...';">
                     <h3>🎯 Random 3 chọn 1</h3>
-                    <p class="small">Hệ thống tự quay CLB trong nhóm Tier S+, S và A+. Mỗi người nhận 3 CLB riêng để chọn 1. Không tính điểm, không lưu lịch sử.</p>
+                    <p class="small">Hệ thống tự quay CLB trong nhóm Tier S+, S và A+. Mỗi người nhận 3 CLB riêng để chọn 1. Kết quả được tính RP và lưu lịch sử.</p>
                     <button class="btn gold" type="submit" {% if not room.guest_ready %}disabled{% endif %}>🎲 Chia 3 CLB S+ / S / A+</button>
                 </form>
                 {% endif %}

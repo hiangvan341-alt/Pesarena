@@ -102,7 +102,7 @@ def register_routes(context):
             )
 
 
-        # Khi tắt riêng Random 3 chọn 1, hủy cả lượt chọn đang chờ và trận Random 3 đang chạy.
+        # Khi tắt riêng Random 3 chọn 1, chỉ hủy lượt chọn chưa bắt đầu. Trận tính RP đang chơi vẫn được hoàn tất bình thường.
         if previous_features.get("friendly_random3_enabled", True) and not features.get("friendly_random3_enabled", False):
             execute_query(
                 db.table("match_rooms").update({
@@ -120,8 +120,8 @@ def register_routes(context):
                     "match_id": None,
                     "note": "Random 3 chọn 1 đã được Admin tắt. Phòng đã trở về trạng thái chờ.",
                     "updated_at": now_iso(),
-                }).eq("team_tier", FRIENDLY_RANDOM3_MODE),
-                "disable_random3_friendly_rooms",
+                }).eq("team_tier", FRIENDLY_RANDOM3_MODE).eq("status", "waiting_ready"),
+                "disable_random3_waiting_rooms",
                 attempts=2,
             )
 

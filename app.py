@@ -2807,7 +2807,7 @@ def enrich_room(room):
     else:
         room["timeout_label"] = ""
 
-    room["match_mode_label"] = ("Random 3 chọn 1" if room.get("friendly_random3_active") else ("Xếp hạng (Rank)" if room.get("match_mode") != MATCH_MODE_FRIENDLY else f"Giao hữu Tier {room.get('friendly_tier') or ''}".strip()))
+    room["match_mode_label"] = ("Random 3 chọn 1" if room.get("team_tier") == FRIENDLY_RANDOM3_MODE else ("Xếp hạng (Rank)" if room.get("match_mode") != MATCH_MODE_FRIENDLY else f"Giao hữu Tier {room.get('friendly_tier') or ''}".strip()))
     room["battle_label"] = "Trận đấu xếp hạng" if room.get("match_mode") != MATCH_MODE_FRIENDLY else "Trận đấu giao hữu"
     room["start_countdown_seconds"] = 0
     room["match_elapsed_seconds"] = 0
