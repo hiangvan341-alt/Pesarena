@@ -48,6 +48,13 @@ def register_routes(context):
             flash("Không tải được thông tin hai người chơi.", "danger")
             return redirect(url_for("room_detail", room_id=room_id))
 
+        if match_mode == MATCH_MODE_RANKED:
+            try:
+                assert_can_start_ranked_match(host.get("id"), guest.get("id"))
+            except ValueError as exc:
+                flash(str(exc), "warning")
+                return redirect(url_for("room_detail", room_id=room_id))
+
         try:
             if match_mode == MATCH_MODE_FRIENDLY:
                 selected_tier = (request.form.get("friendly_tier") or room.get("friendly_tier") or "A").strip().upper()
@@ -131,6 +138,42 @@ def register_routes(context):
         return redirect(url_for("room_detail", room_id=room_id))
 
 
+    @app.route("/room/<room_id>/select-ranked-mode", methods=["POST"])
+    @login_required
+    def room_select_ranked_mode(room_id):
+        user = current_user()
+        room = get_room(room_id)
+        if not room or (user["id"] != room.get("host_user_id") and not is_admin_user(user)):
+            flash("Chỉ chủ phòng mới được chọn chế độ thi đấu.", "danger")
+            return redirect(url_for("room_detail", room_id=room_id))
+        if room.get("status") != "waiting_ready" or room.get("match_id") or room.get("host_team") or room.get("guest_team"):
+            flash("Không thể đổi chế độ ở trạng thái hiện tại.", "warning")
+            return redirect(url_for("room_detail", room_id=room_id))
+        if "__RANK_MODE_LOCKED__" in (room.get("note") or ""):
+            flash("Lượt đá tiếp giữ nguyên chế độ của trận trước, không cần chọn lại.", "warning")
+            return redirect(url_for("room_detail", room_id=room_id))
+        selected_mode = (request.form.get("rank_mode") or SMART_RANDOM_MODE).strip()
+        if selected_mode == FRIENDLY_RANDOM3_MODE:
+            if not system_feature_enabled("friendly_random3_enabled"):
+                flash("Chế độ Random 3 chọn 1 đang tạm tắt.", "warning")
+                return redirect(url_for("room_detail", room_id=room_id))
+            label = "Random 3 chọn 1"
+        else:
+            selected_mode = SMART_RANDOM_MODE
+            label = "Rank thường"
+        execute_query(
+            db.table("match_rooms").update({
+                "match_mode": MATCH_MODE_RANKED,
+                "team_tier": selected_mode,
+                "friendly_tier": None,
+                "note": f"Chủ phòng đã chọn chế độ {label}. Chờ khách Sẵn sàng.",
+                "updated_at": now_iso(),
+            }).eq("id", room_id).eq("status", "waiting_ready"),
+            "select_ranked_room_mode",
+        )
+        flash(f"Đã chọn chế độ {label}.", "success")
+        return redirect(url_for("room_detail", room_id=room_id))
+
     @app.route("/room/<room_id>/start-random3-friendly", methods=["POST"])
     @login_required
     def room_start_random3_friendly(room_id):
@@ -145,13 +188,20 @@ def register_routes(context):
         if not system_feature_enabled("friendly_random3_enabled"):
             flash("Chế độ Random 3 chọn 1 đang tạm tắt.", "warning")
             return redirect(url_for("room_detail", room_id=room_id))
+        host = get_user(room.get("host_user_id"))
+        guest = get_user(room.get("guest_user_id"))
         try:
-            state = build_friendly_random3_state()
+            assert_can_start_ranked_match(room.get("host_user_id"), room.get("guest_user_id"))
+        except ValueError as exc:
+            flash(str(exc), "warning")
+            return redirect(url_for("room_detail", room_id=room_id))
+        try:
+            state = build_friendly_random3_state(host, guest)
         except ValueError as exc:
             flash(str(exc), "warning")
             return redirect(url_for("room_detail", room_id=room_id))
         execute_query(db.table("match_rooms").update({"match_mode": MATCH_MODE_RANKED, "friendly_tier": None, "team_tier": FRIENDLY_RANDOM3_MODE, "note": encode_friendly_random3_state(state), "updated_at": now_iso()}).eq("id", room_id).eq("status", "waiting_ready"), "start_random3_ranked")
-        flash("Đã random 3 CLB thuộc Tier S+, S và A+ cho mỗi người. Hãy chọn 1 CLB.", "success")
+        flash("Đã random 3 CLB theo mức Rank riêng của mỗi người. Hãy chọn 1 CLB.", "success")
         return redirect(url_for("room_detail", room_id=room_id))
 
     @app.route("/room/<room_id>/choose-random3-friendly", methods=["POST"])
@@ -181,6 +231,11 @@ def register_routes(context):
         update = {"note": encode_friendly_random3_state(state), "updated_at": now_iso()}
         match = None
         if state.get("host_choice") is not None and state.get("guest_choice") is not None:
+            try:
+                assert_can_start_ranked_match(room.get("host_user_id"), room.get("guest_user_id"))
+            except ValueError as exc:
+                flash(str(exc), "warning")
+                return redirect(url_for("room_detail", room_id=room_id))
             h = state["host_options"][state["host_choice"]]
             g = state["guest_options"][state["guest_choice"]]
             match_result = execute_query(
@@ -346,6 +401,20 @@ def register_routes(context):
             return redirect(url_for("dashboard"))
         if room.get("status") != "waiting_ready":
             flash("Không thể đổi trạng thái sẵn sàng lúc này.", "warning")
+            return redirect(url_for("room_detail", room_id=room_id))
+        limit_message = daily_rank_block_message(room.get("host_user_id"), room.get("guest_user_id"))
+        if limit_message:
+            # Đảm bảo phòng không mắc kẹt ở trạng thái đã cam kết thi đấu.
+            execute_query(
+                db.table("match_rooms").update({
+                    "guest_ready": False,
+                    "note": "Đã chạm giới hạn trận Rank trong ngày. Có thể rời phòng không bị trừ RP.",
+                    "updated_at": now_iso(),
+                }).eq("id", room_id).eq("status", "waiting_ready"),
+                "block_guest_ready_daily_limit",
+                attempts=2,
+            )
+            flash(limit_message, "warning")
             return redirect(url_for("room_detail", room_id=room_id))
         execute_query(
             db.table("match_rooms").update({

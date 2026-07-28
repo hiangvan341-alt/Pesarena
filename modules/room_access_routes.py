@@ -68,6 +68,11 @@ def register_routes(context):
             flash(f"Bạn đang trong thời gian chờ {cooldown_text(user)}.", "warning")
             return redirect(url_for("dashboard"))
 
+        limit_message = daily_rank_block_message(room.get("host_user_id"), user_id)
+        if limit_message:
+            flash(limit_message, "warning")
+            return redirect(url_for("dashboard"))
+
         existing_room = active_room_for_user(user_id)
         if existing_room:
             flash("Bạn đang có một phòng chưa hoàn tất. Hãy xử lý phòng đó trước.", "warning")
@@ -140,11 +145,21 @@ def register_routes(context):
 
     def build_room_template_context(room):
         viewer = current_user() or {}
+        daily_limit_message = None
+        if room.get("status") == "waiting_ready" and room.get("match_mode") != MATCH_MODE_FRIENDLY:
+            daily_limit_message = daily_rank_block_message(
+                room.get("host_user_id"), room.get("guest_user_id")
+            )
         return {
             "room": room,
             "initial_room_state_key": build_room_state_key(room),
             "friendly_tiers": get_available_team_tiers(),
             "room_head_to_head": build_room_head_to_head(room),
+            # Luôn truyền cấu hình Tìm Nhanh vào cả trang đầy đủ và HTML polling.
+            # Nếu thiếu, Jinja dùng màu mặc định và có thể không phản ánh lựa chọn Admin.
+            "quick_match_config": get_quick_match_config(),
+            "daily_rank_limit_blocked": bool(daily_limit_message),
+            "daily_rank_limit_message": daily_limit_message,
             # Supabase có thể trả ID ở kiểu khác session. Dùng so sánh chuẩn hóa
             # để giao diện không làm mất nút hành động của chủ/khách.
             "viewer_is_host": _same_user_id(viewer.get("id"), room.get("host_user_id")),
@@ -219,6 +234,16 @@ def register_routes(context):
         if room.get("status") not in {"waiting_ready", "friendly_playing"}:
             flash("Không thể rời phòng khi trận xếp hạng đang thi đấu hoặc đang chờ xác nhận kết quả.", "warning")
             return redirect(url_for("room_detail", room_id=room_id))
+
+        # Nếu một trong hai người đã chạm giới hạn Rank ngày thì phòng không còn
+        # được phép bắt đầu trận mới. Mọi người được rời phòng an toàn, kể cả khi
+        # giao diện cũ vẫn còn guest_ready=true, để tránh bị trừ RP oan.
+        daily_limit_blocked = bool(
+            room.get("status") == "waiting_ready"
+            and daily_rank_block_message(room.get("host_user_id"), room.get("guest_user_id"))
+        )
+        if daily_limit_blocked:
+            room["guest_ready"] = False
 
         # Ở bước chờ Sẵn Sàng, luồng rời phòng không phạt chỉ hợp lệ khi khách
         # chưa Sẵn Sàng. Kiểm tra tại backend để không thể né phạt bằng POST

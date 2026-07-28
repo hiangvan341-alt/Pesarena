@@ -157,6 +157,15 @@ def apply_match_result(match):
             if _safe_int(player2.get("total_matches")) < PLACEMENT_MATCHES:
                 delta2 = max(22, min(29, delta2))
 
+        # Giới hạn RP dương theo ngày được áp dụng sau khi tính đủ công thức,
+        # nhưng trước khi ghi điểm. RP âm khi thua không bị thay đổi.
+        delta1, daily_cap1 = apply_daily_positive_rp_cap(
+            player1_id, delta1, exclude_match_id=match.get("id")
+        )
+        delta2, daily_cap2 = apply_daily_positive_rp_cap(
+            player2_id, delta2, exclude_match_id=match.get("id")
+        )
+
         update_player_after_match(player1, delta1, score1, score2)
         update_player_after_match(player2, delta2, score2, score1)
 
@@ -171,6 +180,10 @@ def apply_match_result(match):
                     "seed": f"{RP_RANDOM_SEED_NAMESPACE}|{match.get('id')}",
                     "delta1": int(delta1),
                     "delta2": int(delta2),
+                    "daily_rank_limits": {
+                        "player1": daily_cap1,
+                        "player2": daily_cap2,
+                    },
                 },
                 "status": "confirmed",
                 "note": "Đã xác nhận.",
@@ -190,6 +203,25 @@ def apply_match_result(match):
         except Exception as restore_exc:
             print(f"apply_match_result RESTORE ERROR match={match.get('id')}: {type(restore_exc).__name__}: {restore_exc}")
         raise
+
+    # Thông báo riêng khi RP thắng bị chạm/trần giới hạn ngày.
+    try:
+        for user_id, detail in ((player1_id, daily_cap1), (player2_id, daily_cap2)):
+            if not detail:
+                continue
+            applied = int(detail.get("applied_delta") or 0)
+            earned_after = int(detail.get("earned_before") or 0) + max(0, applied)
+            if detail.get("capped") or earned_after >= int(detail.get("limit") or 150):
+                create_user_notification(
+                    user_id,
+                    "Đã đạt giới hạn RP trong ngày",
+                    f"Bạn đã được cộng tổng cộng {earned_after}/150 RP hôm nay. "
+                    "Phần RP vượt giới hạn không được cộng; giới hạn làm mới lúc 00:00.",
+                    "/notifications",
+                    "rank_limit",
+                )
+    except Exception as exc:
+        print(f"daily rank limit notification warning: {exc}")
 
     # Badge synchronization is auxiliary and must never invalidate a confirmed match.
     try:

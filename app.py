@@ -62,7 +62,7 @@ from modules.win_streaks import (
 load_dotenv()
 
 APP_NAME = "PES Arena – Bản Lĩnh Sân Cỏ"
-APP_VERSION = "Collap_V1.14.8"
+APP_VERSION = "Collap_V1.14.28"
 DEFAULT_POINTS = 1000
 DEVICE_COOKIE_NAME = "rankzone_device_id"
 COOLDOWN_MINUTES = 3
@@ -569,7 +569,7 @@ ADMIN_PERMISSION_GROUPS = {
     "matches": ["matches_view", "matches_confirm", "matches_cancel", "matches_delete"],
     "operations": ["rooms_manage", "invites_manage", "announcements_manage"],
     "system": ["system_features_manage", "chat_manage", "friendly_manage", "registration_codes_manage", "admin_logs_view"],
-    "rp": ["rp_view", "rp_simulate", "rp_backup_restore"],
+    "rp": ["rp_view", "rp_simulate", "rp_backup_restore", "daily_rank_limits_manage"],
     "permissions": ["permissions_manage"],
 }
 ADMIN_PERMISSION_LABELS = {
@@ -581,7 +581,7 @@ ADMIN_PERMISSION_LABELS = {
     "announcements_manage":"Quản lý thông báo", "system_features_manage":"Bật/tắt tính năng hệ thống", "chat_manage":"Quản lý Chat", "friendly_manage":"Quản lý Giao hữu",
     "registration_codes_manage":"Quản lý mã đăng ký", "admin_logs_view":"Xem nhật ký Admin",
     "rp_view":"Xem công thức RP", "rp_simulate":"Tính thử RP",
-    "rp_backup_restore":"Backup/Khôi phục RP", "permissions_manage":"Cấp/thu hồi quyền Admin",
+    "rp_backup_restore":"Backup/Khôi phục RP", "daily_rank_limits_manage":"Bật/tắt giới hạn Rank ngày", "permissions_manage":"Cấp/thu hồi quyền Admin",
 }
 LEGACY_ADMIN_PERMISSION_FIELDS = {
     "create_test_account": "admin_can_create_test_account",
@@ -592,7 +592,7 @@ SYSTEM_FEATURE_DEFAULTS = {
     "dashboard_enabled": False,
     "public_ranking_enabled": True,
     "friendly_enabled": True, "friendly_random3_enabled": True, "lobby_chat_enabled": True, "room_chat_enabled": True,
-    "registration_codes_enabled": True, "announcements_enabled": True,
+    "registration_codes_enabled": True, "announcements_enabled": True, "quick_match_enabled": True,
 }
 
 def _admin_permissions(user):
@@ -628,6 +628,26 @@ def get_system_features():
 def system_feature_enabled(key: str) -> bool:
     return bool(get_system_features().get(key, SYSTEM_FEATURE_DEFAULTS.get(key, False)))
 
+
+QUICK_MATCH_SETTING_KEY = "quick_match_config"
+QUICK_MATCH_COLOR_DEFAULT = "blue"
+QUICK_MATCH_COLOR_VALUES = {"blue", "green"}
+
+def get_quick_match_config():
+    config = {"color": QUICK_MATCH_COLOR_DEFAULT}
+    try:
+        result = execute_query(
+            db.table("system_settings").select("setting_value").eq("setting_key", QUICK_MATCH_SETTING_KEY).limit(1),
+            "get_quick_match_config", attempts=2,
+        )
+        raw = ((result.data or [{}])[0]).get("setting_value")
+        if isinstance(raw, str):
+            raw = json.loads(raw)
+        if isinstance(raw, dict) and raw.get("color") in QUICK_MATCH_COLOR_VALUES:
+            config["color"] = raw["color"]
+    except Exception as exc:
+        print(f"get_quick_match_config warning: {exc}")
+    return config
 
 MAINTENANCE_SETTING_KEY = "server_maintenance_config"
 VN_TIMEZONE = timezone(timedelta(hours=7))
@@ -1187,20 +1207,16 @@ MATCH_MODE_FRIENDLY = "friendly"
 FRIENDLY_RANDOM3_MODE = "random3_pick1"
 FRIENDLY_RANDOM3_NOTE_PREFIX = "FRIENDLY_RANDOM3:"
 
-FRIENDLY_RANDOM3_ALLOWED_TIERS = ("S+", "S", "A+")
-FRIENDLY_RANDOM3_TIER_LABEL = "S+ / S / A+"
+def build_friendly_random3_state(host_player, guest_player):
+    """Chia 3 CLB riêng cho mỗi bên theo tỷ lệ Tier của Rank từng người."""
+    if not host_player or not guest_player:
+        raise ValueError("Không tải được thông tin Rank của hai người chơi.")
 
+    all_teams = _all_random_teams()
+    if len(all_teams) < 6:
+        raise ValueError("Cần ít nhất 6 CLB để dùng Random 3 chọn 1.")
 
-def build_friendly_random3_state():
-    """Chia 3 CLB cho mỗi bên từ nhóm mạnh S+, S và A+; người chơi không chọn Tier."""
-    allowed = set(FRIENDLY_RANDOM3_ALLOWED_TIERS)
-    teams = [
-        team for team in _all_random_teams()
-        if str(team.get("tier") or "").strip().upper() in allowed
-    ]
-    if len(teams) < 6:
-        raise ValueError("Cần ít nhất 6 CLB thuộc Tier S+, S hoặc A+ để dùng Random 3 chọn 1.")
-    picked = random.sample(teams, 6)
+    picked_names = []
 
     def pack(team):
         return {
@@ -1212,12 +1228,26 @@ def build_friendly_random3_state():
             "league": team.get("league") or "",
         }
 
+    def pick_three(player):
+        options = []
+        for _ in range(3):
+            team, _, _, _ = _pick_rank_team(player, all_teams, extra_excluded=picked_names)
+            name = team.get("display")
+            picked_names.append(name)
+            options.append(pack(team))
+        return options
+
+    host_level = get_rank_level(host_player.get("rank_points", 0))
+    guest_level = get_rank_level(guest_player.get("rank_points", 0))
+    rank_ranges = load_rank_ranges()
+
     return {
         "mode": FRIENDLY_RANDOM3_MODE,
-        "tier": FRIENDLY_RANDOM3_TIER_LABEL,
-        "allowed_tiers": list(FRIENDLY_RANDOM3_ALLOWED_TIERS),
-        "host_options": [pack(team) for team in picked[:3]],
-        "guest_options": [pack(team) for team in picked[3:]],
+        "distribution": "rank_weighted",
+        "host_rank": rank_ranges[host_level]["name"],
+        "guest_rank": rank_ranges[guest_level]["name"],
+        "host_options": pick_three(host_player),
+        "guest_options": pick_three(guest_player),
         "host_choice": None,
         "guest_choice": None,
     }
@@ -3328,6 +3358,17 @@ def has_pending_invite_between(user_a, user_b):
     return False
 
 
+def is_solo_waiting_room(room, user_id):
+    """True only when user is the host of an empty room that has not started."""
+    if not room or not user_id:
+        return False
+    return bool(
+        str(room.get("host_user_id")) == str(user_id)
+        and room.get("status") == "waiting_ready"
+        and not room.get("guest_user_id")
+    )
+
+
 def matchmaking_snapshot(user_a, user_b=None):
     """Fetch only the small raw state needed by invite actions.
 
@@ -3538,6 +3579,11 @@ def enforce_server_maintenance():
 @app.before_request
 def before_request():
     try:
+        # Chạy tối đa 1 lần/6 giờ cho toàn hệ thống để tạo cảnh báo 3 ngày
+        # và áp dụng RP suy giảm kể cả khi người chơi chưa quay lại đăng nhập.
+        if request.endpoint != "static":
+            process_inactivity_decay_batch()
+
         # V4.9: chỉ thao tác thật của người dùng mới gia hạn phiên. Heartbeat/polling không gia hạn.
         if session.get("user_id"):
             now_ts = int(time.time())
@@ -3658,6 +3704,7 @@ def inject_globals():
         "active_announcement": announcement,
         "bell_notifications": bell_notifications,
         "unread_notification_count": unread_notification_count,
+        "quick_match_config": get_quick_match_config(),
     }
 
 
@@ -3997,6 +4044,11 @@ def login():
         session["role"] = user.get("role", "player")
         session["account_status"] = status
         session["admin_level"] = user.get("admin_level", "none")
+        # Tính RP không hoạt động trước khi cập nhật last_seen_at của lần đăng nhập mới.
+        try:
+            process_inactivity_for_user(user)
+        except Exception as exc:
+            print(f"Login inactivity decay warning: {exc}")
         execute_query(
             db.table("users").update({"is_online": True, "last_seen_at": now_iso()}).eq("id", user["id"]),
             "login_mark_online",
@@ -4520,6 +4572,10 @@ def dashboard():
 @login_required
 def create_open_room():
     user = current_user()
+    limit_message = daily_rank_block_message(user.get("id"))
+    if limit_message:
+        flash(limit_message, "warning")
+        return redirect(url_for("dashboard"))
     existing = active_room_for_user(user["id"])
     if existing:
         return redirect(url_for("room_detail", room_id=existing["id"]))
@@ -4551,7 +4607,20 @@ def create_open_room():
 @login_required
 def players():
     player_rows = list_players()
-    activity_map = build_player_activity_map()
+    rooms = list_rooms()
+    activity_map = build_player_activity_map(rooms=rooms)
+    solo_room_user_ids = {
+        str(room.get("host_user_id"))
+        for room in rooms
+        if is_solo_waiting_room(room, room.get("host_user_id"))
+    }
+    viewer = current_user()
+    viewer_room = active_room_for_user(viewer.get("id")) if viewer else None
+    viewer_can_invite = bool(
+        viewer
+        and not active_match_for_user(viewer.get("id"))
+        and (not viewer_room or is_solo_waiting_room(viewer_room, viewer.get("id")))
+    )
     query = (request.args.get("q") or "").strip().casefold()
     status_filter = (request.args.get("status") or "all").strip()
 
@@ -4563,6 +4632,10 @@ def players():
         player["activity_code"] = status["code"]
         player["activity_label"] = status["label"]
         player["is_busy"] = status["code"] not in {"ready", "offline"}
+        player["can_receive_invite"] = bool(
+            player.get("is_online")
+            and (status["code"] == "ready" or str(player.get("id")) in solo_room_user_ids)
+        )
         total = int(player.get("total_matches", 0) or 0)
         player["winrate"] = round((int(player.get("wins", 0) or 0) / total) * 100, 1) if total else 0
         player["last_seen_display"] = format_vn_datetime(player.get("last_seen_at"))
@@ -4578,7 +4651,13 @@ def players():
 
     status_order = {"ready": 0, "in_room": 1, "waiting_confirm": 2, "playing": 3, "offline": 4}
     player_rows.sort(key=lambda p: (status_order.get(p.get("activity_code"), 9), _player_ranking_sort_key(p)))
-    return render_template("players.html", players=player_rows, q=request.args.get("q", ""), status_filter=status_filter)
+    return render_template(
+        "players.html",
+        players=player_rows,
+        q=request.args.get("q", ""),
+        status_filter=status_filter,
+        viewer_can_invite=viewer_can_invite,
+    )
 
 
 def _build_recent_form_map(matches, player_ids=None, limit=5):
@@ -4871,11 +4950,18 @@ def profile(user_id):
             "recent": h2h_matches[:5],
         }
 
-    activity = build_player_activity_map().get(user_id)
+    room_rows = list_rooms()
+    activity = build_player_activity_map(rooms=room_rows).get(user_id)
+    target_room = next((room for room in room_rows if str(user_id) in {str(room.get("host_user_id")), str(room.get("guest_user_id"))} and room_is_active(room)), None)
+    viewer_room = next((room for room in room_rows if str(viewer.get("id")) in {str(room.get("host_user_id")), str(room.get("guest_user_id"))} and room_is_active(room)), None)
+    target_available = bool(not activity or is_solo_waiting_room(target_room, user_id))
+    viewer_available = bool(not viewer_room or is_solo_waiting_room(viewer_room, viewer.get("id")))
     can_invite = bool(
         viewer.get("id") != user_id
         and user.get("is_online")
-        and not activity
+        and target_available
+        and viewer_available
+        and not active_match_for_user(viewer.get("id"))
     )
 
     profile_active_room = active_room_for_user(viewer.get("id")) if viewer.get("id") == user_id else None
@@ -4933,6 +5019,11 @@ def invites():
 def send_invite():
     user = current_user()
 
+    limit_message = daily_rank_block_message(user.get("id"))
+    if limit_message:
+        flash(limit_message, "warning")
+        return redirect(url_for("dashboard"))
+
     if is_player_in_cooldown(user):
         flash(f"Bạn đang trong thời gian chờ {cooldown_text(user)}.", "warning")
         return redirect(url_for("players"))
@@ -4949,6 +5040,11 @@ def send_invite():
         flash("Không tìm thấy đối thủ.", "danger")
         return redirect(url_for("players"))
 
+    limit_message = daily_rank_block_message(user.get("id"), opponent.get("id"))
+    if limit_message:
+        flash(limit_message, "warning")
+        return redirect(url_for("players"))
+
     try:
         state = matchmaking_snapshot(user["id"], to_user_id)
     except Exception as exc:
@@ -4957,18 +5053,18 @@ def send_invite():
         return redirect(url_for("players"))
 
     sender_room = state.get("room_a")
+    receiver_room = state.get("room_b")
     if state.get("match_a"):
-        flash("Bạn đang có trận chưa hoàn tất.", "warning")
+        flash("Bạn đang có trận chưa hoàn tất nên chưa thể gửi lời mời.", "warning")
         return redirect(url_for("dashboard"))
-    if sender_room and not (
-        sender_room.get("host_user_id") == user["id"]
-        and sender_room.get("status") == "waiting_ready"
-        and not sender_room.get("guest_user_id")
-    ):
-        flash("Bạn đang có phòng chưa hoàn tất.", "warning")
+    if sender_room and not is_solo_waiting_room(sender_room, user["id"]):
+        flash("Phòng của bạn đã có đủ 2 người hoặc đã bắt đầu. Bạn không thể gửi thêm lời mời.", "warning")
         return redirect(url_for("dashboard"))
-    if state.get("room_b") or state.get("match_b"):
-        flash("Người chơi này đang ở trong phòng đấu hoặc đang thi đấu. Bạn hãy mời lại sau khi trận của họ kết thúc nhé.", "warning")
+    if state.get("match_b"):
+        flash("Người chơi này đang thi đấu hoặc còn trận chưa hoàn tất.", "warning")
+        return redirect(url_for("players"))
+    if receiver_room and not is_solo_waiting_room(receiver_room, to_user_id):
+        flash("Phòng của người chơi này đã có đủ 2 người hoặc đã bắt đầu.", "warning")
         return redirect(url_for("players"))
 
     if is_player_in_cooldown(opponent):
@@ -5049,6 +5145,91 @@ def send_invite():
     return redirect(url_for("room_detail", room_id=room["id"]))
 
 
+@app.route("/invites/quick-match", methods=["POST"])
+@login_required
+def quick_match_invite():
+    user = current_user()
+    limit_message = daily_rank_block_message(user.get("id"))
+    if limit_message:
+        return jsonify({"ok": False, "message": limit_message}), 409
+    if not system_feature_enabled("quick_match_enabled"):
+        return jsonify({"ok": False, "message": "Tính năng Tìm Nhanh đang được Admin tắt."}), 403
+    if is_player_in_cooldown(user):
+        return jsonify({"ok": False, "message": f"Bạn đang trong thời gian chờ {cooldown_text(user)}."}), 409
+
+    try:
+        state = matchmaking_snapshot(user["id"])
+    except Exception as exc:
+        print(f"quick_match state ERROR user={user.get('id')}: {type(exc).__name__}: {exc}")
+        return jsonify({"ok": False, "message": "Không thể kiểm tra trạng thái phòng lúc này."}), 503
+
+    sender_room = state.get("room_a")
+    if state.get("match_a") or not is_solo_waiting_room(sender_room, user["id"]):
+        return jsonify({"ok": False, "message": "Tìm Nhanh chỉ dùng khi bạn đang ở phòng một mình."}), 409
+
+    rooms = state.get("rooms") or []
+    matches = state.get("matches") or []
+    invites = state.get("invites") or []
+    room_by_user = {}
+    for room in rooms:
+        for uid in (room.get("host_user_id"), room.get("guest_user_id")):
+            if uid:
+                room_by_user[str(uid)] = room
+    busy_match_ids = {str(uid) for m in matches for uid in (m.get("player1_id"), m.get("player2_id")) if uid}
+    invite_busy_ids = {str(uid) for i in invites for uid in (i.get("from_user_id"), i.get("to_user_id")) if uid}
+    if str(user["id"]) in invite_busy_ids:
+        return jsonify({"ok": False, "message": "Bạn đang có một lời mời chờ xử lý."}), 409
+
+    my_points = int(user.get("rank_points", 0) or 0)
+    candidates = []
+    for opponent in list_players(include_admin=False):
+        oid = str(opponent.get("id"))
+        if not oid or oid == str(user["id"]):
+            continue
+        if not is_user_online_now(opponent) or is_player_in_cooldown(opponent):
+            continue
+        if oid in busy_match_ids or oid in invite_busy_ids:
+            continue
+        opponent_room = room_by_user.get(oid)
+        if opponent_room and not is_solo_waiting_room(opponent_room, oid):
+            continue
+        gap = abs(int(opponent.get("rank_points", 0) or 0) - my_points)
+        candidates.append((gap, -int(opponent.get("last_seen_at") is not None), str(opponent.get("display_name") or ""), opponent))
+
+    if not candidates:
+        return jsonify({"ok": False, "message": "Hiện chưa có đối thủ phù hợp đang online."}), 404
+
+    candidates.sort(key=lambda item: (item[0], item[2].casefold()))
+    opponent = candidates[0][3]
+    invite_result = execute_query(
+        db.table("match_invites").insert({
+            "from_user_id": user["id"], "to_user_id": opponent["id"],
+            "tier": SMART_RANDOM_MODE, "status": "pending",
+            "message": f'{user["display_name"]} tìm nhanh và mời {opponent["display_name"]} thi đấu hạng.',
+            "expires_at": future_iso(INVITE_TIMEOUT_SECONDS), "updated_at": now_iso(),
+        }), "quick_match_create_invite",
+    )
+    invite = invite_result.data[0] if invite_result.data else None
+    if not invite:
+        return jsonify({"ok": False, "message": "Không thể gửi lời mời lúc này."}), 500
+    execute_query(
+        db.table("match_rooms").update({
+            "invite_id": invite["id"],
+            "note": f'Đã tìm thấy {opponent["display_name"]} (chênh {abs(int(opponent.get("rank_points",0) or 0)-my_points)} RP). Đang chờ chấp nhận.',
+            "updated_at": now_iso(),
+        }).eq("id", sender_room["id"]).eq("status", "waiting_ready").is_("guest_user_id", "null"),
+        "quick_match_attach_invite",
+    )
+    ttl_cache_delete("invites_raw")
+    cache_delete("_rz_invites_all")
+    return jsonify({
+        "ok": True,
+        "opponent_name": opponent.get("display_name") or opponent.get("username"),
+        "points_gap": abs(int(opponent.get("rank_points", 0) or 0) - my_points),
+        "message": f'Đã gửi lời mời tới {opponent.get("display_name") or opponent.get("username")}.',
+    })
+
+
 @app.route("/invites/respond/<invite_id>", methods=["POST"])
 @login_required
 def respond_invite(invite_id):
@@ -5087,17 +5268,29 @@ def respond_invite(invite_id):
         flash(f"Bạn đang trong thời gian chờ {cooldown_text(user)}.", "warning")
         return redirect(url_for("invites"))
 
-    if active_room_for_user(user["id"]) or active_match_for_user(user["id"]):
-        flash("Bạn đang có phòng hoặc trận chưa hoàn tất.", "warning")
+    limit_message = daily_rank_block_message(invite.get("from_user_id"), user.get("id"))
+    if limit_message:
+        execute_query(
+            db.table("match_invites").update({"status": "cancelled", "updated_at": now_iso()})
+            .eq("id", invite_id).eq("status", "pending"),
+            "cancel_invite_daily_limit",
+            attempts=2,
+        )
+        flash(limit_message, "warning")
+        return redirect(url_for("dashboard"))
+
+    receiver_match = active_match_for_user(user["id"])
+    receiver_room = active_room_for_user(user["id"])
+    if receiver_match:
+        flash("Bạn đang có trận chưa hoàn tất nên không thể nhận lời mời.", "warning")
+        return redirect(url_for("dashboard"))
+    if receiver_room and not is_solo_waiting_room(receiver_room, user["id"]):
+        flash("Phòng của bạn đã có đủ 2 người hoặc đã bắt đầu nên không thể nhận lời mời khác.", "warning")
         return redirect(url_for("dashboard"))
 
     inviter_id = invite.get("from_user_id")
     inviter_room = active_room_for_user(inviter_id)
-    if active_match_for_user(inviter_id) or (inviter_room and not (
-        inviter_room.get("host_user_id") == inviter_id
-        and inviter_room.get("status") == "waiting_ready"
-        and not inviter_room.get("guest_user_id")
-    )):
+    if active_match_for_user(inviter_id) or (inviter_room and not is_solo_waiting_room(inviter_room, inviter_id)):
         execute_query(
             db.table("match_invites").update({
                 "status": "cancelled",
@@ -5108,34 +5301,130 @@ def respond_invite(invite_id):
         flash("Người mời đang ở phòng hoặc trận khác. Lời mời này đã hết hiệu lực.", "warning")
         return redirect(url_for("dashboard"))
 
-    if inviter_room:
-        room = execute_query(
-            db.table("match_rooms").update({
-                "invite_id": invite_id,
-                "guest_user_id": invite["to_user_id"],
-                "guest_ready": False,
-                "note": "Đối thủ đã vào phòng. Khách chưa sẵn sàng.",
-                "state_expires_at": None,
+    room = None
+    target_room_created = False
+    try:
+        if inviter_room:
+            attach_result = execute_query(
+                db.table("match_rooms").update({
+                    "invite_id": invite_id,
+                    "guest_user_id": invite["to_user_id"],
+                    "guest_ready": False,
+                    "note": "Đối thủ đã vào phòng. Khách chưa sẵn sàng.",
+                    "state_expires_at": None,
+                    "updated_at": now_iso(),
+                })
+                .eq("id", inviter_room["id"])
+                .eq("status", "waiting_ready")
+                .is_("guest_user_id", "null"),
+                "attach_guest_to_open_room",
+            )
+            room = attach_result.data[0] if attach_result.data else None
+        else:
+            create_result = execute_query(
+                db.table("match_rooms").insert({
+                    "invite_id": invite_id,
+                    "host_user_id": invite["from_user_id"],
+                    "guest_user_id": invite["to_user_id"],
+                    "team_tier": SMART_RANDOM_MODE,
+                    "match_mode": MATCH_MODE_RANKED,
+                    "friendly_tier": "A",
+                    "status": "waiting_ready",
+                    "guest_ready": False,
+                    "note": "Đối thủ đã vào phòng. Khách chưa sẵn sàng.",
+                    "state_expires_at": None,
+                    "updated_at": now_iso(),
+                }),
+                "create_room_when_accepting_invite",
+            )
+            room = create_result.data[0] if create_result.data else None
+            target_room_created = bool(room)
+
+        if not room:
+            flash("Phòng của người mời vừa có người khác tham gia. Lời mời không còn hiệu lực.", "warning")
+            return redirect(url_for("dashboard"))
+
+        # Người nhận có thể đang làm chủ một phòng trống. Khi nhận lời, đóng phòng cũ
+        # trước khi hoàn tất lời mời để mỗi tài khoản chỉ còn đúng một phòng active.
+        if receiver_room and str(receiver_room.get("id")) != str(room.get("id")):
+            old_invite_id = receiver_room.get("invite_id")
+            delete_result = execute_query(
+                db.table("match_rooms").delete()
+                .eq("id", receiver_room["id"])
+                .eq("host_user_id", user["id"])
+                .eq("status", "waiting_ready")
+                .is_("guest_user_id", "null"),
+                "close_receiver_solo_room_on_accept",
+            )
+            if not delete_result.data:
+                raise RuntimeError("Không thể đóng phòng cũ của người nhận")
+            if old_invite_id and str(old_invite_id) != str(invite_id):
+                execute_query(
+                    db.table("match_invites").update({
+                        "status": "cancelled",
+                        "updated_at": now_iso(),
+                    }).eq("id", old_invite_id).eq("status", "pending"),
+                    "cancel_receiver_old_room_invite",
+                )
+
+        execute_query(
+            db.table("match_invites").update({
+                "status": "accepted",
                 "updated_at": now_iso(),
-            }).eq("id", inviter_room["id"]).eq("status", "waiting_ready"),
-            "attach_guest_to_open_room",
-        ).data[0]
-    else:
-        room = db.table("match_rooms").insert({
-            "invite_id": invite_id,
-            "host_user_id": invite["from_user_id"],
-            "guest_user_id": invite["to_user_id"],
-            "team_tier": SMART_RANDOM_MODE,
-            "status": "waiting_ready",
-            "guest_ready": False,
-            "note": "Đối thủ đã vào phòng. Khách chưa sẵn sàng.",
-            "state_expires_at": None,
-            "updated_at": now_iso(),
-        }).execute().data[0]
+            }).eq("id", invite_id).eq("status", "pending"),
+            "accept_match_invite",
+        )
+        # Hủy các lời mời chờ khác của người nhận để popup cũ không xuất hiện lại.
+        execute_query(
+            db.table("match_invites").update({
+                "status": "cancelled",
+                "updated_at": now_iso(),
+            }).eq("to_user_id", user["id"]).eq("status", "pending").neq("id", invite_id),
+            "cancel_other_incoming_invites_after_accept",
+            attempts=1,
+        )
+        execute_query(
+            db.table("match_invites").update({
+                "status": "cancelled",
+                "updated_at": now_iso(),
+            }).eq("from_user_id", user["id"]).eq("status", "pending").neq("id", invite_id),
+            "cancel_receiver_outgoing_invites_after_accept",
+            attempts=1,
+        )
+    except Exception as exc:
+        print(f"respond_invite accept ERROR invite={invite_id}: {type(exc).__name__}: {exc}")
+        # Hoàn tác việc gắn khách nếu đóng phòng cũ thất bại.
+        try:
+            if room:
+                if target_room_created:
+                    execute_query(
+                        db.table("match_rooms").delete().eq("id", room["id"]),
+                        "rollback_created_invite_room",
+                        attempts=1,
+                    )
+                else:
+                    execute_query(
+                        db.table("match_rooms").update({
+                            "guest_user_id": None,
+                            "guest_ready": False,
+                            "invite_id": invite_id,
+                            "note": "Đang chờ đối thủ chấp nhận lời mời.",
+                            "updated_at": now_iso(),
+                        }).eq("id", room["id"]).eq("guest_user_id", user["id"]),
+                        "rollback_attached_invite_guest",
+                        attempts=1,
+                    )
+        except Exception as rollback_exc:
+            print(f"respond_invite rollback warning: {rollback_exc}")
+        flash("Không thể chuyển phòng an toàn lúc này. Phòng cũ của bạn vẫn được giữ nguyên; vui lòng thử lại.", "danger")
+        return redirect(url_for("dashboard"))
 
-    db.table("match_invites").update({"status": "accepted", "updated_at": now_iso()}).eq("id", invite_id).execute()
-
-    flash("Đã chấp nhận lời mời. Hãy bấm Sẵn sàng khi bạn đã chuẩn bị xong.", "success")
+    ttl_cache_delete("rooms_raw")
+    ttl_cache_delete("invites_raw")
+    cache_delete("_rz_rooms_all")
+    cache_delete("_rz_invites_all")
+    cache_delete("_rz_current_pending_invites")
+    flash("Đã nhận lời mời. Phòng cũ một người của bạn đã được đóng và bạn đã vào phòng của đối thủ. Hãy bấm Sẵn sàng khi đã chuẩn bị xong.", "success")
     return redirect(url_for("room_detail", room_id=room["id"]))
 
 
@@ -5194,14 +5483,18 @@ from modules import ranking_lock_service as _ranking_lock_service
 from modules import match_result_service as _match_result_service
 from modules import ranking_rebuild_service as _ranking_rebuild_service
 from modules import data_cleanup_service as _data_cleanup_service
+from modules import inactivity_rp_service as _inactivity_rp_service
+from modules import daily_rank_limit_service as _daily_rank_limit_service
 
 for _service_module in (
     _notification_service,
     _forfeit_history_service,
     _ranking_lock_service,
+    _daily_rank_limit_service,
     _match_result_service,
     _ranking_rebuild_service,
     _data_cleanup_service,
+    _inactivity_rp_service,
 ):
     _service_module.configure(globals())
     for _service_name in _service_module.EXPORTED_NAMES:

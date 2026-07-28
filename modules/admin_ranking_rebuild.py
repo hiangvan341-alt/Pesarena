@@ -12,6 +12,7 @@ Flask/Supabase, nhờ đó có thể kiểm thử độc lập và không làm t
 from __future__ import annotations
 
 import random
+from datetime import datetime, timedelta, timezone
 from typing import Any, Callable, Iterable, Mapping
 
 
@@ -24,6 +25,19 @@ def _int(value: Any, default: int = 0) -> int:
 
 def _sort_key(match: Mapping[str, Any]) -> tuple[str, str]:
     return (str(match.get("created_at") or ""), str(match.get("id") or ""))
+
+
+def _vn_day_key(value: Any) -> str:
+    text = str(value or "").strip()
+    if not text:
+        return "unknown"
+    try:
+        parsed = datetime.fromisoformat(text.replace("Z", "+00:00"))
+        if parsed.tzinfo is None:
+            parsed = parsed.replace(tzinfo=timezone.utc)
+        return parsed.astimezone(timezone(timedelta(hours=7))).date().isoformat()
+    except Exception:
+        return text[:10] or "unknown"
 
 
 def _outcome_for_player(match: Mapping[str, Any], user_id: str) -> str | None:
@@ -204,6 +218,7 @@ def build_replay_plan(
     formula_version: str,
     formula_summary: Callable[[], Any],
     seed_namespace: str,
+    daily_positive_rp_limit: int | None = None,
 ) -> tuple[dict[str, dict[str, Any]], dict[str, dict[str, Any]]]:
     """Trả về payload cập nhật user/match sau khi phát lại lịch sử.
 
@@ -233,6 +248,7 @@ def build_replay_plan(
         effective_matches.append(match)
 
     match_updates: dict[str, dict[str, Any]] = {}
+    positive_rp_by_day: dict[tuple[str, str], int] = {}
     for match in sorted(effective_matches, key=_sort_key):
         match_id = str(match.get("id") or "")
         if not match_id:
@@ -296,6 +312,30 @@ def build_replay_plan(
             if _int(player2.get("total_matches")) < placement_matches:
                 delta2 = max(22, min(29, delta2))
 
+        daily_limit_details = None
+        if daily_positive_rp_limit is not None and int(daily_positive_rp_limit) >= 0:
+            day_key = _vn_day_key(match.get("created_at"))
+            cap_details = {}
+            for user_id, key, delta in ((p1_id, "player1", delta1), (p2_id, "player2", delta2)):
+                if delta <= 0:
+                    cap_details[key] = None
+                    continue
+                earned = positive_rp_by_day.get((user_id, day_key), 0)
+                remaining = max(0, int(daily_positive_rp_limit) - earned)
+                applied = min(delta, remaining)
+                cap_details[key] = {
+                    "enabled": True, "earned_before": earned,
+                    "formula_delta": delta, "applied_delta": applied,
+                    "remaining_before": remaining, "limit": int(daily_positive_rp_limit),
+                    "capped": applied < delta,
+                }
+                positive_rp_by_day[(user_id, day_key)] = earned + max(0, applied)
+                if key == "player1":
+                    delta1 = applied
+                else:
+                    delta2 = applied
+            daily_limit_details = cap_details
+
         _apply_state(player1, delta1, score1, score2)
         _apply_state(player2, delta2, score2, score1)
         winner_id, loser_id = _winner_loser(match, score1, score2)
@@ -311,6 +351,7 @@ def build_replay_plan(
                 "seed": f"{seed_namespace}|{match_id}",
                 "delta1": delta1,
                 "delta2": delta2,
+                "daily_rank_limits": daily_limit_details,
             },
         }
         if match_id in overrides:

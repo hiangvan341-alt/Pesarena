@@ -22,17 +22,22 @@ def register_routes(context):
             flash("Chỉ người chơi Sân Khách mới có thể dùng chức năng này.", "danger")
             return redirect(url_for("room_detail", room_id=room_id))
 
-        allowed_statuses = {"waiting_ready", "playing", "friendly_playing", "waiting_result_confirm"}
+        allowed_statuses = {"waiting_ready", "playing", "friendly_playing"}
         if room.get("status") not in allowed_statuses:
-            flash("Phòng hiện không ở trạng thái có thể bỏ cuộc.", "warning")
+            flash("Bạn không thể thoát ở trạng thái này. Nếu kết quả đang chờ xác nhận, hãy Xác nhận hoặc Gửi tranh chấp trước.", "warning")
             return redirect(url_for("room_detail", room_id=room_id))
 
         # Ở trạng thái chờ, chỉ bắt đầu áp dụng phạt sau khi khách đã bấm Sẵn Sàng.
         # Giao diện sẽ đưa khách chưa sẵn sàng qua route room_leave để rời phòng không mất RP.
         # Kiểm tra này bảo vệ cả trường hợp người dùng tự gửi POST trực tiếp vào route bỏ cuộc.
-        if room.get("status") == "waiting_ready" and not bool(room.get("guest_ready")):
-            flash("Bạn chưa Sẵn Sàng nên có thể rời phòng mà không bị trừ RP.", "warning")
-            return redirect(url_for("room_detail", room_id=room_id))
+        if room.get("status") == "waiting_ready":
+            limit_message = daily_rank_block_message(room.get("host_user_id"), room.get("guest_user_id"))
+            if limit_message:
+                flash("Đã chạm giới hạn trận Rank hôm nay. Hãy dùng Thoát Phòng; bạn sẽ không bị trừ RP.", "warning")
+                return redirect(url_for("room_detail", room_id=room_id))
+            if not bool(room.get("guest_ready")):
+                flash("Bạn chưa Sẵn Sàng nên có thể rời phòng mà không bị trừ RP.", "warning")
+                return redirect(url_for("room_detail", room_id=room_id))
 
         # Mọi chế độ giao hữu đều cho phép rời phòng an toàn:
         # không tạo lịch sử, không cộng/trừ RP và không tính bỏ cuộc.
@@ -127,9 +132,14 @@ def register_routes(context):
             flash("Phòng chưa có đối thủ nên bạn có thể đóng phòng mà không bị trừ RP.", "warning")
             return redirect(url_for("room_detail", room_id=room_id))
 
-        if original_status == "waiting_ready" and not bool(room.get("guest_ready")):
-            flash("Khách chưa Sẵn Sàng nên bạn có thể đóng phòng mà không bị trừ RP.", "warning")
-            return redirect(url_for("room_detail", room_id=room_id))
+        if original_status == "waiting_ready":
+            limit_message = daily_rank_block_message(room.get("host_user_id"), room.get("guest_user_id"))
+            if limit_message:
+                flash("Đã chạm giới hạn trận Rank hôm nay. Hãy dùng Thoát Phòng; bạn sẽ không bị trừ RP.", "warning")
+                return redirect(url_for("room_detail", room_id=room_id))
+            if not bool(room.get("guest_ready")):
+                flash("Khách chưa Sẵn Sàng nên bạn có thể đóng phòng mà không bị trừ RP.", "warning")
+                return redirect(url_for("room_detail", room_id=room_id))
 
         if original_status == "playing":
             reason = f'{user["display_name"]} đã rời phòng khi trận đang thi đấu và bị trừ {ROOM_ABANDON_PENALTY} RP.'
@@ -227,7 +237,12 @@ def register_routes(context):
             flash("Bạn đã chọn Đá tiếp. Đang chờ đối thủ xác nhận.", "warning")
             return redirect(url_for("room_detail", room_id=room_id))
 
-        # Khách bấm Đá tiếp: khách được tính là sẵn sàng ngay và chủ phòng thấy nút quay đội Xếp hạng.
+        # Giữ nguyên chế độ Rank đã chọn ở trận trước cho toàn bộ lượt đá tiếp.
+        previous_rank_mode = room.get("team_tier") or SMART_RANDOM_MODE
+        previous_mode_label = "Random 3 chọn 1" if previous_rank_mode == FRIENDLY_RANDOM3_MODE else "Rank thường"
+        rematch_locked_note = f"__RANK_MODE_LOCKED__|{previous_rank_mode}"
+
+        # Khách bấm Đá tiếp: khách được tính là sẵn sàng ngay, không cần chọn lại chế độ.
         if not is_host:
             execute_query(
                 db.table("match_rooms").update({
@@ -247,14 +262,14 @@ def register_routes(context):
                     "submitted_by_id": None,
                     "confirmed_by_id": None,
                     "match_mode": MATCH_MODE_RANKED,
-                    "team_tier": SMART_RANDOM_MODE,
-                    "note": "Khách đã chọn đá tiếp và sẵn sàng. Chủ phòng có thể quay đội Xếp hạng.",
+                    "team_tier": previous_rank_mode,
+                    "note": rematch_locked_note,
                     "state_expires_at": None,
                     "updated_at": now_iso(),
                 }).eq("id", room_id).eq("status", "confirmed"),
                 "room_guest_rematch_ready_for_ranked_random",
             )
-            flash("Bạn đã chọn Đá tiếp. Chủ phòng có thể quay đội Xếp hạng ngay.", "success")
+            flash(f"Bạn đã chọn Đá tiếp. Giữ nguyên chế độ {previous_mode_label}; Chủ phòng có thể quay quân.", "success")
             return redirect(url_for("room_detail", room_id=room_id))
 
         # Người đầu tiên bấm Đá tiếp: ghi nhận ngay trong phòng, không tạo lời mời mới.
@@ -301,15 +316,15 @@ def register_routes(context):
                 "guest_score": None,
                 "submitted_by_id": None,
                 "confirmed_by_id": None,
-                "team_tier": SMART_RANDOM_MODE,
-                "note": "Hai người đã đồng ý đá tiếp. Đang chờ Chủ Phòng quay đội.",
+                "team_tier": previous_rank_mode,
+                "note": rematch_locked_note,
                 "state_expires_at": None,
                 "updated_at": now_iso(),
             }).eq("id", room_id).eq("status", "confirmed"),
             "room_rematch_reset_same_room",
         )
 
-        flash("Cả hai đã đồng ý đá tiếp. Đang chờ Chủ Phòng quay đội.", "success")
+        flash(f"Cả hai đã đồng ý đá tiếp. Giữ nguyên chế độ {previous_mode_label}; đang chờ Chủ phòng quay quân.", "success")
         return redirect(url_for("room_detail", room_id=room_id))
 
 

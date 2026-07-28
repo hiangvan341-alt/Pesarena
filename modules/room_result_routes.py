@@ -109,11 +109,12 @@ def register_routes(context):
         if not _same_user_id(user.get("id"), room.get("host_user_id")):
             flash("Chỉ chủ phòng đã gửi kết quả mới dùng được lựa chọn này.", "danger")
             return redirect(url_for("room_detail", room_id=room_id))
-        if room.get("status") not in {"waiting_result_confirm", "disputed"}:
-            flash("Phòng không còn ở trạng thái chờ xác nhận hoặc tranh chấp.", "warning")
+        if room.get("status") != "waiting_result_confirm":
+            flash("Chỉ có thể chọn Đá tiếp khi kết quả đang chờ Sân khách xác nhận.", "warning")
             return redirect(url_for("room_detail", room_id=room_id))
-        flash("Bạn đã hoàn tất phần gửi kết quả. Trận vẫn được giữ nguyên để khách xác nhận hoặc Admin xử lý; không trừ RP.", "success")
-        return redirect(url_for("rooms"))
+
+        flash("Không cần chọn Đá Tiếp. Sau khi Sân khách xác nhận kết quả, phòng sẽ tự trở về Chờ Sẵn Sàng và giữ nguyên chế độ thi đấu.", "info")
+        return redirect(url_for("room_detail", room_id=room_id))
 
 
     @app.route("/room/<room_id>/post-result-exit", methods=["POST"])
@@ -162,18 +163,38 @@ def register_routes(context):
             users_before_streak_event = users_map()
             delta1, delta2 = apply_match_result(match)
             streak_event = build_win_streak_event(match, room, users_before_streak_event)
-            execute_query(
-                db.table("match_rooms").update({
-                    "status": "confirmed",
-                    "confirmed_by_id": user["id"],
-                    "note": encode_win_streak_room_note(streak_event),
-                    "state_expires_at": None,
-                    "updated_at": now_iso(),
-                }).eq("id", room_id).eq("status", "waiting_result_confirm"),
-                "confirm_result_room",
+            previous_mode = room.get("team_tier") or SMART_RANDOM_MODE
+            room_update = {
+                "status": "waiting_ready",
+                "guest_ready": False,
+                "host_team": None,
+                "guest_team": None,
+                "host_team_overall": None,
+                "guest_team_overall": None,
+                "host_team_logo_url": None,
+                "guest_team_logo_url": None,
+                "host_team_league": None,
+                "guest_team_league": None,
+                "host_score": None,
+                "guest_score": None,
+                "match_id": None,
+                "submitted_by_id": None,
+                "confirmed_by_id": user["id"],
+                "match_mode": MATCH_MODE_RANKED,
+                "team_tier": previous_mode,
+                "note": f"__RANK_MODE_LOCKED__|{previous_mode}",
+                "state_expires_at": None,
+                "updated_at": now_iso(),
+            }
+            room_update_result = execute_query(
+                db.table("match_rooms").update(room_update).eq("id", room_id).eq("status", "waiting_result_confirm"),
+                "confirm_result_reset_room_waiting_ready",
             )
+            if not (room_update_result.data or []):
+                raise ValueError("Trạng thái phòng vừa thay đổi; vui lòng tải lại phòng.")
             if streak_event:
                 publish_global_streak_event(streak_event)
+            flash("Đã xác nhận kết quả. Phòng đã trở về Chờ Sẵn Sàng và giữ nguyên chế độ thi đấu.", "success")
         except ValueError as exc:
             print(f"room_confirm_result validation room={room_id} match={match.get('id')}: {exc}")
             flash(str(exc), "warning")

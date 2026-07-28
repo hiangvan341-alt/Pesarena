@@ -61,6 +61,7 @@ def rebuild_rankings_after_admin_change(
         formula_version=RP_FORMULA_VERSION,
         formula_summary=formula_summary,
         seed_namespace=RP_RANDOM_SEED_NAMESPACE,
+        daily_positive_rp_limit=150 if daily_rank_limits_enabled() else None,
     )
 
     changed_matches = {

@@ -21,6 +21,8 @@ def register_routes(context):
             "simple_test_passwords_enabled": simple_test_passwords_enabled(),
             "minimum_password_length": minimum_password_length(),
             "maintenance_status": get_maintenance_status(),
+            "rank_daily_limits_enabled": daily_rank_limits_enabled(),
+            "quick_match_config": get_quick_match_config(),
         }
 
     @app.route("/admin/system/maintenance", methods=["POST"])
@@ -59,6 +61,26 @@ def register_routes(context):
         flash("Đã lưu trạng thái và lịch bảo trì máy chủ.", "success")
         return redirect_admin("system")
 
+
+    @app.route("/admin/system/quick-match", methods=["POST"])
+    @login_required
+    @admin_required
+    @admin_permission_required("system_features_manage")
+    def admin_update_quick_match():
+        color = (request.form.get("color") or QUICK_MATCH_COLOR_DEFAULT).strip().lower()
+        if color not in QUICK_MATCH_COLOR_VALUES:
+            color = QUICK_MATCH_COLOR_DEFAULT
+        execute_query(
+            db.table("system_settings").upsert({
+                "setting_key": QUICK_MATCH_SETTING_KEY,
+                "setting_value": {"color": color},
+                "updated_at": now_iso(),
+            }, on_conflict="setting_key"),
+            "update_quick_match_config",
+        )
+        log_admin_action("Cập nhật màu nút Tìm Nhanh", "system", details={"color": color})
+        flash("Đã lưu màu nút Tìm Nhanh.", "success")
+        return redirect_admin("system")
 
     @app.route("/admin/system/features", methods=["POST"])
     @login_required
@@ -130,6 +152,32 @@ def register_routes(context):
         return redirect_admin("system")
 
 
+
+
+    @app.route("/admin/system/rank-daily-limits", methods=["POST"])
+    @login_required
+    @admin_required
+    @admin_permission_required("daily_rank_limits_manage")
+    def admin_update_rank_daily_limits():
+        enabled = request.form.get("enabled") == "1"
+        set_daily_rank_limits_enabled(enabled, actor_id=(current_user() or {}).get("id"))
+        log_admin_action(
+            "Cập nhật giới hạn Rank theo ngày",
+            "system",
+            details={
+                "enabled": enabled,
+                "weekday_game_limit": 10,
+                "weekend_game_limit": 15,
+                "daily_positive_rp_limit": 150,
+            },
+        )
+        flash(
+            "Đã bật giới hạn Rank: 10 trận từ Thứ 2 đến Thứ 6, 15 trận vào Thứ 7 và Chủ nhật; tối đa +150 RP mỗi ngày."
+            if enabled else
+            "Đã tắt giới hạn trận Rank và RP cộng theo ngày.",
+            "success",
+        )
+        return redirect_admin("system")
 
     RP_USER_FIELDS = (
         "id", "rank_points", "wins", "draws", "losses", "total_matches",
