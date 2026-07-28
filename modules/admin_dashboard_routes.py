@@ -166,6 +166,9 @@ def register_routes(context):
         admins = [u for u in admin_users if is_admin_user(u)]
         pending_users = [u for u in players if u.get("account_status") == "pending"]
 
+        actor = current_user()
+        zcoin_admin_context = build_zcoin_admin_context(players, actor)
+
         password_reset_requests = admin_safe_load(
             "password_resets", lambda: list_password_reset_requests("pending"), []
         )
@@ -221,5 +224,6 @@ def register_routes(context):
             maintenance_status=admin_safe_load("maintenance_status", get_maintenance_status, {"closed": False, "countdown": None}),
             match_report=match_report,
             match_report_daily=match_report_daily,
+            **zcoin_admin_context,
         )
 

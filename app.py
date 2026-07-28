@@ -62,7 +62,7 @@ from modules.win_streaks import (
 load_dotenv()
 
 APP_NAME = "PES Arena – Bản Lĩnh Sân Cỏ"
-APP_VERSION = "Collap_V1.14.33"
+APP_VERSION = "Collap_V1.14.35"
 DEFAULT_POINTS = 1000
 DEVICE_COOKIE_NAME = "rankzone_device_id"
 COOLDOWN_MINUTES = 3
@@ -570,6 +570,7 @@ ADMIN_PERMISSION_GROUPS = {
     "operations": ["rooms_manage", "invites_manage", "announcements_manage"],
     "system": ["system_features_manage", "chat_manage", "friendly_manage", "registration_codes_manage", "admin_logs_view"],
     "rp": ["rp_view", "rp_simulate", "rp_backup_restore", "daily_rank_limits_manage"],
+    "economy": ["zcoin_view", "zcoin_manage"],
     "permissions": ["permissions_manage"],
 }
 ADMIN_PERMISSION_LABELS = {
@@ -581,7 +582,9 @@ ADMIN_PERMISSION_LABELS = {
     "announcements_manage":"Quản lý thông báo", "system_features_manage":"Bật/tắt tính năng hệ thống", "chat_manage":"Quản lý Chat", "friendly_manage":"Quản lý Giao hữu",
     "registration_codes_manage":"Quản lý mã đăng ký", "admin_logs_view":"Xem nhật ký Admin",
     "rp_view":"Xem công thức RP", "rp_simulate":"Tính thử RP",
-    "rp_backup_restore":"Backup/Khôi phục RP", "daily_rank_limits_manage":"Bật/tắt giới hạn Rank ngày", "permissions_manage":"Cấp/thu hồi quyền Admin",
+    "rp_backup_restore":"Backup/Khôi phục RP", "daily_rank_limits_manage":"Bật/tắt giới hạn Rank ngày",
+    "zcoin_view":"Xem ví và giao dịch Zcoin", "zcoin_manage":"Cộng/trừ Zcoin",
+    "permissions_manage":"Cấp/thu hồi quyền Admin",
 }
 LEGACY_ADMIN_PERMISSION_FIELDS = {
     "create_test_account": "admin_can_create_test_account",
@@ -3165,6 +3168,7 @@ def current_user():
             session["role"] = user.get("role", "player")
             session["account_status"] = user.get("account_status", "approved")
             session["admin_level"] = user.get("admin_level", "none")
+            session["zcoin_balance"] = int(user.get("zcoin_balance") or 0)
             return cache_set("_rz_current_user", user)
     except Exception as exc:
         print(f"current_user warning: {exc}")
@@ -3178,6 +3182,7 @@ def current_user():
         "role": session.get("role", "player"),
         "account_status": session.get("account_status", "approved"),
         "admin_level": session.get("admin_level", "none"),
+        "zcoin_balance": int(session.get("zcoin_balance") or 0),
         "rank_points": 0,
         "is_online": True,
         "matchmaking_cooldown_until": None,
@@ -3554,6 +3559,7 @@ def admin_required(view):
                     session["role"] = user.get("role", "player")
                     session["account_status"] = user.get("account_status", "approved")
                     session["admin_level"] = user.get("admin_level", "none")
+                    session["zcoin_balance"] = int(user.get("zcoin_balance") or 0)
                     cache_set("_rz_current_user", user)
             except Exception as exc:
                 print(f"admin_required warning: {exc}")
@@ -4036,6 +4042,7 @@ def admin_login():
         session["role"] = user.get("role", "player")
         session["account_status"] = user.get("account_status", "approved")
         session["admin_level"] = user.get("admin_level", "none")
+        session["zcoin_balance"] = int(user.get("zcoin_balance") or 0)
         execute_query(
             db.table("users").update({"is_online": True, "last_seen_at": now_iso()}).eq("id", user["id"]),
             "admin_login_mark_online",
@@ -4088,6 +4095,7 @@ def login():
         session["role"] = user.get("role", "player")
         session["account_status"] = status
         session["admin_level"] = user.get("admin_level", "none")
+        session["zcoin_balance"] = int(user.get("zcoin_balance") or 0)
         # Tính RP không hoạt động trước khi cập nhật last_seen_at của lần đăng nhập mới.
         try:
             process_inactivity_for_user(user)
@@ -5530,6 +5538,7 @@ from modules import data_cleanup_service as _data_cleanup_service
 from modules import inactivity_rp_service as _inactivity_rp_service
 from modules import daily_rank_limit_service as _daily_rank_limit_service
 from modules import repeat_opponent_rp_service as _repeat_opponent_rp_service
+from modules import zcoin as _zcoin_module
 
 for _service_module in (
     _notification_service,
@@ -5537,6 +5546,7 @@ for _service_module in (
     _ranking_lock_service,
     _daily_rank_limit_service,
     _repeat_opponent_rp_service,
+    _zcoin_module,
     _match_result_service,
     _ranking_rebuild_service,
     _data_cleanup_service,
@@ -5546,12 +5556,15 @@ for _service_module in (
     for _service_name in _service_module.EXPORTED_NAMES:
         globals()[_service_name] = getattr(_service_module, _service_name)
 
+build_zcoin_admin_context = _zcoin_module.build_admin_context
+
 # Route phòng đấu.
 from modules.room_access_routes import register_routes as _register_room_access_routes
 from modules.room_rematch_routes import register_routes as _register_room_rematch_routes
 from modules.room_team_routes import register_routes as _register_room_team_routes
 from modules.room_result_routes import register_routes as _register_room_result_routes
 from modules.match_history_routes import register_routes as _register_match_history_routes
+from modules.zcoin import register_routes as _register_zcoin_routes
 
 # Route Admin.
 from modules.admin_system_routes import register_routes as _register_admin_system_routes
@@ -5567,6 +5580,7 @@ for _route_registrar in (
     _register_room_team_routes,
     _register_room_result_routes,
     _register_match_history_routes,
+    _register_zcoin_routes,
     _register_admin_system_routes,
     _register_admin_dashboard_routes,
     _register_admin_account_routes,

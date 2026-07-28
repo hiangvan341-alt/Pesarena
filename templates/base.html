@@ -7,7 +7,9 @@
     <title>{{ APP_NAME }}</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}?v={{ APP_VERSION|urlencode }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/zcoin.css') }}?v={{ APP_VERSION|urlencode }}">
     <script src="{{ url_for('static', filename='js/pes_polling.js') }}?v={{ APP_VERSION|urlencode }}" defer></script>
+    <script src="{{ url_for('static', filename='js/zcoin.js') }}?v={{ APP_VERSION|urlencode }}" defer></script>
     {% if current_user and not (auth_only|default(false)) %}
     <script>
     window.PES_SESSION_CONFIG = {
@@ -72,7 +74,7 @@ function toggleTheme(){
     <main class="main player-main">
         <header class="player-topbar">
             <button class="sidebar-menu-button" type="button" onclick="document.body.classList.toggle('sidebar-open')">☰</button>
-            {% set page_titles = {'dashboard':'Dashboard','ranking':'Bảng xếp hạng','players':'Players','guide':'Hướng dẫn bắt đầu','matches':'Lịch sử trận đấu','profile':'Hồ sơ cá nhân','change_password':'Đổi mật khẩu','admin':'Quản trị hệ thống','rooms':'Phòng đấu','room_detail':'Phòng đấu'} %}
+            {% set page_titles = {'dashboard':'Dashboard','ranking':'Bảng xếp hạng','players':'Players','guide':'Hướng dẫn bắt đầu','matches':'Lịch sử trận đấu','profile':'Hồ sơ cá nhân','change_password':'Đổi mật khẩu','admin':'Quản trị hệ thống','rooms':'Phòng đấu','room_detail':'Phòng đấu','zcoin_wallet':'Ví Zcoin'} %}
             <div class="topbar-copy"><strong>{{ page_titles.get(request.endpoint, APP_NAME) }}</strong><small>Chào {{ current_user.display_name }}, chúc bạn có một ngày thi đấu tốt!</small></div>
             <div id="adminAnnouncementMount" class="topbar-announcement-mount">
                 {% if active_announcement and system_features.announcements_enabled %}
@@ -135,7 +137,26 @@ function toggleTheme(){
                         </div>
                     </div>
                 </div>
-                <a class="topbar-profile" href="{{ url_for('profile', user_id=current_user.id) }}">{{ player_avatar(current_user, size='sm') }}<span><strong>{{ current_user.display_name }}</strong><small><i></i> Online</small></span><em>⌄</em></a>
+                <a class="topbar-zcoin" href="{{ url_for('zcoin_wallet') }}" title="Mở ví Zcoin">
+                    <img src="{{ url_for('static', filename='zcoin-logo.png') }}?v={{ APP_VERSION|urlencode }}" alt="Zcoin">
+                    <span><strong>{{ format_zcoin(current_user.zcoin_balance|default(0, true)) }}</strong><small>ZCOIN</small></span>
+                </a>
+                <div class="topbar-account-wrap">
+                    <button id="accountMenuButton" class="topbar-profile" type="button" onclick="toggleAccountMenu(event)" aria-expanded="false" aria-controls="accountDropdown">
+                        {{ player_avatar(current_user, size='sm') }}
+                        <span><strong>{{ current_user.display_name }}</strong><small><i></i> Online</small></span><em>⌄</em>
+                    </button>
+                    <div id="accountDropdown" class="topbar-account-dropdown" hidden>
+                        <div class="account-dropdown-wallet">
+                            <img src="{{ url_for('static', filename='zcoin-logo.png') }}" alt="">
+                            <div><small>Số dư hiện tại</small><strong>{{ format_zcoin(current_user.zcoin_balance|default(0, true)) }} Zcoin</strong></div>
+                        </div>
+                        <a href="{{ url_for('profile', user_id=current_user.id) }}"><span>👤</span> Hồ sơ cá nhân</a>
+                        <a href="{{ url_for('zcoin_wallet') }}"><span>🪙</span> Ví & lịch sử Zcoin</a>
+                        <a href="{{ url_for('matches') }}"><span>📜</span> Lịch sử trận đấu</a>
+                        <a class="account-dropdown-logout" href="{{ url_for('logout') }}"><span>↪</span> Đăng xuất</a>
+                    </div>
+                </div>
             </div>
         </header>
         {% if request.endpoint == "players" %}
