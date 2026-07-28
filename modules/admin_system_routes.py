@@ -90,17 +90,19 @@ def register_routes(context):
     @admin_permission_required("system_features_manage")
     def admin_update_repeat_opponent_rp_config():
         try:
-            values = [int(request.form.get(f"factor_{index}", "")) for index in range(1, 5)]
+            winner_values = [int(request.form.get(f"winner_factor_{index}", "")) for index in range(1, 5)]
+            loser_values = [int(request.form.get(f"loser_factor_{index}", "")) for index in range(1, 5)]
         except (TypeError, ValueError):
             flash("Các hệ số phải là số nguyên từ 0 đến 100%.", "danger")
             return redirect_admin("system")
-        if any(value < 0 or value > 100 for value in values):
-            flash("Mỗi hệ số phải nằm trong khoảng 0–100%.", "danger")
-            return redirect_admin("system")
-        if not all(values[index] >= values[index + 1] for index in range(3)):
-            flash("Hệ số phải giảm dần hoặc bằng nhau từ lần thắng 1 đến lần thắng 4.", "danger")
-            return redirect_admin("system")
-        payload = {"winner_factors": values}
+        for label, values in (("người thắng", winner_values), ("người thua", loser_values)):
+            if any(value < 0 or value > 100 for value in values):
+                flash(f"Mỗi hệ số của {label} phải nằm trong khoảng 0–100%.", "danger")
+                return redirect_admin("system")
+            if not all(values[index] >= values[index + 1] for index in range(3)):
+                flash(f"Hệ số của {label} phải giảm dần hoặc bằng nhau từ lần 1 đến lần 4.", "danger")
+                return redirect_admin("system")
+        payload = {"winner_factors": winner_values, "loser_factors": loser_values}
         execute_query(
             db.table("system_settings").upsert({
                 "setting_key": REPEAT_OPPONENT_CONFIG_SETTING_KEY,
@@ -111,7 +113,9 @@ def register_routes(context):
         )
         log_admin_action("Cập nhật hệ số RP gặp lại đối thủ", "system", details=payload)
         flash(
-            "Đã lưu hệ số gặp lại đối thủ: " + " → ".join(f"{value}%" for value in values) + ".",
+            "Đã lưu hệ số gặp lại đối thủ — thắng: "
+            + " → ".join(f"{value}%" for value in winner_values)
+            + "; thua: " + " → ".join(f"{value}%" for value in loser_values) + ".",
             "success",
         )
         return redirect_admin("system")

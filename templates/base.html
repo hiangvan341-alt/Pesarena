@@ -8,8 +8,10 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}?v={{ APP_VERSION|urlencode }}">
     <link rel="stylesheet" href="{{ url_for('static', filename='css/zcoin.css') }}?v={{ APP_VERSION|urlencode }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/zcoin_rewards.css') }}?v={{ APP_VERSION|urlencode }}">
     <script src="{{ url_for('static', filename='js/pes_polling.js') }}?v={{ APP_VERSION|urlencode }}" defer></script>
     <script src="{{ url_for('static', filename='js/zcoin.js') }}?v={{ APP_VERSION|urlencode }}" defer></script>
+    <script src="{{ url_for('static', filename='js/zcoin_rewards.js') }}?v={{ APP_VERSION|urlencode }}" defer></script>
     {% if current_user and not (auth_only|default(false)) %}
     <script>
     window.PES_SESSION_CONFIG = {
@@ -58,7 +60,7 @@ function toggleTheme(){
             <a class="{{ 'active' if request.endpoint in ['rooms', 'room_detail'] else '' }}" href="#" onclick="event.preventDefault(); document.getElementById('quickCreateRoomForm').submit();"><span>🎮</span> Phòng đấu</a>
             <a class="{{ 'active' if request.endpoint == 'matches' else '' }}" href="{{ url_for('matches') }}"><span>📜</span> Lịch sử</a>
             <a class="{{ 'active' if request.endpoint == 'guide' else '' }}" href="{{ url_for('guide') }}"><span>📘</span> Hướng dẫn</a>
-            {% if (current_user.role == "admin" or current_user.admin_level in ["owner", "admin"]) %}<a class="{{ 'active' if request.endpoint == 'admin' else '' }}" href="{{ url_for('admin') }}"><span>⚙️</span> Admin</a>{% endif %}
+            {% if (current_user.role == "admin" or current_user.admin_level in ["owner", "admin"]) %}<a class="{{ 'active' if request.endpoint == 'admin' else '' }}" href="{{ url_for('admin') }}"><span>⚙️</span> Admin</a><a class="{{ 'active' if request.endpoint == 'admin_economy' else '' }}" href="{{ url_for('admin_economy') }}"><span>🪙</span> Zcoin & Gift Code</a>{% endif %}
             <a class="logout" href="{{ url_for('logout') }}"><span>↪</span> Đăng xuất</a>
         </nav>
 
@@ -74,7 +76,7 @@ function toggleTheme(){
     <main class="main player-main">
         <header class="player-topbar">
             <button class="sidebar-menu-button" type="button" onclick="document.body.classList.toggle('sidebar-open')">☰</button>
-            {% set page_titles = {'dashboard':'Dashboard','ranking':'Bảng xếp hạng','players':'Players','guide':'Hướng dẫn bắt đầu','matches':'Lịch sử trận đấu','profile':'Hồ sơ cá nhân','change_password':'Đổi mật khẩu','admin':'Quản trị hệ thống','rooms':'Phòng đấu','room_detail':'Phòng đấu','zcoin_wallet':'Ví Zcoin'} %}
+            {% set page_titles = {'dashboard':'Dashboard','ranking':'Bảng xếp hạng','players':'Players','guide':'Hướng dẫn bắt đầu','matches':'Lịch sử trận đấu','profile':'Hồ sơ cá nhân','change_password':'Đổi mật khẩu','admin':'Quản trị hệ thống','rooms':'Phòng đấu','room_detail':'Phòng đấu','zcoin_wallet':'Ví Zcoin','zcoin_rewards':'Điểm danh & Gift Code','admin_economy':'Quản trị Zcoin & Gift Code'} %}
             <div class="topbar-copy"><strong>{{ page_titles.get(request.endpoint, APP_NAME) }}</strong><small>Chào {{ current_user.display_name }}, chúc bạn có một ngày thi đấu tốt!</small></div>
             <div id="adminAnnouncementMount" class="topbar-announcement-mount">
                 {% if active_announcement and system_features.announcements_enabled %}
@@ -142,16 +144,18 @@ function toggleTheme(){
                     <span><strong>{{ format_zcoin(current_user.zcoin_balance|default(0, true)) }}</strong><small>ZCOIN</small></span>
                 </a>
                 <div class="topbar-account-wrap">
-                    <button id="accountMenuButton" class="topbar-profile" type="button" onclick="toggleAccountMenu(event)" aria-expanded="false" aria-controls="accountDropdown">
+                    <button id="accountMenuButton" class="topbar-profile" type="button" onclick="toggleAccountMenu(event)" aria-expanded="false" aria-haspopup="menu" aria-controls="accountDropdown">
                         {{ player_avatar(current_user, size='sm') }}
                         <span><strong>{{ current_user.display_name }}</strong><small><i></i> Online</small></span><em>⌄</em>
                     </button>
-                    <div id="accountDropdown" class="topbar-account-dropdown" hidden>
+                    <div id="accountDropdown" class="topbar-account-dropdown" role="menu" hidden>
                         <div class="account-dropdown-wallet">
                             <img src="{{ url_for('static', filename='zcoin-logo.png') }}" alt="">
                             <div><small>Số dư hiện tại</small><strong>{{ format_zcoin(current_user.zcoin_balance|default(0, true)) }} Zcoin</strong></div>
                         </div>
                         <a href="{{ url_for('profile', user_id=current_user.id) }}"><span>👤</span> Hồ sơ cá nhân</a>
+                        <a href="{{ url_for('zcoin_rewards') }}#daily-checkin"><span>📅</span> Điểm danh hằng ngày</a>
+                        <a href="{{ url_for('zcoin_rewards') }}#gift-code"><span>🎁</span> Nhập Gift Code</a>
                         <a href="{{ url_for('zcoin_wallet') }}"><span>🪙</span> Ví & lịch sử Zcoin</a>
                         <a href="{{ url_for('matches') }}"><span>📜</span> Lịch sử trận đấu</a>
                         <a class="account-dropdown-logout" href="{{ url_for('logout') }}"><span>↪</span> Đăng xuất</a>

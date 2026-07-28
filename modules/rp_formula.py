@@ -6,7 +6,7 @@ Supabase hoặc dữ liệu người dùng. Mọi thay đổi công thức RP ph
 """
 from __future__ import annotations
 
-RP_FORMULA_VERSION = "RP_V1.14.2"
+RP_FORMULA_VERSION = "RP_V1.14.3"
 RP_FORMULA_NAME = "PES Arena RP – Giảm RP khi gặp lại cùng đối thủ"
 RP_RANDOM_SEED_NAMESPACE = f"PES_ARENA|{RP_FORMULA_VERSION}"
 
@@ -66,7 +66,7 @@ def formula_summary() -> dict:
         },
         "repeat_opponent": {
             "winner_factors": [1.0, 0.6, 0.3, 0.0],
-            "fourth_plus_loser_factor": 0.5,
+            "loser_factors": [1.0, 0.7, 0.4, 0.1],
             "pair_rp_match_limit": 6,
             "draw_gap_bonus": 5,
             "draw_gap_threshold": 500,

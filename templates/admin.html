@@ -1,3 +1,4 @@
+{# HOTFIX V1.14.39.1: legacy Zcoin tab removed; use /admin/economy #}
 {% extends "base.html" %}
 {% block content %}
 <style>
@@ -52,7 +53,6 @@
 {% if can_create_test_account or can_import_accounts_csv %}<button class="admin-tab-button" type="button" data-admin-tab="test-data">🧪 Tài khoản test & Import</button>{% endif %}
     {% if can_admin('system_features_manage') or can_admin('announcements_manage') or can_admin('daily_rank_limits_manage') %}<button class="admin-tab-button" type="button" data-admin-tab="system">⚙️ Hệ thống</button>{% endif %}
     {% if can_admin('rp_view') %}<button class="admin-tab-button" type="button" data-admin-tab="rp-tools">📈 Công cụ RP</button>{% endif %}
-    {% if can_view_zcoin %}<button class="admin-tab-button" type="button" data-admin-tab="zcoin">🪙 Zcoin</button>{% endif %}
     {% if can_admin('admin_logs_view') %}<button class="admin-tab-button" type="button" data-admin-tab="logs">🧾 Nhật ký</button>{% endif %}
 </div>
 
@@ -136,7 +136,6 @@
 </section>
 
 
-{% include "zcoin/_admin_panel.html" %}
 
 <section class="admin-tab-panel" data-admin-panel="passwords">
     <div class="panel admin-highlight">
@@ -575,18 +574,25 @@
 <button class="btn green" type="submit">Lưu cài đặt</button></form></div>
     <div class="panel">
         <h2>🎯 Hệ số RP khi gặp lại đối thủ</h2>
-        <p class="muted">Điều chỉnh phần trăm tổng RP thắng nhận được ở từng lần thắng cùng một đối thủ trong ngày. Hệ số phải giảm dần từ lần 1 đến lần 4.</p>
-        {% set repeat_factors = repeat_opponent_rp_config.get('winner_factors', [100, 60, 30, 0]) %}
+        <p class="muted">Điều chỉnh riêng phần RP người thắng được cộng và RP người thua bị trừ ở từng lần một người đánh bại cùng đối thủ trong ngày. Mỗi dãy hệ số phải giảm dần từ lần 1 đến lần 4.</p>
+        {% set winner_factors = repeat_opponent_rp_config.get('winner_factors', [100, 60, 30, 0]) %}
+        {% set loser_factors = repeat_opponent_rp_config.get('loser_factors', [100, 70, 40, 10]) %}
         <form method="post" action="{{ url_for('admin_update_repeat_opponent_rp_config') }}" class="system-toggle-grid">
             {% for index in range(4) %}
-            <label><span>Lần thắng {{ index + 1 }}{% if index == 3 %} trở đi{% endif %}</span>
-                <input type="number" name="factor_{{ index + 1 }}" min="0" max="100" step="1" value="{{ repeat_factors[index] }}" required>
-                <small class="muted">Phần trăm RP thắng được nhận</small>
+            <label><span>Người thắng — lần {{ index + 1 }}{% if index == 3 %} trở đi{% endif %}</span>
+                <input type="number" name="winner_factor_{{ index + 1 }}" min="0" max="100" step="1" value="{{ winner_factors[index] }}" required>
+                <small class="muted">Phần trăm tổng RP thắng được cộng</small>
             </label>
             {% endfor %}
-            <button class="btn" type="submit">Lưu hệ số RP</button>
+            {% for index in range(4) %}
+            <label><span>Người thua — lần {{ index + 1 }}{% if index == 3 %} trở đi{% endif %}</span>
+                <input type="number" name="loser_factor_{{ index + 1 }}" min="0" max="100" step="1" value="{{ loser_factors[index] }}" required>
+                <small class="muted">Phần trăm RP thua thông thường bị trừ</small>
+            </label>
+            {% endfor %}
+            <button class="btn" type="submit">Lưu cả hai bộ hệ số</button>
         </form>
-        <p class="small">Thiết lập hiện tại: <strong>{{ repeat_factors|join('% → ') }}%</strong>. Phần RP thua 50% từ lần thắng thứ 4 và giới hạn 6 trận/cặp vẫn giữ nguyên.</p>
+        <p class="small">Người thắng: <strong>{{ winner_factors|join('% → ') }}%</strong><br>Người thua: <strong>{{ loser_factors|join('% → ') }}%</strong>. Từ trận đối đầu thứ 7 vẫn không tính RP.</p>
     </div>
     <div class="panel">
         <h2>⚡ Giao diện nút Tìm Nhanh</h2>

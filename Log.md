@@ -1,11 +1,8 @@
-# Collap_V1.14.35
+# Collap_V1.14.39.2
 
-- `modules/zcoin/` (toàn bộ thư mục): thêm module Zcoin độc lập gồm service, route ví, thao tác cộng/trừ và dữ liệu quản trị.
-- `templates/zcoin/`, `static/css/zcoin.css`, `static/js/zcoin.js` (toàn bộ file): thêm giao diện ví, tab Admin Zcoin, CSS và tìm kiếm người chơi.
-- `app.py` (khu vực quyền Admin, session người dùng, đăng ký service/route): kết nối module Zcoin; thêm quyền `zcoin_view`, `zcoin_manage`; đồng bộ số dư Zcoin vào session.
-- `modules/admin_dashboard_routes.py` (khoảng dòng 165–230): tải dữ liệu thống kê và giao dịch cho tab Zcoin.
-- `templates/base.html` (head và topbar): hiển thị số dư, menu ví và lịch sử Zcoin.
-- `templates/admin.html` (tab, phân quyền và panel): thêm khu vực quản trị Zcoin mà không làm mất cấu hình RP hiện tại.
-- Không chạy SQL; tiếp tục dùng `users.zcoin_balance`, `zcoin_transactions` và RPC `adjust_zcoin_balance` đã có trên Supabase.
-
-Khác V1.14.34: module Zcoin đã được ghép vào bản chính; giữ nguyên toàn bộ nâng cấp phòng đấu, giới hạn Rank và quy tắc RP gặp lại đối thủ.
+- `app.py` khoảng dòng 64, 580–610: đồng bộ phiên bản; lưu và đọc hai bộ hệ số người thắng/người thua, tương thích dữ liệu cấu hình cũ.
+- `modules/admin_system_routes.py` khoảng dòng 91–125: Admin nhập, kiểm tra và lưu riêng 4 hệ số thắng cùng 4 hệ số thua.
+- `templates/admin.html` khoảng dòng 575–600: thêm tám ô cấu hình, mặc định thắng `100–60–30–0%`, thua `100–70–40–10%`.
+- `modules/repeat_opponent_rp_service.py` khoảng dòng 7–45, 220–245: áp dụng hệ số thua theo từng lần thay cho mức hard-code cũ.
+- `modules/admin_ranking_rebuild.py` khoảng dòng 225–400 và `modules/ranking_rebuild_service.py` khoảng dòng 65–68: tính lại BXH và sửa tỷ số Admin dùng đúng cả hai bộ hệ số.
+- `modules/rp_formula.py` khoảng dòng 9, 67–73: nâng công thức lên `RP_V1.14.3` và cập nhật mô tả hệ số.

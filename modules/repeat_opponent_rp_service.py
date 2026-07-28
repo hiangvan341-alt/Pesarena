@@ -9,6 +9,7 @@ EXPORTED_NAMES = [
     "apply_repeat_opponent_rules",
     "repeat_opponent_rules_enabled",
     "repeat_opponent_winner_factors",
+    "repeat_opponent_loser_factors",
 ]
 
 VN_TZ = timezone(timedelta(hours=7))
@@ -30,6 +31,18 @@ def repeat_opponent_winner_factors():
         except Exception:
             pass
     return [1.0, 0.6, 0.3, 0.0]
+
+
+def repeat_opponent_loser_factors():
+    getter = globals().get("get_repeat_opponent_rp_config")
+    if callable(getter):
+        try:
+            values = (getter() or {}).get("loser_factors") or [100, 70, 40, 10]
+            if len(values) == 4:
+                return [max(0.0, min(1.0, float(value) / 100.0)) for value in values]
+        except Exception:
+            pass
+    return [1.0, 0.7, 0.4, 0.1]
 
 
 def repeat_opponent_rules_enabled():
@@ -206,21 +219,23 @@ def apply_repeat_opponent_rules(match, player1, player2, score1, score2, delta1,
     repeat_win_number = int((context.get("wins") or {}).get(winner_id, 0)) + 1
     details["winner_repeat_win_number"] = repeat_win_number
 
-    factors = repeat_opponent_winner_factors()
-    factor = factors[min(max(repeat_win_number, 1), 4) - 1]
-    details["configured_winner_factors"] = factors
+    winner_factors = repeat_opponent_winner_factors()
+    loser_factors = repeat_opponent_loser_factors()
+    factor_index = min(max(repeat_win_number, 1), 4) - 1
+    winner_factor = winner_factors[factor_index]
+    loser_factor = loser_factors[factor_index]
+    details["configured_winner_factors"] = winner_factors
+    details["configured_loser_factors"] = loser_factors
+    details["winner_factor"] = winner_factor
+    details["loser_factor"] = loser_factor
     if repeat_win_number >= 4:
-        details["loser_factor"] = 0.5
         details["streak_eligible"] = False
 
-    details["winner_factor"] = factor
     if p1_won:
-        delta1 = _round_scaled(delta1, factor)
-        if repeat_win_number >= 4:
-            delta2 = _round_scaled(delta2, 0.5)
+        delta1 = _round_scaled(delta1, winner_factor)
+        delta2 = _round_scaled(delta2, loser_factor)
     else:
-        delta2 = _round_scaled(delta2, factor)
-        if repeat_win_number >= 4:
-            delta1 = _round_scaled(delta1, 0.5)
+        delta2 = _round_scaled(delta2, winner_factor)
+        delta1 = _round_scaled(delta1, loser_factor)
     details["reason"] = "repeat_win"
     return int(delta1), int(delta2), details

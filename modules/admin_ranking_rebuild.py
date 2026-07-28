@@ -224,6 +224,7 @@ def build_replay_plan(
     daily_positive_rp_limit: int | None = None,
     repeat_opponent_rules_enabled: bool = True,
     repeat_opponent_winner_factors: tuple[float, float, float, float] = (1.0, 0.6, 0.3, 0.0),
+    repeat_opponent_loser_factors: tuple[float, float, float, float] = (1.0, 0.7, 0.4, 0.1),
 ) -> tuple[dict[str, dict[str, Any]], dict[str, dict[str, Any]]]:
     """Trả về payload cập nhật user/match sau khi phát lại lịch sử.
 
@@ -367,30 +368,35 @@ def build_replay_plan(
                 win_key = (day_key, pair_key, winner_id)
                 repeat_win_number = pair_wins.get(win_key, 0) + 1
                 pair_wins[win_key] = repeat_win_number
-                configured_factors = list(repeat_opponent_winner_factors or (1.0, 0.6, 0.3, 0.0))
-                while len(configured_factors) < 4:
-                    configured_factors.append(0.0)
-                factor = float(configured_factors[min(max(repeat_win_number, 1), 4) - 1])
+                configured_winner_factors = list(repeat_opponent_winner_factors or (1.0, 0.6, 0.3, 0.0))
+                configured_loser_factors = list(repeat_opponent_loser_factors or (1.0, 0.7, 0.4, 0.1))
+                while len(configured_winner_factors) < 4:
+                    configured_winner_factors.append(0.0)
+                while len(configured_loser_factors) < 4:
+                    configured_loser_factors.append(0.0)
+                factor_index = min(max(repeat_win_number, 1), 4) - 1
+                winner_factor = float(configured_winner_factors[factor_index])
+                loser_factor = float(configured_loser_factors[factor_index])
                 repeat_details.update({
                     "winner_repeat_win_number": repeat_win_number,
-                    "winner_factor": factor,
-                    "configured_winner_factors": configured_factors[:4],
+                    "winner_factor": winner_factor,
+                    "loser_factor": loser_factor,
+                    "configured_winner_factors": configured_winner_factors[:4],
+                    "configured_loser_factors": configured_loser_factors[:4],
                     "reason": "repeat_win",
                 })
                 def scaled(value, coefficient):
                     sign = -1 if _int(value) < 0 else 1
                     return sign * int(math.floor(abs(_int(value)) * coefficient + 0.5))
                 if p1_won:
-                    delta1 = scaled(delta1, factor)
-                    if repeat_win_number >= 4:
-                        delta2 = scaled(delta2, 0.5)
+                    delta1 = scaled(delta1, winner_factor)
+                    delta2 = scaled(delta2, loser_factor)
                 else:
-                    delta2 = scaled(delta2, factor)
-                    if repeat_win_number >= 4:
-                        delta1 = scaled(delta1, 0.5)
+                    delta2 = scaled(delta2, winner_factor)
+                    delta1 = scaled(delta1, loser_factor)
                 if repeat_win_number >= 4:
                     affect_streak = False
-                    repeat_details.update({"loser_factor": 0.5, "streak_eligible": False})
+                    repeat_details.update({"streak_eligible": False})
 
         daily_limit_details = None
         if daily_positive_rp_limit is not None and int(daily_positive_rp_limit) >= 0:

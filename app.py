@@ -11,7 +11,6 @@ import uuid
 import zipfile
 from datetime import datetime, timezone, timedelta
 from functools import wraps
-from collections import Counter
 
 from dotenv import load_dotenv
 from PIL import Image, ImageOps, UnidentifiedImageError
@@ -62,17 +61,13 @@ from modules.win_streaks import (
 load_dotenv()
 
 APP_NAME = "PES Arena – Bản Lĩnh Sân Cỏ"
-APP_VERSION = "Collap_V1.14.35"
+APP_VERSION = "Collap_V1.14.39.2"
 DEFAULT_POINTS = 1000
 DEVICE_COOKIE_NAME = "rankzone_device_id"
 COOLDOWN_MINUTES = 3
 ONLINE_TIMEOUT_SECONDS = 90
 CHAT_COOLDOWN_SECONDS = 5
 CHAT_MAX_LENGTH = 200
-AVATAR_BUCKET = "avatars"
-AVATAR_MAX_BYTES = 2 * 1024 * 1024
-AVATAR_OUTPUT_SIZE = 512
-AVATAR_ALLOWED_FORMATS = {"JPEG", "PNG", "WEBP"}
 DISPUTE_EVIDENCE_BUCKET = "dispute-evidence"
 DISPUTE_EVIDENCE_MAX_BYTES = 4 * 1024 * 1024
 DISPUTE_EVIDENCE_MAX_SIDE = 1600
@@ -262,78 +257,6 @@ def _normalize_storage_public_url(value):
     if isinstance(value, dict):
         return value.get("publicUrl") or value.get("public_url") or value.get("signedURL") or value.get("signed_url")
     return str(value or "")
-
-
-def prepare_avatar_bytes(file_storage):
-    if not file_storage or not getattr(file_storage, "filename", ""):
-        raise ValueError("Bạn chưa chọn ảnh đại diện.")
-
-    raw = file_storage.read(AVATAR_MAX_BYTES + 1)
-    if len(raw) > AVATAR_MAX_BYTES:
-        raise ValueError("Ảnh đại diện không được vượt quá 2 MB.")
-    if not raw:
-        raise ValueError("File ảnh đang trống.")
-
-    try:
-        with Image.open(io.BytesIO(raw)) as probe:
-            image_format = (probe.format or "").upper()
-            width, height = probe.size
-            probe.verify()
-        if image_format not in AVATAR_ALLOWED_FORMATS:
-            raise ValueError("Chỉ chấp nhận ảnh JPG, PNG hoặc WEBP.")
-        if width < 80 or height < 80:
-            raise ValueError("Ảnh quá nhỏ. Vui lòng chọn ảnh từ 80×80 pixel trở lên.")
-        if width * height > 25_000_000:
-            raise ValueError("Ảnh có độ phân giải quá lớn.")
-
-        with Image.open(io.BytesIO(raw)) as source:
-            source = ImageOps.exif_transpose(source)
-            source = source.convert("RGB")
-            avatar = ImageOps.fit(
-                source,
-                (AVATAR_OUTPUT_SIZE, AVATAR_OUTPUT_SIZE),
-                method=Image.Resampling.LANCZOS,
-                centering=(0.5, 0.5),
-            )
-            output = io.BytesIO()
-            avatar.save(output, format="WEBP", quality=86, method=6)
-            return output.getvalue()
-    except ValueError:
-        raise
-    except (UnidentifiedImageError, OSError, SyntaxError):
-        raise ValueError("File đã chọn không phải ảnh hợp lệ hoặc đã bị lỗi.")
-
-
-def upload_avatar_to_storage(user_id, avatar_bytes):
-    require_db()
-    object_path = f"{user_id}/{uuid.uuid4().hex}.webp"
-    bucket = db.storage.from_(AVATAR_BUCKET)
-    bucket.upload(
-        object_path,
-        avatar_bytes,
-        {
-            "content-type": "image/webp",
-            "cache-control": "31536000",
-            "upsert": "false",
-        },
-    )
-    public_url = _normalize_storage_public_url(bucket.get_public_url(object_path))
-    if not public_url:
-        try:
-            bucket.remove([object_path])
-        except Exception:
-            pass
-        raise RuntimeError("Không lấy được đường dẫn ảnh sau khi tải lên.")
-    return object_path, public_url
-
-
-def remove_avatar_object(object_path):
-    if not object_path or db is None:
-        return
-    try:
-        db.storage.from_(AVATAR_BUCKET).remove([object_path])
-    except Exception as exc:
-        print(f"remove_avatar_object warning: {exc}")
 
 
 def prepare_dispute_evidence_bytes(file_storage):
@@ -655,10 +578,14 @@ def get_quick_match_config():
 
 
 REPEAT_OPPONENT_CONFIG_SETTING_KEY = "repeat_opponent_rp_config"
-REPEAT_OPPONENT_FACTOR_DEFAULTS = [100, 60, 30, 0]
+REPEAT_OPPONENT_WINNER_FACTOR_DEFAULTS = [100, 60, 30, 0]
+REPEAT_OPPONENT_LOSER_FACTOR_DEFAULTS = [100, 70, 40, 10]
 
 def get_repeat_opponent_rp_config():
-    config = {"winner_factors": list(REPEAT_OPPONENT_FACTOR_DEFAULTS)}
+    config = {
+        "winner_factors": list(REPEAT_OPPONENT_WINNER_FACTOR_DEFAULTS),
+        "loser_factors": list(REPEAT_OPPONENT_LOSER_FACTOR_DEFAULTS),
+    }
     try:
         result = execute_query(
             db.table("system_settings").select("setting_value").eq(
@@ -669,11 +596,13 @@ def get_repeat_opponent_rp_config():
         raw = ((result.data or [{}])[0]).get("setting_value")
         if isinstance(raw, str):
             raw = json.loads(raw)
-        values = (raw or {}).get("winner_factors") if isinstance(raw, dict) else None
-        if isinstance(values, list) and len(values) == 4:
-            normalized = [max(0, min(100, int(value))) for value in values]
-            if all(normalized[index] >= normalized[index + 1] for index in range(3)):
-                config["winner_factors"] = normalized
+        if isinstance(raw, dict):
+            for key in ("winner_factors", "loser_factors"):
+                values = raw.get(key)
+                if isinstance(values, list) and len(values) == 4:
+                    normalized = [max(0, min(100, int(value))) for value in values]
+                    if all(normalized[index] >= normalized[index + 1] for index in range(3)):
+                        config[key] = normalized
     except Exception as exc:
         print(f"get_repeat_opponent_rp_config warning: {exc}")
     return config
@@ -4819,215 +4748,7 @@ def ranking():
     )
 
 
-@app.route("/profile")
-@login_required
-def my_profile():
-    return redirect(url_for("profile", user_id=current_user().get("id")))
-
-
-@app.route("/profile/avatar", methods=["POST"])
-@login_required
-def update_profile_avatar():
-    user = current_user()
-    avatar_file = request.files.get("avatar")
-    new_path = None
-
-    try:
-        avatar_bytes = prepare_avatar_bytes(avatar_file)
-        new_path, new_url = upload_avatar_to_storage(user.get("id"), avatar_bytes)
-        old_path = user.get("avatar_path")
-
-        execute_query(
-            db.table("users").update({
-                "avatar_url": new_url,
-                "avatar_path": new_path,
-                "avatar_updated_at": now_iso(),
-            }).eq("id", user.get("id")),
-            "update_profile_avatar",
-        )
-        session["avatar_url"] = new_url
-        if old_path and old_path != new_path:
-            remove_avatar_object(old_path)
-        flash("Ảnh đại diện đã được cập nhật và sẽ hiển thị trên toàn app.", "success")
-    except ValueError as exc:
-        flash(str(exc), "danger")
-    except Exception as exc:
-        if new_path:
-            remove_avatar_object(new_path)
-        print(f"update_profile_avatar error: {exc}")
-        flash("Không thể cập nhật ảnh đại diện lúc này. Hãy kiểm tra đã chạy SQL V1.6.1 rồi thử lại.", "danger")
-
-    return redirect(url_for("profile", user_id=user.get("id")))
-
-
-@app.route("/profile/avatar/delete", methods=["POST"])
-@login_required
-def delete_profile_avatar():
-    user = current_user()
-    old_path = user.get("avatar_path")
-    try:
-        execute_query(
-            db.table("users").update({
-                "avatar_url": None,
-                "avatar_path": None,
-                "avatar_updated_at": now_iso(),
-            }).eq("id", user.get("id")),
-            "delete_profile_avatar",
-        )
-        session["avatar_url"] = None
-        remove_avatar_object(old_path)
-        flash("Đã xóa ảnh đại diện. App sẽ dùng chữ cái mặc định.", "success")
-    except Exception as exc:
-        print(f"delete_profile_avatar error: {exc}")
-        flash("Không thể xóa ảnh đại diện lúc này.", "danger")
-    return redirect(url_for("profile", user_id=user.get("id")))
-
-
-@app.route("/profile/display-name", methods=["POST"])
-@login_required
-def update_display_name():
-    user = current_user()
-    if not user:
-        return redirect(url_for("login"))
-
-    new_name = " ".join(request.form.get("display_name", "").strip().split())
-    current_name = str(user.get("display_name") or "").strip()
-    change_count = int(user.get("display_name_change_count", 0) or 0)
-
-    if change_count >= 2:
-        flash("Bạn đã sử dụng hết 2 lần đổi tên hiển thị.", "danger")
-        return redirect(url_for("profile", user_id=user.get("id")))
-
-    if len(new_name) < 2 or len(new_name) > 40:
-        flash("Tên hiển thị phải có từ 2 đến 40 ký tự.", "danger")
-        return redirect(url_for("profile", user_id=user.get("id")))
-
-    if new_name.casefold() == current_name.casefold():
-        flash("Tên hiển thị mới không khác tên hiện tại.", "warning")
-        return redirect(url_for("profile", user_id=user.get("id")))
-
-    # Không cho hai tài khoản có tên hiển thị giống hệt nhau để tránh nhầm lẫn.
-    try:
-        duplicate = execute_query(
-            db.table("users").select("id,display_name").ilike("display_name", new_name).limit(5),
-            "check_display_name_duplicate",
-        ).data or []
-    except Exception:
-        duplicate = []
-    if any(row.get("id") != user.get("id") and str(row.get("display_name") or "").casefold() == new_name.casefold() for row in duplicate):
-        flash("Tên hiển thị này đã được người khác sử dụng.", "danger")
-        return redirect(url_for("profile", user_id=user.get("id")))
-
-    try:
-        execute_query(
-            db.table("users").update({
-                "display_name": new_name,
-                "display_name_change_count": change_count + 1,
-                "display_name_changed_at": now_iso(),
-            }).eq("id", user.get("id")),
-            "update_display_name",
-        )
-        session["display_name"] = new_name
-        remaining = max(0, 2 - (change_count + 1))
-        flash(f"Đã đổi tên hiển thị. Bạn còn {remaining} lần đổi tên.", "success")
-    except Exception as exc:
-        print(f"update_display_name error: {exc}")
-        flash("Không thể đổi tên lúc này. Hãy kiểm tra đã chạy file SQL cập nhật V1.8.47.", "danger")
-
-    return redirect(url_for("profile", user_id=user.get("id")))
-
-
-@app.route("/profile/<user_id>")
-@login_required
-def profile(user_id):
-    user = get_user(user_id)
-    if not user:
-        flash("Không tìm thấy player.", "danger")
-        return redirect(url_for("players"))
-
-    viewer = current_user()
-    all_matches = list_matches()
-    player_matches_raw = [
-        match for match in all_matches
-        if user_id in {match.get("player1_id"), match.get("player2_id")}
-    ]
-    matches = [decorate_match_for_view(match, user_id) for match in player_matches_raw[:10]]
-
-    form = []
-    for match in matches:
-        is_ranked_result = match.get("status") == "confirmed"
-        is_forfeit_loss = bool(match.get("is_forfeit") and match.get("result_code") == "loss")
-        if not (is_ranked_result or is_forfeit_loss):
-            continue
-        form.append(match.get("result_code", "neutral"))
-        if len(form) >= 5:
-            break
-
-    total = int(user.get("total_matches", 0) or 0)
-    wins = int(user.get("wins", 0) or 0)
-    user["winrate"] = round((wins / total) * 100, 1) if total else 0
-    user["goal_diff"] = int(user.get("goals_for", 0) or 0) - int(user.get("goals_against", 0) or 0)
-    ranking_players = list_players()
-    position = next((i for i, player in enumerate(ranking_players, 1) if player.get("id") == user_id), None)
-    user["rank_info"] = get_player_rank_info(user, position)
-    user["position"] = position
-    decorate_player_achievements(user, position)
-    user["is_online"] = is_user_online_now(user)
-
-    confirmed = [match for match in player_matches_raw if match.get("status") == "confirmed"]
-    teams = []
-    opponents = []
-    users = users_map()
-    for match in confirmed:
-        as_player1 = match.get("player1_id") == user_id
-        teams.append(match.get("team1") if as_player1 else match.get("team2"))
-        opponent_id = match.get("player2_id") if as_player1 else match.get("player1_id")
-        opponents.append(users.get(opponent_id, {}).get("display_name", "Unknown"))
-    user["favorite_team"] = Counter([team for team in teams if team]).most_common(1)[0][0] if any(teams) else "Chưa có"
-    user["frequent_opponent"] = Counter([name for name in opponents if name]).most_common(1)[0][0] if opponents else "Chưa có"
-
-    h2h = None
-    if viewer.get("id") != user_id:
-        h2h_matches = [
-            decorate_match_for_view(match, viewer.get("id"))
-            for match in all_matches
-            if match.get("status") == "confirmed"
-            and {match.get("player1_id"), match.get("player2_id")} == {viewer.get("id"), user_id}
-        ]
-        h2h = {
-            "total": len(h2h_matches),
-            "wins": len([m for m in h2h_matches if m.get("result_code") == "win"]),
-            "draws": len([m for m in h2h_matches if m.get("result_code") == "draw"]),
-            "losses": len([m for m in h2h_matches if m.get("result_code") == "loss"]),
-            "recent": h2h_matches[:5],
-        }
-
-    room_rows = list_rooms()
-    activity = build_player_activity_map(rooms=room_rows).get(user_id)
-    target_room = next((room for room in room_rows if str(user_id) in {str(room.get("host_user_id")), str(room.get("guest_user_id"))} and room_is_active(room)), None)
-    viewer_room = next((room for room in room_rows if str(viewer.get("id")) in {str(room.get("host_user_id")), str(room.get("guest_user_id"))} and room_is_active(room)), None)
-    target_available = bool(not activity or is_solo_waiting_room(target_room, user_id))
-    viewer_available = bool(not viewer_room or is_solo_waiting_room(viewer_room, viewer.get("id")))
-    can_invite = bool(
-        viewer.get("id") != user_id
-        and user.get("is_online")
-        and target_available
-        and viewer_available
-        and not active_match_for_user(viewer.get("id"))
-    )
-
-    profile_active_room = active_room_for_user(viewer.get("id")) if viewer.get("id") == user_id else None
-
-    return render_template(
-        "profile.html",
-        player=user,
-        matches=matches,
-        form=form,
-        h2h=h2h,
-        can_invite=can_invite,
-        activity=activity,
-        profile_active_room=profile_active_room,
-    )
+# Hồ sơ cá nhân đã tách sang modules/profile.
 
 
 # =========================
@@ -5539,6 +5260,8 @@ from modules import inactivity_rp_service as _inactivity_rp_service
 from modules import daily_rank_limit_service as _daily_rank_limit_service
 from modules import repeat_opponent_rp_service as _repeat_opponent_rp_service
 from modules import zcoin as _zcoin_module
+from modules import daily_checkin as _daily_checkin_module
+from modules import gift_codes as _gift_codes_module
 
 for _service_module in (
     _notification_service,
@@ -5547,6 +5270,8 @@ for _service_module in (
     _daily_rank_limit_service,
     _repeat_opponent_rp_service,
     _zcoin_module,
+    _daily_checkin_module,
+    _gift_codes_module,
     _match_result_service,
     _ranking_rebuild_service,
     _data_cleanup_service,
@@ -5556,7 +5281,6 @@ for _service_module in (
     for _service_name in _service_module.EXPORTED_NAMES:
         globals()[_service_name] = getattr(_service_module, _service_name)
 
-build_zcoin_admin_context = _zcoin_module.build_admin_context
 
 # Route phòng đấu.
 from modules.room_access_routes import register_routes as _register_room_access_routes
@@ -5565,6 +5289,10 @@ from modules.room_team_routes import register_routes as _register_room_team_rout
 from modules.room_result_routes import register_routes as _register_room_result_routes
 from modules.match_history_routes import register_routes as _register_match_history_routes
 from modules.zcoin import register_routes as _register_zcoin_routes
+from modules.profile import register_routes as _register_profile_routes
+from modules.daily_checkin import register_routes as _register_daily_checkin_routes
+from modules.gift_codes import register_routes as _register_gift_code_routes
+from modules.admin_economy import register_routes as _register_admin_economy_routes
 
 # Route Admin.
 from modules.admin_system_routes import register_routes as _register_admin_system_routes
@@ -5581,6 +5309,10 @@ for _route_registrar in (
     _register_room_result_routes,
     _register_match_history_routes,
     _register_zcoin_routes,
+    _register_profile_routes,
+    _register_daily_checkin_routes,
+    _register_gift_code_routes,
+    _register_admin_economy_routes,
     _register_admin_system_routes,
     _register_admin_dashboard_routes,
     _register_admin_account_routes,

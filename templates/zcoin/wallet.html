@@ -3,29 +3,17 @@
 <section class="zcoin-wallet-hero">
     <div class="zcoin-wallet-brand">
         <img src="{{ url_for('static', filename='zcoin-logo.png') }}?v={{ APP_VERSION|urlencode }}" alt="Logo Zcoin">
-        <div>
-            <span>VÍ ZCOIN</span>
-            <h1>{{ format_zcoin(current_user.zcoin_balance|default(0, true)) }}</h1>
-            <p>Zcoin dùng cho các vật phẩm và tiện ích trong PES Arena.</p>
-        </div>
-    </div>
-    <div class="zcoin-wallet-note">
-        <strong>Giai đoạn 1</strong>
-        <span>Hiện tại số dư chỉ được điều chỉnh an toàn bởi Admin. Điểm danh, Gift Code và Cửa hàng sẽ được mở ở các giai đoạn tiếp theo.</span>
+        <h1>{{ format_zcoin(current_user.zcoin_balance|default(0, true)) }} <small>Zcoin</small></h1>
     </div>
 </section>
 
 <section class="panel zcoin-history-panel">
     <div class="section-heading zcoin-section-heading">
-        <div>
-            <span class="eyebrow">LỊCH SỬ VÍ</span>
-            <h2>Giao dịch Zcoin gần đây</h2>
-            <p class="small">Mọi lần cộng hoặc trừ đều được lưu lại, không thể sửa xóa trên giao diện.</p>
-        </div>
+        <h2>Lịch sử giao dịch</h2>
     </div>
 
     {% if not wallet_ready %}
-    <div class="notice warning">Hệ thống Zcoin chưa sẵn sàng. Admin cần chạy file SQL bổ sung của V1.14.33 hoặc kiểm tra dòng lỗi cuối trong Vercel Logs.</div>
+    <div class="notice warning">Hệ thống Zcoin chưa sẵn sàng. Vui lòng liên hệ Admin.</div>
     {% elif transactions %}
     <div class="zcoin-transaction-list">
         {% for tx in transactions %}
