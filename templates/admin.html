@@ -30,6 +30,11 @@
 .repeat-rp-summary-row{display:flex;gap:8px;flex-wrap:wrap;margin:4px 0}
 .repeat-rp-summary-label{min-width:92px;font-weight:800;color:#f8fafc}
 @media(max-width:900px){.repeat-rp-layout{grid-template-columns:1fr}}
+
+.admin-mode-compare{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px;margin:18px 0}
+.admin-mode-card{padding:18px;border-radius:16px;background:rgba(15,23,42,.55);border:1px solid rgba(148,163,184,.18)}
+.admin-mode-card h3{margin:0 0 6px}.admin-mode-card strong{display:block;font-size:2rem;margin:8px 0 2px}.admin-mode-bar{height:9px;border-radius:999px;background:rgba(148,163,184,.18);overflow:hidden;margin-top:12px}.admin-mode-bar span{display:block;height:100%;background:linear-gradient(90deg,#2563eb,#06b6d4)}
+@media(max-width:700px){.admin-mode-compare{grid-template-columns:1fr}}
 </style>
 <div class="admin-dashboard-heading">
     <div>
@@ -420,16 +425,42 @@
             <article class="admin-report-card"><span>Tổng bàn thắng</span><strong>{{ match_report.confirmed_goals }}</strong></article>
         </div>
 
+        <div class="admin-section-heading">
+            <div>
+                <h3>🎮 So sánh chế độ Rank</h3>
+                <p class="small">Đếm toàn bộ trận Rank trong khoảng thời gian đang chọn. Chế độ được nhận diện từ dữ liệu trận đã lưu.</p>
+            </div>
+            <span class="admin-count">Nhiều hơn: {{ match_report.popular_mode }}</span>
+        </div>
+        <div class="admin-mode-compare">
+            <article class="admin-mode-card">
+                <h3>🎲 Rank Random</h3>
+                <span>Quay ngẫu nhiên một cặp đội</span>
+                <strong>{{ match_report.rank_random }} trận</strong>
+                <small>{{ match_report.rank_random_percent }}% tổng số trận</small>
+                <div class="admin-mode-bar"><span style="width:{{ match_report.rank_random_percent }}%"></span></div>
+            </article>
+            <article class="admin-mode-card">
+                <h3>🃏 Random 3 chọn 1</h3>
+                <span>Mỗi người chọn một đội trong ba lựa chọn</span>
+                <strong>{{ match_report.random3_pick1 }} trận</strong>
+                <small>{{ match_report.random3_pick1_percent }}% tổng số trận</small>
+                <div class="admin-mode-bar"><span style="width:{{ match_report.random3_pick1_percent }}%"></span></div>
+            </article>
+        </div>
+
         <div class="table-wrap admin-table-wrap">
             <table>
                 <thead>
-                    <tr><th>Ngày</th><th>Tổng trận</th><th>Đã xác nhận</th><th>Đang đá</th><th>Chờ xác nhận</th><th>Tranh chấp</th><th>Đã hủy</th><th>Người tham gia</th></tr>
+                    <tr><th>Ngày</th><th>Tổng trận</th><th>Rank Random</th><th>3 chọn 1</th><th>Đã xác nhận</th><th>Đang đá</th><th>Chờ xác nhận</th><th>Tranh chấp</th><th>Đã hủy</th><th>Người tham gia</th></tr>
                 </thead>
                 <tbody>
                 {% for row in match_report_daily %}
                     <tr>
                         <td><strong>{{ row.date_label }}</strong></td>
                         <td>{{ row.total }}</td>
+                        <td>{{ row.rank_random }}</td>
+                        <td>{{ row.random3_pick1 }}</td>
                         <td>{{ row.confirmed }}</td>
                         <td>{{ row.playing }}</td>
                         <td>{{ row.waiting }}</td>
@@ -438,7 +469,7 @@
                         <td>{{ row.player_count }}</td>
                     </tr>
                 {% else %}
-                    <tr><td colspan="8">Chưa có trận đấu trong khoảng thời gian này.</td></tr>
+                    <tr><td colspan="10">Chưa có trận đấu trong khoảng thời gian này.</td></tr>
                 {% endfor %}
                 </tbody>
             </table>

@@ -88,10 +88,19 @@ def register_routes(context):
         report_unique_players = set()
         report_confirmed_goals = 0
         report_positive_rp = 0
+        report_mode_counts = {"rank_random": 0, "random3_pick1": 0}
+
+        def _report_match_mode(match):
+            note = str((match or {}).get("note") or "").casefold()
+            if "random 3 chọn 1" in note or "random3_pick1" in note:
+                return "random3_pick1"
+            return "rank_random"
+
         for match in report_matches:
             status = str(match.get("status") or "").strip().lower()
             if status in report_status_counts:
                 report_status_counts[status] += 1
+            report_mode_counts[_report_match_mode(match)] += 1
             for key in ("player1_id", "player2_id"):
                 if match.get(key):
                     report_unique_players.add(str(match.get(key)))
@@ -112,9 +121,12 @@ def register_routes(context):
                 "waiting": 0,
                 "disputed": 0,
                 "cancelled": 0,
+                "rank_random": 0,
+                "random3_pick1": 0,
                 "players": set(),
             })
             bucket["total"] += 1
+            bucket[_report_match_mode(match)] += 1
             status = str(match.get("status") or "").strip().lower()
             if status == "confirmed":
                 bucket["confirmed"] += 1
@@ -150,6 +162,15 @@ def register_routes(context):
             "unique_players": len(report_unique_players),
             "confirmed_goals": report_confirmed_goals,
             "positive_rp": report_positive_rp,
+            "rank_random": report_mode_counts["rank_random"],
+            "random3_pick1": report_mode_counts["random3_pick1"],
+            "rank_random_percent": round((report_mode_counts["rank_random"] * 100 / len(report_matches)), 1) if report_matches else 0,
+            "random3_pick1_percent": round((report_mode_counts["random3_pick1"] * 100 / len(report_matches)), 1) if report_matches else 0,
+            "popular_mode": (
+                "Random 3 chọn 1" if report_mode_counts["random3_pick1"] > report_mode_counts["rank_random"]
+                else "Rank Random" if report_mode_counts["rank_random"] > report_mode_counts["random3_pick1"]
+                else "Hai chế độ ngang nhau"
+            ),
         }
 
         raw_users = admin_safe_load("users", list_all_users, [])
