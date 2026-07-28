@@ -1,0 +1,17 @@
+PES Arena — V1.14.39 Admin Dashboard Hotfix
+
+Mục tiêu:
+- Sửa lỗi 500 tại /admin: NameError build_zcoin_admin_context.
+- Giữ quản trị Zcoin/Gift Code ở trang riêng /admin/economy.
+
+File thay đổi:
+- modules/admin_dashboard_routes.py
+- templates/admin.html
+
+Database/SQL:
+- Không cần chạy SQL.
+
+Cách cập nhật:
+1. Copy đè đúng 2 file code trong PATCH vào repo local.
+2. Commit và push.
+3. Kiểm tra /admin và /admin/economy.
