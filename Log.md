@@ -20,3 +20,10 @@
 - `templates/base.html` (head và topbar): hiển thị số dư, menu ví và lịch sử Zcoin.
 - `templates/admin.html` (tab, phân quyền và panel): thêm khu vực quản trị Zcoin mà không làm mất cấu hình RP hiện tại.
 - Không chạy SQL; tiếp tục dùng `users.zcoin_balance`, `zcoin_transactions` và RPC `adjust_zcoin_balance` đã có trên Supabase.
+
+## Collap_V1.14.37_PROFILE_MODULE
+- Tách toàn bộ route Hồ sơ cá nhân khỏi `app.py` sang `modules/profile/`.
+- Tách xử lý avatar, tổng hợp dữ liệu hồ sơ và truy vấn cập nhật thành service/repository riêng.
+- Giữ nguyên endpoint, giao diện và dữ liệu hiện tại để tương thích ngược.
+- Thêm `equipment_service.py` làm điểm nối cho Shop/Kho đồ sau này, chưa yêu cầu schema mới.
+- Không cần chạy SQL.
