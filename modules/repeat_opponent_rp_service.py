@@ -7,6 +7,8 @@ import math
 EXPORTED_NAMES = [
     "repeat_opponent_context",
     "apply_repeat_opponent_rules",
+    "repeat_opponent_rules_enabled",
+    "repeat_opponent_winner_factors",
 ]
 
 VN_TZ = timezone(timedelta(hours=7))
@@ -15,6 +17,29 @@ COUNTED_STATUSES = {"playing", "waiting_confirm", "processing_result", "disputed
 
 def configure(context):
     globals().update(context)
+
+
+
+def repeat_opponent_winner_factors():
+    getter = globals().get("get_repeat_opponent_rp_config")
+    if callable(getter):
+        try:
+            values = (getter() or {}).get("winner_factors") or [100, 60, 30, 0]
+            if len(values) == 4:
+                return [max(0.0, min(1.0, float(value) / 100.0)) for value in values]
+        except Exception:
+            pass
+    return [1.0, 0.6, 0.3, 0.0]
+
+
+def repeat_opponent_rules_enabled():
+    checker = globals().get("system_feature_enabled")
+    if callable(checker):
+        try:
+            return bool(checker("repeat_opponent_rp_enabled"))
+        except Exception:
+            return True
+    return True
 
 
 def _parse_dt(value):
@@ -133,10 +158,18 @@ def _round_scaled(value, factor):
 
 def apply_repeat_opponent_rules(match, player1, player2, score1, score2, delta1, delta2, context=None):
     """Áp dụng hệ số cặp đấu và trả delta + metadata điều khiển chuỗi."""
+    if not repeat_opponent_rules_enabled():
+        return int(delta1), int(delta2), {
+            "enabled": False,
+            "counted_for_rp": True,
+            "streak_eligible": True,
+            "reason": "disabled_by_admin",
+        }
     context = dict(context or repeat_opponent_context(match))
     encounter = int(context.get("encounter_number") or 1)
     p1, p2 = str(match.get("player1_id") or ""), str(match.get("player2_id") or "")
     details = {
+        "enabled": True,
         "encounter_number": encounter,
         "prior_encounters": max(0, encounter - 1),
         "counted_for_rp": encounter <= 6,
@@ -173,14 +206,10 @@ def apply_repeat_opponent_rules(match, player1, player2, score1, score2, delta1,
     repeat_win_number = int((context.get("wins") or {}).get(winner_id, 0)) + 1
     details["winner_repeat_win_number"] = repeat_win_number
 
-    if repeat_win_number == 1:
-        factor = 1.0
-    elif repeat_win_number == 2:
-        factor = 0.6
-    elif repeat_win_number == 3:
-        factor = 0.3
-    else:
-        factor = 0.0
+    factors = repeat_opponent_winner_factors()
+    factor = factors[min(max(repeat_win_number, 1), 4) - 1]
+    details["configured_winner_factors"] = factors
+    if repeat_win_number >= 4:
         details["loser_factor"] = 0.5
         details["streak_eligible"] = False
 

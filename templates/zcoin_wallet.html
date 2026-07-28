@@ -1,31 +1,17 @@
 {% extends "base.html" %}
 {% block content %}
-<section class="zcoin-wallet-hero">
-    <div class="zcoin-wallet-brand">
-        <img src="{{ url_for('static', filename='zcoin-logo.png') }}?v={{ APP_VERSION|urlencode }}" alt="Logo Zcoin">
-        <div>
-            <span>VÍ ZCOIN</span>
-            <h1>{{ format_zcoin(current_user.zcoin_balance|default(0, true)) }}</h1>
-            <p>Zcoin dùng cho các vật phẩm và tiện ích trong PES Arena.</p>
-        </div>
-    </div>
-    <div class="zcoin-wallet-note">
-        <strong>Giai đoạn 1</strong>
-        <span>Hiện tại số dư chỉ được điều chỉnh an toàn bởi Admin. Điểm danh, Gift Code và Cửa hàng sẽ được mở ở các giai đoạn tiếp theo.</span>
-    </div>
+<section class="zcoin-wallet-summary" aria-label="Số dư Zcoin">
+    <img src="{{ url_for('static', filename='zcoin-logo.png') }}?v={{ APP_VERSION|urlencode }}" alt="Logo Zcoin">
+    <h1>{{ format_zcoin(current_user.zcoin_balance|default(0, true)) }} <span>Zcoin</span></h1>
 </section>
 
 <section class="panel zcoin-history-panel">
-    <div class="section-heading zcoin-section-heading">
-        <div>
-            <span class="eyebrow">LỊCH SỬ VÍ</span>
-            <h2>Giao dịch Zcoin gần đây</h2>
-            <p class="small">Mọi lần cộng hoặc trừ đều được lưu lại, không thể sửa xóa trên giao diện.</p>
-        </div>
+    <div class="zcoin-history-heading">
+        <h2>Lịch sử giao dịch</h2>
     </div>
 
     {% if not wallet_ready %}
-    <div class="notice warning">Hệ thống Zcoin chưa sẵn sàng. Admin cần chạy file SQL bổ sung của V1.14.33 hoặc kiểm tra dòng lỗi cuối trong Vercel Logs.</div>
+    <div class="notice warning">Không thể tải lịch sử Zcoin. Hãy thử lại sau.</div>
     {% elif transactions %}
     <div class="zcoin-transaction-list">
         {% for tx in transactions %}
@@ -36,7 +22,7 @@
             <div class="zcoin-transaction-copy">
                 <strong>{{ 'Nhận Zcoin' if tx.is_credit else 'Trừ Zcoin' }}</strong>
                 <span>{{ tx.reason }}</span>
-                <small>{{ format_vn_datetime(tx.created_at) }}{% if tx.actor_name %} • Thực hiện bởi {{ tx.actor_name }}{% endif %}</small>
+                <small>{{ format_vn_datetime(tx.created_at) }}</small>
             </div>
             <div class="zcoin-transaction-value">
                 <strong>{{ '+' if tx.is_credit else '-' }}{{ tx.amount_display }}</strong>
@@ -49,7 +35,6 @@
     <div class="zcoin-empty-state">
         <img src="{{ url_for('static', filename='zcoin-logo.png') }}" alt="">
         <strong>Chưa có giao dịch Zcoin</strong>
-        <span>Lịch sử nhận và sử dụng Zcoin sẽ xuất hiện tại đây.</span>
     </div>
     {% endif %}
 </section>

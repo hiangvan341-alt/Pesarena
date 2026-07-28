@@ -62,7 +62,7 @@ from modules.win_streaks import (
 load_dotenv()
 
 APP_NAME = "PES Arena – Bản Lĩnh Sân Cỏ"
-APP_VERSION = "Collap_V1.14.33_ZCOIN_PHASE1_COMPAT"
+APP_VERSION = "Collap_V1.14.35_ZCOIN_PHASE1_CLEAN"
 DEFAULT_POINTS = 1000
 DEVICE_COOKIE_NAME = "rankzone_device_id"
 COOLDOWN_MINUTES = 3
@@ -596,6 +596,7 @@ SYSTEM_FEATURE_DEFAULTS = {
     "public_ranking_enabled": True,
     "friendly_enabled": True, "friendly_random3_enabled": True, "lobby_chat_enabled": True, "room_chat_enabled": True,
     "registration_codes_enabled": True, "announcements_enabled": True, "quick_match_enabled": True,
+    "repeat_opponent_rp_enabled": True,
 }
 
 def _admin_permissions(user):
@@ -650,6 +651,31 @@ def get_quick_match_config():
             config["color"] = raw["color"]
     except Exception as exc:
         print(f"get_quick_match_config warning: {exc}")
+    return config
+
+
+REPEAT_OPPONENT_CONFIG_SETTING_KEY = "repeat_opponent_rp_config"
+REPEAT_OPPONENT_FACTOR_DEFAULTS = [100, 60, 30, 0]
+
+def get_repeat_opponent_rp_config():
+    config = {"winner_factors": list(REPEAT_OPPONENT_FACTOR_DEFAULTS)}
+    try:
+        result = execute_query(
+            db.table("system_settings").select("setting_value").eq(
+                "setting_key", REPEAT_OPPONENT_CONFIG_SETTING_KEY
+            ).limit(1),
+            "get_repeat_opponent_rp_config", attempts=2,
+        )
+        raw = ((result.data or [{}])[0]).get("setting_value")
+        if isinstance(raw, str):
+            raw = json.loads(raw)
+        values = (raw or {}).get("winner_factors") if isinstance(raw, dict) else None
+        if isinstance(values, list) and len(values) == 4:
+            normalized = [max(0, min(100, int(value))) for value in values]
+            if all(normalized[index] >= normalized[index + 1] for index in range(3)):
+                config["winner_factors"] = normalized
+    except Exception as exc:
+        print(f"get_repeat_opponent_rp_config warning: {exc}")
     return config
 
 MAINTENANCE_SETTING_KEY = "server_maintenance_config"

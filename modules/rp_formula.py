@@ -6,7 +6,7 @@ Supabase hoặc dữ liệu người dùng. Mọi thay đổi công thức RP ph
 """
 from __future__ import annotations
 
-RP_FORMULA_VERSION = "RP_V1.14.0"
+RP_FORMULA_VERSION = "RP_V1.14.2"
 RP_FORMULA_NAME = "PES Arena RP – Giảm RP khi gặp lại cùng đối thủ"
 RP_RANDOM_SEED_NAMESPACE = f"PES_ARENA|{RP_FORMULA_VERSION}"
 

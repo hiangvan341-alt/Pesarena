@@ -222,6 +222,8 @@ def build_replay_plan(
     formula_summary: Callable[[], Any],
     seed_namespace: str,
     daily_positive_rp_limit: int | None = None,
+    repeat_opponent_rules_enabled: bool = True,
+    repeat_opponent_winner_factors: tuple[float, float, float, float] = (1.0, 0.6, 0.3, 0.0),
 ) -> tuple[dict[str, dict[str, Any]], dict[str, dict[str, Any]]]:
     """Trả về payload cập nhật user/match sau khi phát lại lịch sử.
 
@@ -318,61 +320,77 @@ def build_replay_plan(
             if _int(player2.get("total_matches")) < placement_matches:
                 delta2 = max(22, min(29, delta2))
 
-        # Áp dụng quy tắc gặp lại cùng đối thủ theo đúng thứ tự lịch sử.
         day_key = _vn_day_key(match.get("created_at"))
-        pair_key = tuple(sorted((p1_id, p2_id)))
-        pair_day_key = (day_key, pair_key)
-        encounter_number = pair_encounters.get(pair_day_key, 0) + 1
-        pair_encounters[pair_day_key] = encounter_number
+        # Áp dụng quy tắc gặp lại cùng đối thủ theo đúng thứ tự lịch sử khi Admin bật.
         repeat_details = {
-            "encounter_number": encounter_number,
-            "prior_encounters": encounter_number - 1,
-            "counted_for_rp": encounter_number <= 6,
+            "enabled": bool(repeat_opponent_rules_enabled),
+            "counted_for_rp": True,
             "streak_eligible": True,
-            "winner_repeat_win_number": None,
-            "winner_factor": None,
-            "loser_factor": 1.0,
-            "draw_bonus_applied": False,
+            "reason": "disabled_by_admin" if not repeat_opponent_rules_enabled else None,
         }
         affect_streak = True
-        if encounter_number >= 7:
-            delta1 = delta2 = 0
-            affect_streak = False
-            repeat_details.update({"counted_for_rp": False, "streak_eligible": False, "reason": "pair_daily_limit"})
-        elif score1 == score2:
-            delta1 = delta2 = 0
-            affect_streak = True
-            if abs(_int(player1.get("rank_points")) - _int(player2.get("rank_points"))) >= 500 and pair_day_key not in pair_draw_bonus:
-                if _int(player1.get("rank_points")) < _int(player2.get("rank_points")):
-                    delta1 = 5
-                elif _int(player2.get("rank_points")) < _int(player1.get("rank_points")):
-                    delta2 = 5
-                if delta1 == 5 or delta2 == 5:
-                    pair_draw_bonus.add(pair_day_key)
-                    repeat_details["draw_bonus_applied"] = True
-            repeat_details.update({"streak_eligible": True, "reason": "draw"})
-        else:
-            p1_won = score1 > score2
-            winner_id = p1_id if p1_won else p2_id
-            win_key = (day_key, pair_key, winner_id)
-            repeat_win_number = pair_wins.get(win_key, 0) + 1
-            pair_wins[win_key] = repeat_win_number
-            factor = 1.0 if repeat_win_number == 1 else 0.6 if repeat_win_number == 2 else 0.3 if repeat_win_number == 3 else 0.0
-            repeat_details.update({"winner_repeat_win_number": repeat_win_number, "winner_factor": factor, "reason": "repeat_win"})
-            def scaled(value, coefficient):
-                sign = -1 if _int(value) < 0 else 1
-                return sign * int(math.floor(abs(_int(value)) * coefficient + 0.5))
-            if p1_won:
-                delta1 = scaled(delta1, factor)
-                if repeat_win_number >= 4:
-                    delta2 = scaled(delta2, 0.5)
-            else:
-                delta2 = scaled(delta2, factor)
-                if repeat_win_number >= 4:
-                    delta1 = scaled(delta1, 0.5)
-            if repeat_win_number >= 4:
+        if repeat_opponent_rules_enabled:
+            pair_key = tuple(sorted((p1_id, p2_id)))
+            pair_day_key = (day_key, pair_key)
+            encounter_number = pair_encounters.get(pair_day_key, 0) + 1
+            pair_encounters[pair_day_key] = encounter_number
+            repeat_details = {
+                "enabled": True,
+                "encounter_number": encounter_number,
+                "prior_encounters": encounter_number - 1,
+                "counted_for_rp": encounter_number <= 6,
+                "streak_eligible": True,
+                "winner_repeat_win_number": None,
+                "winner_factor": None,
+                "loser_factor": 1.0,
+                "draw_bonus_applied": False,
+            }
+            if encounter_number >= 7:
+                delta1 = delta2 = 0
                 affect_streak = False
-                repeat_details.update({"loser_factor": 0.5, "streak_eligible": False})
+                repeat_details.update({"counted_for_rp": False, "streak_eligible": False, "reason": "pair_daily_limit"})
+            elif score1 == score2:
+                delta1 = delta2 = 0
+                affect_streak = True
+                if abs(_int(player1.get("rank_points")) - _int(player2.get("rank_points"))) >= 500 and pair_day_key not in pair_draw_bonus:
+                    if _int(player1.get("rank_points")) < _int(player2.get("rank_points")):
+                        delta1 = 5
+                    elif _int(player2.get("rank_points")) < _int(player1.get("rank_points")):
+                        delta2 = 5
+                    if delta1 == 5 or delta2 == 5:
+                        pair_draw_bonus.add(pair_day_key)
+                        repeat_details["draw_bonus_applied"] = True
+                repeat_details.update({"streak_eligible": True, "reason": "draw"})
+            else:
+                p1_won = score1 > score2
+                winner_id = p1_id if p1_won else p2_id
+                win_key = (day_key, pair_key, winner_id)
+                repeat_win_number = pair_wins.get(win_key, 0) + 1
+                pair_wins[win_key] = repeat_win_number
+                configured_factors = list(repeat_opponent_winner_factors or (1.0, 0.6, 0.3, 0.0))
+                while len(configured_factors) < 4:
+                    configured_factors.append(0.0)
+                factor = float(configured_factors[min(max(repeat_win_number, 1), 4) - 1])
+                repeat_details.update({
+                    "winner_repeat_win_number": repeat_win_number,
+                    "winner_factor": factor,
+                    "configured_winner_factors": configured_factors[:4],
+                    "reason": "repeat_win",
+                })
+                def scaled(value, coefficient):
+                    sign = -1 if _int(value) < 0 else 1
+                    return sign * int(math.floor(abs(_int(value)) * coefficient + 0.5))
+                if p1_won:
+                    delta1 = scaled(delta1, factor)
+                    if repeat_win_number >= 4:
+                        delta2 = scaled(delta2, 0.5)
+                else:
+                    delta2 = scaled(delta2, factor)
+                    if repeat_win_number >= 4:
+                        delta1 = scaled(delta1, 0.5)
+                if repeat_win_number >= 4:
+                    affect_streak = False
+                    repeat_details.update({"loser_factor": 0.5, "streak_eligible": False})
 
         daily_limit_details = None
         if daily_positive_rp_limit is not None and int(daily_positive_rp_limit) >= 0:

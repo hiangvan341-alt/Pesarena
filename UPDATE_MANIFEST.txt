@@ -1,26 +1,38 @@
-VERSION: Collap_V1.14.33_ZCOIN_PHASE1_COMPAT
-BASELINE: Collap_V1.14.31 + giao diện Zcoin V1.14.32 chưa deploy
-SQL_REQUIRED: YES - MINIMAL COMPAT RPC ONLY
-SQL_FILE: docs/update_zcoin_phase1_compat_v1_14_33.sql
+VERSION: Collap_V1.14.35_ZCOIN_PHASE1_CLEAN
+BASELINE: Collap_V1.14.34
+SQL_REQUIRED_FOR_CURRENT_DATABASE: NO (RPC tương thích đã chạy ở V1.14.33)
+SQL_REQUIRED_FOR_FRESH_DATABASE: YES
+SQL_FILE: docs/update_zcoin_phase1_compat_v1_14_35.sql
 DATA_RESET: NO
 CREATE_TABLES: NO
 ALTER_EXISTING_TABLE_COLUMNS: NO
 
-PHAM_VI:
-- Gọi số dư users.zcoin_balance hiện có ra frontend
-- Dùng đúng schema zcoin_transactions hiện có
-- Lưu audit mở rộng trong metadata
-- RPC cộng/trừ Zcoin nguyên tử
-- Logo Zcoin trên topbar
+GIU_NGUYEN_TU_V1_14_34:
+- Sửa nhập tỷ số mặc định 0 không biến thành 40
+- Chặn con lăn chuột đổi tỷ số
+- Giới hạn tỷ số 0–99
+- Giữ bản nháp tỷ số khi polling
+
+ZCOIN_PHASE1:
+- Gọi users.zcoin_balance hiện có ra frontend
+- Dùng schema zcoin_transactions hiện có
+- RPC cộng/trừ Zcoin nguyên tử và chống gửi trùng
+- Logo Zcoin vàng chính thức trên topbar
 - Dropdown tài khoản
-- Trang Ví Zcoin và lịch sử
+- Trang Ví Zcoin và lịch sử giao dịch tinh gọn
 - Tab Admin Zcoin
 - Quyền zcoin_view / zcoin_manage
+
+DA_BO_THONG_TIN_DU_THUA:
+- Khung “Giai đoạn 1” trên trang Ví
+- Mô tả roadmap Điểm danh / Gift Code / Cửa hàng
+- Nhãn “VÍ ZCOIN”, “LỊCH SỬ VÍ” và các câu giải thích lặp
+- Tên Admin thực hiện khỏi lịch sử ví phía member
 
 CHUA_TRIEN_KHAI:
 - Điểm danh ngày
 - Gift Code
-- Cửa hàng / kho đồ
+- Cửa hàng / kho đồ backend
 - Hiệu ứng pháo hoa
 
 BAO_MAT:

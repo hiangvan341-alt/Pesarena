@@ -1,4 +1,4 @@
-"""Kiểm thử nhanh công thức RP RP_V1.14.0. Chạy: python test_rp_engine.py"""
+"""Kiểm thử nhanh công thức RP RP_V1.14.2. Chạy: python test_rp_engine.py"""
 import random
 from modules.rp_engine import calculate_deltas, validate_deltas
 from modules.rp_formula import RP_FORMULA_VERSION
@@ -53,8 +53,8 @@ def run():
         raise AssertionError("Delta thua bằng 0 phải bị từ chối")
     except ValueError:
         pass
-    assert RP_FORMULA_VERSION == "RP_V1.14.0"
-    print("OK - RP Engine RP_V1.14.0")
+    assert RP_FORMULA_VERSION == "RP_V1.14.2"
+    print("OK - RP Engine RP_V1.14.2")
 
 
 if __name__ == "__main__":

@@ -1,10 +1,16 @@
-# Collap_V1.14.29
+# Collap_V1.14.35_ZCOIN_PHASE1_CLEAN
 
-- `modules/daily_rank_limit_service.py` (khoảng dòng 1–190): thêm hàm xác định người đã chạm giới hạn và thông báo chặn dùng chung.
-- `app.py` (khoảng dòng 4570–5390): chặn tạo phòng Rank, gửi lời mời, Tìm Nhanh và nhận lời mời khi một trong hai người đã đủ số trận.
-- `modules/room_access_routes.py` (khoảng dòng 20–285): chặn vào phòng qua link; cho rời phòng an toàn nếu phòng không thể bắt đầu vì giới hạn ngày; truyền trạng thái giới hạn ra giao diện.
-- `modules/room_team_routes.py` (khoảng dòng 396–440): chặn Sân khách bấm Sẵn Sàng khi một trong hai người đã đủ lượt.
-- `modules/room_rematch_routes.py` (khoảng dòng 1–180): ngăn route bỏ cuộc trừ 20 RP tại `waiting_ready` nếu phòng đã bị khóa bởi giới hạn ngày.
-- `templates/room_detail.html`, `templates/_room_live_content.html`, `templates/partials/room_dynamic_state.html`: ẩn thao tác bắt đầu trận, hiển thị cảnh báo giới hạn và chuyển nút thoát sang luồng không trừ RP.
+- Baseline: `Collap_V1.14.34`.
+- Giữ nguyên toàn bộ sửa lỗi nhập tỷ số của V1.14.34.
+- Khôi phục Zcoin Giai đoạn 1 trên source mới: số dư topbar, menu tài khoản, Ví Zcoin, lịch sử giao dịch và quản trị cộng/trừ Zcoin.
+- Dùng đúng schema Zcoin đã tồn tại; không tạo lại bảng và không reset dữ liệu.
+- Thay logo Zcoin trong V1.14.34 bằng logo vàng chữ Z chính thức.
+- Tinh gọn trang Ví: bỏ khung “Giai đoạn 1”, roadmap nội bộ và các mô tả lặp.
+- Database đã chạy RPC tương thích ở V1.14.33 không cần chạy lại SQL.
 
-Khác V1.14.28: giới hạn không còn chỉ được kiểm tra lúc tạo trận; người đã đủ lượt không thể đi vào chuỗi tạo phòng → mời/nhận lời → Sẵn Sàng, nên không còn bị trừ 20 RP oan khi thoát phòng.
+# Collap_V1.14.34
+
+- `templates/room_detail.html`: sửa ô nhập tỷ số; khi giá trị là 0, bấm/focus sẽ chọn toàn bộ để số mới thay thế 0; chặn con lăn chuột làm đổi tỷ số; giới hạn 0–99; tiếp tục giữ bản nháp khi polling.
+- `templates/_room_live_content.html`: đồng bộ thuộc tính ô tỷ số cho giao diện cập nhật trực tiếp.
+- `templates/partials/room_dynamic_state.html`: đồng bộ thuộc tính ô tỷ số cho giao diện polling.
+- Khác V1.14.33: nhập `4` tại ô mặc định `0` sẽ thành `4`, không còn thành `40`.

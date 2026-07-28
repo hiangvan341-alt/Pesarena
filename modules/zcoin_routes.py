@@ -79,7 +79,7 @@ def register_routes(context):
             if "insufficient_zcoin" in lowered or "không đủ zcoin" in lowered:
                 flash("Không thể trừ vì số dư Zcoin của người chơi không đủ.", "danger")
             elif "adjust_zcoin_balance" in lowered or "pgrst202" in lowered or "schema cache" in lowered:
-                flash("Supabase chưa có RPC Zcoin tương thích. Hãy chạy file SQL bổ sung của V1.14.33 trước.", "danger")
+                flash("Supabase chưa có RPC Zcoin tương thích. Hãy chạy file SQL tương thích Zcoin trong thư mục docs trước.", "danger")
             else:
                 flash("Không thể điều chỉnh Zcoin. Hãy kiểm tra dòng lỗi cuối trong Vercel Logs.", "danger")
             return redirect_admin("zcoin")
