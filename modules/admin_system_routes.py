@@ -23,6 +23,7 @@ def register_routes(context):
             "maintenance_status": get_maintenance_status(),
             "rank_daily_limits_enabled": daily_rank_limits_enabled(),
             "quick_match_config": get_quick_match_config(),
+            "repeat_opponent_rp_config": get_repeat_opponent_rp_config(),
         }
 
     @app.route("/admin/system/maintenance", methods=["POST"])
@@ -80,6 +81,39 @@ def register_routes(context):
         )
         log_admin_action("Cập nhật màu nút Tìm Nhanh", "system", details={"color": color})
         flash("Đã lưu màu nút Tìm Nhanh.", "success")
+        return redirect_admin("system")
+
+
+    @app.route("/admin/system/repeat-opponent-rp", methods=["POST"])
+    @login_required
+    @admin_required
+    @admin_permission_required("system_features_manage")
+    def admin_update_repeat_opponent_rp_config():
+        try:
+            values = [int(request.form.get(f"factor_{index}", "")) for index in range(1, 5)]
+        except (TypeError, ValueError):
+            flash("Các hệ số phải là số nguyên từ 0 đến 100%.", "danger")
+            return redirect_admin("system")
+        if any(value < 0 or value > 100 for value in values):
+            flash("Mỗi hệ số phải nằm trong khoảng 0–100%.", "danger")
+            return redirect_admin("system")
+        if not all(values[index] >= values[index + 1] for index in range(3)):
+            flash("Hệ số phải giảm dần hoặc bằng nhau từ lần thắng 1 đến lần thắng 4.", "danger")
+            return redirect_admin("system")
+        payload = {"winner_factors": values}
+        execute_query(
+            db.table("system_settings").upsert({
+                "setting_key": REPEAT_OPPONENT_CONFIG_SETTING_KEY,
+                "setting_value": payload,
+                "updated_at": now_iso(),
+            }, on_conflict="setting_key"),
+            "update_repeat_opponent_rp_config",
+        )
+        log_admin_action("Cập nhật hệ số RP gặp lại đối thủ", "system", details=payload)
+        flash(
+            "Đã lưu hệ số gặp lại đối thủ: " + " → ".join(f"{value}%" for value in values) + ".",
+            "success",
+        )
         return redirect_admin("system")
 
     @app.route("/admin/system/features", methods=["POST"])

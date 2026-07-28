@@ -1,5 +1,6 @@
-# Collap_V1.14.30
+# Collap_V1.14.34
 
-- `modules/admin_dashboard_routes.py` — khoảng dòng 20–165: thêm bộ tổng hợp báo cáo trận theo múi giờ Việt Nam, hỗ trợ Hôm nay, Hôm qua, 3 ngày, 1 tuần, 1 tháng và Toàn thời gian.
-- `templates/admin.html` — phần tab Admin và khu vực báo cáo: thêm tab “Báo cáo trận đấu”, thẻ thống kê tổng quan và bảng chi tiết theo ngày.
-- Khác V1.14.29: Admin có thể xem số trận theo từng khoảng thời gian, gồm tổng trận, xác nhận, đang đá, chờ xác nhận, tranh chấp, hủy và số người tham gia.
+- `templates/room_detail.html` khoảng dòng 184–188 và 744–785: sửa ô nhập tỷ số; khi giá trị là 0, bấm/focus sẽ chọn toàn bộ để số mới thay thế 0; chặn con lăn chuột làm đổi tỷ số; giới hạn 0–99; tiếp tục giữ bản nháp khi polling.
+- `templates/_room_live_content.html` khoảng dòng 144–148: đồng bộ thuộc tính ô tỷ số cho giao diện cập nhật trực tiếp.
+- `templates/partials/room_dynamic_state.html` khoảng dòng 423–427: đồng bộ thuộc tính ô tỷ số cho giao diện polling.
+- Khác V1.14.33: nhập `4` tại ô mặc định `0` sẽ thành `4`, không còn thành `40`.

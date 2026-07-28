@@ -560,7 +560,7 @@
     {% endif %}
 
     {% if can_admin('system_features_manage') %}
-    <div class="panel"><h2>🎛️ Bật/tắt tính năng hệ thống</h2><form method="post" action="{{ url_for('admin_update_system_features') }}" class="system-toggle-grid">{% for key,label in {'friendly_enabled':'Giao hữu thường','friendly_random3_enabled':'Random 3 chọn 1','lobby_chat_enabled':'Chat Sảnh','room_chat_enabled':'Chat Phòng','registration_codes_enabled':'Mã đăng ký','announcements_enabled':'Thông báo','quick_match_enabled':'Tìm Nhanh','match_history_all_enabled':'Xem lịch sử toàn hệ thống'}.items() %}<label class="admin-permission-option"><span>{{ label }}</span><span class="admin-switch"><input type="checkbox" name="{{ key }}" value="1" {% if system_features.get(key) %}checked{% endif %}><span class="admin-switch-track"></span></span></label>{% endfor %}
+    <div class="panel"><h2>🎛️ Bật/tắt tính năng hệ thống</h2><form method="post" action="{{ url_for('admin_update_system_features') }}" class="system-toggle-grid">{% for key,label in {'friendly_enabled':'Giao hữu thường','friendly_random3_enabled':'Random 3 chọn 1','lobby_chat_enabled':'Chat Sảnh','room_chat_enabled':'Chat Phòng','registration_codes_enabled':'Mã đăng ký','announcements_enabled':'Thông báo','quick_match_enabled':'Tìm Nhanh','repeat_opponent_rp_enabled':'Giảm RP khi gặp lại cùng đối thủ','match_history_all_enabled':'Xem lịch sử toàn hệ thống'}.items() %}<label class="admin-permission-option"><span>{{ label }}</span><span class="admin-switch"><input type="checkbox" name="{{ key }}" value="1" {% if system_features.get(key) %}checked{% endif %}><span class="admin-switch-track"></span></span></label>{% endfor %}
 <label class="admin-permission-option admin-public-ranking-option">
     <span>BXH công khai (không cần đăng nhập)</span>
     <span class="admin-switch">
@@ -569,6 +569,21 @@
     </span>
 </label>
 <button class="btn green" type="submit">Lưu cài đặt</button></form></div>
+    <div class="panel">
+        <h2>🎯 Hệ số RP khi gặp lại đối thủ</h2>
+        <p class="muted">Điều chỉnh phần trăm tổng RP thắng nhận được ở từng lần thắng cùng một đối thủ trong ngày. Hệ số phải giảm dần từ lần 1 đến lần 4.</p>
+        {% set repeat_factors = repeat_opponent_rp_config.get('winner_factors', [100, 60, 30, 0]) %}
+        <form method="post" action="{{ url_for('admin_update_repeat_opponent_rp_config') }}" class="system-toggle-grid">
+            {% for index in range(4) %}
+            <label><span>Lần thắng {{ index + 1 }}{% if index == 3 %} trở đi{% endif %}</span>
+                <input type="number" name="factor_{{ index + 1 }}" min="0" max="100" step="1" value="{{ repeat_factors[index] }}" required>
+                <small class="muted">Phần trăm RP thắng được nhận</small>
+            </label>
+            {% endfor %}
+            <button class="btn" type="submit">Lưu hệ số RP</button>
+        </form>
+        <p class="small">Thiết lập hiện tại: <strong>{{ repeat_factors|join('% → ') }}%</strong>. Phần RP thua 50% từ lần thắng thứ 4 và giới hạn 6 trận/cặp vẫn giữ nguyên.</p>
+    </div>
     <div class="panel">
         <h2>⚡ Giao diện nút Tìm Nhanh</h2>
         <p class="muted">Chọn màu nổi bật cho nút Tìm Nhanh trong phòng đấu.</p>
