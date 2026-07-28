@@ -107,7 +107,8 @@ def create_gift_code(actor, form):
     duration_minutes = _safe_int(form.get("duration_minutes"), 120)
     note = str(form.get("note") or "").strip()
 
-    # Mọi tài khoản Admin trong PES Arena đều có toàn quyền quản trị Zcoin.
+    if not is_admin_user(actor):
+        raise ValueError("Tài khoản không có quyền tạo Gift Code.")
     max_reward = 50_000
     max_total_redemptions = 100_000
     if reward_amount < 1 or reward_amount > max_reward:

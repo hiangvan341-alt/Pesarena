@@ -1,19 +1,33 @@
-Collap_V1.14.39_ADMIN_ZCOIN_TAB_FIX
-Baseline: Collap_V1.14.38_ZCOIN_REWARDS_MODULE
+Collap_V1.14.39_ADMIN_ECONOMY_MODULE
+
+BASELINE
+- Collap_V1.14.38_ZCOIN_REWARDS_MODULE (Production ổn định)
+
+MỤC TIÊU
+- Tách quản trị Zcoin/Gift Code khỏi route /admin chính.
+- Mọi tài khoản Admin hợp lệ truy cập được trang quản trị kinh tế riêng.
+- Không để lỗi tải dữ liệu kinh tế làm sập toàn bộ Admin Panel.
 
 THAY ĐỔI
-- Hiển thị tab Zcoin cho mọi tài khoản Admin hợp lệ.
-- Cho phép mọi Admin cộng/trừ Zcoin và tạo/bật/tắt Gift Code.
-- Đồng bộ giới hạn quản trị Zcoin/Gift Code giữa các Admin.
-- Không thay đổi quyền của player.
+- Thêm modules/admin_economy/__init__.py
+- Thêm modules/admin_economy/repository.py
+- Thêm modules/admin_economy/service.py
+- Thêm modules/admin_economy/routes.py
+- Thêm modules/admin_economy/README.md
+- Thêm templates/admin_economy/index.html
+- Chuyển route quản trị Zcoin/Gift Code ra khỏi modules/zcoin và modules/gift_codes.
+- Loại bỏ dữ liệu/tab Zcoin khỏi /admin chính.
+- Thêm link sidebar tới /admin/economy.
+- Đồng bộ quyền kinh tế cho mọi Admin.
 
 SQL
-- KHÔNG cần chạy SQL.
+- Không cần chạy SQL.
+- Giữ nguyên SQL/RPC đã chạy ở V1.14.38.
 
-PHẠM VI FILE
-- app.py
-- modules/zcoin/routes.py
-- modules/gift_codes/service.py
-- templates/zcoin/_admin_panel.html
-- Log.md
-- UPDATE_MANIFEST_V1.14.39.txt
+KIỂM TRA
+- Python compile: PASS
+- RP Engine RP_V1.14.2: PASS
+- Jinja 39/39: PASS
+- JavaScript syntax: PASS
+- Route scan: 119 route, không trùng
+- Admin Economy module simulation: PASS

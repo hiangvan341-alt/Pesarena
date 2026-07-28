@@ -60,7 +60,7 @@ function toggleTheme(){
             <a class="{{ 'active' if request.endpoint in ['rooms', 'room_detail'] else '' }}" href="#" onclick="event.preventDefault(); document.getElementById('quickCreateRoomForm').submit();"><span>🎮</span> Phòng đấu</a>
             <a class="{{ 'active' if request.endpoint == 'matches' else '' }}" href="{{ url_for('matches') }}"><span>📜</span> Lịch sử</a>
             <a class="{{ 'active' if request.endpoint == 'guide' else '' }}" href="{{ url_for('guide') }}"><span>📘</span> Hướng dẫn</a>
-            {% if (current_user.role == "admin" or current_user.admin_level in ["owner", "admin"]) %}<a class="{{ 'active' if request.endpoint == 'admin' else '' }}" href="{{ url_for('admin') }}"><span>⚙️</span> Admin</a>{% endif %}
+            {% if (current_user.role == "admin" or current_user.admin_level in ["owner", "admin"]) %}<a class="{{ 'active' if request.endpoint == 'admin' else '' }}" href="{{ url_for('admin') }}"><span>⚙️</span> Admin</a><a class="{{ 'active' if request.endpoint == 'admin_economy' else '' }}" href="{{ url_for('admin_economy') }}"><span>🪙</span> Zcoin & Gift Code</a>{% endif %}
             <a class="logout" href="{{ url_for('logout') }}"><span>↪</span> Đăng xuất</a>
         </nav>
 
@@ -76,7 +76,7 @@ function toggleTheme(){
     <main class="main player-main">
         <header class="player-topbar">
             <button class="sidebar-menu-button" type="button" onclick="document.body.classList.toggle('sidebar-open')">☰</button>
-            {% set page_titles = {'dashboard':'Dashboard','ranking':'Bảng xếp hạng','players':'Players','guide':'Hướng dẫn bắt đầu','matches':'Lịch sử trận đấu','profile':'Hồ sơ cá nhân','change_password':'Đổi mật khẩu','admin':'Quản trị hệ thống','rooms':'Phòng đấu','room_detail':'Phòng đấu','zcoin_wallet':'Ví Zcoin','zcoin_rewards':'Điểm danh & Gift Code'} %}
+            {% set page_titles = {'dashboard':'Dashboard','ranking':'Bảng xếp hạng','players':'Players','guide':'Hướng dẫn bắt đầu','matches':'Lịch sử trận đấu','profile':'Hồ sơ cá nhân','change_password':'Đổi mật khẩu','admin':'Quản trị hệ thống','rooms':'Phòng đấu','room_detail':'Phòng đấu','zcoin_wallet':'Ví Zcoin','zcoin_rewards':'Điểm danh & Gift Code','admin_economy':'Quản trị Zcoin & Gift Code'} %}
             <div class="topbar-copy"><strong>{{ page_titles.get(request.endpoint, APP_NAME) }}</strong><small>Chào {{ current_user.display_name }}, chúc bạn có một ngày thi đấu tốt!</small></div>
             <div id="adminAnnouncementMount" class="topbar-announcement-mount">
                 {% if active_announcement and system_features.announcements_enabled %}

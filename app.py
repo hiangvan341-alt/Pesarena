@@ -61,7 +61,7 @@ from modules.win_streaks import (
 load_dotenv()
 
 APP_NAME = "PES Arena – Bản Lĩnh Sân Cỏ"
-APP_VERSION = "Collap_V1.14.39_ADMIN_ZCOIN_TAB_FIX"
+APP_VERSION = "Collap_V1.14.39_ADMIN_ECONOMY_MODULE"
 DEFAULT_POINTS = 1000
 DEVICE_COOKIE_NAME = "rankzone_device_id"
 COOLDOWN_MINUTES = 3
@@ -533,11 +533,6 @@ def _admin_permissions(user):
 def has_admin_permission(user, permission_code: str) -> bool:
     if is_owner_user(user): return True
     if not is_admin_user(user): return False
-    # PES Arena hiện coi toàn bộ tài khoản Admin là quản trị viên đầy đủ
-    # đối với kinh tế Zcoin/Gift Code. Không để admin_permissions cũ làm ẩn tab
-    # hoặc chặn thao tác của một Admin hợp lệ.
-    if permission_code in {"zcoin_view", "zcoin_manage"}:
-        return True
     permissions = _admin_permissions(user)
     if permission_code in permissions: return permissions.get(permission_code) is True
     legacy = LEGACY_ADMIN_PERMISSION_FIELDS.get(permission_code)
@@ -5280,8 +5275,6 @@ for _service_module in (
     for _service_name in _service_module.EXPORTED_NAMES:
         globals()[_service_name] = getattr(_service_module, _service_name)
 
-build_zcoin_admin_context = _zcoin_module.build_admin_context
-build_gift_codes_admin_context = _gift_codes_module.build_admin_context
 
 # Route phòng đấu.
 from modules.room_access_routes import register_routes as _register_room_access_routes
@@ -5293,6 +5286,7 @@ from modules.zcoin import register_routes as _register_zcoin_routes
 from modules.profile import register_routes as _register_profile_routes
 from modules.daily_checkin import register_routes as _register_daily_checkin_routes
 from modules.gift_codes import register_routes as _register_gift_code_routes
+from modules.admin_economy import register_routes as _register_admin_economy_routes
 
 # Route Admin.
 from modules.admin_system_routes import register_routes as _register_admin_system_routes
@@ -5312,6 +5306,7 @@ for _route_registrar in (
     _register_profile_routes,
     _register_daily_checkin_routes,
     _register_gift_code_routes,
+    _register_admin_economy_routes,
     _register_admin_system_routes,
     _register_admin_dashboard_routes,
     _register_admin_account_routes,
