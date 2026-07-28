@@ -61,7 +61,7 @@ from modules.win_streaks import (
 load_dotenv()
 
 APP_NAME = "PES Arena – Bản Lĩnh Sân Cỏ"
-APP_VERSION = "Collap_V1.14.38_ZCOIN_REWARDS_MODULE"
+APP_VERSION = "Collap_V1.14.39_ADMIN_ZCOIN_TAB_FIX"
 DEFAULT_POINTS = 1000
 DEVICE_COOKIE_NAME = "rankzone_device_id"
 COOLDOWN_MINUTES = 3
@@ -533,6 +533,11 @@ def _admin_permissions(user):
 def has_admin_permission(user, permission_code: str) -> bool:
     if is_owner_user(user): return True
     if not is_admin_user(user): return False
+    # PES Arena hiện coi toàn bộ tài khoản Admin là quản trị viên đầy đủ
+    # đối với kinh tế Zcoin/Gift Code. Không để admin_permissions cũ làm ẩn tab
+    # hoặc chặn thao tác của một Admin hợp lệ.
+    if permission_code in {"zcoin_view", "zcoin_manage"}:
+        return True
     permissions = _admin_permissions(user)
     if permission_code in permissions: return permissions.get(permission_code) is True
     legacy = LEGACY_ADMIN_PERMISSION_FIELDS.get(permission_code)

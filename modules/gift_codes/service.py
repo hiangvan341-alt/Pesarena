@@ -107,11 +107,12 @@ def create_gift_code(actor, form):
     duration_minutes = _safe_int(form.get("duration_minutes"), 120)
     note = str(form.get("note") or "").strip()
 
-    is_owner = is_owner_user(actor)
-    max_reward = 50_000 if is_owner else 2_000
+    # Mọi tài khoản Admin trong PES Arena đều có toàn quyền quản trị Zcoin.
+    max_reward = 50_000
+    max_total_redemptions = 100_000
     if reward_amount < 1 or reward_amount > max_reward:
-        raise ValueError(f"Giá trị mỗi lượt phải từ 1 đến {format_zcoin(max_reward)} Zcoin với quyền hiện tại.")
-    if max_redemptions < 1 or max_redemptions > (100_000 if is_owner else 2_000):
+        raise ValueError(f"Giá trị mỗi lượt phải từ 1 đến {format_zcoin(max_reward)} Zcoin.")
+    if max_redemptions < 1 or max_redemptions > max_total_redemptions:
         raise ValueError("Giới hạn lượt sử dụng không hợp lệ.")
     if per_user_limit < 1 or per_user_limit > 10:
         raise ValueError("Mỗi tài khoản chỉ được phép dùng từ 1 đến 10 lần.")

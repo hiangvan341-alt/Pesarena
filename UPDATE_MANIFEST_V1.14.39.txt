@@ -1,0 +1,19 @@
+Collap_V1.14.39_ADMIN_ZCOIN_TAB_FIX
+Baseline: Collap_V1.14.38_ZCOIN_REWARDS_MODULE
+
+THAY ĐỔI
+- Hiển thị tab Zcoin cho mọi tài khoản Admin hợp lệ.
+- Cho phép mọi Admin cộng/trừ Zcoin và tạo/bật/tắt Gift Code.
+- Đồng bộ giới hạn quản trị Zcoin/Gift Code giữa các Admin.
+- Không thay đổi quyền của player.
+
+SQL
+- KHÔNG cần chạy SQL.
+
+PHẠM VI FILE
+- app.py
+- modules/zcoin/routes.py
+- modules/gift_codes/service.py
+- templates/zcoin/_admin_panel.html
+- Log.md
+- UPDATE_MANIFEST_V1.14.39.txt
