@@ -16,6 +16,20 @@
 .admin-report-card span{display:block;font-size:.78rem;opacity:.72;text-transform:uppercase;letter-spacing:.05em}
 .admin-report-card strong{display:block;font-size:1.8rem;margin-top:5px}
 @media(max-width:800px){.admin-report-summary{grid-template-columns:repeat(2,minmax(0,1fr))}}
+
+.repeat-rp-layout{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:18px;margin-top:16px}
+.repeat-rp-card{padding:18px;border-radius:16px;background:rgba(15,23,42,.52);border:1px solid rgba(148,163,184,.18)}
+.repeat-rp-card h3{margin:0 0 6px;font-size:1.08rem}
+.repeat-rp-card p{margin:0 0 14px;color:rgba(226,232,240,.72);font-size:.92rem}
+.repeat-rp-grid{display:grid;grid-template-columns:1fr;gap:12px}
+.repeat-rp-grid label{display:flex;flex-direction:column;gap:6px}
+.repeat-rp-grid input{width:100%}
+.repeat-rp-grid small{color:rgba(226,232,240,.68)}
+.repeat-rp-actions{display:flex;align-items:center;gap:14px;flex-wrap:wrap;margin-top:16px}
+.repeat-rp-summary{margin-top:14px;padding:12px 14px;border-radius:12px;background:rgba(15,23,42,.36);border:1px solid rgba(148,163,184,.15)}
+.repeat-rp-summary-row{display:flex;gap:8px;flex-wrap:wrap;margin:4px 0}
+.repeat-rp-summary-label{min-width:92px;font-weight:800;color:#f8fafc}
+@media(max-width:900px){.repeat-rp-layout{grid-template-columns:1fr}}
 </style>
 <div class="admin-dashboard-heading">
     <div>
@@ -595,22 +609,42 @@
         <p class="muted">Điều chỉnh riêng phần RP người thắng được cộng và RP người thua bị trừ ở từng lần một người đánh bại cùng đối thủ trong ngày. Mỗi dãy hệ số phải giảm dần từ lần 1 đến lần 4.</p>
         {% set winner_factors = repeat_opponent_rp_config.get('winner_factors', [100, 60, 30, 0]) %}
         {% set loser_factors = repeat_opponent_rp_config.get('loser_factors', [100, 70, 40, 10]) %}
-        <form method="post" action="{{ url_for('admin_update_repeat_opponent_rp_config') }}" class="system-toggle-grid">
-            {% for index in range(4) %}
-            <label><span>Người thắng — lần {{ index + 1 }}{% if index == 3 %} trở đi{% endif %}</span>
-                <input type="number" name="winner_factor_{{ index + 1 }}" min="0" max="100" step="1" value="{{ winner_factors[index] }}" required>
-                <small class="muted">Phần trăm tổng RP thắng được cộng</small>
-            </label>
-            {% endfor %}
-            {% for index in range(4) %}
-            <label><span>Người thua — lần {{ index + 1 }}{% if index == 3 %} trở đi{% endif %}</span>
-                <input type="number" name="loser_factor_{{ index + 1 }}" min="0" max="100" step="1" value="{{ loser_factors[index] }}" required>
-                <small class="muted">Phần trăm RP thua thông thường bị trừ</small>
-            </label>
-            {% endfor %}
-            <button class="btn" type="submit">Lưu cả hai bộ hệ số</button>
+        <form method="post" action="{{ url_for('admin_update_repeat_opponent_rp_config') }}">
+            <div class="repeat-rp-layout">
+                <section class="repeat-rp-card">
+                    <h3>🏆 Hệ số thắng</h3>
+                    <p>Phần trăm tổng RP thắng được cộng cho người chiến thắng ở mỗi lần gặp lại cùng đối thủ.</p>
+                    <div class="repeat-rp-grid">
+                        {% for index in range(4) %}
+                        <label><span>Người thắng — lần {{ index + 1 }}{% if index == 3 %} trở đi{% endif %}</span>
+                            <input type="number" name="winner_factor_{{ index + 1 }}" min="0" max="100" step="1" value="{{ winner_factors[index] }}" required>
+                            <small>Phần trăm tổng RP thắng được cộng</small>
+                        </label>
+                        {% endfor %}
+                    </div>
+                </section>
+                <section class="repeat-rp-card">
+                    <h3>🛡️ Hệ số thua</h3>
+                    <p>Phần trăm RP thua thông thường bị trừ đối với người thua ở từng lần thua trước cùng đối thủ.</p>
+                    <div class="repeat-rp-grid">
+                        {% for index in range(4) %}
+                        <label><span>Người thua — lần {{ index + 1 }}{% if index == 3 %} trở đi{% endif %}</span>
+                            <input type="number" name="loser_factor_{{ index + 1 }}" min="0" max="100" step="1" value="{{ loser_factors[index] }}" required>
+                            <small>Phần trăm RP thua thông thường bị trừ</small>
+                        </label>
+                        {% endfor %}
+                    </div>
+                </section>
+            </div>
+            <div class="repeat-rp-actions">
+                <button class="btn" type="submit">Lưu cả hai bộ hệ số</button>
+            </div>
         </form>
-        <p class="small">Người thắng: <strong>{{ winner_factors|join('% → ') }}%</strong><br>Người thua: <strong>{{ loser_factors|join('% → ') }}%</strong>. Từ trận đối đầu thứ 7 vẫn không tính RP.</p>
+        <div class="repeat-rp-summary small">
+            <div class="repeat-rp-summary-row"><span class="repeat-rp-summary-label">Người thắng:</span><strong>{{ winner_factors|join('% → ') }}%</strong></div>
+            <div class="repeat-rp-summary-row"><span class="repeat-rp-summary-label">Người thua:</span><strong>{{ loser_factors|join('% → ') }}%</strong></div>
+            <div class="repeat-rp-summary-row"><span>Từ trận đối đầu thứ 7 vẫn không tính RP.</span></div>
+        </div>
     </div>
     <div class="panel">
         <h2>⚡ Giao diện nút Tìm Nhanh</h2>
