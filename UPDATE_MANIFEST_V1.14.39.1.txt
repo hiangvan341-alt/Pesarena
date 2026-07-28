@@ -1,0 +1,9 @@
+Collap_V1.14.39.1_ADMIN_ROUTE_FINAL_HOTFIX
+
+CHỈ 2 FILE CODE:
+- modules/admin_dashboard_routes.py
+- templates/admin.html
+
+Sửa đúng lỗi Production tại /admin do context Zcoin cũ còn sót lại.
+Quản trị Zcoin/Gift Code tiếp tục ở /admin/economy.
+Không cần SQL.

@@ -17,6 +17,8 @@ EXPORTED_NAMES = [
     "daily_rank_block_message",
     "assert_can_start_ranked_match",
     "apply_daily_positive_rp_cap",
+    "reset_user_daily_rank_games",
+    "get_user_daily_rank_reset",
 ]
 
 SETTING_KEY = "rank_daily_limits_config"
@@ -48,6 +50,88 @@ def _day_bounds_utc_iso(moment=None):
     return start_vn.astimezone(timezone.utc).isoformat(), end_vn.astimezone(timezone.utc).isoformat()
 
 
+
+
+def _load_daily_rank_config():
+    try:
+        result = execute_query(
+            db.table("system_settings").select("setting_value")
+            .eq("setting_key", SETTING_KEY).limit(1),
+            "get_rank_daily_limits_full_config",
+            attempts=2,
+        )
+        row = (result.data or [{}])[0]
+        raw = row.get("setting_value")
+        return dict(raw) if isinstance(raw, dict) else {}
+    except Exception as exc:
+        print(f"_load_daily_rank_config warning: {exc}")
+        return {}
+
+
+def get_user_daily_rank_reset(user_id, moment=None):
+    """Trả mốc reset lượt của người chơi nếu mốc đó thuộc ngày Việt Nam hiện tại."""
+    if not user_id:
+        return None
+    config = _load_daily_rank_config()
+    resets = config.get("user_game_resets") or {}
+    raw = resets.get(str(user_id)) if isinstance(resets, dict) else None
+    if not raw:
+        return None
+    try:
+        reset_dt = datetime.fromisoformat(str(raw).replace("Z", "+00:00"))
+        if reset_dt.tzinfo is None:
+            reset_dt = reset_dt.replace(tzinfo=timezone.utc)
+        current = moment or _now_vn()
+        if reset_dt.astimezone(VN_TZ).date() != current.astimezone(VN_TZ).date():
+            return None
+        return reset_dt.astimezone(timezone.utc)
+    except Exception:
+        return None
+
+
+def reset_user_daily_rank_games(user_id, actor_id=None):
+    """Đặt mốc đếm mới cho riêng số trận Rank hôm nay, không xóa lịch sử và không reset trần +150 RP."""
+    if not user_id:
+        raise ValueError("Thiếu người chơi cần reset.")
+    config = _load_daily_rank_config()
+    config.update({
+        "enabled": bool(config.get("enabled", True)),
+        "weekday_game_limit": WEEKDAY_GAME_LIMIT,
+        "weekend_game_limit": WEEKEND_GAME_LIMIT,
+        "daily_positive_rp_limit": DAILY_POSITIVE_RP_LIMIT,
+    })
+    resets = config.get("user_game_resets")
+    if not isinstance(resets, dict):
+        resets = {}
+    # Chỉ giữ mốc reset của ngày hiện tại để setting không phình theo thời gian.
+    today = _now_vn().date()
+    cleaned = {}
+    for key, value in resets.items():
+        try:
+            dt = datetime.fromisoformat(str(value).replace("Z", "+00:00"))
+            if dt.tzinfo is None:
+                dt = dt.replace(tzinfo=timezone.utc)
+            if dt.astimezone(VN_TZ).date() == today:
+                cleaned[str(key)] = dt.astimezone(timezone.utc).isoformat()
+        except Exception:
+            continue
+    reset_at = now_iso()
+    cleaned[str(user_id)] = reset_at
+    config["user_game_resets"] = cleaned
+    config["updated_by"] = actor_id
+    config["updated_at"] = reset_at
+    execute_query(
+        db.table("system_settings").upsert({
+            "setting_key": SETTING_KEY,
+            "setting_value": config,
+            "updated_at": reset_at,
+        }, on_conflict="setting_key"),
+        "reset_user_rank_daily_games",
+        attempts=2,
+    )
+    return {"user_id": str(user_id), "reset_at": reset_at, "game_limit": current_daily_game_limit()}
+
+
 def daily_rank_limits_enabled():
     try:
         result = execute_query(
@@ -68,11 +152,13 @@ def daily_rank_limits_enabled():
 
 
 def set_daily_rank_limits_enabled(enabled, actor_id=None):
+    current = _load_daily_rank_config()
     payload = {
         "enabled": bool(enabled),
         "weekday_game_limit": WEEKDAY_GAME_LIMIT,
         "weekend_game_limit": WEEKEND_GAME_LIMIT,
         "daily_positive_rp_limit": DAILY_POSITIVE_RP_LIMIT,
+        "user_game_resets": current.get("user_game_resets") or {},
         "updated_by": actor_id,
         "updated_at": now_iso(),
     }
@@ -121,7 +207,22 @@ def _is_counted_rank_match(match):
 
 
 def _ranked_matches_started_today(user_id):
-    return [match for match in _matches_today(user_id) if _is_counted_rank_match(match)]
+    reset_at = get_user_daily_rank_reset(user_id)
+    matches = []
+    for match in _matches_today(user_id):
+        if not _is_counted_rank_match(match):
+            continue
+        if reset_at:
+            try:
+                created = datetime.fromisoformat(str(match.get("created_at") or "").replace("Z", "+00:00"))
+                if created.tzinfo is None:
+                    created = created.replace(tzinfo=timezone.utc)
+                if created.astimezone(timezone.utc) < reset_at:
+                    continue
+            except Exception:
+                pass
+        matches.append(match)
+    return matches
 
 
 def ranked_games_today(user_id):

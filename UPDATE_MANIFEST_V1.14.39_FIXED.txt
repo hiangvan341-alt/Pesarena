@@ -1,0 +1,23 @@
+Collap_V1.14.39_ADMIN_ECONOMY_FIXED
+
+Baseline:
+- Collap_V1.14.38_ZCOIN_REWARDS_MODULE
+
+Phạm vi:
+- Tách quản trị Zcoin/Gift Code khỏi dashboard Admin chính.
+- Trang mới: /admin/economy
+- Mọi Admin hợp lệ có quyền; player bị chặn.
+- Không thay đổi schema/database.
+- Không cần chạy SQL.
+
+Nguyên nhân lỗi bản trước:
+- Endpoint admin_adjust_zcoin được đăng ký hai lần lúc Flask khởi động.
+- Một số file chuyển module không đồng bộ khiến /admin còn gọi context Zcoin cũ.
+
+Kiểm tra:
+- Python compile: PASS
+- App startup/import smoke test: PASS
+- Route scan: 119 route, không trùng URL/endpoint: PASS
+- Jinja templates: 39/39 PASS
+- JavaScript syntax: PASS
+- RP Engine RP_V1.14.2: PASS

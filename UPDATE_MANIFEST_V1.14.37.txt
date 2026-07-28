@@ -1,0 +1,18 @@
+Collap_V1.14.37_PROFILE_MODULE
+Baseline: Collap_V1.14.36_ZCOIN_UI_FIX
+
+Changed:
+- app.py
+- Log.md
+
+Added:
+- modules/profile/__init__.py
+- modules/profile/routes.py
+- modules/profile/service.py
+- modules/profile/repository.py
+- modules/profile/equipment_service.py
+- modules/profile/README.md
+- UPDATE_MANIFEST_V1.14.37.txt
+
+Database migration: NO
+Existing endpoints preserved: YES

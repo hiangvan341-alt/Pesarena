@@ -217,6 +217,40 @@ def register_routes(context):
         )
         return redirect_admin("system")
 
+    @app.route("/admin/system/rank-daily-limits/reset-user", methods=["POST"])
+    @login_required
+    @admin_required
+    @admin_permission_required("daily_rank_limits_manage")
+    def admin_reset_user_rank_daily_games():
+        if not daily_rank_limits_enabled():
+            flash("Hãy bật Giới hạn thi đấu Rank mỗi ngày trước khi reset lượt cho người chơi.", "danger")
+            return redirect_admin("system")
+        user_id = str(request.form.get("user_id") or "").strip()
+        target = get_user(user_id) if user_id else None
+        if not target:
+            flash("Không tìm thấy người chơi cần reset lượt Rank.", "danger")
+            return redirect_admin("system")
+        games_before = ranked_games_today(user_id)
+        result = reset_user_daily_rank_games(user_id, actor_id=(current_user() or {}).get("id"))
+        log_admin_action(
+            "Reset lượt thi đấu Rank trong ngày",
+            "user",
+            target_id=user_id,
+            details={
+                "display_name": target.get("display_name"),
+                "games_before": games_before,
+                "new_game_limit": result.get("game_limit"),
+                "reset_at": result.get("reset_at"),
+                "positive_rp_cap_reset": False,
+            },
+        )
+        flash(
+            f"Đã reset số trận Rank hôm nay của {target.get('display_name') or 'người chơi'}. "
+            f"Tài khoản có thể chơi lại tối đa {result.get('game_limit')} trận; trần +150 RP không được reset.",
+            "success",
+        )
+        return redirect_admin("system")
+
     RP_USER_FIELDS = (
         "id", "rank_points", "wins", "draws", "losses", "total_matches",
         "goals_for", "goals_against", "streak", "loss_streak",
