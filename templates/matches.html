@@ -48,7 +48,7 @@
             {% if m.is_mine %}<strong class="{{ 'positive' if m.my_delta > 0 else 'negative' if m.my_delta < 0 else '' }}">{{ "%+d"|format(m.my_delta) }} điểm</strong>
             {% else %}<strong>{{ "%+d"|format(m.left_delta or 0) }} / {{ "%+d"|format(m.right_delta or 0) }}</strong>{% endif %}
         {% else %}<strong>Không tính điểm</strong>{% endif %}
-        <small>{{ m.status_label }}</small>
+        <small>{{ m.status_label }}{% if m.is_no_rp_pair_match %} · Không tính RP (quá 6 trận/cặp){% endif %}</small>
     </div>
     {% if m.note and m.note != 'Đã xác nhận.' %}<div class="history-note">{{ m.note }}</div>{% endif %}
 </article>

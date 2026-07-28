@@ -921,6 +921,14 @@ def get_difficulty_factor(difficulty, won):
     return 1.00
 
 
+def _match_affects_streak(match):
+    details = (match or {}).get("rp_details") or {}
+    if not isinstance(details, dict):
+        return True
+    repeat = details.get("repeat_opponent") or {}
+    return not (isinstance(repeat, dict) and repeat.get("streak_eligible") is False)
+
+
 def get_current_loss_streak(user_id):
     """Đếm số trận thua liên tiếp gần nhất từ lịch sử đã xác nhận."""
     if not user_id or db is None:
@@ -928,7 +936,7 @@ def get_current_loss_streak(user_id):
     try:
         result = execute_query(
             db.table("matches")
-            .select("player1_id,player2_id,score1,score2,status,created_at")
+            .select("player1_id,player2_id,score1,score2,status,created_at,rp_details")
             .or_(f"player1_id.eq.{user_id},player2_id.eq.{user_id}")
             .eq("status", "confirmed")
             .order("created_at", desc=True)
@@ -942,6 +950,8 @@ def get_current_loss_streak(user_id):
 
     streak = 0
     for match in result.data or []:
+        if not _match_affects_streak(match):
+            continue
         score1 = _safe_int(match.get("score1"), -1)
         score2 = _safe_int(match.get("score2"), -1)
         if score1 < 0 or score2 < 0 or score1 == score2:
@@ -961,7 +971,7 @@ def get_loss_recovery_win_step(user_id):
     try:
         result = execute_query(
             db.table("matches")
-            .select("player1_id,player2_id,score1,score2,status,created_at")
+            .select("player1_id,player2_id,score1,score2,status,created_at,rp_details")
             .or_(f"player1_id.eq.{user_id},player2_id.eq.{user_id}")
             .eq("status", "confirmed")
             .order("created_at", desc=True)
@@ -973,6 +983,8 @@ def get_loss_recovery_win_step(user_id):
         return 0
     outcomes = []
     for match in result.data or []:
+        if not _match_affects_streak(match):
+            continue
         s1, s2 = _safe_int(match.get("score1"), -1), _safe_int(match.get("score2"), -1)
         if s1 < 0 or s2 < 0 or s1 == s2:
             break
@@ -2126,6 +2138,12 @@ def decorate_match_for_view(match, viewer_id=None):
     item["status_label"] = "Bỏ cuộc" if item["is_forfeit"] else match_status_label(item.get("status"))
     item["created_at_display"] = format_vn_datetime(item.get("created_at"))
     item["is_cancelled"] = item.get("status") == "cancelled"
+    rp_details = item.get("rp_details") or {}
+    repeat_details = rp_details.get("repeat_opponent") if isinstance(rp_details, dict) else {}
+    repeat_details = repeat_details if isinstance(repeat_details, dict) else {}
+    item["repeat_opponent_details"] = repeat_details
+    item["is_no_rp_pair_match"] = repeat_details.get("counted_for_rp") is False
+    item["repeat_encounter_number"] = repeat_details.get("encounter_number")
 
     score1 = _normalize_match_score(item.get("score1"))
     score2 = _normalize_match_score(item.get("score2"))
@@ -5485,12 +5503,14 @@ from modules import ranking_rebuild_service as _ranking_rebuild_service
 from modules import data_cleanup_service as _data_cleanup_service
 from modules import inactivity_rp_service as _inactivity_rp_service
 from modules import daily_rank_limit_service as _daily_rank_limit_service
+from modules import repeat_opponent_rp_service as _repeat_opponent_rp_service
 
 for _service_module in (
     _notification_service,
     _forfeit_history_service,
     _ranking_lock_service,
     _daily_rank_limit_service,
+    _repeat_opponent_rp_service,
     _match_result_service,
     _ranking_rebuild_service,
     _data_cleanup_service,

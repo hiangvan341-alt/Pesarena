@@ -47,6 +47,13 @@ def is_ranked_match_for_streak(match, room=None):
 def build_win_streak_event(match, room, users_before):
     if not is_ranked_match_for_streak(match, room):
         return None
+    if (match or {}).get("_streak_eligible") is False:
+        return None
+    details = (match or {}).get("rp_details") or {}
+    if isinstance(details, dict):
+        repeat = details.get("repeat_opponent") or {}
+        if isinstance(repeat, dict) and repeat.get("streak_eligible") is False:
+            return None
     winner_id = (match or {}).get("winner_id")
     loser_id = (match or {}).get("loser_id")
     if not winner_id or not loser_id:
