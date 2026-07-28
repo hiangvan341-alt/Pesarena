@@ -62,6 +62,53 @@
         </section>
 
         <section class="room-center-stage-plain" aria-label="Khu vực điều khiển trận đấu">
+            {% if room.status == "waiting_ready" and not room.friendly_random3_active %}
+            <div class="room-center-mode-zone">
+                <div class="room-center-mode-title">CHẾ ĐỘ THI ĐẤU</div>
+                {% set rematch_mode_locked = '__RANK_MODE_LOCKED__' in (room.note or '') %}
+                {% if rematch_mode_locked %}
+                <div class="room-center-mode-note">Đã chọn: <strong>{% if room.team_tier == 'random3_pick1' %}Random 3 chọn 1{% else %}Rank thường{% endif %}</strong>{% if room.has_guest %} • Chờ khách Sẵn sàng{% else %} • Mời đối thủ vào phòng{% endif %}</div>
+                {% elif room_room_viewer_is_host or current_user.role == "admin" %}
+                <div class="room-center-mode-actions">
+                    <form method="post" action="{{ url_for('room_select_ranked_mode', room_id=room.id) }}" data-room-async="1">
+                        <input type="hidden" name="rank_mode" value="smart_random">
+                        <button class="room-mode-select-btn mode-ranked {% if room.team_tier != 'random3_pick1' %}selected{% endif %}" type="submit">
+                            <strong>RANK THƯỜNG</strong><small>Random trực tiếp 1 CLB</small>
+                        </button>
+                    </form>
+                    {% if system_features.friendly_random3_enabled %}
+                    <form method="post" action="{{ url_for('room_select_ranked_mode', room_id=room.id) }}" data-room-async="1">
+                        <input type="hidden" name="rank_mode" value="random3_pick1">
+                        <button class="room-mode-select-btn mode-random3 {% if room.team_tier == 'random3_pick1' %}selected{% endif %}" type="submit">
+                            <strong>RANDOM 3 CHỌN 1</strong><small>Nhận 3 CLB theo Rank</small>
+                        </button>
+                    </form>
+                    {% endif %}
+                </div>
+                <div class="room-center-mode-note">Đã chọn: <strong>{% if room.team_tier == 'random3_pick1' %}Random 3 chọn 1{% else %}Rank thường{% endif %}</strong>{% if room.has_guest %} • Chờ khách Sẵn sàng{% else %} • Mời đối thủ vào phòng{% endif %}</div>
+                {% else %}
+                <div class="room-center-mode-note">Chủ phòng đã chọn <strong>{% if room.team_tier == 'random3_pick1' %}Random 3 chọn 1{% else %}Rank thường{% endif %}</strong></div>
+                {% endif %}
+            </div>
+            {% elif room.status == "waiting_ready" and room.friendly_random3_active %}
+            <div class="room-center-random3-zone">
+                <div class="room-center-mode-title">RANDOM 3 CHỌN 1</div>
+                {% set my_options = room.friendly_random3.host_options if room_room_viewer_is_host else room.friendly_random3.guest_options %}
+                {% set my_choice = room.friendly_random3.host_choice if room_room_viewer_is_host else room.friendly_random3.guest_choice %}
+                {% if my_choice is none %}
+                <div class="room-center-random3-grid">
+                    {% for team in my_options %}
+                    <form method="post" action="{{ url_for('room_choose_random3_friendly', room_id=room.id) }}" class="room-center-random3-card" data-room-async="1">
+                        <input type="hidden" name="choice_index" value="{{ loop.index0 }}">
+                        {% if team.logo %}<img src="{{ team.logo }}" alt="Logo {{ team.name }}">{% else %}<div class="friendly-random3-placeholder">?</div>{% endif %}
+                        <strong>{{ team.name }}</strong><button type="submit">CHỌN CLB</button>
+                    </form>
+                    {% endfor %}
+                </div>
+                {% else %}<div class="room-center-random3-locked">✓ Đã chọn đội — chờ đối thủ</div>{% endif %}
+            </div>
+            {% endif %}
+
             {% if room.has_guest %}
                 {% if room.status == 'waiting_ready' %}
                 <div class="room-center-countdown-label">Thời gian còn lại để bắt đầu</div>
@@ -111,12 +158,9 @@
                         <div class="room-result-waiting">Đang chờ sân khách xác nhận</div>
                         {% endif %}
                     </div>
-                    {% if room_viewer_is_host %}
+                    {% if room_room_viewer_is_host %}
                     <div class="room-center-primary-actions room-post-result-actions room-action-zone is-post-result">
-                        <form method="post" action="{{ url_for('room_post_result_next', room_id=room.id) }}">
-                            <button class="btn gold room-center-action-btn" type="submit">Đá Tiếp</button>
-                        </form>
-                        <form class="room-exit-confirm-form" method="post" action="{{ url_for('room_post_result_exit', room_id=room.id) }}"
+<form class="room-exit-confirm-form" method="post" action="{{ url_for('room_post_result_exit', room_id=room.id) }}"
                               data-modal-tone="safe"
                               data-modal-icon="🚪"
                               data-modal-title="Thoát an toàn"
@@ -125,6 +169,7 @@
                               data-modal-confirm-label="Thoát và về sảnh">
                             <button class="btn red room-center-action-btn" type="submit">Thoát Phòng</button>
                         </form>
+
                     </div>
                     {% endif %}
                 {% else %}
@@ -146,13 +191,31 @@
                                 <button class="btn green room-submit-result-btn" type="submit">Gửi Kết Quả</button>
                             </form>
                         </div>
+                    {% elif room.status == 'playing' and room.match_mode != 'friendly' and room_viewer_is_guest %}
+                        <div class="room-center-primary-actions room-action-zone">
+                            <form class="room-exit-confirm-form" method="post" action="{{ url_for('room_guest_forfeit', room_id=room.id) }}"
+                                  data-modal-tone="danger"
+                                  data-modal-icon="⚠"
+                                  data-modal-title="Xác nhận bỏ cuộc"
+                                  data-modal-message="Trận đấu chưa kết thúc. Thoát phòng lúc này sẽ bị tính là bỏ cuộc và hệ thống trừ 20 RP."
+                                  data-modal-note="−20 RP"
+                                  data-modal-confirm-label="Bỏ cuộc và thoát">
+                                <button class="btn red room-center-action-btn" type="submit">Thoát Phòng</button>
+                            </form>
+                        </div>
                     {% elif room.status == 'waiting_ready' and not room.friendly_random3_active %}
-                        {% if (room_room_viewer_is_host or current_user.role == 'admin') and room.guest_ready %}
-                        <form class="room-center-random-form" method="post" action="{{ url_for('room_random_teams', room_id=room.id) }}" onsubmit="const b=this.querySelector('button'); b.disabled=true; b.classList.add('loading');">
-                            <input type="hidden" name="match_mode" value="ranked">
-                            <button class="room-center-random-trigger" type="submit">
-                                <span class="room-center-random-title room-random-button-label">QUAY RANDOM ĐỘI</span>
-                                <span class="room-center-random-sub">Nhấn để đổi đội ngẫu nhiên cho cả hai bên</span>
+                        {% if daily_rank_limit_blocked %}
+                        <div class="room-limit-warning">
+                            <strong>ĐÃ ĐỦ GIỚI HẠN TRẬN RANK HÔM NAY</strong>
+                            <span>{{ daily_rank_limit_message }}</span>
+                        </div>
+                        {% endif %}
+                        {% if (room_room_viewer_is_host or current_user.role == 'admin') and room.guest_ready and not daily_rank_limit_blocked %}
+                        <form class="room-center-random-form" method="post" action="{% if room.team_tier == 'random3_pick1' %}{{ url_for('room_start_random3_friendly', room_id=room.id) }}{% else %}{{ url_for('room_random_teams', room_id=room.id) }}{% endif %}" onsubmit="const b=this.querySelector('button'); b.disabled=true; b.classList.add('loading');">
+                            {% if room.team_tier != 'random3_pick1' %}<input type="hidden" name="match_mode" value="ranked">{% endif %}
+                            <button class="room-center-random-trigger {% if room.team_tier == 'random3_pick1' %}random3-trigger{% endif %}" type="submit">
+                                <span class="room-center-random-title room-random-button-label">QUAY QUÂN</span>
+                                <span class="room-center-random-sub">{% if room.team_tier == 'random3_pick1' %}Random 3 CLB cho mỗi người{% else %}Random trực tiếp 1 CLB cho mỗi bên{% endif %}</span>
                             </button>
                         </form>
                         {% else %}
@@ -163,7 +226,7 @@
                         {% endif %}
                         {% if room_viewer_is_guest %}
                         <div class="room-center-primary-actions room-action-zone">
-                            {% if not room.guest_ready %}
+                            {% if not room.guest_ready and not daily_rank_limit_blocked %}
                             <form method="post" action="{{ url_for('room_guest_ready', room_id=room.id) }}">
                                 <button class="btn green room-center-action-btn" type="submit">Sẵn Sàng</button>
                             </form>
@@ -172,7 +235,7 @@
                                 <button class="btn gray room-center-action-btn" type="submit">Hủy Sẵn Sàng</button>
                             </form>
                             {% endif %}
-                            {% if room.guest_ready %}
+                            {% if room.guest_ready and not daily_rank_limit_blocked %}
                             <form class="room-exit-confirm-form" method="post" action="{{ url_for('room_guest_forfeit', room_id=room.id) }}"
                                   data-modal-tone="danger"
                                   data-modal-icon="⚠"
@@ -196,7 +259,7 @@
                         </div>
                         {% elif room_room_viewer_is_host %}
                         <div class="room-center-primary-actions room-action-zone">
-                            {% if room.guest_ready %}
+                            {% if room.guest_ready and not daily_rank_limit_blocked %}
                             <form class="room-exit-confirm-form" method="post" action="{{ url_for('room_host_forfeit', room_id=room.id) }}"
                                   data-modal-tone="danger"
                                   data-modal-icon="⚠"
@@ -222,9 +285,6 @@
                     {% else %}
                         {% if room.status in ['waiting_result_confirm', 'disputed'] and room_room_viewer_is_host %}
                         <div class="room-center-primary-actions room-action-zone">
-                            <form method="post" action="{{ url_for('room_post_result_next', room_id=room.id) }}">
-                                <button class="btn gold room-center-action-btn" type="submit">Đá Tiếp</button>
-                            </form>
                             <form class="room-exit-confirm-form" method="post" action="{{ url_for('room_post_result_exit', room_id=room.id) }}"
                                   data-modal-tone="safe"
                                   data-modal-icon="🚪"
@@ -235,7 +295,7 @@
                                 <button class="btn red room-center-action-btn" type="submit">Thoát Phòng</button>
                             </form>
                         </div>
-                        {% elif room.status == 'confirmed' and room_room_viewer_is_host or room_viewer_is_guest %}
+                        {% elif room.status == 'confirmed' and (room_room_viewer_is_host or room_viewer_is_guest) %}
                         {% set current_has_rematch_ready = (room_room_viewer_is_host and room.rematch_host_ready) or (room_viewer_is_guest and room.rematch_guest_ready) %}
                         <div class="room-center-primary-actions room-action-zone">
                             <form method="post" action="{{ url_for('room_rematch', room_id=room.id) }}">
@@ -259,6 +319,14 @@
             {% else %}
                 <img class="room-center-vs-image" src="{{ url_for('static', filename='vs.png') }}" alt="VS" loading="eager">
                 {% if room_room_viewer_is_host or current_user.role == 'admin' %}
+                <div class="room-quick-match-row room-action-zone">
+                    {% if system_features.get('quick_match_enabled', true) %}
+                    <button class="btn room-center-action-btn room-quick-match-btn room-quick-match-{{ quick_match_config.get('color', 'blue') }}" type="button"
+                            data-quick-match-url="{{ url_for('quick_match_invite') }}">
+                        <span class="quick-match-icon">⚡</span><span class="quick-match-label">TÌM NHANH</span>
+                    </button>
+                    {% endif %}
+                </div>
                 <div class="room-center-primary-actions room-action-zone">
                     <a class="btn gold room-center-action-btn" href="{{ url_for('players') }}">Mời Đấu</a>
                     <form class="room-exit-confirm-form" method="post" action="{{ url_for('room_leave', room_id=room.id) }}"
@@ -366,46 +434,12 @@
     <div class="panel room-extra-controls">
     <h2 class="room-control-title">Điều khiển phòng</h2>
 
-    {% if system_features.friendly_random3_enabled and room.status == "waiting_ready" and room.friendly_random3_active %}
-    <div class="friendly-random3-panel">
-        <h3>🎯 Random 3 chọn 1</h3>
-        <p>Chỉ bạn nhìn thấy 3 CLB của mình. Lựa chọn của đối thủ được giữ kín cho tới khi cả hai chọn xong.</p>
-        {% set my_side = 'host' if room_room_viewer_is_host else 'guest' %}
-        {% set my_options = room.friendly_random3.host_options if room_room_viewer_is_host else room.friendly_random3.guest_options %}
-        {% set my_choice = room.friendly_random3.host_choice if room_room_viewer_is_host else room.friendly_random3.guest_choice %}
-        {% if room_room_viewer_is_host or room_viewer_is_guest %}
-            {% if my_choice is none %}
-            <div class="friendly-random3-grid">
-                {% for team in my_options %}
-                <form method="post" action="{{ url_for('room_choose_random3_friendly', room_id=room.id) }}" class="friendly-random3-card" data-room-async="1">
-                    <input type="hidden" name="choice_index" value="{{ loop.index0 }}">
-                    {% if team.logo %}<img src="{{ team.logo }}" alt="Logo {{ team.name }}">{% else %}<div class="friendly-random3-placeholder">?</div>{% endif %}
-                    <strong>{{ team.name }}</strong><span>{{ team.league or 'Chưa rõ giải' }}</span><small>{{ team.total_stats }} điểm • OVR {{ team.overall }}</small>
-                    <button class="btn green" type="submit">Chọn CLB này</button>
-                </form>
-                {% endfor %}
-            </div>
-            {% else %}
-            <div class="friendly-random3-waiting">✅ Bạn đã khóa lựa chọn. Đang chờ đối thủ chọn...</div>
-            {% endif %}
-        {% endif %}
-    </div>
-    {% endif %}
-
     {% if (system_features.friendly_enabled or system_features.friendly_random3_enabled) and room.status == "waiting_ready" %}
 
         {% if room_room_viewer_is_host or current_user.role == "admin" %}
             {% if room.has_guest %}
             <div class="room-mode-grid">
 
-
-                {% if system_features.friendly_random3_enabled %}
-                <form method="post" action="{{ url_for('room_start_random3_friendly', room_id=room.id) }}" class="room-mode-card random3-mode-card" data-room-async="1" onsubmit="const b=this.querySelector('button'); b.disabled=true; b.textContent='Đang chia 3 CLB...';">
-                    <h3>🎯 Random 3 chọn 1</h3>
-                    <p class="small">Hệ thống tự quay CLB trong nhóm Tier S+, S và A+. Mỗi người nhận 3 CLB riêng để chọn 1. Kết quả được tính RP và lưu lịch sử.</p>
-                    <button class="btn gold" type="submit" {% if not room.guest_ready %}disabled{% endif %}>🎲 Chia 3 CLB S+ / S / A+</button>
-                </form>
-                {% endif %}
                 {% if system_features.friendly_enabled %}
                 <form method="post" action="{{ url_for('room_random_teams', room_id=room.id) }}" class="room-mode-card" onsubmit="const b=this.querySelector('button'); b.disabled=true; b.textContent='Đang quay đội...';">
                     <input type="hidden" name="match_mode" value="friendly">

@@ -16,7 +16,7 @@
     </div>
     <div class="admin-heading-actions">
         <a class="btn gray" href="{{ url_for('dashboard') }}">⌂ Trang người chơi</a>
-        {% if can_admin('system_features_manage') or can_admin('announcements_manage') %}<a class="btn" href="#system">⚙ Cài đặt hệ thống</a>{% endif %}
+        {% if can_admin('system_features_manage') or can_admin('announcements_manage') or can_admin('daily_rank_limits_manage') %}<a class="btn" href="#system">⚙ Cài đặt hệ thống</a>{% endif %}
     </div>
 </div>
 
@@ -42,7 +42,7 @@
     <button class="admin-tab-button" type="button" data-admin-tab="rooms">🚪 Phòng & lời mời</button>
     {% if can_admin('matches_view') %}<button class="admin-tab-button" type="button" data-admin-tab="matches">🎮 Trận đấu</button>{% endif %}
 {% if can_create_test_account or can_import_accounts_csv %}<button class="admin-tab-button" type="button" data-admin-tab="test-data">🧪 Tài khoản test & Import</button>{% endif %}
-    {% if can_admin('system_features_manage') or can_admin('announcements_manage') %}<button class="admin-tab-button" type="button" data-admin-tab="system">⚙️ Hệ thống</button>{% endif %}
+    {% if can_admin('system_features_manage') or can_admin('announcements_manage') or can_admin('daily_rank_limits_manage') %}<button class="admin-tab-button" type="button" data-admin-tab="system">⚙️ Hệ thống</button>{% endif %}
     {% if can_admin('rp_view') %}<button class="admin-tab-button" type="button" data-admin-tab="rp-tools">📈 Công cụ RP</button>{% endif %}
     {% if can_admin('admin_logs_view') %}<button class="admin-tab-button" type="button" data-admin-tab="logs">🧾 Nhật ký</button>{% endif %}
 </div>
@@ -480,10 +480,24 @@
 </section>
 {% endif %}
 
-{% if can_admin('system_features_manage') or can_admin('announcements_manage') %}
+{% if can_admin('system_features_manage') or can_admin('announcements_manage') or can_admin('daily_rank_limits_manage') %}
 <section class="admin-tab-panel" data-admin-panel="system">
+    {% if can_admin('daily_rank_limits_manage') %}
+    <div class="panel">
+        <h2>🏆 Giới hạn thi đấu Rank mỗi ngày</h2>
+        <p class="muted">Mỗi người tối đa 10 trận Rank từ Thứ 2 đến Thứ 6; riêng Thứ 7 và Chủ nhật tối đa 15 trận. Mức cộng tối đa vẫn là 150 RP/ngày; RP bị trừ khi thua vẫn tính bình thường.</p>
+        <form method="post" action="{{ url_for('admin_update_rank_daily_limits') }}" class="system-toggle-grid">
+            <label class="admin-permission-option">
+                <span><strong>Bật giới hạn Rank ngày</strong><small style="display:block">Ngày thường 10 trận • Cuối tuần 15 trận • Làm mới lúc 00:00 giờ Việt Nam</small></span>
+                <span class="admin-switch"><input type="checkbox" name="enabled" value="1" {% if rank_daily_limits_enabled %}checked{% endif %}><span class="admin-switch-track"></span></span>
+            </label>
+            <button class="btn" type="submit">Lưu giới hạn Rank</button>
+        </form>
+    </div>
+    {% endif %}
+
     {% if can_admin('system_features_manage') %}
-    <div class="panel"><h2>🎛️ Bật/tắt tính năng hệ thống</h2><form method="post" action="{{ url_for('admin_update_system_features') }}" class="system-toggle-grid">{% for key,label in {'friendly_enabled':'Giao hữu thường','friendly_random3_enabled':'Random 3 chọn 1','lobby_chat_enabled':'Chat Sảnh','room_chat_enabled':'Chat Phòng','registration_codes_enabled':'Mã đăng ký','announcements_enabled':'Thông báo','match_history_all_enabled':'Xem lịch sử toàn hệ thống'}.items() %}<label class="admin-permission-option"><span>{{ label }}</span><span class="admin-switch"><input type="checkbox" name="{{ key }}" value="1" {% if system_features.get(key) %}checked{% endif %}><span class="admin-switch-track"></span></span></label>{% endfor %}
+    <div class="panel"><h2>🎛️ Bật/tắt tính năng hệ thống</h2><form method="post" action="{{ url_for('admin_update_system_features') }}" class="system-toggle-grid">{% for key,label in {'friendly_enabled':'Giao hữu thường','friendly_random3_enabled':'Random 3 chọn 1','lobby_chat_enabled':'Chat Sảnh','room_chat_enabled':'Chat Phòng','registration_codes_enabled':'Mã đăng ký','announcements_enabled':'Thông báo','quick_match_enabled':'Tìm Nhanh','match_history_all_enabled':'Xem lịch sử toàn hệ thống'}.items() %}<label class="admin-permission-option"><span>{{ label }}</span><span class="admin-switch"><input type="checkbox" name="{{ key }}" value="1" {% if system_features.get(key) %}checked{% endif %}><span class="admin-switch-track"></span></span></label>{% endfor %}
 <label class="admin-permission-option admin-public-ranking-option">
     <span>BXH công khai (không cần đăng nhập)</span>
     <span class="admin-switch">
@@ -492,6 +506,19 @@
     </span>
 </label>
 <button class="btn green" type="submit">Lưu cài đặt</button></form></div>
+    <div class="panel">
+        <h2>⚡ Giao diện nút Tìm Nhanh</h2>
+        <p class="muted">Chọn màu nổi bật cho nút Tìm Nhanh trong phòng đấu.</p>
+        <form method="post" action="{{ url_for('admin_update_quick_match') }}" class="system-toggle-grid">
+            <label><span>Màu nút</span>
+                <select name="color">
+                    <option value="blue" {% if quick_match_config.get('color') == 'blue' %}selected{% endif %}>Xanh dương sáng</option>
+                    <option value="green" {% if quick_match_config.get('color') == 'green' %}selected{% endif %}>Xanh lá sáng</option>
+                </select>
+            </label>
+            <button class="btn" type="submit">Lưu màu nút</button>
+        </form>
+    </div>
     {% endif %}
     {% if can_admin('announcements_manage') %}
     <div class="panel">

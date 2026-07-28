@@ -328,7 +328,7 @@ function checkActiveRoom() {
 
 let pendingInvitesRequestPromise = null;
 function checkPendingInvites() {
-    if (document.hidden || window.location.pathname.startsWith("/room/")) return Promise.resolve();
+    if (document.hidden) return Promise.resolve();
 
     const task = function () {
         return fetch("{{ url_for('api_pending_invites') }}", {
@@ -919,12 +919,13 @@ window.addEventListener("DOMContentLoaded", function () {
         jitter: 5000
     });
 
-    // Trong phòng đã có đủ hai người; Lịch sử/Hướng dẫn không cần dò lời mời.
-    if (!isRoomPage && !isPassivePage) {
+    // Lời mời phải xuất hiện cả khi người chơi đang đứng một mình trong phòng đấu.
+    // Backend vẫn chặn nhận lời nếu phòng hiện tại đã đủ hai người hoặc đang thi đấu.
+    if (!isPassivePage) {
         PESNet.createPoller({
             key: "pending-invites",
             task: checkPendingInvites,
-            visibleInterval: isPlayersPage || isRankingPage ? 15000 : 20000,
+            visibleInterval: isRoomPage ? 10000 : (isPlayersPage || isRankingPage ? 15000 : 20000),
             hiddenInterval: 60000,
             runWhenHidden: false,
             immediate: true,
@@ -1009,6 +1010,39 @@ window.addEventListener("DOMContentLoaded", function () {
     }
     tick();
     window.setInterval(tick, 1000);
+})();
+</script>
+
+<script>
+(function(){
+  document.addEventListener('click', async function(event){
+    const button = event.target.closest('[data-quick-match-url]');
+    if (!button || button.disabled) return;
+    const label = button.querySelector('.quick-match-label');
+    const icon = button.querySelector('.quick-match-icon');
+    const original = label ? label.textContent : 'TÌM NHANH';
+    button.disabled = true;
+    button.classList.add('is-searching');
+    if (icon) icon.textContent = '⏳';
+    if (label) label.textContent = 'ĐANG TÌM ĐỐI THỦ...';
+    try {
+      const response = await fetch(button.dataset.quickMatchUrl, {method:'POST', headers:{'X-Requested-With':'XMLHttpRequest','Accept':'application/json'}});
+      const data = await response.json().catch(function(){ return {}; });
+      if (!response.ok || !data.ok) throw new Error(data.message || 'Không thể tìm đối thủ lúc này.');
+      button.classList.remove('is-searching');
+      button.classList.add('is-sent');
+      if (icon) icon.textContent = '✓';
+      if (label) label.textContent = 'ĐÃ GỬI LỜI MỜI';
+      if (window.showToast) window.showToast(data.message || 'Đã gửi lời mời.', 'success');
+      setTimeout(function(){ window.location.reload(); }, 1200);
+    } catch (error) {
+      button.classList.remove('is-searching');
+      button.disabled = false;
+      if (icon) icon.textContent = '⚡';
+      if (label) label.textContent = original;
+      if (window.showToast) window.showToast(error.message, 'warning'); else alert(error.message);
+    }
+  });
 })();
 </script>
 </body>

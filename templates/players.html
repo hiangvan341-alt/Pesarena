@@ -36,7 +36,7 @@
             <td><a class="player-link player-with-avatar" href="{{ url_for('profile', user_id=p.id) }}">{{ player_avatar(p, size='sm') }}<span class="player-name-stack"><strong>{{ p.display_name }}</strong>{% if p.username != p.display_name %}<small>@{{ p.username }}</small>{% endif %}{% set player_streak_badge = get_win_streak_badge(p.streak or 0) %}{% if player_streak_badge %}<span class="win-streak-badge compact players-win-streak-badge">🔥 <strong>{{ player_streak_badge.title }}</strong> · {{ player_streak_badge.count }}</span>{% endif %}</span></a></td>
 <td class="action-cell">
                 <a class="btn gray small" href="{{ url_for('profile', user_id=p.id) }}">Hồ sơ</a>
-                {% if p.id != current_user.id and p.activity_code == 'ready' %}
+                {% if p.id != current_user.id and viewer_can_invite and p.can_receive_invite %}
                 <form class="inline-form" method="post" action="{{ url_for('send_invite') }}">
                     <input type="hidden" name="to_user_id" value="{{ p.id }}">
                     <input type="hidden" name="tier" value="Random">
