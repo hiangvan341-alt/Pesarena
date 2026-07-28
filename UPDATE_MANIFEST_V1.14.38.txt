@@ -1,0 +1,22 @@
+Collap_V1.14.38_ZCOIN_REWARDS_MODULE
+Baseline: Collap_V1.14.37_PROFILE_MODULE
+
+THAY ĐỔI
+- Tách module Điểm danh 7 ngày: modules/daily_checkin/.
+- Tách module Gift Code: modules/gift_codes/.
+- Thêm trang Điểm danh & Gift Code trong menu tài khoản.
+- Chu kỳ điểm danh: 100, 120, 150, 180, 220, 280, 450 Zcoin.
+- Gift Code có thời điểm bắt đầu, thời hạn, tổng lượt và giới hạn mỗi tài khoản.
+- Admin tạo/bật/tắt Gift Code trong tab Zcoin.
+- Hiệu ứng confetti/pháo hoa khi nhận Zcoin; không phát âm thanh.
+- Cộng Zcoin và ghi lịch sử được xử lý nguyên tử trong Supabase RPC.
+
+SQL
+- CÓ: docs/update_zcoin_rewards_v1_14_38.sql
+- Không xóa bảng hoặc dữ liệu.
+- Tận dụng daily_checkins, gift_codes, gift_code_redemptions hiện có.
+
+KHÔNG BAO GỒM
+- Cửa hàng và Kho đồ.
+- Thưởng Zcoin theo trận.
+- Vật phẩm ảnh hưởng RP.

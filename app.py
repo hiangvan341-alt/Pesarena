@@ -61,7 +61,7 @@ from modules.win_streaks import (
 load_dotenv()
 
 APP_NAME = "PES Arena – Bản Lĩnh Sân Cỏ"
-APP_VERSION = "Collap_V1.14.37_PROFILE_MODULE"
+APP_VERSION = "Collap_V1.14.38_ZCOIN_REWARDS_MODULE"
 DEFAULT_POINTS = 1000
 DEVICE_COOKIE_NAME = "rankzone_device_id"
 COOLDOWN_MINUTES = 3
@@ -5254,6 +5254,8 @@ from modules import inactivity_rp_service as _inactivity_rp_service
 from modules import daily_rank_limit_service as _daily_rank_limit_service
 from modules import repeat_opponent_rp_service as _repeat_opponent_rp_service
 from modules import zcoin as _zcoin_module
+from modules import daily_checkin as _daily_checkin_module
+from modules import gift_codes as _gift_codes_module
 
 for _service_module in (
     _notification_service,
@@ -5262,6 +5264,8 @@ for _service_module in (
     _daily_rank_limit_service,
     _repeat_opponent_rp_service,
     _zcoin_module,
+    _daily_checkin_module,
+    _gift_codes_module,
     _match_result_service,
     _ranking_rebuild_service,
     _data_cleanup_service,
@@ -5272,6 +5276,7 @@ for _service_module in (
         globals()[_service_name] = getattr(_service_module, _service_name)
 
 build_zcoin_admin_context = _zcoin_module.build_admin_context
+build_gift_codes_admin_context = _gift_codes_module.build_admin_context
 
 # Route phòng đấu.
 from modules.room_access_routes import register_routes as _register_room_access_routes
@@ -5281,6 +5286,8 @@ from modules.room_result_routes import register_routes as _register_room_result_
 from modules.match_history_routes import register_routes as _register_match_history_routes
 from modules.zcoin import register_routes as _register_zcoin_routes
 from modules.profile import register_routes as _register_profile_routes
+from modules.daily_checkin import register_routes as _register_daily_checkin_routes
+from modules.gift_codes import register_routes as _register_gift_code_routes
 
 # Route Admin.
 from modules.admin_system_routes import register_routes as _register_admin_system_routes
@@ -5298,6 +5305,8 @@ for _route_registrar in (
     _register_match_history_routes,
     _register_zcoin_routes,
     _register_profile_routes,
+    _register_daily_checkin_routes,
+    _register_gift_code_routes,
     _register_admin_system_routes,
     _register_admin_dashboard_routes,
     _register_admin_account_routes,

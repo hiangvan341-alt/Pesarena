@@ -21,9 +21,11 @@
 - `templates/admin.html` (tab, phân quyền và panel): thêm khu vực quản trị Zcoin mà không làm mất cấu hình RP hiện tại.
 - Không chạy SQL; tiếp tục dùng `users.zcoin_balance`, `zcoin_transactions` và RPC `adjust_zcoin_balance` đã có trên Supabase.
 
-## Collap_V1.14.37_PROFILE_MODULE
-- Tách toàn bộ route Hồ sơ cá nhân khỏi `app.py` sang `modules/profile/`.
-- Tách xử lý avatar, tổng hợp dữ liệu hồ sơ và truy vấn cập nhật thành service/repository riêng.
-- Giữ nguyên endpoint, giao diện và dữ liệu hiện tại để tương thích ngược.
-- Thêm `equipment_service.py` làm điểm nối cho Shop/Kho đồ sau này, chưa yêu cầu schema mới.
-- Không cần chạy SQL.
+## Collap_V1.14.38_ZCOIN_REWARDS_MODULE
+- Tách `modules/daily_checkin/` và `modules/gift_codes/`; không đưa nghiệp vụ mới vào `app.py`.
+- Điểm danh 7 ngày nhận lần lượt 100 / 120 / 150 / 180 / 220 / 280 / 450 Zcoin.
+- Gift Code hỗ trợ thời gian bắt đầu, hết hạn theo phút/giờ/ngày, tổng lượt dùng và giới hạn mỗi tài khoản.
+- Admin quản lý Gift Code ngay trong tab Zcoin.
+- Member mở Điểm danh và Gift Code từ menu tài khoản.
+- Hiệu ứng nhận Zcoin dùng confetti, không phát âm thanh và chỉ chạy một lần.
+- Cần chạy `docs/update_zcoin_rewards_v1_14_38.sql`; SQL không xóa dữ liệu cũ.
