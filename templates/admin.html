@@ -1,3 +1,4 @@
+{# HOTFIX V1.14.39.1: legacy Zcoin tab removed; use /admin/economy #}
 {% extends "base.html" %}
 {% block content %}
 <style>
@@ -52,7 +53,6 @@
 {% if can_create_test_account or can_import_accounts_csv %}<button class="admin-tab-button" type="button" data-admin-tab="test-data">🧪 Tài khoản test & Import</button>{% endif %}
     {% if can_admin('system_features_manage') or can_admin('announcements_manage') or can_admin('daily_rank_limits_manage') %}<button class="admin-tab-button" type="button" data-admin-tab="system">⚙️ Hệ thống</button>{% endif %}
     {% if can_admin('rp_view') %}<button class="admin-tab-button" type="button" data-admin-tab="rp-tools">📈 Công cụ RP</button>{% endif %}
-    {% if can_view_zcoin %}<button class="admin-tab-button" type="button" data-admin-tab="zcoin">🪙 Zcoin</button>{% endif %}
     {% if can_admin('admin_logs_view') %}<button class="admin-tab-button" type="button" data-admin-tab="logs">🧾 Nhật ký</button>{% endif %}
 </div>
 
@@ -136,7 +136,6 @@
 </section>
 
 
-{% include "zcoin/_admin_panel.html" %}
 
 <section class="admin-tab-panel" data-admin-panel="passwords">
     <div class="panel admin-highlight">
