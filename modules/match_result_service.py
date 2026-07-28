@@ -157,15 +157,6 @@ def apply_match_result(match):
             if _safe_int(player2.get("total_matches")) < PLACEMENT_MATCHES:
                 delta2 = max(22, min(29, delta2))
 
-        # Giảm RP khi gặp lại cùng một đối thủ trong ngày. Quy tắc này được áp dụng
-        # sau toàn bộ công thức thắng hiện tại/ưu đãi Chủ phòng và trước trần +150 RP.
-        repeat_context = repeat_opponent_context(match)
-        delta1, delta2, repeat_details = apply_repeat_opponent_rules(
-            match, player1, player2, score1, score2, delta1, delta2,
-            context=repeat_context,
-        )
-        match["_streak_eligible"] = bool(repeat_details.get("streak_eligible", True))
-
         # Giới hạn RP dương theo ngày được áp dụng sau khi tính đủ công thức,
         # nhưng trước khi ghi điểm. RP âm khi thua không bị thay đổi.
         delta1, daily_cap1 = apply_daily_positive_rp_cap(
@@ -175,9 +166,8 @@ def apply_match_result(match):
             player2_id, delta2, exclude_match_id=match.get("id")
         )
 
-        affect_streak = bool(repeat_details.get("streak_eligible", True))
-        update_player_after_match(player1, delta1, score1, score2, affect_streak=affect_streak)
-        update_player_after_match(player2, delta2, score2, score1, affect_streak=affect_streak)
+        update_player_after_match(player1, delta1, score1, score2)
+        update_player_after_match(player2, delta2, score2, score1)
 
         execute_query(
             db.table("matches").update({
@@ -190,7 +180,6 @@ def apply_match_result(match):
                     "seed": f"{RP_RANDOM_SEED_NAMESPACE}|{match.get('id')}",
                     "delta1": int(delta1),
                     "delta2": int(delta2),
-                    "repeat_opponent": repeat_details,
                     "daily_rank_limits": {
                         "player1": daily_cap1,
                         "player2": daily_cap2,
@@ -362,7 +351,7 @@ def cancel_match_dispute(dispute, resolved_by_id, resolution_note=""):
     )
 
 
-def update_player_after_match(player, delta, goals_for, goals_against, affect_streak=True):
+def update_player_after_match(player, delta, goals_for, goals_against):
     win = 1 if goals_for > goals_against else 0
     draw = 1 if goals_for == goals_against else 0
     loss = 1 if goals_for < goals_against else 0
@@ -372,10 +361,7 @@ def update_player_after_match(player, delta, goals_for, goals_against, affect_st
     goals_against = _safe_int(goals_against)
     new_points = max(0, _safe_int(player.get("rank_points")) + delta)
     current_streak = int(player.get("streak", 0) or 0)
-    if affect_streak:
-        new_streak = current_streak + 1 if win else 0 if loss else current_streak
-    else:
-        new_streak = current_streak
+    new_streak = current_streak + 1 if win else 0 if loss else current_streak
 
     execute_query(
         db.table("users").update({

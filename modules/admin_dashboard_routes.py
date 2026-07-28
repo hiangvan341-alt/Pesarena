@@ -166,22 +166,6 @@ def register_routes(context):
         admins = [u for u in admin_users if is_admin_user(u)]
         pending_users = [u for u in players if u.get("account_status") == "pending"]
 
-        actor = current_user()
-        can_manage_zcoin = has_admin_permission(actor, "zcoin_manage")
-        can_view_zcoin = can_manage_zcoin or has_admin_permission(actor, "zcoin_view")
-        zcoin_transactions = (
-            admin_safe_load("zcoin_transactions", lambda: list_zcoin_transactions(limit=100), [])
-            if can_view_zcoin else []
-        )
-        zcoin_stats = build_zcoin_stats(players, zcoin_transactions) if can_view_zcoin else {
-            "circulating": 0,
-            "wallet_count": 0,
-            "highest_balance": 0,
-            "recent_issued": 0,
-            "recent_withdrawn": 0,
-        }
-        zcoin_adjustment_token = uuid.uuid4().hex if can_manage_zcoin else ""
-
         password_reset_requests = admin_safe_load(
             "password_resets", lambda: list_password_reset_requests("pending"), []
         )
@@ -237,10 +221,5 @@ def register_routes(context):
             maintenance_status=admin_safe_load("maintenance_status", get_maintenance_status, {"closed": False, "countdown": None}),
             match_report=match_report,
             match_report_daily=match_report_daily,
-            can_view_zcoin=can_view_zcoin,
-            can_manage_zcoin=can_manage_zcoin,
-            zcoin_transactions=zcoin_transactions,
-            zcoin_stats=zcoin_stats,
-            zcoin_adjustment_token=zcoin_adjustment_token,
         )
 

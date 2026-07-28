@@ -6,8 +6,8 @@ Supabase hoặc dữ liệu người dùng. Mọi thay đổi công thức RP ph
 """
 from __future__ import annotations
 
-RP_FORMULA_VERSION = "RP_V1.14.0"
-RP_FORMULA_NAME = "PES Arena RP – Giảm RP khi gặp lại cùng đối thủ"
+RP_FORMULA_VERSION = "RP_V1.13.0"
+RP_FORMULA_NAME = "PES Arena RP – Biến thiên có kiểm soát"
 RP_RANDOM_SEED_NAMESPACE = f"PES_ARENA|{RP_FORMULA_VERSION}"
 
 PLACEMENT_MATCHES = 10
@@ -63,12 +63,5 @@ def formula_summary() -> dict:
             "placement": list(PLACEMENT_LOSS_RANGE),
             "regular": list(REGULAR_LOSS_RANGE),
             "loss_streak_start": LOSS_STREAK_START,
-        },
-        "repeat_opponent": {
-            "winner_factors": [1.0, 0.6, 0.3, 0.0],
-            "fourth_plus_loser_factor": 0.5,
-            "pair_rp_match_limit": 6,
-            "draw_gap_bonus": 5,
-            "draw_gap_threshold": 500,
         },
     }

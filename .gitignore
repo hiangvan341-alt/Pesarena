@@ -19,4 +19,3 @@ venv/
 private/
 backups/
 user_data/
-.pytest_cache/
