@@ -62,7 +62,7 @@ from modules.win_streaks import (
 load_dotenv()
 
 APP_NAME = "PES Arena – Bản Lĩnh Sân Cỏ"
-APP_VERSION = "Collap_V1.14.28"
+APP_VERSION = "Collap_V1.14.33_ZCOIN_PHASE1_COMPAT"
 DEFAULT_POINTS = 1000
 DEVICE_COOKIE_NAME = "rankzone_device_id"
 COOLDOWN_MINUTES = 3
@@ -570,6 +570,7 @@ ADMIN_PERMISSION_GROUPS = {
     "operations": ["rooms_manage", "invites_manage", "announcements_manage"],
     "system": ["system_features_manage", "chat_manage", "friendly_manage", "registration_codes_manage", "admin_logs_view"],
     "rp": ["rp_view", "rp_simulate", "rp_backup_restore", "daily_rank_limits_manage"],
+    "economy": ["zcoin_view", "zcoin_manage"],
     "permissions": ["permissions_manage"],
 }
 ADMIN_PERMISSION_LABELS = {
@@ -581,7 +582,9 @@ ADMIN_PERMISSION_LABELS = {
     "announcements_manage":"Quản lý thông báo", "system_features_manage":"Bật/tắt tính năng hệ thống", "chat_manage":"Quản lý Chat", "friendly_manage":"Quản lý Giao hữu",
     "registration_codes_manage":"Quản lý mã đăng ký", "admin_logs_view":"Xem nhật ký Admin",
     "rp_view":"Xem công thức RP", "rp_simulate":"Tính thử RP",
-    "rp_backup_restore":"Backup/Khôi phục RP", "daily_rank_limits_manage":"Bật/tắt giới hạn Rank ngày", "permissions_manage":"Cấp/thu hồi quyền Admin",
+    "rp_backup_restore":"Backup/Khôi phục RP", "daily_rank_limits_manage":"Bật/tắt giới hạn Rank ngày",
+    "zcoin_view":"Xem ví và giao dịch Zcoin", "zcoin_manage":"Cộng/trừ Zcoin",
+    "permissions_manage":"Cấp/thu hồi quyền Admin",
 }
 LEGACY_ADMIN_PERMISSION_FIELDS = {
     "create_test_account": "admin_can_create_test_account",
@@ -921,6 +924,14 @@ def get_difficulty_factor(difficulty, won):
     return 1.00
 
 
+def _match_affects_streak(match):
+    details = (match or {}).get("rp_details") or {}
+    if not isinstance(details, dict):
+        return True
+    repeat = details.get("repeat_opponent") or {}
+    return not (isinstance(repeat, dict) and repeat.get("streak_eligible") is False)
+
+
 def get_current_loss_streak(user_id):
     """Đếm số trận thua liên tiếp gần nhất từ lịch sử đã xác nhận."""
     if not user_id or db is None:
@@ -928,7 +939,7 @@ def get_current_loss_streak(user_id):
     try:
         result = execute_query(
             db.table("matches")
-            .select("player1_id,player2_id,score1,score2,status,created_at")
+            .select("player1_id,player2_id,score1,score2,status,created_at,rp_details")
             .or_(f"player1_id.eq.{user_id},player2_id.eq.{user_id}")
             .eq("status", "confirmed")
             .order("created_at", desc=True)
@@ -942,6 +953,8 @@ def get_current_loss_streak(user_id):
 
     streak = 0
     for match in result.data or []:
+        if not _match_affects_streak(match):
+            continue
         score1 = _safe_int(match.get("score1"), -1)
         score2 = _safe_int(match.get("score2"), -1)
         if score1 < 0 or score2 < 0 or score1 == score2:
@@ -961,7 +974,7 @@ def get_loss_recovery_win_step(user_id):
     try:
         result = execute_query(
             db.table("matches")
-            .select("player1_id,player2_id,score1,score2,status,created_at")
+            .select("player1_id,player2_id,score1,score2,status,created_at,rp_details")
             .or_(f"player1_id.eq.{user_id},player2_id.eq.{user_id}")
             .eq("status", "confirmed")
             .order("created_at", desc=True)
@@ -973,6 +986,8 @@ def get_loss_recovery_win_step(user_id):
         return 0
     outcomes = []
     for match in result.data or []:
+        if not _match_affects_streak(match):
+            continue
         s1, s2 = _safe_int(match.get("score1"), -1), _safe_int(match.get("score2"), -1)
         if s1 < 0 or s2 < 0 or s1 == s2:
             break
@@ -2126,6 +2141,12 @@ def decorate_match_for_view(match, viewer_id=None):
     item["status_label"] = "Bỏ cuộc" if item["is_forfeit"] else match_status_label(item.get("status"))
     item["created_at_display"] = format_vn_datetime(item.get("created_at"))
     item["is_cancelled"] = item.get("status") == "cancelled"
+    rp_details = item.get("rp_details") or {}
+    repeat_details = rp_details.get("repeat_opponent") if isinstance(rp_details, dict) else {}
+    repeat_details = repeat_details if isinstance(repeat_details, dict) else {}
+    item["repeat_opponent_details"] = repeat_details
+    item["is_no_rp_pair_match"] = repeat_details.get("counted_for_rp") is False
+    item["repeat_encounter_number"] = repeat_details.get("encounter_number")
 
     score1 = _normalize_match_score(item.get("score1"))
     score2 = _normalize_match_score(item.get("score2"))
@@ -3121,6 +3142,7 @@ def current_user():
             session["role"] = user.get("role", "player")
             session["account_status"] = user.get("account_status", "approved")
             session["admin_level"] = user.get("admin_level", "none")
+            session["zcoin_balance"] = int(user.get("zcoin_balance") or 0)
             return cache_set("_rz_current_user", user)
     except Exception as exc:
         print(f"current_user warning: {exc}")
@@ -3134,6 +3156,7 @@ def current_user():
         "role": session.get("role", "player"),
         "account_status": session.get("account_status", "approved"),
         "admin_level": session.get("admin_level", "none"),
+        "zcoin_balance": int(session.get("zcoin_balance") or 0),
         "rank_points": 0,
         "is_online": True,
         "matchmaking_cooldown_until": None,
@@ -3510,6 +3533,7 @@ def admin_required(view):
                     session["role"] = user.get("role", "player")
                     session["account_status"] = user.get("account_status", "approved")
                     session["admin_level"] = user.get("admin_level", "none")
+                    session["zcoin_balance"] = int(user.get("zcoin_balance") or 0)
                     cache_set("_rz_current_user", user)
             except Exception as exc:
                 print(f"admin_required warning: {exc}")
@@ -3992,6 +4016,7 @@ def admin_login():
         session["role"] = user.get("role", "player")
         session["account_status"] = user.get("account_status", "approved")
         session["admin_level"] = user.get("admin_level", "none")
+        session["zcoin_balance"] = int(user.get("zcoin_balance") or 0)
         execute_query(
             db.table("users").update({"is_online": True, "last_seen_at": now_iso()}).eq("id", user["id"]),
             "admin_login_mark_online",
@@ -4044,6 +4069,7 @@ def login():
         session["role"] = user.get("role", "player")
         session["account_status"] = status
         session["admin_level"] = user.get("admin_level", "none")
+        session["zcoin_balance"] = int(user.get("zcoin_balance") or 0)
         # Tính RP không hoạt động trước khi cập nhật last_seen_at của lần đăng nhập mới.
         try:
             process_inactivity_for_user(user)
@@ -5485,12 +5511,16 @@ from modules import ranking_rebuild_service as _ranking_rebuild_service
 from modules import data_cleanup_service as _data_cleanup_service
 from modules import inactivity_rp_service as _inactivity_rp_service
 from modules import daily_rank_limit_service as _daily_rank_limit_service
+from modules import repeat_opponent_rp_service as _repeat_opponent_rp_service
+from modules import zcoin_service as _zcoin_service
 
 for _service_module in (
     _notification_service,
     _forfeit_history_service,
     _ranking_lock_service,
     _daily_rank_limit_service,
+    _repeat_opponent_rp_service,
+    _zcoin_service,
     _match_result_service,
     _ranking_rebuild_service,
     _data_cleanup_service,
@@ -5506,6 +5536,7 @@ from modules.room_rematch_routes import register_routes as _register_room_rematc
 from modules.room_team_routes import register_routes as _register_room_team_routes
 from modules.room_result_routes import register_routes as _register_room_result_routes
 from modules.match_history_routes import register_routes as _register_match_history_routes
+from modules.zcoin_routes import register_routes as _register_zcoin_routes
 
 # Route Admin.
 from modules.admin_system_routes import register_routes as _register_admin_system_routes
@@ -5521,6 +5552,7 @@ for _route_registrar in (
     _register_room_team_routes,
     _register_room_result_routes,
     _register_match_history_routes,
+    _register_zcoin_routes,
     _register_admin_system_routes,
     _register_admin_dashboard_routes,
     _register_admin_account_routes,

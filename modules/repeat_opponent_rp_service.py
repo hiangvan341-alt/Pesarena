@@ -1,0 +1,197 @@
+"""Quy tắc RP khi hai người gặp lại nhau trong cùng ngày Việt Nam."""
+from __future__ import annotations
+
+from datetime import datetime, timedelta, timezone
+import math
+
+EXPORTED_NAMES = [
+    "repeat_opponent_context",
+    "apply_repeat_opponent_rules",
+]
+
+VN_TZ = timezone(timedelta(hours=7))
+COUNTED_STATUSES = {"playing", "waiting_confirm", "processing_result", "disputed", "confirmed"}
+
+
+def configure(context):
+    globals().update(context)
+
+
+def _parse_dt(value):
+    try:
+        dt = datetime.fromisoformat(str(value or "").replace("Z", "+00:00"))
+        if dt.tzinfo is None:
+            dt = dt.replace(tzinfo=timezone.utc)
+        return dt
+    except Exception:
+        return datetime.now(timezone.utc)
+
+
+def _day_bounds(value):
+    current_vn = _parse_dt(value).astimezone(VN_TZ)
+    start_vn = current_vn.replace(hour=0, minute=0, second=0, microsecond=0)
+    end_vn = start_vn + timedelta(days=1)
+    return start_vn.astimezone(timezone.utc).isoformat(), end_vn.astimezone(timezone.utc).isoformat()
+
+
+def _pair_key(a, b):
+    return tuple(sorted((str(a or ""), str(b or ""))))
+
+
+def _is_counted(match):
+    status = str((match or {}).get("status") or "").lower()
+    if status in COUNTED_STATUSES:
+        return True
+    if status == "cancelled":
+        checker = globals().get("is_forfeit_match")
+        if callable(checker):
+            try:
+                return bool(checker(match))
+            except Exception:
+                pass
+        note = str((match or {}).get("note") or "").casefold()
+        return "[forfeit:" in note or "bỏ cuộc" in note
+    return False
+
+
+def _is_earlier(row, current):
+    return (str(row.get("created_at") or ""), str(row.get("id") or "")) < (
+        str(current.get("created_at") or ""), str(current.get("id") or "")
+    )
+
+
+def _winner_id(match):
+    winner = match.get("winner_id")
+    if winner:
+        return str(winner)
+    try:
+        s1, s2 = int(match.get("score1")), int(match.get("score2"))
+    except (TypeError, ValueError):
+        return ""
+    if s1 == s2:
+        return ""
+    return str(match.get("player1_id") if s1 > s2 else match.get("player2_id"))
+
+
+def _had_draw_bonus(match):
+    details = match.get("rp_details") or {}
+    if isinstance(details, dict):
+        repeat = details.get("repeat_opponent") or {}
+        if isinstance(repeat, dict) and repeat.get("draw_bonus_applied"):
+            return True
+    try:
+        return int(match.get("delta1") or 0) == 5 or int(match.get("delta2") or 0) == 5
+    except Exception:
+        return False
+
+
+def repeat_opponent_context(match):
+    """Đọc các trận trước đó của đúng cặp trong ngày của trận hiện tại."""
+    p1 = str((match or {}).get("player1_id") or "")
+    p2 = str((match or {}).get("player2_id") or "")
+    if not p1 or not p2:
+        return {"prior_encounters": 0, "wins": {p1: 0, p2: 0}, "draw_bonus_used": False}
+    start_iso, end_iso = _day_bounds(match.get("created_at"))
+    result = execute_query(
+        db.table("matches")
+        .select("id,player1_id,player2_id,score1,score2,winner_id,status,delta1,delta2,rp_details,note,created_at")
+        .gte("created_at", start_iso).lt("created_at", end_iso)
+        .or_(f"and(player1_id.eq.{p1},player2_id.eq.{p2}),and(player1_id.eq.{p2},player2_id.eq.{p1})"),
+        "repeat_opponent_daily_pair",
+        attempts=2,
+    )
+    pair = _pair_key(p1, p2)
+    prior = []
+    for row in result.data or []:
+        if str(row.get("id")) == str(match.get("id")):
+            continue
+        if _pair_key(row.get("player1_id"), row.get("player2_id")) != pair:
+            continue
+        if not _is_counted(row) or not _is_earlier(row, match):
+            continue
+        prior.append(row)
+    wins = {p1: 0, p2: 0}
+    draw_bonus_used = False
+    for row in prior:
+        winner = _winner_id(row)
+        if winner in wins:
+            wins[winner] += 1
+        if _had_draw_bonus(row):
+            draw_bonus_used = True
+    return {
+        "prior_encounters": len(prior),
+        "encounter_number": len(prior) + 1,
+        "wins": wins,
+        "draw_bonus_used": draw_bonus_used,
+    }
+
+
+def _round_scaled(value, factor):
+    sign = -1 if int(value) < 0 else 1
+    return sign * int(math.floor(abs(int(value)) * float(factor) + 0.5))
+
+
+def apply_repeat_opponent_rules(match, player1, player2, score1, score2, delta1, delta2, context=None):
+    """Áp dụng hệ số cặp đấu và trả delta + metadata điều khiển chuỗi."""
+    context = dict(context or repeat_opponent_context(match))
+    encounter = int(context.get("encounter_number") or 1)
+    p1, p2 = str(match.get("player1_id") or ""), str(match.get("player2_id") or "")
+    details = {
+        "encounter_number": encounter,
+        "prior_encounters": max(0, encounter - 1),
+        "counted_for_rp": encounter <= 6,
+        "streak_eligible": True,
+        "winner_repeat_win_number": None,
+        "winner_factor": None,
+        "loser_factor": 1.0,
+        "draw_bonus_applied": False,
+    }
+
+    if encounter >= 7:
+        details.update({"counted_for_rp": False, "streak_eligible": False, "reason": "pair_daily_limit"})
+        return 0, 0, details
+
+    if int(score1) == int(score2):
+        # Hòa giữ nguyên chuỗi thắng theo logic hiện tại; chuỗi thua vẫn kết thúc.
+        details["streak_eligible"] = True
+        rp1, rp2 = int(player1.get("rank_points") or 0), int(player2.get("rank_points") or 0)
+        if abs(rp1 - rp2) >= 500 and not context.get("draw_bonus_used"):
+            if rp1 < rp2:
+                delta1, delta2 = 5, 0
+            elif rp2 < rp1:
+                delta1, delta2 = 0, 5
+            else:
+                delta1, delta2 = 0, 0
+            details["draw_bonus_applied"] = bool(delta1 == 5 or delta2 == 5)
+        else:
+            delta1, delta2 = 0, 0
+        details["reason"] = "draw"
+        return int(delta1), int(delta2), details
+
+    p1_won = int(score1) > int(score2)
+    winner_id = p1 if p1_won else p2
+    repeat_win_number = int((context.get("wins") or {}).get(winner_id, 0)) + 1
+    details["winner_repeat_win_number"] = repeat_win_number
+
+    if repeat_win_number == 1:
+        factor = 1.0
+    elif repeat_win_number == 2:
+        factor = 0.6
+    elif repeat_win_number == 3:
+        factor = 0.3
+    else:
+        factor = 0.0
+        details["loser_factor"] = 0.5
+        details["streak_eligible"] = False
+
+    details["winner_factor"] = factor
+    if p1_won:
+        delta1 = _round_scaled(delta1, factor)
+        if repeat_win_number >= 4:
+            delta2 = _round_scaled(delta2, 0.5)
+    else:
+        delta2 = _round_scaled(delta2, factor)
+        if repeat_win_number >= 4:
+            delta1 = _round_scaled(delta1, 0.5)
+    details["reason"] = "repeat_win"
+    return int(delta1), int(delta2), details

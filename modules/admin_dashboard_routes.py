@@ -23,6 +23,134 @@ def register_routes(context):
 
         all_rooms = admin_safe_load("rooms", list_rooms, [])
         all_matches = admin_safe_load("matches", list_matches, [])
+
+        # Báo cáo số trận theo múi giờ Việt Nam. Dùng dữ liệu matches đã tải để
+        # tránh phát sinh thêm nhiều truy vấn và giữ kết quả thống nhất với tab Trận đấu.
+        from datetime import datetime, timedelta, timezone
+
+        vn_tz = timezone(timedelta(hours=7))
+        now_vn = datetime.now(vn_tz)
+        today_vn = now_vn.date()
+        report_range = str(request.args.get("match_report_range") or "today").strip().lower()
+        allowed_ranges = {"today", "yesterday", "3days", "7days", "30days", "all"}
+        if report_range not in allowed_ranges:
+            report_range = "today"
+
+        report_range_labels = {
+            "today": "Hôm nay",
+            "yesterday": "Hôm qua",
+            "3days": "3 ngày gần đây",
+            "7days": "1 tuần",
+            "30days": "1 tháng",
+            "all": "Toàn thời gian",
+        }
+
+        if report_range == "today":
+            report_start_date = report_end_date = today_vn
+        elif report_range == "yesterday":
+            report_start_date = report_end_date = today_vn - timedelta(days=1)
+        elif report_range == "3days":
+            report_start_date, report_end_date = today_vn - timedelta(days=2), today_vn
+        elif report_range == "7days":
+            report_start_date, report_end_date = today_vn - timedelta(days=6), today_vn
+        elif report_range == "30days":
+            report_start_date, report_end_date = today_vn - timedelta(days=29), today_vn
+        else:
+            report_start_date = report_end_date = None
+
+        def _match_vn_date(match):
+            raw = (match or {}).get("created_at")
+            if not raw:
+                return None
+            try:
+                value = str(raw).strip().replace("Z", "+00:00")
+                parsed = datetime.fromisoformat(value)
+                if parsed.tzinfo is None:
+                    parsed = parsed.replace(tzinfo=timezone.utc)
+                return parsed.astimezone(vn_tz).date()
+            except Exception:
+                return None
+
+        report_matches = []
+        for match in all_matches:
+            match_date = _match_vn_date(match)
+            if match_date is None:
+                continue
+            if report_start_date and not (report_start_date <= match_date <= report_end_date):
+                continue
+            row = dict(match)
+            row["_report_date"] = match_date
+            report_matches.append(row)
+
+        report_status_keys = ("playing", "waiting_confirm", "waiting_result_confirm", "disputed", "confirmed", "cancelled")
+        report_status_counts = {key: 0 for key in report_status_keys}
+        report_unique_players = set()
+        report_confirmed_goals = 0
+        report_positive_rp = 0
+        for match in report_matches:
+            status = str(match.get("status") or "").strip().lower()
+            if status in report_status_counts:
+                report_status_counts[status] += 1
+            for key in ("player1_id", "player2_id"):
+                if match.get(key):
+                    report_unique_players.add(str(match.get(key)))
+            if status == "confirmed":
+                report_confirmed_goals += int(match.get("score1") or 0) + int(match.get("score2") or 0)
+                report_positive_rp += max(0, int(match.get("delta1") or 0)) + max(0, int(match.get("delta2") or 0))
+
+        daily_map = {}
+        for match in report_matches:
+            day = match.get("_report_date")
+            if day is None:
+                continue
+            bucket = daily_map.setdefault(day, {
+                "date": day,
+                "total": 0,
+                "confirmed": 0,
+                "playing": 0,
+                "waiting": 0,
+                "disputed": 0,
+                "cancelled": 0,
+                "players": set(),
+            })
+            bucket["total"] += 1
+            status = str(match.get("status") or "").strip().lower()
+            if status == "confirmed":
+                bucket["confirmed"] += 1
+            elif status == "playing":
+                bucket["playing"] += 1
+            elif status in {"waiting_confirm", "waiting_result_confirm"}:
+                bucket["waiting"] += 1
+            elif status == "disputed":
+                bucket["disputed"] += 1
+            elif status == "cancelled":
+                bucket["cancelled"] += 1
+            for key in ("player1_id", "player2_id"):
+                if match.get(key):
+                    bucket["players"].add(str(match.get(key)))
+
+        match_report_daily = []
+        for day in sorted(daily_map.keys(), reverse=True):
+            bucket = daily_map[day]
+            bucket["player_count"] = len(bucket.pop("players"))
+            bucket["date_label"] = day.strftime("%d/%m/%Y")
+            match_report_daily.append(bucket)
+
+        match_report = {
+            "range": report_range,
+            "range_label": report_range_labels[report_range],
+            "range_labels": report_range_labels,
+            "total": len(report_matches),
+            "confirmed": report_status_counts.get("confirmed", 0),
+            "playing": report_status_counts.get("playing", 0),
+            "waiting": report_status_counts.get("waiting_confirm", 0) + report_status_counts.get("waiting_result_confirm", 0),
+            "disputed": report_status_counts.get("disputed", 0),
+            "cancelled": report_status_counts.get("cancelled", 0),
+            "unique_players": len(report_unique_players),
+            "confirmed_goals": report_confirmed_goals,
+            "positive_rp": report_positive_rp,
+        }
+
         raw_users = admin_safe_load("users", list_all_users, [])
         admin_users = admin_safe_load(
             "decorate_users", lambda: decorate_admin_users(raw_users), []
@@ -37,6 +165,22 @@ def register_routes(context):
         players = [u for u in admin_users if u.get("role") == "player"]
         admins = [u for u in admin_users if is_admin_user(u)]
         pending_users = [u for u in players if u.get("account_status") == "pending"]
+
+        actor = current_user()
+        can_manage_zcoin = has_admin_permission(actor, "zcoin_manage")
+        can_view_zcoin = can_manage_zcoin or has_admin_permission(actor, "zcoin_view")
+        zcoin_transactions = (
+            admin_safe_load("zcoin_transactions", lambda: list_zcoin_transactions(limit=100), [])
+            if can_view_zcoin else []
+        )
+        zcoin_stats = build_zcoin_stats(players, zcoin_transactions) if can_view_zcoin else {
+            "circulating": 0,
+            "wallet_count": 0,
+            "highest_balance": 0,
+            "recent_issued": 0,
+            "recent_withdrawn": 0,
+        }
+        zcoin_adjustment_token = uuid.uuid4().hex if can_manage_zcoin else ""
 
         password_reset_requests = admin_safe_load(
             "password_resets", lambda: list_password_reset_requests("pending"), []
@@ -91,5 +235,12 @@ def register_routes(context):
             system_features=admin_safe_load("system_features", get_system_features, dict(SYSTEM_FEATURE_DEFAULTS)),
             maintenance_config=admin_safe_load("maintenance_config", get_maintenance_config, _maintenance_default_config()),
             maintenance_status=admin_safe_load("maintenance_status", get_maintenance_status, {"closed": False, "countdown": None}),
+            match_report=match_report,
+            match_report_daily=match_report_daily,
+            can_view_zcoin=can_view_zcoin,
+            can_manage_zcoin=can_manage_zcoin,
+            zcoin_transactions=zcoin_transactions,
+            zcoin_stats=zcoin_stats,
+            zcoin_adjustment_token=zcoin_adjustment_token,
         )
 
