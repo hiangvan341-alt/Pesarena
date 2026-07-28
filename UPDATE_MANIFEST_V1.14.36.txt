@@ -1,0 +1,18 @@
+COLLAP V1.14.36 - ZCOIN UI FIX
+
+BASELINE: Collap_V1.14.35
+SQL REQUIRED: NO
+DATA RESET: NO
+
+CHANGED FILES:
+- app.py
+- Log.md
+- templates/base.html
+- templates/zcoin/wallet.html
+- static/js/zcoin.js
+- static/css/zcoin.css
+
+SCOPE:
+- Fix account dropdown menu.
+- Remove internal Phase 1 roadmap from player wallet.
+- Simplify wallet UI.

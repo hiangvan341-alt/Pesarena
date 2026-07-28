@@ -1,3 +1,16 @@
+# Collap_V1.14.36_ZCOIN_UI_FIX
+
+- Dựa trên source `Collap_V1.14.35`.
+- Khôi phục menu tài khoản xổ xuống khi bấm tên người chơi.
+- Menu tự đóng khi bấm ra ngoài hoặc nhấn phím Esc.
+- Tinh gọn Ví Zcoin: chỉ giữ logo, số dư và lịch sử giao dịch.
+- Xóa khung “Giai đoạn 1” và toàn bộ roadmap nội bộ khỏi giao diện người chơi.
+- Xóa các nhãn/mô tả lặp lại không cần thiết.
+- Không thay đổi database, công thức RP, phòng đấu hoặc các chức năng khác.
+- Không cần chạy SQL.
+
+---
+
 # Collap_V1.14.35
 
 - `modules/zcoin/` (toàn bộ thư mục): thêm module Zcoin độc lập gồm service, route ví, thao tác cộng/trừ và dữ liệu quản trị.
@@ -7,5 +20,3 @@
 - `templates/base.html` (head và topbar): hiển thị số dư, menu ví và lịch sử Zcoin.
 - `templates/admin.html` (tab, phân quyền và panel): thêm khu vực quản trị Zcoin mà không làm mất cấu hình RP hiện tại.
 - Không chạy SQL; tiếp tục dùng `users.zcoin_balance`, `zcoin_transactions` và RPC `adjust_zcoin_balance` đã có trên Supabase.
-
-Khác V1.14.34: module Zcoin đã được ghép vào bản chính; giữ nguyên toàn bộ nâng cấp phòng đấu, giới hạn Rank và quy tắc RP gặp lại đối thủ.

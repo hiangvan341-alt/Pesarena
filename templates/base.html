@@ -142,11 +142,11 @@ function toggleTheme(){
                     <span><strong>{{ format_zcoin(current_user.zcoin_balance|default(0, true)) }}</strong><small>ZCOIN</small></span>
                 </a>
                 <div class="topbar-account-wrap">
-                    <button id="accountMenuButton" class="topbar-profile" type="button" onclick="toggleAccountMenu(event)" aria-expanded="false" aria-controls="accountDropdown">
+                    <button id="accountMenuButton" class="topbar-profile" type="button" onclick="toggleAccountMenu(event)" aria-expanded="false" aria-haspopup="menu" aria-controls="accountDropdown">
                         {{ player_avatar(current_user, size='sm') }}
                         <span><strong>{{ current_user.display_name }}</strong><small><i></i> Online</small></span><em>⌄</em>
                     </button>
-                    <div id="accountDropdown" class="topbar-account-dropdown" hidden>
+                    <div id="accountDropdown" class="topbar-account-dropdown" role="menu" hidden>
                         <div class="account-dropdown-wallet">
                             <img src="{{ url_for('static', filename='zcoin-logo.png') }}" alt="">
                             <div><small>Số dư hiện tại</small><strong>{{ format_zcoin(current_user.zcoin_balance|default(0, true)) }} Zcoin</strong></div>
