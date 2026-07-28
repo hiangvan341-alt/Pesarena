@@ -1,8 +1,8 @@
 # Admin Economy
 
-Module quản trị Zcoin/Gift Code độc lập tại `/admin/economy`.
+Module quản trị Zcoin và Gift Code tách biệt khỏi `/admin`.
 
-- Không nạp dữ liệu kinh tế trong route `/admin` chính.
-- Mọi tài khoản Admin hợp lệ đều truy cập và quản lý được.
-- Player không thể truy cập do `admin_required`.
-- Route cộng/trừ Zcoin và quản lý Gift Code nằm hoàn toàn trong module này.
+- Trang riêng: `/admin/economy`
+- Route ghi dữ liệu dùng tiền tố `/admin/economy/...`
+- Chỉ dùng `admin_required`; mọi tài khoản Admin hợp lệ đều truy cập được.
+- Không tải dữ liệu kinh tế trong dashboard Admin chính.

@@ -1,4 +1,4 @@
-"""Nghiệp vụ hiển thị trang quản trị kinh tế riêng."""
+"""Nghiệp vụ hiển thị trang quản trị kinh tế độc lập."""
 
 import uuid
 
@@ -20,7 +20,7 @@ def _safe_load(label, loader, default):
 
 
 def build_page_context(actor):
-    """Mọi tài khoản Admin hợp lệ đều có toàn quyền kinh tế theo cấu hình app."""
+    """Tải từng khối độc lập để một truy vấn lỗi không làm sập trang."""
     players = _safe_load("players", repository.list_players_for_economy, [])
     transactions = _safe_load(
         "zcoin_transactions",
@@ -32,7 +32,17 @@ def build_page_context(actor):
         lambda: repository.list_codes(limit=150),
         [],
     )
-    stats = build_zcoin_stats(players, transactions)
+    stats = _safe_load(
+        "zcoin_stats",
+        lambda: build_zcoin_stats(players, transactions),
+        {
+            "circulating": 0,
+            "wallet_count": 0,
+            "highest_balance": 0,
+            "recent_issued": 0,
+            "recent_withdrawn": 0,
+        },
+    )
     return {
         "players": players,
         "zcoin_transactions": transactions,

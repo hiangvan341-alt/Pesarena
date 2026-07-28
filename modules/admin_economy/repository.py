@@ -1,7 +1,4 @@
-"""Repository cho trang quản trị kinh tế.
-
-Chỉ gom dữ liệu cần thiết cho Zcoin/Gift Code, không phụ thuộc route /admin chính.
-"""
+"""Repository dữ liệu cho trang quản trị kinh tế."""
 
 
 def configure(context):
@@ -11,10 +8,12 @@ def configure(context):
 def list_players_for_economy():
     rows = list_all_users()
     players = [dict(row) for row in (rows or []) if row.get("role") == "player"]
-    players.sort(key=lambda item: (
-        (item.get("display_name") or item.get("username") or "").lower(),
-        (item.get("username") or "").lower(),
-    ))
+    players.sort(
+        key=lambda item: (
+            (item.get("display_name") or item.get("username") or "").lower(),
+            (item.get("username") or "").lower(),
+        )
+    )
     return players
 
 

@@ -30,11 +30,12 @@
 - Hiệu ứng nhận Zcoin dùng confetti, không phát âm thanh và chỉ chạy một lần.
 - Cần chạy `docs/update_zcoin_rewards_v1_14_38.sql`; SQL không xóa dữ liệu cũ.
 
-## Collap_V1.14.39_ADMIN_ECONOMY_MODULE
-- Làm lại V1.14.39 từ baseline Production ổn định V1.14.38; không sử dụng code của bản V1.14.39 lỗi.
-- Tách toàn bộ quản trị Zcoin/Gift Code sang module độc lập `modules/admin_economy/` và trang `/admin/economy`.
-- Route `/admin` chính không còn tải dữ liệu Zcoin/Gift Code, nên lỗi kinh tế không thể làm sập toàn bộ trang Admin.
-- Di chuyển route cộng/trừ Zcoin, tạo Gift Code và bật/tắt Gift Code vào module Admin Economy.
-- Mọi tài khoản Admin hợp lệ đều có quyền quản trị kinh tế; player bị chặn bởi `admin_required`.
-- Thêm mục `Zcoin & Gift Code` riêng trong sidebar Admin.
+## Collap_V1.14.39_ADMIN_ECONOMY_FIXED
+- Dựng lại từ Production ổn định V1.14.38.
+- Sửa nguyên nhân làm toàn bộ Vercel Function crash: route/endpoint `admin_adjust_zcoin` bị đăng ký trùng giữa module Zcoin cũ và module Admin Economy.
+- Loại bỏ hoàn toàn route quản trị khỏi module member `modules/zcoin/` và `modules/gift_codes/`.
+- Tách quản trị Zcoin/Gift Code sang `modules/admin_economy/` với URL và endpoint riêng dưới `/admin/economy`.
+- Route `/admin` chính không tải dữ liệu kinh tế và không chứa tab Zcoin cũ.
+- Mọi tài khoản Admin hợp lệ có thể truy cập; player bị chặn bằng `admin_required`.
 - Không thay đổi database và không cần chạy SQL.
+- Đã kiểm tra import khởi động ứng dụng, 119 route không trùng, Python/Jinja/JavaScript và RP Engine.

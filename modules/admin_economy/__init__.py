@@ -1,4 +1,4 @@
-"""Khu quản trị kinh tế Zcoin/Gift Code độc lập với dashboard Admin chính."""
+"""Khu quản trị kinh tế Zcoin/Gift Code tách biệt khỏi dashboard Admin chính."""
 
 from .routes import register_routes
 

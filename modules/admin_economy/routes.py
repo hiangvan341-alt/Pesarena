@@ -1,8 +1,4 @@
-"""Route quản trị kinh tế độc lập.
-
-Không gắn dữ liệu Zcoin/Gift Code vào route /admin chính để một lỗi kinh tế
-không làm sập toàn bộ bảng điều khiển quản trị.
-"""
+"""Route quản trị Zcoin/Gift Code độc lập với dashboard Admin chính."""
 
 from . import service
 
@@ -15,18 +11,22 @@ def register_routes(context):
         target = url_for("admin_economy")
         return redirect(target + (f"#{anchor}" if anchor else ""))
 
-    @app.route("/admin/economy")
+    @app.route("/admin/economy", endpoint="admin_economy")
     @login_required
     @admin_required
-    def admin_economy():
+    def admin_economy_page():
         actor = current_user()
         page_context = service.build_page_context(actor)
         return render_template("admin_economy/index.html", **page_context)
 
-    @app.route("/admin/zcoin/adjust", methods=["POST"])
+    @app.route(
+        "/admin/economy/zcoin/adjust",
+        methods=["POST"],
+        endpoint="admin_economy_adjust_zcoin",
+    )
     @login_required
     @admin_required
-    def admin_adjust_zcoin():
+    def admin_economy_adjust_zcoin_route():
         actor = current_user()
         user_id = str(request.form.get("target_user_id") or "").strip()
         target = get_user(user_id) if user_id else None
@@ -39,13 +39,17 @@ def register_routes(context):
             amount = int(request.form.get("amount") or 0)
         except (TypeError, ValueError):
             amount = 0
+
         if operation not in {"credit", "debit"} or amount <= 0:
             flash("Hãy chọn cộng/trừ và nhập số Zcoin lớn hơn 0.", "danger")
             return _redirect_economy("adjust-zcoin")
 
         max_amount = 1_000_000
         if amount > max_amount:
-            flash(f"Mỗi lần điều chỉnh tối đa {format_zcoin(max_amount)} Zcoin.", "danger")
+            flash(
+                f"Mỗi lần điều chỉnh tối đa {format_zcoin(max_amount)} Zcoin.",
+                "danger",
+            )
             return _redirect_economy("adjust-zcoin")
 
         reason = str(request.form.get("reason") or "").strip()
@@ -60,20 +64,33 @@ def register_routes(context):
         delta = amount if operation == "credit" else -amount
         try:
             result = adjust_zcoin_balance(
-                target.get("id"), delta, reason, actor.get("id"), request_token
+                target.get("id"),
+                delta,
+                reason,
+                actor.get("id"),
+                request_token,
             )
         except ValueError as exc:
             flash(str(exc), "danger")
             return _redirect_economy("adjust-zcoin")
         except Exception as exc:
-            message = str(exc).lower()
-            app.logger.exception("Điều chỉnh Zcoin thất bại user=%s: %s", user_id, exc)
-            if "insufficient_zcoin" in message or "không đủ zcoin" in message:
+            lowered = str(exc).lower()
+            app.logger.exception(
+                "Điều chỉnh Zcoin thất bại user=%s: %s", user_id, exc
+            )
+            if "insufficient_zcoin" in lowered or "không đủ zcoin" in lowered:
                 flash("Không thể trừ vì số dư Zcoin của người chơi không đủ.", "danger")
-            elif "adjust_zcoin_balance" in message or "pgrst202" in message or "schema cache" in message:
+            elif (
+                "adjust_zcoin_balance" in lowered
+                or "pgrst202" in lowered
+                or "schema cache" in lowered
+            ):
                 flash("Supabase chưa có RPC Zcoin tương thích.", "danger")
             else:
-                flash("Không thể điều chỉnh Zcoin. Hãy kiểm tra dòng lỗi cuối trong Vercel Logs.", "danger")
+                flash(
+                    "Không thể điều chỉnh Zcoin. Hãy kiểm tra dòng lỗi cuối trong Vercel Logs.",
+                    "danger",
+                )
             return _redirect_economy("adjust-zcoin")
 
         ttl_cache_delete(f"user:{target.get('id')}")
@@ -87,7 +104,11 @@ def register_routes(context):
             "zcoin_wallet",
             target.get("id"),
             target.get("username") or target.get("display_name"),
-            f"{delta:+d} Zcoin | {result.get('balance_before', 0)} → {result.get('balance_after', 0)} | {reason}",
+            (
+                f"{delta:+d} Zcoin | "
+                f"{result.get('balance_before', 0)} → "
+                f"{result.get('balance_after', 0)} | {reason}"
+            ),
         )
         flash(
             f"Đã {action_text.lower()} {format_zcoin(amount)} cho "
@@ -97,10 +118,14 @@ def register_routes(context):
         )
         return _redirect_economy("adjust-zcoin")
 
-    @app.route("/admin/gift-codes/create", methods=["POST"])
+    @app.route(
+        "/admin/economy/gift-codes/create",
+        methods=["POST"],
+        endpoint="admin_economy_create_gift_code",
+    )
     @login_required
     @admin_required
-    def admin_create_gift_code():
+    def admin_economy_create_gift_code_route():
         actor = current_user()
         try:
             item = create_gift_code(actor, request.form)
@@ -109,11 +134,14 @@ def register_routes(context):
             return _redirect_economy("gift-codes")
         except Exception as exc:
             app.logger.exception("Tạo Gift Code thất bại: %s", exc)
-            message = str(exc).lower()
-            if "duplicate" in message or "unique" in message:
+            lowered = str(exc).lower()
+            if "duplicate" in lowered or "unique" in lowered:
                 flash("Gift Code này đã tồn tại. Hãy chọn mã khác.", "danger")
             else:
-                flash("Không thể tạo Gift Code. Hãy kiểm tra dòng lỗi cuối trong Vercel Logs.", "danger")
+                flash(
+                    "Không thể tạo Gift Code. Hãy kiểm tra dòng lỗi cuối trong Vercel Logs.",
+                    "danger",
+                )
             return _redirect_economy("gift-codes")
 
         log_admin_action(
@@ -121,22 +149,32 @@ def register_routes(context):
             "gift_code",
             item.get("id"),
             item.get("code"),
-            f"{item.get('reward_amount', 0)} Zcoin × {item.get('max_redemptions', 0)} lượt",
+            (
+                f"{item.get('reward_amount', 0)} Zcoin × "
+                f"{item.get('max_redemptions', 0)} lượt"
+            ),
         )
         flash(f"Đã tạo Gift Code {item.get('code')}.", "success")
         return _redirect_economy("gift-codes")
 
-    @app.route("/admin/gift-codes/<code_id>/toggle", methods=["POST"])
+    @app.route(
+        "/admin/economy/gift-codes/<code_id>/toggle",
+        methods=["POST"],
+        endpoint="admin_economy_toggle_gift_code",
+    )
     @login_required
     @admin_required
-    def admin_toggle_gift_code(code_id):
+    def admin_economy_toggle_gift_code_route(code_id):
         enabled = str(request.form.get("enabled") or "0").strip() == "1"
         try:
             toggle_gift_code(code_id, enabled)
         except Exception as exc:
-            app.logger.exception("Bật/tắt Gift Code thất bại id=%s: %s", code_id, exc)
+            app.logger.exception(
+                "Bật/tắt Gift Code thất bại id=%s: %s", code_id, exc
+            )
             flash("Không thể thay đổi trạng thái Gift Code.", "danger")
             return _redirect_economy("gift-codes")
+
         log_admin_action(
             "Bật Gift Code" if enabled else "Tắt Gift Code",
             "gift_code",
