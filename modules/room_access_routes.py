@@ -214,6 +214,8 @@ def register_routes(context):
         )
         response.headers["Cache-Control"] = "no-store, max-age=0"
         response.headers["X-PES-Room-Partial"] = "1"
+        response.headers["X-PES-Room-State-Key"] = build_room_state_key(room)
+        response.headers["X-PES-Room-Status"] = str(room.get("status") or "")
         return response
 
 

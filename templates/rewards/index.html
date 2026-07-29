@@ -7,7 +7,7 @@
         <p>Điểm danh đều đặn hoặc nhập Gift Code từ Admin.</p>
     </div>
     <a class="rewards-balance" href="{{ url_for('zcoin_wallet') }}">
-        <img src="{{ asset_url('zcoin-logo.webp') }}?v={{ APP_VERSION|urlencode }}" alt="">
+        <img src="{{ asset_url('zcoin-logo.webp') }}" alt="">
         <span><small>Số dư</small><strong>{{ format_zcoin(current_user.zcoin_balance|default(0, true)) }} Zcoin</strong></span>
     </a>
 </section>

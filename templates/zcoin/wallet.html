@@ -2,7 +2,7 @@
 {% block content %}
 <section class="zcoin-wallet-hero">
     <div class="zcoin-wallet-brand">
-        <img src="{{ asset_url('zcoin-logo.webp') }}?v={{ APP_VERSION|urlencode }}" alt="Logo Zcoin">
+        <img src="{{ asset_url('zcoin-logo.webp') }}" alt="Logo Zcoin">
         <h1>{{ format_zcoin(current_user.zcoin_balance|default(0, true)) }} <small>Zcoin</small></h1>
     </div>
 </section>
