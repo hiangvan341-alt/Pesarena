@@ -9,6 +9,17 @@ def register_routes(context):
     repository.configure(context)
     service.configure(context)
 
+    @app.context_processor
+    def inject_current_profile_equipment():
+        user = current_user()
+        if not user:
+            return {"current_profile_equipment": {}}
+        try:
+            return {"current_profile_equipment": service.build_equipment_state(user)}
+        except Exception as exc:
+            app.logger.debug("Topbar equipment fallback user=%s: %s", user.get("id"), exc)
+            return {"current_profile_equipment": {}}
+
     @app.route("/profile")
     @login_required
     def my_profile():

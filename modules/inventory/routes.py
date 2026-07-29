@@ -3,6 +3,7 @@
 from . import repository
 from . import service
 from modules.shop.catalog import EQUIPMENT_SLOT_LABELS
+from modules.profile import equipment_service
 
 
 def register_routes(context):
@@ -37,6 +38,7 @@ def register_routes(context):
 
         ttl_cache_delete(f"user:{user.get('id')}")
         cache_delete("_rz_current_user")
+        equipment_service.invalidate_equipment_cache(user.get("id"))
         flash(f"Đã trang bị {result.get('item_name') or 'vật phẩm'}.", "success")
         return redirect(url_for("inventory", tab="equipped"))
 
@@ -60,5 +62,6 @@ def register_routes(context):
 
         ttl_cache_delete(f"user:{user.get('id')}")
         cache_delete("_rz_current_user")
+        equipment_service.invalidate_equipment_cache(user.get("id"))
         flash(f"Đã gỡ {EQUIPMENT_SLOT_LABELS[slot]}.", "success")
         return redirect(url_for("inventory", tab="equipped"))

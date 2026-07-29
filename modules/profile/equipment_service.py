@@ -21,6 +21,24 @@ def _safe_dict(value):
     return dict(value) if isinstance(value, dict) else {}
 
 
+
+
+def _cache_keys(user_id):
+    normalized = str(user_id or "").replace("-", "_")
+    return f"_rz_profile_equipment_{normalized}", f"profile_equipment:{user_id}"
+
+
+def invalidate_equipment_cache(user_id):
+    request_key, ttl_key = _cache_keys(user_id)
+    try:
+        cache_delete(request_key)
+    except Exception:
+        pass
+    try:
+        ttl_cache_delete(ttl_key)
+    except Exception:
+        pass
+
 def _fallback_state(player):
     player = dict(player or {})
     raw = _safe_dict(player.get("equipped_cosmetics"))
@@ -45,6 +63,17 @@ def build_equipment_state(player):
     if not user_id:
         return fallback
 
+    request_key, ttl_key = _cache_keys(user_id)
+    try:
+        cached = cache_get(request_key)
+        if cached is not None:
+            return cached
+        shared = ttl_cache_get(ttl_key)
+        if shared is not None:
+            return cache_set(request_key, shared)
+    except Exception:
+        pass
+
     try:
         equipment_result = execute_query(
             db.table("user_equipment")
@@ -56,7 +85,13 @@ def build_equipment_state(player):
         equipment_rows = [dict(row) for row in (equipment_result.data or [])]
         item_ids = sorted({str(row.get("item_id")) for row in equipment_rows if row.get("item_id")})
         if not item_ids:
-            return {slot: None for slot in PROFILE_EQUIPMENT_SLOTS}
+            state = {slot: None for slot in PROFILE_EQUIPMENT_SLOTS}
+            try:
+                ttl_cache_set(ttl_key, state, 15)
+                cache_set(request_key, state)
+            except Exception:
+                pass
+            return state
 
         item_result = execute_query(
             db.table("shop_items").select("*").in_("id", item_ids),
@@ -78,6 +113,11 @@ def build_equipment_state(player):
                 item["inventory_id"] = equipment.get("inventory_id")
                 item["equipped_at"] = equipment.get("equipped_at")
                 state[slot] = item
+        try:
+            ttl_cache_set(ttl_key, state, 15)
+            cache_set(request_key, state)
+        except Exception:
+            pass
         return state
     except Exception as exc:
         try:

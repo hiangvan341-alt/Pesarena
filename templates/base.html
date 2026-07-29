@@ -147,7 +147,7 @@ function toggleTheme(){
                 </a>
                 <div class="topbar-account-wrap">
                     <button id="accountMenuButton" class="topbar-profile" type="button" onclick="toggleAccountMenu(event)" aria-expanded="false" aria-haspopup="menu" aria-controls="accountDropdown">
-                        {{ player_avatar(current_user, size='sm') }}
+                        {{ player_avatar(current_user, size='sm', frame=current_profile_equipment.avatar_frame if current_profile_equipment else none) }}
                         <span><strong>{{ current_user.display_name }}</strong><small><i></i> Online</small></span><em>⌄</em>
                     </button>
                     <div id="accountDropdown" class="topbar-account-dropdown" role="menu" hidden>
