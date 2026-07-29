@@ -128,7 +128,7 @@
                     <td>{{ loop.index }}</td>
                     <td><strong>{{ p.display_name or p.username }}</strong></td>
                     <td>@{{ p.username }}</td>
-                    <td><span class="zcoin-inline-balance"><img src="{{ url_for('static', filename='zcoin-logo.png') }}" alt="">{{ format_zcoin(p.zcoin_balance|default(0, true)) }}</span></td>
+                    <td><span class="zcoin-inline-balance"><img src="{{ asset_url('zcoin-logo.webp') }}" alt="">{{ format_zcoin(p.zcoin_balance|default(0, true)) }}</span></td>
                     <td><span class="badge {{ p.account_status or 'approved' }}">{{ p.account_status or 'approved' }}</span></td>
                 </tr>
                 {% else %}<tr><td colspan="5">Chưa có người chơi.</td></tr>{% endfor %}

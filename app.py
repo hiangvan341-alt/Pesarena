@@ -51,6 +51,7 @@ from modules.system_feature_service import post_login_endpoint, dashboard_is_ena
 from modules.session_runtime_service import (
     IDLE_TIMEOUT_SECONDS, idle_decision, room_blocks_idle_logout, client_config as session_client_config,
 )
+from modules.static_asset_service import asset_url, asset_base_url
 from modules.win_streaks import (
     WIN_STREAK_TITLES, WIN_STREAK_EVENT_PREFIX, get_win_streak_title,
     get_win_streak_badge, build_win_streak_event, encode_win_streak_room_note,
@@ -61,7 +62,7 @@ from modules.win_streaks import (
 load_dotenv()
 
 APP_NAME = "PES Arena – Bản Lĩnh Sân Cỏ"
-APP_VERSION = "Collap_V1.14.39.7"
+APP_VERSION = "Collap_V1.14.39.8"
 DEFAULT_POINTS = 1000
 DEVICE_COOKIE_NAME = "rankzone_device_id"
 COOLDOWN_MINUTES = 3
@@ -163,6 +164,8 @@ ACTIVITY_PRIORITY = {
 
 
 app = Flask(__name__)
+app.jinja_env.globals["asset_url"] = asset_url
+app.jinja_env.globals["asset_base_url"] = asset_base_url
 
 # Tên biến chính thức giữ giống bản Production v1.9.3.
 # Các tên dự phòng chỉ giúp app tương thích nếu Vercel từng được cấu hình theo tên cũ.

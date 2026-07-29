@@ -8,7 +8,7 @@
     </div>
     <div class="shop-wallet-card inventory-wallet-card">
         <span>Số dư</span>
-        <strong><img src="{{ url_for('static', filename='zcoin-logo.png') }}" alt=""> {{ '{:,}'.format((current_user.zcoin_balance|default(0, true))|int).replace(',', '.') }} ZCOIN</strong>
+        <strong><img src="{{ asset_url('zcoin-logo.webp') }}" alt=""> {{ '{:,}'.format((current_user.zcoin_balance|default(0, true))|int).replace(',', '.') }} ZCOIN</strong>
         <a href="{{ url_for('shop') }}">Đến Cửa Hàng</a>
     </div>
 </section>

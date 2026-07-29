@@ -7,7 +7,7 @@
         <p>Điểm danh đều đặn hoặc nhập Gift Code từ Admin.</p>
     </div>
     <a class="rewards-balance" href="{{ url_for('zcoin_wallet') }}">
-        <img src="{{ url_for('static', filename='zcoin-logo.png') }}?v={{ APP_VERSION|urlencode }}" alt="">
+        <img src="{{ asset_url('zcoin-logo.webp') }}?v={{ APP_VERSION|urlencode }}" alt="">
         <span><small>Số dư</small><strong>{{ format_zcoin(current_user.zcoin_balance|default(0, true)) }} Zcoin</strong></span>
     </a>
 </section>
@@ -30,7 +30,7 @@
         {% for item in checkin_status.days %}
         <article class="daily-reward-card{% if item.today %} is-today{% elif item.next %} is-next{% elif item.completed or item.claimed %} is-completed{% endif %}">
             <span>Ngày {{ item.day }}</span>
-            <img src="{{ url_for('static', filename='zcoin-logo.png') }}" alt="">
+            <img src="{{ asset_url('zcoin-logo.webp') }}" alt="">
             <strong>{{ format_zcoin(item.reward) }}</strong>
             <small>Zcoin</small>
             {% if item.today or item.completed or item.claimed %}<em>✓</em>{% endif %}

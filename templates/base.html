@@ -39,6 +39,8 @@ function toggleTheme(){
     localStorage.setItem('pes2026-theme', next);
 }
 </script>
+<style>:root{--pes-login-background:url("{{ asset_url('login-background.webp') }}")}</style>
+<script>window.PES_ASSET_BASE_URL={{ asset_base_url()|tojson }};</script>
 </head>
 <body>
 {% if is_test_mode %}<div style="position:fixed;z-index:99999;left:0;right:0;top:0;text-align:center;background:#ffcc00;color:#111;font-weight:800;padding:6px">🧪 PES ARENA TEST MODE — KHÔNG DÙNG DATABASE PRODUCTION</div><div style="height:34px"></div>{% endif %}
@@ -52,7 +54,7 @@ function toggleTheme(){
 <div class="layout player-app-shell">
     <aside class="sidebar player-sidebar">
         <div class="brand-lockup">
-            <img class="sidebar-brand-logo" src="{{ url_for('static', filename='pes-arena-logo.png') }}?v={{ APP_VERSION|urlencode }}" alt="PES Arena – Bản Lĩnh Sân Cỏ">
+            <img class="sidebar-brand-logo" src="{{ asset_url('pes-arena-logo.webp') }}?v={{ APP_VERSION|urlencode }}" alt="PES Arena – Bản Lĩnh Sân Cỏ">
         </div>
 
         <nav class="nav player-nav">
@@ -140,7 +142,7 @@ function toggleTheme(){
                     </div>
                 </div>
                 <a class="topbar-zcoin" href="{{ url_for('zcoin_wallet') }}" title="Mở ví Zcoin">
-                    <img src="{{ url_for('static', filename='zcoin-logo.png') }}?v={{ APP_VERSION|urlencode }}" alt="Zcoin">
+                    <img src="{{ asset_url('zcoin-logo.webp') }}?v={{ APP_VERSION|urlencode }}" alt="Zcoin">
                     <span><strong>{{ format_zcoin(current_user.zcoin_balance|default(0, true)) }}</strong><small>ZCOIN</small></span>
                 </a>
                 <div class="topbar-account-wrap">
@@ -150,7 +152,7 @@ function toggleTheme(){
                     </button>
                     <div id="accountDropdown" class="topbar-account-dropdown" role="menu" hidden>
                         <div class="account-dropdown-wallet">
-                            <img src="{{ url_for('static', filename='zcoin-logo.png') }}" alt="">
+                            <img src="{{ asset_url('zcoin-logo.webp') }}" alt="">
                             <div><small>Số dư hiện tại</small><strong>{{ format_zcoin(current_user.zcoin_balance|default(0, true)) }} Zcoin</strong></div>
                         </div>
                         <a href="{{ url_for('profile', user_id=current_user.id) }}"><span>👤</span> Hồ sơ cá nhân</a>

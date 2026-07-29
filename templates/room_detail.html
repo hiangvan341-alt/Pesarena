@@ -38,7 +38,7 @@
                 {{ player_avatar(name=room.host_name, avatar_url=room.host_avatar_url, achievement=room.host_achievement, size='sm') }}
                 <div class="room-player-name">{{ room.host_name }}</div>
                 <div class="room-player-rankline">
-                    <img src="{{ url_for('static', filename='ranks/' ~ room.host_rank_info.slug ~ '.png') }}" alt="{{ room.host_rank_info.name }}" loading="lazy">
+                    <img src="{{ asset_url('ranks/' ~ room.host_rank_info.slug ~ '.webp') }}" alt="{{ room.host_rank_info.name }}" loading="lazy">
                     <span>{{ room.host_rank_info.name }}</span>
                 </div>
                 {% if room.host_streak_badge %}
@@ -173,7 +173,7 @@
                     </div>
                     {% endif %}
                 {% else %}
-                    <img class="room-center-vs-image" src="{{ url_for('static', filename='vs.png') }}" alt="VS" loading="eager">
+                    <img class="room-center-vs-image" src="{{ asset_url('vs.webp') }}" alt="VS" loading="eager">
                     {% if room.status == 'playing' and room.match_mode != 'friendly' and (room_room_viewer_is_host or current_user.role == 'admin') %}
                         <div class="room-center-score-panel">
                             <h3 class="room-score-title">Kết quả trận đấu</h3>
@@ -317,7 +317,7 @@
                     {% endif %}
                 {% endif %}
             {% else %}
-                <img class="room-center-vs-image" src="{{ url_for('static', filename='vs.png') }}" alt="VS" loading="eager">
+                <img class="room-center-vs-image" src="{{ asset_url('vs.webp') }}" alt="VS" loading="eager">
                 {% if room_room_viewer_is_host or current_user.role == 'admin' %}
                 <div class="room-quick-match-row room-action-zone">
                     {% if system_features.get('quick_match_enabled', true) %}
@@ -349,7 +349,7 @@
                 <div class="room-player-name">{{ room.guest_name }}</div>
                 {% if room.has_guest and room.guest_rank_info %}
                 <div class="room-player-rankline">
-                    <img src="{{ url_for('static', filename='ranks/' ~ room.guest_rank_info.slug ~ '.png') }}" alt="{{ room.guest_rank_info.name }}" loading="lazy">
+                    <img src="{{ asset_url('ranks/' ~ room.guest_rank_info.slug ~ '.webp') }}" alt="{{ room.guest_rank_info.name }}" loading="lazy">
                     <span>{{ room.guest_rank_info.name }}</span>
                 </div>
                 {% if room.guest_streak_badge %}

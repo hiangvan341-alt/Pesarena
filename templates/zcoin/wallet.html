@@ -2,7 +2,7 @@
 {% block content %}
 <section class="zcoin-wallet-hero">
     <div class="zcoin-wallet-brand">
-        <img src="{{ url_for('static', filename='zcoin-logo.png') }}?v={{ APP_VERSION|urlencode }}" alt="Logo Zcoin">
+        <img src="{{ asset_url('zcoin-logo.webp') }}?v={{ APP_VERSION|urlencode }}" alt="Logo Zcoin">
         <h1>{{ format_zcoin(current_user.zcoin_balance|default(0, true)) }} <small>Zcoin</small></h1>
     </div>
 </section>
@@ -19,7 +19,7 @@
         {% for tx in transactions %}
         <article class="zcoin-transaction-card {{ 'is-credit' if tx.is_credit else 'is-debit' }}">
             <div class="zcoin-transaction-icon">
-                <img src="{{ url_for('static', filename='zcoin-logo.png') }}" alt="">
+                <img src="{{ asset_url('zcoin-logo.webp') }}" alt="">
             </div>
             <div class="zcoin-transaction-copy">
                 <strong>{{ 'Nhận Zcoin' if tx.is_credit else 'Trừ Zcoin' }}</strong>
@@ -35,7 +35,7 @@
     </div>
     {% else %}
     <div class="zcoin-empty-state">
-        <img src="{{ url_for('static', filename='zcoin-logo.png') }}" alt="">
+        <img src="{{ asset_url('zcoin-logo.webp') }}" alt="">
         <strong>Chưa có giao dịch Zcoin</strong>
         <span>Lịch sử nhận và sử dụng Zcoin sẽ xuất hiện tại đây.</span>
     </div>
