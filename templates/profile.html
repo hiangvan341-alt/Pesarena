@@ -1,13 +1,30 @@
 {% extends "base.html" %}
 {% from "_rank_macros.html" import rank_badge %}
 {% from "_avatar_macros.html" import player_avatar %}
+{% block head_extra %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/shop_phase3.css') }}?v={{ APP_VERSION|urlencode }}">
+{% endblock %}
 {% block content %}
-<section class="profile-header-card profile-header-with-avatar">
+{% set equipped_frame = profile_equipment.avatar_frame if profile_equipment else none %}
+{% set equipped_banner = profile_equipment.profile_banner if profile_equipment else none %}
+{% set equipped_badge = profile_equipment.profile_badge if profile_equipment else none %}
+{% set equipped_name_style = profile_equipment.name_style if profile_equipment else none %}
+<section class="profile-header-card profile-header-with-avatar {% if equipped_banner %}has-profile-banner{% endif %}"{% if equipped_banner %} style="--profile-banner-image:url('{{ equipped_banner.image_url }}')"{% endif %}>
     <div class="profile-identity">
+        {% if equipped_frame %}
+        <div class="profile-avatar-cosmetic">
+            {{ player_avatar(player, size='xxl', achievement={}) }}
+            <img class="profile-avatar-frame" src="{{ equipped_frame.image_url }}" alt="{{ equipped_frame.name }}">
+        </div>
+        {% else %}
         {{ player_avatar(player, size='xxl') }}
+        {% endif %}
         <div>
             <span class="eyebrow">HỒ SƠ PLAYER</span>
-            <h1 class="page-title">{{ player.display_name }}</h1>
+            <div class="profile-display-name-row">
+                <h1 class="page-title {% if equipped_name_style %}{{ equipped_name_style.metadata.get('css_class', '') }}{% endif %}">{{ player.display_name }}</h1>
+                {% if equipped_badge %}<img class="profile-equipped-badge" src="{{ equipped_badge.image_url }}" alt="{{ equipped_badge.name }}" title="{{ equipped_badge.name }}">{% endif %}
+            </div>
             <div class="profile-rank-line">
                 {{ rank_badge(player.rank_info) }}
                 <strong>{{ player.rank_points or 0 }} điểm</strong>
@@ -21,6 +38,9 @@
                 <strong>{{ profile_streak_badge.title }}</strong>
                 <span>· {{ profile_streak_badge.count }} trận thắng</span>
             </div>
+            {% endif %}
+            {% if current_user.id == player.id %}
+            <div class="profile-cosmetic-actions"><a href="{{ url_for('inventory') }}">🎒 Quản lý trang bị</a><a href="{{ url_for('shop') }}">🛒 Mở Cửa hàng</a></div>
             {% endif %}
         </div>
     </div>
@@ -93,18 +113,20 @@
         </form>
     </section>
 
-    <section class="panel display-name-manager-panel">
+    <section class="panel display-name-manager-panel" id="display-name-manager">
         <span class="eyebrow">TÊN HIỂN THỊ</span>
         <h2>Đổi tên hiển thị</h2>
         {% set display_name_changes = player.display_name_change_count or 0 %}
         {% set display_name_remaining = [0, 2 - display_name_changes]|max %}
+        {% set can_change_display_name = display_name_remaining > 0 or display_name_ticket_count > 0 %}
         <p>Tên này xuất hiện trên BXH, phòng đấu, chat và lịch sử trận.</p>
-        <p class="small">Mỗi tài khoản được đổi tối đa <strong>2 lần</strong>. Bạn còn <strong>{{ display_name_remaining }}</strong> lần.</p>
+        <p class="small">Bạn còn <strong>{{ display_name_remaining }}</strong> lượt miễn phí và <strong>{{ display_name_ticket_count }}</strong> Vé đổi tên trong Kho đồ.</p>
+        {% if display_name_remaining <= 0 and display_name_ticket_count > 0 %}<p class="display-name-ticket-note">🎟️ Lần đổi tiếp theo sẽ tự dùng 1 Vé đổi tên.</p>{% endif %}
         <form class="display-name-form" method="post" action="{{ url_for('update_display_name') }}">
-            <input name="display_name" value="{{ player.display_name }}" minlength="2" maxlength="40" {% if display_name_remaining <= 0 %}disabled{% endif %} required>
-            <button class="btn gold" type="submit" {% if display_name_remaining <= 0 %}disabled{% endif %}>Lưu tên mới</button>
+            <input name="display_name" value="{{ player.display_name }}" minlength="2" maxlength="40" {% if not can_change_display_name %}disabled{% endif %} required>
+            <button class="btn gold" type="submit" {% if not can_change_display_name %}disabled{% endif %}>Lưu tên mới</button>
         </form>
-        {% if display_name_remaining <= 0 %}<small class="limit-reached-note">Bạn đã sử dụng hết lượt đổi tên.</small>{% endif %}
+        {% if not can_change_display_name %}<small class="limit-reached-note">Bạn đã hết lượt đổi tên. Có thể mua Vé đổi tên trong <a href="{{ url_for('shop', category='utility') }}">Cửa hàng</a>.</small>{% endif %}
     </section>
     {% endif %}
 
@@ -213,12 +235,12 @@
     <div class="history-result"><span class="result-pill result-{{ m.result_code }}">{{ m.result_label }}</span><small>{{ m.created_at_display }}</small></div>
     <div class="history-matchup">
         <div>
-            <span class="match-player-inline">{{ player_avatar(name=m.left_player_name, avatar_url=m.left_avatar_url, achievement=m.left_achievement, size='xs') }}<strong>{{ m.left_player_name }}</strong></span>
+            <span class="match-player-inline">{{ player_avatar(name=m.left_player_name, avatar_url=m.left_avatar_url, achievement=m.left_achievement, size='xs', frame=m.left_avatar_frame) }}<strong>{{ m.left_player_name }}</strong></span>
             <small>{{ m.left_team or '-' }}{% if m.status == 'confirmed' or m.is_forfeit %} · <strong class="{{ 'positive' if m.left_result_code == 'win' else 'negative' if m.left_result_code == 'loss' else '' }}">{{ m.left_result_label }}</strong>{% endif %}</small>
         </div>
         <strong>{{ m.score_display }}</strong>
         <div class="right">
-            <a class="match-player-inline match-player-right" href="{{ url_for('profile', user_id=m.right_player_id) }}"><span>{{ m.right_player_name }}</span>{{ player_avatar(name=m.right_player_name, avatar_url=m.right_avatar_url, achievement=m.right_achievement, size='xs') }}</a>
+            <a class="match-player-inline match-player-right" href="{{ url_for('profile', user_id=m.right_player_id) }}"><span>{{ m.right_player_name }}</span>{{ player_avatar(name=m.right_player_name, avatar_url=m.right_avatar_url, achievement=m.right_achievement, size='xs', frame=m.right_avatar_frame) }}</a>
             <small>{{ m.right_team or '-' }}{% if m.status == 'confirmed' or m.is_forfeit %} · <strong class="{{ 'positive' if m.right_result_code == 'win' else 'negative' if m.right_result_code == 'loss' else '' }}">{{ m.right_result_label }}</strong>{% endif %}</small>
         </div>
     </div>

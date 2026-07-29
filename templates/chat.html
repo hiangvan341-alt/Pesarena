@@ -8,7 +8,7 @@
     <div id="globalChatBox" class="chat-box">
         {% for msg in messages %}
         <div class="chat-message">
-            <div class="chat-message-head">{{ player_avatar(name=msg.user_name, avatar_url=msg.user_avatar_url, achievement=msg.user_achievement, size='xs') }}<span class="chat-name {{ 'admin' if msg.user_role == 'admin' else '' }}">{{ msg.user_name }}</span></div>
+            <div class="chat-message-head">{{ player_avatar(name=msg.user_name, avatar_url=msg.user_avatar_url, achievement=msg.user_achievement, size='xs', frame=msg.user_avatar_frame) }}<span class="chat-name {{ 'admin' if msg.user_role == 'admin' else '' }}">{{ msg.user_name }}</span></div>
             {% if msg.user_role == "admin" %}<span class="badge gold">ADMIN</span>{% endif %}
             <span class="chat-time">{{ msg.created_at_display }}</span>
             <div class="chat-text">{{ msg.message }}</div>
@@ -31,11 +31,17 @@ function escapeHtml(text) {
     return div.innerHTML;
 }
 
-function renderGlobalAvatar(url, name) {
+function renderGlobalAvatar(url, name, frameUrl) {
     const safeName = escapeHtml(name || "?");
     const initial = escapeHtml((name || "?").trim().charAt(0).toUpperCase() || "?");
-    if (url) return `<span class="player-avatar avatar-xs"><img src="${escapeHtml(url)}" alt="Ảnh đại diện ${safeName}" loading="lazy"></span>`;
-    return `<span class="player-avatar avatar-xs"><span>${initial}</span></span>`;
+    const safeFrame = frameUrl ? escapeHtml(frameUrl) : "";
+    const avatarBody = url
+        ? `<img class="player-avatar-image" src="${escapeHtml(url)}" alt="Ảnh đại diện ${safeName}" loading="lazy">`
+        : `<span class="player-avatar-fallback">${initial}</span>`;
+    const frame = safeFrame
+        ? `<img class="player-avatar-equipped-frame" src="${safeFrame}" alt="" aria-hidden="true" loading="lazy">`
+        : "";
+    return `<span class="player-avatar avatar-xs${safeFrame ? ' has-equipped-frame' : ''}">${avatarBody}${frame}</span>`;
 }
 
 function renderGlobalChat(messages) {
@@ -47,7 +53,7 @@ function renderGlobalChat(messages) {
         const adminClass = msg.user_role === "admin" ? 'admin' : '';
         return `
             <div class="chat-message">
-                <div class="chat-message-head">${renderGlobalAvatar(msg.user_avatar_url, msg.user_name)}<span class="chat-name ${adminClass}">${escapeHtml(msg.user_name)}</span></div>
+                <div class="chat-message-head">${renderGlobalAvatar(msg.user_avatar_url, msg.user_name, msg.user_avatar_frame_url)}<span class="chat-name ${adminClass}">${escapeHtml(msg.user_name)}</span></div>
                 ${adminBadge}
                 <span class="chat-time">${escapeHtml(msg.created_at_display || msg.created_at)}</span>
                 <div class="chat-text">${escapeHtml(msg.message)}</div>

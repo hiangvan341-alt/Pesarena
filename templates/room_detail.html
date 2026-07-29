@@ -35,7 +35,7 @@
     <div class="room-match-shell room-arena-frame">
         <section class="room-side-card room-team-card home" aria-label="Chủ phòng">
             <div class="room-player-heading-plain">
-                {{ player_avatar(name=room.host_name, avatar_url=room.host_avatar_url, achievement=room.host_achievement, size='sm') }}
+                {{ player_avatar(name=room.host_name, avatar_url=room.host_avatar_url, achievement=room.host_achievement, size='sm', frame=room.host_avatar_frame) }}
                 <div class="room-player-name">{{ room.host_name }}</div>
                 <div class="room-player-rankline">
                     <img src="{{ asset_url('ranks/' ~ room.host_rank_info.slug ~ '.webp') }}" alt="{{ room.host_rank_info.name }}" loading="lazy">
@@ -345,7 +345,7 @@
 
         <section class="room-side-card room-team-card away" aria-label="Khách">
             <div class="room-player-heading-plain">
-                {{ player_avatar(name=room.guest_name, avatar_url=room.guest_avatar_url, achievement=room.guest_achievement, size='sm') }}
+                {{ player_avatar(name=room.guest_name, avatar_url=room.guest_avatar_url, achievement=room.guest_achievement, size='sm', frame=room.guest_avatar_frame) }}
                 <div class="room-player-name">{{ room.guest_name }}</div>
                 {% if room.has_guest and room.guest_rank_info %}
                 <div class="room-player-rankline">
@@ -1159,14 +1159,20 @@ function escapeRoomHtml(text) {
     return div.innerHTML;
 }
 
-function renderRoomAvatar(url, name, achievement) {
+function renderRoomAvatar(url, name, achievement, frameUrl) {
     const safeName = escapeRoomHtml(name || "?");
     const initial = escapeRoomHtml((name || "?").trim().charAt(0).toUpperCase() || "?");
+    const safeFrame = frameUrl ? escapeRoomHtml(frameUrl) : "";
     const badge = achievement && achievement.icon
         ? `<span class="avatar-achievement" title="${escapeRoomHtml(achievement.name || 'Huy hiệu')}">${escapeRoomHtml(achievement.icon)}</span>`
         : "";
-    if (url) return `<span class="player-avatar avatar-xs"><img src="${escapeRoomHtml(url)}" alt="Ảnh đại diện ${safeName}" loading="lazy">${badge}</span>`;
-    return `<span class="player-avatar avatar-xs"><span>${initial}</span>${badge}</span>`;
+    const avatarBody = url
+        ? `<img class="player-avatar-image" src="${escapeRoomHtml(url)}" alt="Ảnh đại diện ${safeName}" loading="lazy">`
+        : `<span class="player-avatar-fallback">${initial}</span>`;
+    const frame = safeFrame
+        ? `<img class="player-avatar-equipped-frame" src="${safeFrame}" alt="" aria-hidden="true" loading="lazy">`
+        : "";
+    return `<span class="player-avatar avatar-xs${safeFrame ? ' has-equipped-frame' : ''}">${avatarBody}${frame}${badge}</span>`;
 }
 
 function renderRoomChat(messages) {
@@ -1184,7 +1190,7 @@ function renderRoomChat(messages) {
         const adminClass = msg.user_role === "admin" ? 'admin' : '';
         return `
             <div class="chat-message">
-                <div class="chat-message-head">${renderRoomAvatar(msg.user_avatar_url, msg.user_name, msg.user_achievement)}<span class="chat-name ${adminClass}">${escapeRoomHtml(msg.user_name)}</span></div>
+                <div class="chat-message-head">${renderRoomAvatar(msg.user_avatar_url, msg.user_name, msg.user_achievement, msg.user_avatar_frame_url)}<span class="chat-name ${adminClass}">${escapeRoomHtml(msg.user_name)}</span></div>
                 ${adminBadge}
                 <span class="chat-time">${escapeRoomHtml(msg.created_at_display || msg.created_at)}</span>
                 <div class="chat-text">${escapeRoomHtml(msg.message)}</div>

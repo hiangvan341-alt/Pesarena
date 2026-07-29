@@ -52,6 +52,7 @@ from modules.session_runtime_service import (
     IDLE_TIMEOUT_SECONDS, idle_decision, room_blocks_idle_logout, client_config as session_client_config,
 )
 from modules.static_asset_service import asset_url, asset_base_url
+from modules.profile import equipment_service as profile_equipment_service
 from modules.win_streaks import (
     WIN_STREAK_TITLES, WIN_STREAK_EVENT_PREFIX, get_win_streak_title,
     get_win_streak_badge, build_win_streak_event, encode_win_streak_room_note,
@@ -62,7 +63,7 @@ from modules.win_streaks import (
 load_dotenv()
 
 APP_NAME = "PES Arena – Bản Lĩnh Sân Cỏ"
-APP_VERSION = "Collap_V1.14.39.12"
+APP_VERSION = "Collap_V1.14.40.7_GLOBAL_AVATAR_FRAMES"
 DEFAULT_POINTS = 1000
 DEVICE_COOKIE_NAME = "rankzone_device_id"
 COOLDOWN_MINUTES = 3
@@ -1714,6 +1715,16 @@ def list_players(include_admin=False):
             item["rank_info"] = get_rank_info(item.get("rank_points", 0))
             decorate_player_achievements(item, None, achievement_map)
 
+    # Gắn khung Avatar theo lô để mọi bảng Players/BXH/Dashboard dùng chung,
+    # tránh truy vấn N+1 cho từng người chơi.
+    try:
+        avatar_frame_map = profile_equipment_service.build_avatar_frame_map(safe)
+    except Exception as exc:
+        app.logger.debug("Player avatar frame map fallback: %s", exc)
+        avatar_frame_map = {}
+    for item in safe:
+        item["avatar_frame"] = avatar_frame_map.get(str(item.get("id")))
+
     return safe
 
 
@@ -2081,6 +2092,8 @@ def list_matches(status=None):
         match["player2_name"] = player2.get("display_name", "Unknown")
         match["player1_avatar_url"] = player1.get("avatar_url")
         match["player2_avatar_url"] = player2.get("avatar_url")
+        match["player1_avatar_frame"] = player1.get("avatar_frame")
+        match["player2_avatar_frame"] = player2.get("avatar_frame")
         match["player1_achievement"] = player1.get("featured_achievement")
         match["player2_achievement"] = player2.get("featured_achievement")
         match["submitted_by_name"] = users.get(match.get("submitted_by_id"), {}).get("display_name", "")
@@ -2203,6 +2216,7 @@ def decorate_match_for_view(match, viewer_id=None):
     item["left_player_id"] = side_value(left_prefix, "id")
     item["left_player_name"] = side_value(left_prefix, "name")
     item["left_avatar_url"] = side_value(left_prefix, "avatar_url")
+    item["left_avatar_frame"] = side_value(left_prefix, "avatar_frame")
     item["left_achievement"] = side_value(left_prefix, "achievement")
     item["left_team"] = left_team
     item["left_score"] = left_score
@@ -2211,6 +2225,7 @@ def decorate_match_for_view(match, viewer_id=None):
     item["right_player_id"] = side_value(right_prefix, "id")
     item["right_player_name"] = side_value(right_prefix, "name")
     item["right_avatar_url"] = side_value(right_prefix, "avatar_url")
+    item["right_avatar_frame"] = side_value(right_prefix, "avatar_frame")
     item["right_achievement"] = side_value(right_prefix, "achievement")
     item["right_team"] = right_team
     item["right_score"] = right_score
@@ -2268,6 +2283,8 @@ def decorate_match_for_view(match, viewer_id=None):
     item["opponent_name"] = None
     item["my_avatar_url"] = None
     item["opponent_avatar_url"] = None
+    item["my_avatar_frame"] = None
+    item["opponent_avatar_frame"] = None
     item["my_achievement"] = None
     item["opponent_achievement"] = None
     item["my_team"] = None
@@ -2282,6 +2299,8 @@ def decorate_match_for_view(match, viewer_id=None):
         item["opponent_name"] = item["right_player_name"]
         item["my_avatar_url"] = item["left_avatar_url"]
         item["opponent_avatar_url"] = item["right_avatar_url"]
+        item["my_avatar_frame"] = item["left_avatar_frame"]
+        item["opponent_avatar_frame"] = item["right_avatar_frame"]
         item["my_achievement"] = item["left_achievement"]
         item["opponent_achievement"] = item["right_achievement"]
         item["my_team"] = item["left_team"]
@@ -2518,11 +2537,13 @@ def list_invites(status=None):
         to_user = users.get(invite.get("to_user_id"), {})
         invite["from_name"] = from_user.get("display_name", "Unknown")
         invite["from_avatar_url"] = from_user.get("avatar_url")
+        invite["from_avatar_frame"] = from_user.get("avatar_frame")
         invite["from_achievement"] = from_user.get("featured_achievement")
         invite["from_points"] = from_user.get("rank_points", 0)
         invite["from_rank"] = get_rank_display(from_user.get("rank_points", 0))
         invite["to_name"] = to_user.get("display_name", "Unknown")
         invite["to_avatar_url"] = to_user.get("avatar_url")
+        invite["to_avatar_frame"] = to_user.get("avatar_frame")
         invite["to_achievement"] = to_user.get("featured_achievement")
         invite["to_points"] = to_user.get("rank_points", 0)
         invite["to_rank"] = get_rank_display(to_user.get("rank_points", 0))
@@ -2772,6 +2793,7 @@ def enrich_room(room):
 
     room["host_name"] = host.get("display_name", "Unknown")
     room["host_avatar_url"] = host.get("avatar_url")
+    room["host_avatar_frame"] = host.get("avatar_frame")
     room["host_achievement"] = host.get("featured_achievement")
     room["host_points"] = host.get("rank_points", 0)
     room["host_rank_info"] = get_rank_info(host.get("rank_points", 0))
@@ -2781,6 +2803,7 @@ def enrich_room(room):
     room["has_guest"] = bool(room.get("guest_user_id"))
     room["guest_name"] = guest.get("display_name", "Đang chờ đối thủ") if room["has_guest"] else "Đang chờ đối thủ"
     room["guest_avatar_url"] = guest.get("avatar_url") if room["has_guest"] else None
+    room["guest_avatar_frame"] = guest.get("avatar_frame") if room["has_guest"] else None
     room["guest_achievement"] = guest.get("featured_achievement") if room["has_guest"] else None
     room["guest_points"] = guest.get("rank_points", 0) if room["has_guest"] else 0
     room["guest_rank_info"] = get_rank_info(guest.get("rank_points", 0)) if room["has_guest"] else None
@@ -3027,6 +3050,8 @@ def enrich_chat_message(message, users=None):
     user = users.get(message.get("user_id"), {})
     message["user_name"] = user.get("display_name", "Unknown")
     message["user_avatar_url"] = user.get("avatar_url")
+    message["user_avatar_frame"] = user.get("avatar_frame")
+    message["user_avatar_frame_url"] = (user.get("avatar_frame") or {}).get("image_url") if isinstance(user.get("avatar_frame"), dict) else None
     message["user_achievement"] = user.get("featured_achievement")
     message["user_role"] = "admin" if is_admin_user(user) else user.get("role", "player")
     # Giữ timestamp gốc cho logic chưa đọc, đồng thời gửi chuỗi giờ Việt Nam dễ đọc.
@@ -5329,6 +5354,9 @@ from modules.room_result_routes import register_routes as _register_room_result_
 from modules.match_history_routes import register_routes as _register_match_history_routes
 from modules.zcoin import register_routes as _register_zcoin_routes
 from modules.profile import register_routes as _register_profile_routes
+from modules.shop import register_routes as _register_shop_routes
+from modules.inventory import register_routes as _register_inventory_routes
+from modules.admin_shop import register_routes as _register_admin_shop_routes
 from modules.daily_checkin import register_routes as _register_daily_checkin_routes
 from modules.gift_codes import register_routes as _register_gift_code_routes
 from modules.admin_economy import register_routes as _register_admin_economy_routes
@@ -5349,6 +5377,9 @@ for _route_registrar in (
     _register_match_history_routes,
     _register_zcoin_routes,
     _register_profile_routes,
+    _register_shop_routes,
+    _register_inventory_routes,
+    _register_admin_shop_routes,
     _register_daily_checkin_routes,
     _register_gift_code_routes,
     _register_admin_economy_routes,

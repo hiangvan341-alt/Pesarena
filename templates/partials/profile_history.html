@@ -15,7 +15,7 @@
                 </div>
                 <strong>{{ m.score_display }}</strong>
                 <div class="right">
-                    <a class="match-player-inline match-player-right" href="{{ url_for('profile', user_id=m.opponent_id) }}"><span>{{ m.opponent_name }}</span>{{ player_avatar(name=m.opponent_name, avatar_url=m.opponent_avatar_url, achievement=m.opponent_achievement, size='xs') }}</a>
+                    <a class="match-player-inline match-player-right" href="{{ url_for('profile', user_id=m.opponent_id) }}"><span>{{ m.opponent_name }}</span>{{ player_avatar(name=m.opponent_name, avatar_url=m.opponent_avatar_url, achievement=m.opponent_achievement, size='xs', frame=m.opponent_avatar_frame) }}</a>
                     <small>{{ m.opponent_team or '-' }}</small>
                 </div>
             </div>

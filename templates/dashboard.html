@@ -49,10 +49,10 @@
     <article class="dash-panel next-match-panel">
         <div class="dash-panel-head"><div><h2>Trận đấu tiếp theo</h2><p>{{ 'Phòng đấu đang hoạt động' if active_room else 'Tìm đối thủ để bắt đầu' }}</p></div></div>
         {% if active_room %}
-        <div class="versus-card"><div>{{ player_avatar(current_user, size='lg') }}<strong>{{ current_user.display_name }}</strong><small>{{ me.rank_points or 0 }} RP</small></div><b>VS</b><div class="mystery-avatar">?</div></div>
+        <div class="versus-card"><div>{{ player_avatar(current_user, size='lg', frame=current_profile_equipment.avatar_frame if current_profile_equipment else none) }}<strong>{{ current_user.display_name }}</strong><small>{{ me.rank_points or 0 }} RP</small></div><b>VS</b><div class="mystery-avatar">?</div></div>
         <a class="btn gold wide" href="{{ url_for('room_detail', room_id=active_room.id) }}">Vào phòng đấu</a>
         {% else %}
-        <div class="versus-card"><div>{{ player_avatar(current_user, size='lg') }}<strong>{{ current_user.display_name }}</strong><small>{{ me.rank_points or 0 }} RP</small></div><b>VS</b><div class="mystery-avatar">?</div></div>
+        <div class="versus-card"><div>{{ player_avatar(current_user, size='lg', frame=current_profile_equipment.avatar_frame if current_profile_equipment else none) }}<strong>{{ current_user.display_name }}</strong><small>{{ me.rank_points or 0 }} RP</small></div><b>VS</b><div class="mystery-avatar">?</div></div>
         <form method="post" action="{{ url_for('create_open_room') }}">
             <button class="btn gold wide" type="submit">＋ Tạo phòng đấu</button>
         </form>
