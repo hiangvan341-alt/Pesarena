@@ -166,6 +166,15 @@ def apply_match_result(match):
         )
         match["_streak_eligible"] = bool(repeat_details.get("streak_eligible", True))
 
+        # Hết lượt Rank ngày vẫn được thi đấu và lưu lịch sử, nhưng trận vượt
+        # lượt không cộng/trừ RP và không tác động chuỗi hoặc danh hiệu.
+        daily_game_status = daily_rank_match_rp_status(player1_id, player2_id)
+        if not daily_game_status.get("rp_eligible", True):
+            delta1 = 0
+            delta2 = 0
+            repeat_details["streak_eligible"] = False
+            match["_streak_eligible"] = False
+
         # Giới hạn RP dương theo ngày được áp dụng sau khi tính đủ công thức,
         # nhưng trước khi ghi điểm. RP âm khi thua không bị thay đổi.
         delta1, daily_cap1 = apply_daily_positive_rp_cap(
@@ -192,12 +201,19 @@ def apply_match_result(match):
                     "delta2": int(delta2),
                     "repeat_opponent": repeat_details,
                     "daily_rank_limits": {
-                        "player1": daily_cap1,
-                        "player2": daily_cap2,
+                        "game_limit": daily_game_status,
+                        "positive_rp_cap": {
+                            "player1": daily_cap1,
+                            "player2": daily_cap2,
+                        },
                     },
                 },
                 "status": "confirmed",
-                "note": "Đã xác nhận.",
+                "note": (
+                    "Đã xác nhận. Không tính RP do vượt giới hạn trận Rank trong ngày."
+                    if not daily_game_status.get("rp_eligible", True)
+                    else "Đã xác nhận."
+                ),
                 "updated_at": now_iso(),
             }).eq("id", match["id"]).eq("status", "processing_result"),
             "finalize_match_result",

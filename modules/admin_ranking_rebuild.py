@@ -255,6 +255,7 @@ def build_replay_plan(
 
     match_updates: dict[str, dict[str, Any]] = {}
     positive_rp_by_day: dict[tuple[str, str], int] = {}
+    ranked_games_by_day: dict[tuple[str, str], int] = {}
     pair_encounters: dict[tuple[str, tuple[str, str]], int] = {}
     pair_wins: dict[tuple[str, tuple[str, str], str], int] = {}
     pair_draw_bonus: set[tuple[str, tuple[str, str]]] = set()
@@ -400,6 +401,33 @@ def build_replay_plan(
 
         daily_limit_details = None
         if daily_positive_rp_limit is not None and int(daily_positive_rp_limit) >= 0:
+            # Khi bật giới hạn ngày, trận thứ 11 trong ngày thường hoặc thứ 16
+            # vào cuối tuần vẫn được lưu nhưng không tính RP/chuỗi.
+            try:
+                day_dt = datetime.fromisoformat(str(day_key))
+                game_limit = 15 if day_dt.weekday() in {5, 6} else 10
+            except Exception:
+                game_limit = 10
+            p1_games = ranked_games_by_day.get((p1_id, day_key), 0) + 1
+            p2_games = ranked_games_by_day.get((p2_id, day_key), 0) + 1
+            ranked_games_by_day[(p1_id, day_key)] = p1_games
+            ranked_games_by_day[(p2_id, day_key)] = p2_games
+            game_status = {
+                "enabled": True,
+                "rp_eligible": p1_games <= game_limit and p2_games <= game_limit,
+                "game_limit": game_limit,
+                "players": {
+                    p1_id: {"games_today": p1_games, "over_limit": p1_games > game_limit},
+                    p2_id: {"games_today": p2_games, "over_limit": p2_games > game_limit},
+                },
+                "reason": "within_daily_limit",
+            }
+            if not game_status["rp_eligible"]:
+                delta1 = delta2 = 0
+                affect_streak = False
+                repeat_details["streak_eligible"] = False
+                game_status["reason"] = "daily_game_limit_exceeded"
+
             cap_details = {}
             for user_id, key, delta in ((p1_id, "player1", delta1), (p2_id, "player2", delta2)):
                 if delta <= 0:
@@ -419,7 +447,10 @@ def build_replay_plan(
                     delta1 = applied
                 else:
                     delta2 = applied
-            daily_limit_details = cap_details
+            daily_limit_details = {
+                "game_limit": game_status,
+                "positive_rp_cap": cap_details,
+            }
 
         _apply_state(player1, delta1, score1, score2, affect_streak=affect_streak)
         _apply_state(player2, delta2, score2, score1, affect_streak=affect_streak)

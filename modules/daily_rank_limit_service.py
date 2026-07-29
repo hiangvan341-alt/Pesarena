@@ -15,6 +15,7 @@ EXPORTED_NAMES = [
     "rank_daily_status",
     "user_reached_daily_rank_limit",
     "daily_rank_block_message",
+    "daily_rank_match_rp_status",
     "assert_can_start_ranked_match",
     "apply_daily_positive_rp_cap",
     "reset_user_daily_rank_games",
@@ -26,7 +27,7 @@ WEEKDAY_GAME_LIMIT = 10
 WEEKEND_GAME_LIMIT = 15
 DAILY_POSITIVE_RP_LIMIT = 150
 VN_TZ = timezone(timedelta(hours=7))
-COUNTED_MATCH_STATUSES = {"playing", "waiting_confirm", "disputed", "confirmed"}
+COUNTED_MATCH_STATUSES = {"playing", "waiting_confirm", "waiting_result_confirm", "processing_result", "disputed", "confirmed"}
 
 
 def configure(context):
@@ -271,32 +272,51 @@ def user_reached_daily_rank_limit(user_id):
     return ranked_games_today(user_id) >= current_daily_game_limit()
 
 
-def daily_rank_block_message(*user_ids):
-    """Trả về thông báo chặn thân thiện, hoặc None nếu tất cả còn lượt."""
-    if not daily_rank_limits_enabled():
-        return None
+def daily_rank_match_rp_status(*user_ids):
+    """Cho biết trận hiện tại còn được tính RP hay đã vượt lượt ngày.
+
+    Trận được tạo trước khi chốt kết quả nên trận thứ 10/15 vẫn hợp lệ; chỉ từ
+    trận thứ 11/16 trở đi mới bị chuyển thành trận không tính RP.
+    """
     game_limit = current_daily_game_limit()
-    blocked = []
+    if not daily_rank_limits_enabled():
+        return {
+            "enabled": False,
+            "rp_eligible": True,
+            "game_limit": game_limit,
+            "players": {},
+            "reason": "disabled_by_admin",
+        }
+    players = {}
+    exceeded = False
     for user_id in user_ids:
         if not user_id:
             continue
         games = ranked_games_today(user_id)
-        if games >= game_limit:
-            user = get_user(user_id) or {}
-            blocked.append((user.get("display_name") or "Người chơi", games))
-    if not blocked:
-        return None
-    names = ", ".join(name for name, _ in blocked)
-    return (
-        f"{names} đã đủ {game_limit} trận Rank hôm nay. "
-        "Không thể tạo phòng, nhận lời mời, Sẵn Sàng hoặc bắt đầu trận Rank mới. "
-        "Bạn có thể rời phòng hiện tại an toàn, không bị trừ RP. Giới hạn làm mới lúc 00:00."
-    )
+        over_limit = games > game_limit
+        players[str(user_id)] = {
+            "games_today": games,
+            "game_limit": game_limit,
+            "over_limit": over_limit,
+        }
+        exceeded = exceeded or over_limit
+    return {
+        "enabled": True,
+        "rp_eligible": not exceeded,
+        "game_limit": game_limit,
+        "players": players,
+        "reason": "daily_game_limit_exceeded" if exceeded else "within_daily_limit",
+    }
+
+
+def daily_rank_block_message(*user_ids):
+    """Không còn chặn thi đấu; giới hạn chỉ quyết định trận có được tính RP."""
+    return None
+
 
 def assert_can_start_ranked_match(*user_ids):
-    message = daily_rank_block_message(*user_ids)
-    if message:
-        raise ValueError(message)
+    """Giữ API tương thích cũ nhưng luôn cho phép bắt đầu trận Rank."""
+    return True
 
 
 def apply_daily_positive_rp_cap(user_id, delta, exclude_match_id=None):

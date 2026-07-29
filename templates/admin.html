@@ -595,7 +595,7 @@
 <section class="admin-tab-panel" data-admin-panel="system">
     {% if can_admin('daily_rank_limits_manage') %}
     <div class="panel">
-        <h2>🏆 Giới hạn thi đấu Rank mỗi ngày</h2>
+        <h2>🏆 Giới hạn RP theo số trận Rank mỗi ngày</h2>
         <p class="muted">Mỗi người tối đa 10 trận Rank từ Thứ 2 đến Thứ 6; riêng Thứ 7 và Chủ nhật tối đa 15 trận. Mức cộng tối đa vẫn là 150 RP/ngày; RP bị trừ khi thua vẫn tính bình thường.</p>
         <form method="post" action="{{ url_for('admin_update_rank_daily_limits') }}" class="system-toggle-grid">
             <label class="admin-permission-option">
@@ -606,7 +606,7 @@
         </form>
         <hr style="margin:18px 0">
         <h3>🔄 Reset lượt Rank của người chơi</h3>
-        <p class="muted">Tạo một mốc đếm mới cho hôm nay. Lịch sử trận cũ vẫn được giữ nguyên; người chơi được chơi lại đủ 10 trận ngày thường hoặc 15 trận cuối tuần. Trần cộng tối đa +150 RP/ngày không bị reset.</p>
+        <p class="muted">Tạo một mốc đếm mới cho hôm nay. Lịch sử trận cũ vẫn được giữ nguyên; người chơi được tính RP lại đủ 10 trận ngày thường hoặc 15 trận cuối tuần. Trần cộng tối đa +150 RP/ngày không bị reset.</p>
         {% if rank_daily_limits_enabled %}
         <form method="post" action="{{ url_for('admin_reset_user_rank_daily_games') }}" class="system-toggle-grid" onsubmit="return confirm('Reset toàn bộ lượt Rank hôm nay của người chơi này? Lịch sử trận không bị xóa.');">
             <label><span>Chọn người chơi</span>
@@ -617,7 +617,7 @@
                     {% endfor %}
                 </select>
             </label>
-            <button class="btn red" type="submit">Reset lượt Rank hôm nay</button>
+            <button class="btn red" type="submit">Reset lượt tính RP hôm nay</button>
         </form>
         {% else %}
         <p class="small"><strong>Chức năng đang khóa:</strong> cần bật “Giới hạn Rank ngày” và lưu cài đặt trước.</p>
