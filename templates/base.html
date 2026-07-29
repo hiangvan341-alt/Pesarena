@@ -185,7 +185,7 @@ function toggleTheme(){
             {% for inv in incoming_invites %}
             <div class="invite-item">
                 <div class="invite-player-inline">
-                    {{ player_avatar(name=inv.from_name, avatar_url=inv.from_avatar_url, achievement=inv.from_achievement, size='sm') }}
+                    {{ player_avatar(name=inv.from_name, avatar_url=inv.from_avatar_url, achievement=inv.from_achievement, size='sm', frame=inv.from_avatar_frame) }}
                     <div>
                         <strong>{{ inv.from_name }}</strong> mời bạn thi đấu<br>
                         <span class="small">Rank: {{ inv.from_rank }} • Điểm: {{ inv.from_points }} • Tier: {{ inv.tier }}</span>
@@ -281,7 +281,7 @@ function renderInvitePopup(invite) {
     content.innerHTML = `
         <div class="invite-modal-player">
             <div class="invite-modal-person">
-                ${renderAvatarHtml(invite.from_avatar_url, invite.from_name, 'lg', invite.from_achievement)}
+                ${renderAvatarHtml(invite.from_avatar_url, invite.from_name, 'lg', invite.from_achievement, invite.from_avatar_frame && invite.from_avatar_frame.image_url)}
                 <p><strong>${escapeHtml(invite.from_name)}</strong> đang mời bạn thi đấu.</p>
             </div>
             <p class="small">Rank: ${escapeHtml(invite.from_rank)} • Điểm: ${escapeHtml(String(invite.from_points))} • Tier: ${escapeHtml(invite.tier)}</p>
@@ -402,17 +402,21 @@ function escapeHtml(text) {
     return div.innerHTML;
 }
 
-function renderAvatarHtml(url, name, size, achievement) {
+function renderAvatarHtml(url, name, size, achievement, frameUrl) {
     const safeName = escapeHtml(name || "?");
     const initial = escapeHtml((name || "?").trim().charAt(0).toUpperCase() || "?");
     const sizeClass = escapeHtml(size || "sm");
+    const safeFrame = frameUrl ? escapeHtml(frameUrl) : "";
     const badge = achievement && achievement.icon
         ? `<span class="avatar-achievement" title="${escapeHtml(achievement.name || 'Huy hiệu')}">${escapeHtml(achievement.icon)}</span>`
         : "";
-    if (url) {
-        return `<span class="player-avatar avatar-${sizeClass}" title="${safeName}"><img src="${escapeHtml(url)}" alt="Ảnh đại diện ${safeName}" loading="lazy">${badge}</span>`;
-    }
-    return `<span class="player-avatar avatar-${sizeClass}" title="${safeName}"><span>${initial}</span>${badge}</span>`;
+    const avatarBody = url
+        ? `<img class="player-avatar-image" src="${escapeHtml(url)}" alt="Ảnh đại diện ${safeName}" loading="lazy">`
+        : `<span class="player-avatar-fallback">${initial}</span>`;
+    const frame = safeFrame
+        ? `<img class="player-avatar-equipped-frame" src="${safeFrame}" alt="" aria-hidden="true" loading="lazy">`
+        : "";
+    return `<span class="player-avatar avatar-${sizeClass}${safeFrame ? ' has-equipped-frame' : ''}" title="${safeName}">${avatarBody}${frame}${badge}</span>`;
 }
 
 function renderBottomChat(messages) {
@@ -425,7 +429,7 @@ function renderBottomChat(messages) {
         return `
             <div class="bottom-chat-message">
                 <div class="chat-message-head">
-                    ${renderAvatarHtml(msg.user_avatar_url, msg.user_name, 'xs', msg.user_achievement)}
+                    ${renderAvatarHtml(msg.user_avatar_url, msg.user_name, 'xs', msg.user_achievement, msg.user_avatar_frame_url)}
                     <span class="chat-name ${adminClass}">${escapeHtml(msg.user_name)}</span>
                 </div>
                 ${adminBadge}

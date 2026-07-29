@@ -32,10 +32,11 @@ def invalidate_equipment_cache(user_id):
     request_key, ttl_key = _cache_keys(user_id)
     try:
         cache_delete(request_key)
+        cache_delete("_rz_profile_avatar_frame_map")
     except Exception:
         pass
     try:
-        ttl_cache_delete(ttl_key)
+        ttl_cache_delete(ttl_key, "profile_avatar_frame_map")
     except Exception:
         pass
 
@@ -53,6 +54,78 @@ def _decorate_item(item):
     item["image_url"] = asset_url(image_path) if image_path else None
     item["preview_url"] = asset_url(preview_path) if preview_path else item.get("image_url")
     return item
+
+
+def build_avatar_frame_map(players=None):
+    """Đọc khung Avatar đang trang bị cho nhiều người chỉ bằng tối đa 2 truy vấn.
+
+    Kết quả là ``{user_id: item}``, trong đó item đã có ``image_url``.
+    Bản đồ được cache ngắn để trang Players/BXH/phòng đấu không tạo truy vấn N+1.
+    """
+    requested_ids = set()
+    fallback = {}
+    for value in players or []:
+        if isinstance(value, dict):
+            user_id = value.get("id")
+            raw = _safe_dict(value.get("equipped_cosmetics"))
+            legacy_frame = raw.get("avatar_frame")
+            if user_id and isinstance(legacy_frame, dict):
+                fallback[str(user_id)] = dict(legacy_frame)
+        else:
+            user_id = value
+        if user_id:
+            requested_ids.add(str(user_id))
+
+    try:
+        cached = cache_get("_rz_profile_avatar_frame_map")
+        if cached is None:
+            cached = ttl_cache_get("profile_avatar_frame_map")
+        if cached is None:
+            equipment_result = execute_query(
+                db.table("user_equipment")
+                .select("user_id,item_id,inventory_id,equipped_at")
+                .eq("slot", "avatar_frame"),
+                "profile_avatar_frame_rows",
+                attempts=2,
+            )
+            equipment_rows = [dict(row) for row in (equipment_result.data or [])]
+            item_ids = sorted({str(row.get("item_id")) for row in equipment_rows if row.get("item_id")})
+            items_by_id = {}
+            if item_ids:
+                item_result = execute_query(
+                    db.table("shop_items").select("*").in_("id", item_ids),
+                    "profile_avatar_frame_items",
+                    attempts=2,
+                )
+                items_by_id = {
+                    str(item.get("id")): _decorate_item(item)
+                    for item in (item_result.data or [])
+                }
+
+            cached = {}
+            for equipment in equipment_rows:
+                item = items_by_id.get(str(equipment.get("item_id")))
+                user_id = equipment.get("user_id")
+                if not item or not user_id:
+                    continue
+                decorated = dict(item)
+                decorated["inventory_id"] = equipment.get("inventory_id")
+                decorated["equipped_at"] = equipment.get("equipped_at")
+                cached[str(user_id)] = decorated
+            ttl_cache_set("profile_avatar_frame_map", cached, 15)
+        cache_set("_rz_profile_avatar_frame_map", cached)
+    except Exception as exc:
+        try:
+            app.logger.debug("Avatar frame map fallback: %s", exc)
+        except Exception:
+            pass
+        cached = {}
+
+    result = dict(fallback)
+    result.update(cached or {})
+    if requested_ids:
+        return {user_id: result.get(user_id) for user_id in requested_ids if result.get(user_id)}
+    return result
 
 
 def build_equipment_state(player):

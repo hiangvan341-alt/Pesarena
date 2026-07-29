@@ -235,12 +235,12 @@
     <div class="history-result"><span class="result-pill result-{{ m.result_code }}">{{ m.result_label }}</span><small>{{ m.created_at_display }}</small></div>
     <div class="history-matchup">
         <div>
-            <span class="match-player-inline">{{ player_avatar(name=m.left_player_name, avatar_url=m.left_avatar_url, achievement=m.left_achievement, size='xs') }}<strong>{{ m.left_player_name }}</strong></span>
+            <span class="match-player-inline">{{ player_avatar(name=m.left_player_name, avatar_url=m.left_avatar_url, achievement=m.left_achievement, size='xs', frame=m.left_avatar_frame) }}<strong>{{ m.left_player_name }}</strong></span>
             <small>{{ m.left_team or '-' }}{% if m.status == 'confirmed' or m.is_forfeit %} · <strong class="{{ 'positive' if m.left_result_code == 'win' else 'negative' if m.left_result_code == 'loss' else '' }}">{{ m.left_result_label }}</strong>{% endif %}</small>
         </div>
         <strong>{{ m.score_display }}</strong>
         <div class="right">
-            <a class="match-player-inline match-player-right" href="{{ url_for('profile', user_id=m.right_player_id) }}"><span>{{ m.right_player_name }}</span>{{ player_avatar(name=m.right_player_name, avatar_url=m.right_avatar_url, achievement=m.right_achievement, size='xs') }}</a>
+            <a class="match-player-inline match-player-right" href="{{ url_for('profile', user_id=m.right_player_id) }}"><span>{{ m.right_player_name }}</span>{{ player_avatar(name=m.right_player_name, avatar_url=m.right_avatar_url, achievement=m.right_achievement, size='xs', frame=m.right_avatar_frame) }}</a>
             <small>{{ m.right_team or '-' }}{% if m.status == 'confirmed' or m.is_forfeit %} · <strong class="{{ 'positive' if m.right_result_code == 'win' else 'negative' if m.right_result_code == 'loss' else '' }}">{{ m.right_result_label }}</strong>{% endif %}</small>
         </div>
     </div>

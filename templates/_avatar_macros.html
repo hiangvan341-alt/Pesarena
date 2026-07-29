@@ -2,7 +2,12 @@
     {% set avatar_name = name or (player.display_name if player else '') or (player.username if player else '') or '?' %}
     {% set avatar_src = avatar_url if avatar_url is not none else (player.avatar_url if player else none) %}
     {% set achievement_data = achievement if achievement is not none else (player.featured_achievement if player and player.featured_achievement else none) %}
-    {% set frame_src = frame.image_url if frame and frame.image_url else none %}
+    {% set frame_data = frame if frame is not none else (player.avatar_frame if player and player.avatar_frame else none) %}
+    {% if frame_data is string %}
+        {% set frame_src = frame_data %}
+    {% else %}
+        {% set frame_src = frame_data.image_url if frame_data and frame_data.image_url else none %}
+    {% endif %}
     <span class="player-avatar avatar-{{ size }} {{ extra_class }}{% if frame_src %} has-equipped-frame{% endif %}" title="{{ avatar_name }}" aria-label="Ảnh đại diện {{ avatar_name }}">
         {% if avatar_src %}
         <img class="player-avatar-image" src="{{ avatar_src }}" alt="Ảnh đại diện {{ avatar_name }}" loading="lazy">
