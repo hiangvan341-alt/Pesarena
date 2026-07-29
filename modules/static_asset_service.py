@@ -18,6 +18,15 @@ def asset_base_url() -> str:
 
 def asset_url(filename: str) -> str:
     clean = str(filename or "").strip().lstrip("/")
+
+    # Shop Phase 3 assets are shipped inside the application package under
+    # ``static/shop``. They must stay on Flask/Vercel static URLs even when
+    # STATIC_ASSET_BASE_URL points legacy assets to Supabase Storage.
+    # Otherwise the app generates Supabase URLs for objects that were never
+    # uploaded there, causing broken Shop cards and preview images.
+    if clean == "shop" or clean.startswith("shop/"):
+        return url_for("static", filename=clean)
+
     base = asset_base_url()
     if base:
         return f"{base}/{quote(clean, safe='/')}"
