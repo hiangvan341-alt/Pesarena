@@ -6,6 +6,8 @@ from collections import Counter
 
 from PIL import Image, ImageOps, UnidentifiedImageError
 
+from . import equipment_service
+from . import repository
 from .equipment_service import build_equipment_state
 
 AVATAR_BUCKET = "avatars"
@@ -16,6 +18,7 @@ AVATAR_ALLOWED_FORMATS = {"JPEG", "PNG", "WEBP"}
 
 def configure(context):
     globals().update(context)
+    equipment_service.configure(context)
 
 
 def _normalize_storage_public_url(value):
@@ -181,6 +184,7 @@ def build_profile_context(user_id, viewer):
     )
 
     profile_active_room = active_room_for_user(viewer.get("id")) if viewer.get("id") == user_id else None
+    display_name_ticket_count = repository.get_display_name_ticket_count(user_id) if viewer.get("id") == user_id else 0
     return {
         "player": user,
         "matches": matches,
@@ -190,4 +194,5 @@ def build_profile_context(user_id, viewer):
         "activity": activity,
         "profile_active_room": profile_active_room,
         "profile_equipment": build_equipment_state(user),
+        "display_name_ticket_count": display_name_ticket_count,
     }

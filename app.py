@@ -62,7 +62,7 @@ from modules.win_streaks import (
 load_dotenv()
 
 APP_NAME = "PES Arena – Bản Lĩnh Sân Cỏ"
-APP_VERSION = "Collap_V1.14.39.12"
+APP_VERSION = "Collap_V1.14.40_SHOP_INVENTORY_PHASE3"
 DEFAULT_POINTS = 1000
 DEVICE_COOKIE_NAME = "rankzone_device_id"
 COOLDOWN_MINUTES = 3
@@ -5329,6 +5329,9 @@ from modules.room_result_routes import register_routes as _register_room_result_
 from modules.match_history_routes import register_routes as _register_match_history_routes
 from modules.zcoin import register_routes as _register_zcoin_routes
 from modules.profile import register_routes as _register_profile_routes
+from modules.shop import register_routes as _register_shop_routes
+from modules.inventory import register_routes as _register_inventory_routes
+from modules.admin_shop import register_routes as _register_admin_shop_routes
 from modules.daily_checkin import register_routes as _register_daily_checkin_routes
 from modules.gift_codes import register_routes as _register_gift_code_routes
 from modules.admin_economy import register_routes as _register_admin_economy_routes
@@ -5349,6 +5352,9 @@ for _route_registrar in (
     _register_match_history_routes,
     _register_zcoin_routes,
     _register_profile_routes,
+    _register_shop_routes,
+    _register_inventory_routes,
+    _register_admin_shop_routes,
     _register_daily_checkin_routes,
     _register_gift_code_routes,
     _register_admin_economy_routes,

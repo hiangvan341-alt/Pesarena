@@ -1,3 +1,14 @@
+# Collap V1.14.40 — Shop & Inventory Phase 3
+
+- Nền phát triển duy nhất: `Collap_V1.14.39.12`.
+- Thêm Cửa hàng `/shop`, Kho đồ `/inventory` và Admin Shop `/admin/shop` dưới dạng module độc lập.
+- Seed 25 vật phẩm từ `Cuahang.rar`: 6 khung avatar, 6 banner, 5 huy hiệu, 3 màu tên, 1 vé đổi tên và 4 phiếu giảm giá.
+- Phiếu 20% và 30% không được bày bán; chỉ Admin cấp cho một người hoặc toàn bộ người chơi.
+- Mua hàng bằng RPC nguyên tử, có chống gửi trùng, lịch sử giao dịch và hỗ trợ phiếu giảm giá.
+- Trang bị đồng thời 1 khung avatar, 1 banner, 1 màu tên và 1 huy hiệu cạnh tên.
+- Vé đổi tên được tiêu thụ sau khi dùng hết 2 lượt miễn phí.
+- Cần chạy `docs/update_shop_inventory_phase3_v1_14_40.sql`.
+
 # Collap V1.14.39.12
 
 - Nền phát triển: Collap_V1.14.39.11, vốn quay lại từ V1.14.39.8.
