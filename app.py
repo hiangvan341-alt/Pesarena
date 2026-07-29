@@ -62,7 +62,7 @@ from modules.win_streaks import (
 load_dotenv()
 
 APP_NAME = "PES Arena – Bản Lĩnh Sân Cỏ"
-APP_VERSION = "Collap_V1.14.39.9"
+APP_VERSION = "Collap_V1.14.39.12"
 DEFAULT_POINTS = 1000
 DEVICE_COOKIE_NAME = "rankzone_device_id"
 COOLDOWN_MINUTES = 3
@@ -1181,7 +1181,7 @@ FRIENDLY_RANDOM3_MODE = "random3_pick1"
 FRIENDLY_RANDOM3_NOTE_PREFIX = "FRIENDLY_RANDOM3:"
 
 def build_friendly_random3_state(host_player, guest_player):
-    """Chia 3 CLB riêng cho mỗi bên theo tỷ lệ Tier của Rank từng người."""
+    """Chia 3 CLB mỗi bên; tránh đội trong 5 trận gần nhất với đúng đối thủ."""
     if not host_player or not guest_player:
         raise ValueError("Không tải được thông tin Rank của hai người chơi.")
 
@@ -1190,6 +1190,10 @@ def build_friendly_random3_state(host_player, guest_player):
         raise ValueError("Cần ít nhất 6 CLB để dùng Random 3 chọn 1.")
 
     picked_names = []
+    selected_history = {
+        "host": _recent_pair_team_names(host_player.get("id"), guest_player.get("id")),
+        "guest": _recent_pair_team_names(guest_player.get("id"), host_player.get("id")),
+    }
 
     def pack(team):
         return {
@@ -1201,10 +1205,17 @@ def build_friendly_random3_state(host_player, guest_player):
             "league": team.get("league") or "",
         }
 
-    def pick_three(player):
+    def pick_three(player, side):
         options = []
+        excluded = list(selected_history.get(side) or [])
         for _ in range(3):
-            team, _, _, _ = _pick_rank_team(player, all_teams, extra_excluded=picked_names)
+            team, _, _, _ = _pick_rank_team(
+                player,
+                all_teams,
+                extra_excluded=excluded + picked_names,
+                opponent_id=(guest_player.get("id") if side == "host" else host_player.get("id")),
+                include_pair_history=False,
+            )
             name = team.get("display")
             picked_names.append(name)
             options.append(pack(team))
@@ -1219,8 +1230,8 @@ def build_friendly_random3_state(host_player, guest_player):
         "distribution": "rank_weighted",
         "host_rank": rank_ranges[host_level]["name"],
         "guest_rank": rank_ranges[guest_level]["name"],
-        "host_options": pick_three(host_player),
-        "guest_options": pick_three(guest_player),
+        "host_options": pick_three(host_player, "host"),
+        "guest_options": pick_three(guest_player, "guest"),
         "host_choice": None,
         "guest_choice": None,
     }
@@ -1334,9 +1345,22 @@ def _all_random_teams():
     return teams
 
 
-def _recent_team_names(user_id, limit=RECENT_TEAM_EXCLUSION_COUNT):
-    """Return the last distinct clubs used by one player, newest first."""
-    if not user_id:
+def _normalize_team_name(name):
+    return " ".join(str(name or "").strip().casefold().split())
+
+
+def _is_random3_match(match):
+    note = str(match.get("note") or "").casefold()
+    return "random 3 chọn 1" in note or FRIENDLY_RANDOM3_MODE in note
+
+
+def _recent_pair_team_names(user_id, opponent_id, limit=RECENT_TEAM_EXCLUSION_COUNT):
+    """CLB người chơi đã dùng trong N trận confirmed gần nhất với đúng đối thủ.
+
+    Lịch sử dùng chung cho Rank thường và Random 3 chọn 1. Khi đổi đối thủ,
+    danh sách chống lặp tự tách theo cặp người chơi mới.
+    """
+    if not user_id or not opponent_id:
         return []
     names = []
     try:
@@ -1346,28 +1370,32 @@ def _recent_team_names(user_id, limit=RECENT_TEAM_EXCLUSION_COUNT):
             reverse=True,
         )
         for match in matches:
-            if match.get("player1_id") == user_id:
+            if str(match.get("status") or "").lower() != "confirmed":
+                continue
+            p1 = match.get("player1_id")
+            p2 = match.get("player2_id")
+            if p1 == user_id and p2 == opponent_id:
                 name = match.get("team1")
-            elif match.get("player2_id") == user_id:
+            elif p2 == user_id and p1 == opponent_id:
                 name = match.get("team2")
             else:
                 continue
-            if name and name not in names:
-                names.append(name)
+            if name:
+                names.append(str(name).strip())
             if len(names) >= limit:
                 break
     except Exception as exc:
-        print(f"recent_team_history warning: {exc}")
+        print(f"recent_pair_team_history warning: {exc}")
     return names
 
 
 def _teams_in_tiers(teams, tiers, excluded_names=None):
     allowed = {str(tier).upper() for tier in (tiers or [])}
-    excluded = {str(name).casefold() for name in (excluded_names or []) if name}
+    excluded = {_normalize_team_name(name) for name in (excluded_names or []) if name}
     return [
         team for team in teams
         if str(team.get("tier") or "").upper() in allowed
-        and str(team.get("display") or "").casefold() not in excluded
+        and _normalize_team_name(team.get("display")) not in excluded
     ]
 
 
@@ -1394,22 +1422,20 @@ def _weighted_tier_choice(tier_weights, teams, excluded_names):
     tier, _, candidates = available[-1]
     return tier, candidates
 
-def _pick_rank_team(player, all_teams, extra_excluded=None):
+def _pick_rank_team(player, all_teams, extra_excluded=None, opponent_id=None, include_pair_history=True):
     level = get_rank_level(player.get("rank_points", 0))
     tier_weights = get_rank_tier_weights(level)
-    recent = _recent_team_names(player.get("id"))
+    recent = (
+        _recent_pair_team_names(player.get("id"), opponent_id)
+        if include_pair_history and opponent_id
+        else []
+    )
     extra = list(extra_excluded or [])
     excluded = list(dict.fromkeys(recent + extra))
     selected_tier, candidates = _weighted_tier_choice(tier_weights, all_teams, excluded)
 
-    # Keep anti-repeat whenever possible; relax 5 -> 3 -> 1 -> 0 only if needed.
-    if not candidates:
-        for keep_recent in (3, 1, 0):
-            selected_tier, candidates = _weighted_tier_choice(
-                tier_weights, all_teams, recent[:keep_recent] + extra
-            )
-            if candidates:
-                break
+    # Không nới danh sách cấm: CLB thuộc 5 trận Rank thường gần nhất
+    # tuyệt đối không được xuất hiện lại ở lượt random hiện tại.
     if not candidates:
         raise ValueError(f"Không có CLB phù hợp cho rank {load_rank_ranges()[level]['name']}.")
     return random.choice(candidates), selected_tier, tier_weights, recent
@@ -1423,7 +1449,7 @@ def get_smart_random_rule(player_a, player_b):
         "level_b": level_b,
         "rank_gap": abs(level_a - level_b),
         "advantage": "Mỗi Rank có tỷ lệ xuất hiện Tier CLB riêng.",
-        "summary": "Random theo tỷ lệ Tier riêng của từng Rank; chống lặp 5 CLB gần nhất; không trùng CLB.",
+        "summary": "Random theo tỷ lệ Tier riêng; tránh CLB đã dùng trong 5 trận confirmed gần nhất với đúng đối thủ, dùng chung cả Rank thường và Random 3 chọn 1; hai bên không trùng CLB.",
         "rule_a": get_rank_tier_weights(level_a),
         "rule_b": get_rank_tier_weights(level_b),
     }
@@ -1435,16 +1461,26 @@ def smart_random_team_pair(player_a, player_b):
     if len(all_teams) < 2:
         raise ValueError("Không đủ dữ liệu CLB để Smart Random.")
 
-    team_a, tier_a_selected, weights_a, recent_a = _pick_rank_team(player_a, all_teams)
+    team_a, tier_a_selected, weights_a, recent_a = _pick_rank_team(
+        player_a, all_teams, opponent_id=player_b.get("id")
+    )
     team_b, tier_b_selected, weights_b, recent_b = _pick_rank_team(
-        player_b, all_teams, extra_excluded=[team_a.get("display")]
+        player_b,
+        all_teams,
+        extra_excluded=[team_a.get("display")],
+        opponent_id=player_a.get("id"),
     )
 
     if str(team_a.get("display")).casefold() == str(team_b.get("display")).casefold():
         allowed_b = set(weights_b.keys())
+        excluded_b = {
+            _normalize_team_name(name)
+            for name in list(recent_b) + [team_a.get("display")]
+            if name
+        }
         alternatives = [
             team for team in all_teams
-            if str(team.get("display")).casefold() != str(team_a.get("display")).casefold()
+            if _normalize_team_name(team.get("display")) not in excluded_b
             and str(team.get("tier") or "").upper() in allowed_b
         ]
         if not alternatives:
@@ -1498,7 +1534,7 @@ def friendly_random_team_pair(tier, excluded_names=None):
     candidates = [
         team for team in _all_random_teams()
         if str(team.get("tier") or "").strip().upper() == selected_tier
-        and str(team.get("display") or "").casefold() not in excluded
+        and _normalize_team_name(team.get("display")) not in excluded
     ]
     if len(candidates) < 2 and excluded:
         candidates = [

@@ -661,7 +661,6 @@ let currentRoomStatus = {{ room.status|tojson }};
 const currentRoomUserIsHost = {{ (room_room_viewer_is_host or current_user.role == 'admin')|tojson }};
 const currentRoomUserIsGuest = {{ (room_viewer_is_guest)|tojson }};
 const currentRoomPath = {{ url_for('room_detail', room_id=room.id)|tojson }};
-const currentRoomViewPath = {{ url_for('api_room_view', room_id=room.id)|tojson }};
 
 let roomCountdownSeconds = 0;
 let roomStartCountdownSeconds = 0;
@@ -793,10 +792,10 @@ let roomActionRequestInFlight = false;
 
 function getRoomStateInterval() {
     if (document.hidden) return 90000;
-    if (currentRoomStatus === "playing") return currentRoomUserIsGuest ? 6000 : 12000;
+    if (currentRoomStatus === "playing") return currentRoomUserIsGuest ? 4500 : 10000;
     if (currentRoomStatus === "friendly_playing") return 10000;
-    if (currentRoomStatus === "waiting_result_confirm") return currentRoomUserIsGuest ? 4000 : 8000;
-    if (currentRoomStatus === "waiting_ready") return 6000;
+    if (currentRoomStatus === "waiting_result_confirm") return currentRoomUserIsGuest ? 3000 : 6000;
+    if (currentRoomStatus === "waiting_ready") return 4000;
     if (currentRoomStatus === "confirmed") return 6000;
     return 10000;
 }
@@ -911,25 +910,9 @@ async function refreshRoomView() {
     if (roomViewRefreshInFlight || roomStateStopped) return false;
     roomViewRefreshInFlight = true;
     try {
-        const response = await fetch(currentRoomViewPath, {
-            credentials: "same-origin",
-            cache: "no-store",
-            headers: {"X-PES-Room-Ajax": "1"}
-        });
-        if (handleRoomSessionResponse(response) || !response.ok) return false;
-        const html = await response.text();
-        const currentShell = document.getElementById("roomLiveShell");
-        if (!currentShell) return false;
-
-        // Partial chỉ chứa nội dung động của phòng, không tải lại base.html,
-        // menu, CSS, JavaScript và không thay chính node shell.
-        currentShell.innerHTML = html;
-        currentRoomStateKey = response.headers.get("X-PES-Room-State-Key") || currentRoomStateKey;
-        currentRoomStatus = response.headers.get("X-PES-Room-Status") || currentRoomStatus;
-        currentShell.dataset.roomStateKey = currentRoomStateKey;
-        currentShell.dataset.roomStatus = currentRoomStatus;
-        rebindRoomDynamicUi();
-        return true;
+        const result = await fetchRoomDocument(currentRoomPath);
+        if (!result.response.ok) return false;
+        return replaceRoomShellFromDocument(result.doc);
     } catch (error) {
         return false;
     } finally {
@@ -1343,7 +1326,7 @@ function startRoomChatPolling() {
     roomChatPoller = PESNet.createPoller({
         key: "room-chat:{{ room.id }}",
         task: loadRoomChat,
-        visibleInterval: 18000,
+        visibleInterval: 12000,
         hiddenInterval: 60000,
         runWhenHidden: false,
         immediate: true,

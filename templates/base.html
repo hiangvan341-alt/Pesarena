@@ -7,12 +7,11 @@
     <title>{{ APP_NAME }}</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}?v={{ APP_VERSION|urlencode }}">
-    {% set zcoin_page = request.endpoint in ['zcoin_wallet', 'zcoin_rewards', 'inventory', 'shop', 'admin_economy'] %}
-    {% if zcoin_page %}<link rel="stylesheet" href="{{ url_for('static', filename='css/zcoin.css') }}?v={{ APP_VERSION|urlencode }}">{% endif %}
-    {% if request.endpoint == 'zcoin_rewards' %}<link rel="stylesheet" href="{{ url_for('static', filename='css/zcoin_rewards.css') }}?v={{ APP_VERSION|urlencode }}">{% endif %}
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/zcoin.css') }}?v={{ APP_VERSION|urlencode }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/zcoin_rewards.css') }}?v={{ APP_VERSION|urlencode }}">
     <script src="{{ url_for('static', filename='js/pes_polling.js') }}?v={{ APP_VERSION|urlencode }}" defer></script>
-    {% if zcoin_page %}<script src="{{ url_for('static', filename='js/zcoin.js') }}?v={{ APP_VERSION|urlencode }}" defer></script>{% endif %}
-    {% if request.endpoint == 'zcoin_rewards' %}<script src="{{ url_for('static', filename='js/zcoin_rewards.js') }}?v={{ APP_VERSION|urlencode }}" defer></script>{% endif %}
+    <script src="{{ url_for('static', filename='js/zcoin.js') }}?v={{ APP_VERSION|urlencode }}" defer></script>
+    <script src="{{ url_for('static', filename='js/zcoin_rewards.js') }}?v={{ APP_VERSION|urlencode }}" defer></script>
     {% if current_user and not (auth_only|default(false)) %}
     <script>
     window.PES_SESSION_CONFIG = {
@@ -55,7 +54,7 @@ function toggleTheme(){
 <div class="layout player-app-shell">
     <aside class="sidebar player-sidebar">
         <div class="brand-lockup">
-            <img class="sidebar-brand-logo" src="{{ asset_url('pes-arena-logo.webp') }}" alt="PES Arena – Bản Lĩnh Sân Cỏ">
+            <img class="sidebar-brand-logo" src="{{ asset_url('pes-arena-logo.webp') }}?v={{ APP_VERSION|urlencode }}" alt="PES Arena – Bản Lĩnh Sân Cỏ">
         </div>
 
         <nav class="nav player-nav">
@@ -143,7 +142,7 @@ function toggleTheme(){
                     </div>
                 </div>
                 <a class="topbar-zcoin" href="{{ url_for('zcoin_wallet') }}" title="Mở ví Zcoin">
-                    <img src="{{ asset_url('zcoin-logo.webp') }}" alt="Zcoin">
+                    <img src="{{ asset_url('zcoin-logo.webp') }}?v={{ APP_VERSION|urlencode }}" alt="Zcoin">
                     <span><strong>{{ format_zcoin(current_user.zcoin_balance|default(0, true)) }}</strong><small>ZCOIN</small></span>
                 </a>
                 <div class="topbar-account-wrap">
@@ -953,7 +952,7 @@ window.addEventListener("DOMContentLoaded", function () {
         PESNet.createPoller({
             key: "pending-invites",
             task: checkPendingInvites,
-            visibleInterval: isRoomPage ? 15000 : (isPlayersPage || isRankingPage ? 20000 : 30000),
+            visibleInterval: isRoomPage ? 10000 : (isPlayersPage || isRankingPage ? 15000 : 20000),
             hiddenInterval: 60000,
             runWhenHidden: false,
             immediate: true,
@@ -976,8 +975,8 @@ window.addEventListener("DOMContentLoaded", function () {
     PESNet.createPoller({
         key: "announcement",
         task: checkAnnouncementSmart,
-        visibleInterval: 60000,
-        hiddenInterval: 180000,
+        visibleInterval: 15000,
+        hiddenInterval: 60000,
         runWhenHidden: false,
         immediate: true,
         jitter: 1500
