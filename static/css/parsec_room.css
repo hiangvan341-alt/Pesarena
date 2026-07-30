@@ -1,3 +1,15 @@
-.parsec-room-panel{margin:14px 0;padding:14px;border:1px solid var(--border-color,#334155);border-radius:14px;background:rgba(15,23,42,.45)}
-.parsec-room-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}.parsec-room-item{padding:10px;border-radius:10px;background:rgba(255,255,255,.04)}
-.parsec-room-row{display:flex;gap:8px;align-items:center;flex-wrap:wrap}.parsec-room-value{font-weight:700;word-break:break-all}.parsec-copy-btn{padding:7px 10px}.parsec-room-link-form{margin-top:10px;display:flex;gap:8px;flex-wrap:wrap}.parsec-room-link-form input{flex:1;min-width:220px}.parsec-profile-form{display:flex;gap:10px;flex-wrap:wrap}.parsec-profile-form input{flex:1;min-width:240px}@media(max-width:700px){.parsec-room-grid{grid-template-columns:1fr}}
+.parsec-room-panel{padding:13px 14px;border:1px solid rgba(255,39,101,.72);border-radius:16px;background:linear-gradient(180deg,rgba(8,20,35,.96),rgba(5,14,27,.96));box-shadow:0 0 0 1px rgba(255,255,255,.025),0 12px 28px rgba(0,0,0,.26)}
+.parsec-room-heading{display:flex;align-items:center;gap:9px;padding-bottom:10px;margin-bottom:10px;border-bottom:1px solid rgba(234,190,77,.28)}
+.parsec-room-heading h3{margin:0!important;font-size:16px!important;letter-spacing:.02em}
+.parsec-room-logo{display:block;width:22px;height:22px;object-fit:contain;flex:0 0 22px}
+.parsec-room-grid{display:grid;grid-template-columns:1fr;gap:8px}
+.parsec-room-item{padding:9px 10px;border-radius:10px;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.055)}
+.parsec-room-item small{display:block;margin-bottom:6px;color:#aeb9c9;font-size:12px}
+.parsec-room-row{display:flex;gap:8px;align-items:center;flex-wrap:nowrap}
+.parsec-room-value{min-width:0;flex:1;font-weight:750;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.parsec-copy-btn{flex:0 0 auto;padding:7px 10px;min-height:34px}
+.parsec-room-link-item{margin-top:8px}.parsec-copy-link-btn{width:100%}
+.parsec-room-link-form{margin-top:9px;display:grid;grid-template-columns:minmax(0,1fr) auto auto;gap:7px}
+.parsec-room-link-form input{min-width:0;width:100%}
+.parsec-room-note{margin:9px 0 0;color:#9ca9ba;font-size:11px;line-height:1.35}
+@media(max-width:700px){.parsec-room-link-form{grid-template-columns:1fr 1fr}.parsec-room-link-form input{grid-column:1/-1}}

@@ -5264,3 +5264,8 @@ html[data-theme="light"] .sidebar-version-panel{
 .name-style-neon-blue{display:inline-block;background:linear-gradient(90deg,#66d9ff,#1a7cff);-webkit-background-clip:text;background-clip:text;color:transparent!important;text-shadow:0 0 14px rgba(35,157,255,.48)}
 .name-style-elite-purple{display:inline-block;background:linear-gradient(90deg,#e48cff,#7b4dff,#f1a1ff);-webkit-background-clip:text;background-clip:text;color:transparent!important;text-shadow:0 0 14px rgba(153,80,255,.5)}
 .name-style-champion-gold{display:inline-block;background:linear-gradient(90deg,#fff0a6,#ffbd21,#fff4ba);-webkit-background-clip:text;background-clip:text;color:transparent!important;text-shadow:0 0 14px rgba(255,190,35,.48)}
+
+/* V1.14.41.8 — show the complete sidebar logo */
+.brand-lockup{min-height:122px!important;height:auto!important;padding:8px 10px!important;overflow:visible!important}
+.sidebar-brand-logo{width:100%!important;max-width:208px!important;height:auto!important;max-height:106px!important;object-fit:contain!important;object-position:center!important}
+@media(max-width:900px){.brand-lockup{min-height:102px!important}.sidebar-brand-logo{max-width:188px!important;max-height:92px!important}}

@@ -22,3 +22,23 @@ def test_no_new_polling_source():
 def test_rp_files_untouched_by_module():
     src=open('modules/parsec_room/routes.py',encoding='utf-8').read()
     assert 'rp_' not in src.lower() and 'matches' not in src.lower()
+
+
+def test_parsec_visible_on_initial_room_template():
+    initial=open('templates/room_detail.html',encoding='utf-8').read()
+    fragment=open('templates/_room_live_content.html',encoding='utf-8').read()
+    for src in (initial, fragment):
+        assert 'parsec-room-panel' in src
+        assert "asset_url('parsec-logo.webp')" in src
+
+def test_parsec_panel_is_in_right_rail():
+    for name in ('templates/room_detail.html','templates/_room_live_content.html'):
+        src=open(name,encoding='utf-8').read()
+        assert src.index('room-arena-right-rail') < src.index('parsec-room-panel')
+
+def test_parsec_logo_is_webp_and_no_polling_added():
+    from pathlib import Path
+    assert Path('static/parsec-logo.webp').is_file()
+    assert not Path('static/parsec-logo.png').exists()
+    src=open('static/css/parsec_room.css',encoding='utf-8').read()
+    assert 'width:22px' in src
