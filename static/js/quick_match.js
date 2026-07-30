@@ -99,15 +99,27 @@
       headers: { 'Accept': 'application/json' }
     });
     const data = await response.json().catch(function () { return {}; });
-    if (!response.ok || !data.ok) return;
-    if (data.status === 'accepted') {
+    if (!response.ok || !data.ok) {
+      // A missing/stale server state must never leave the button spinning forever.
+      clearInterval(statusTimer);
+      saveState(null);
+      setButton('idle');
+      return;
+    }
+    if (data.status === 'accepted' || data.status === 'room_filled') {
       saveState(null);
       clearInterval(statusTimer);
+      setButton('idle');
       window.location.reload();
       return;
     }
-    if (['rejected', 'expired', 'cancelled'].includes(data.status)) {
+    if (data.status !== 'pending') {
       clearInterval(statusTimer);
+      if (!data.continue_search) {
+        saveState(null);
+        setButton('idle');
+        return;
+      }
       const excluded = Array.from(new Set([
         ...(state.excluded || []),
         String(state.opponentId || data.opponent_id || '')
@@ -121,6 +133,9 @@
         setButton('idle');
         if (window.showGameNotice) window.showGameNotice(error.message, 'warning', 'Tìm Nhanh');
       }
+    } else {
+      // Room live polling may replace the button node. Reapply its visual state.
+      setButton('sent');
     }
   }
 

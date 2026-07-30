@@ -300,3 +300,16 @@ File sửa:
 - Loại CSS và JavaScript Tìm Nhanh khỏi file dùng chung.
 - Chặn gửi hai request cùng lúc.
 - 35/35 test thành công.
+
+## V1.14.41.31 — 31/07/2026 02:47 (Asia/Bangkok)
+
+- Sửa lời mời Tìm Nhanh được tạo nhưng không gắn thành công vào phòng: nếu update phòng thất bại, lời mời được hủy ngay và trả lỗi rõ ràng.
+- Cho Admin/Owner nhận popup lời mời như người chơi thường khi đang Online.
+- Endpoint trạng thái Tìm Nhanh tự đối chiếu trực tiếp phòng, presence và trạng thái đối thủ trên Supabase.
+- Đối thủ Offline hoặc bận: hủy lời mời treo và chuyển sang đối thủ tiếp theo.
+- Phòng người gửi đã có khách: kết thúc chuỗi Tìm Nhanh, không tiếp tục mời thêm người.
+- Khi bất kỳ lời mời nào được chấp nhận vào phòng, hủy các lời mời chờ khác của chủ phòng.
+- JavaScript không còn kẹt ở “ĐÃ GỬI LỜI MỜI” khi API trả 404 hoặc trạng thái đã kết thúc.
+- CSS Tìm Nhanh tiếp tục được cô lập trong `static/css/quick_match.css`; không phát hiện rule màu/trạng thái làm sai logic.
+- Kiểm tra: Python compile thành công, JavaScript syntax thành công, 35/35 test thành công.
+

@@ -64,7 +64,7 @@ from modules.win_streaks import (
 load_dotenv()
 
 APP_NAME = "PES Arena – Bản Lĩnh Sân Cỏ"
-APP_VERSION = "V1.14.41.30"
+APP_VERSION = "V1.14.41.31"
 DEFAULT_POINTS = 1000
 DEVICE_COOKIE_NAME = "rankzone_device_id"
 COOLDOWN_MINUTES = 3
@@ -3331,7 +3331,7 @@ def current_pending_invites():
         return cached
     try:
         user = current_user()
-        if not user or user.get("role") == "admin":
+        if not user:
             return cache_set("_rz_current_pending_invites", [])
         invites = list_invites("pending")
         return cache_set("_rz_current_pending_invites", [invite for invite in invites if invite["to_user_id"] == user["id"]])
@@ -4010,7 +4010,7 @@ def presence_offline():
 def api_pending_invites():
     """Truy vấn trực tiếp lời mời của người hiện tại để giảm độ trễ popup."""
     user = current_user()
-    if not user or user.get("role") == "admin":
+    if not user:
         return jsonify({"invites": []})
 
     try:
@@ -5304,7 +5304,7 @@ def quick_match_invite():
     invite = invite_result.data[0] if invite_result.data else None
     if not invite:
         return jsonify({"ok": False, "message": "Không thể gửi lời mời lúc này."}), 500
-    execute_query(
+    attach_result = execute_query(
         db.table("match_rooms").update({
             "invite_id": invite["id"],
             "note": f'Đã tìm thấy {opponent["display_name"]} (chênh {abs(int(opponent.get("rank_points",0) or 0)-my_points)} RP). Đang chờ chấp nhận.',
@@ -5312,6 +5312,21 @@ def quick_match_invite():
         }).eq("id", sender_room["id"]).eq("status", "waiting_ready").is_("guest_user_id", "null"),
         "quick_match_attach_invite",
     )
+    if not attach_result.data:
+        execute_query(
+            db.table("match_invites").update({
+                "status": "cancelled",
+                "updated_at": now_iso(),
+            }).eq("id", invite["id"]).eq("status", "pending"),
+            "quick_match_cancel_unattached_invite",
+            attempts=2,
+        )
+        ttl_cache_delete("invites_raw")
+        cache_delete("_rz_invites_all")
+        return jsonify({
+            "ok": False,
+            "message": "Phòng vừa thay đổi nên lời mời chưa được gửi. Vui lòng bấm Tìm Nhanh lại.",
+        }), 409
     ttl_cache_delete("invites_raw")
     cache_delete("_rz_invites_all")
     return jsonify({
@@ -5327,13 +5342,138 @@ def quick_match_invite():
 @app.route("/api/invites/quick-match/<invite_id>/status")
 @login_required
 def quick_match_invite_status(invite_id):
+    """Return the live state of a Quick Match invitation.
+
+    This endpoint also reconciles stale pending rows. A Quick Match chain must
+    stop when the sender's room is already filled, and must move on when the
+    selected opponent goes offline or becomes unavailable.
+    """
     user = current_user()
     invite = get_invite(invite_id)
     if not invite or str(invite.get("from_user_id")) != str(user.get("id")) or not is_quick_match_invite(invite):
-        return jsonify({"ok": False, "message": "Không tìm thấy lượt Tìm Nhanh."}), 404
+        return jsonify({
+            "ok": False,
+            "status": "missing",
+            "continue_search": False,
+            "message": "Không tìm thấy lượt Tìm Nhanh.",
+        }), 404
+
+    status = str(invite.get("status") or "")
+    continue_search = status in {"rejected", "expired", "cancelled"}
+    reason = status
+
+    if status == "pending":
+        sender_id = invite.get("from_user_id")
+        opponent_id = invite.get("to_user_id")
+        now = now_dt()
+
+        room_result = execute_query(
+            db.table("match_rooms")
+              .select("id,host_user_id,guest_user_id,status,invite_id")
+              .eq("host_user_id", sender_id)
+              .in_("status", ["waiting_ready", "playing", "friendly_playing", "waiting_result_confirm"])
+              .order("updated_at", desc=True)
+              .limit(1),
+            "quick_match_status_sender_room",
+            attempts=2,
+        )
+        sender_room = dict(room_result.data[0]) if room_result.data else None
+
+        # A different player has already entered the sender's room. The search
+        # is complete and must not continue to invite more people.
+        if sender_room and sender_room.get("guest_user_id"):
+            guest_id = str(sender_room.get("guest_user_id"))
+            next_status = "accepted" if guest_id == str(opponent_id) else "cancelled"
+            execute_query(
+                db.table("match_invites").update({
+                    "status": next_status,
+                    "updated_at": now_iso(),
+                }).eq("id", invite_id).eq("status", "pending"),
+                "quick_match_close_when_room_filled",
+                attempts=2,
+            )
+            status = "room_filled"
+            reason = "room_filled"
+            continue_search = False
+        elif not sender_room or not is_solo_waiting_room(sender_room, sender_id):
+            execute_query(
+                db.table("match_invites").update({
+                    "status": "cancelled",
+                    "updated_at": now_iso(),
+                }).eq("id", invite_id).eq("status", "pending"),
+                "quick_match_cancel_sender_unavailable",
+                attempts=2,
+            )
+            status = "sender_unavailable"
+            reason = "sender_unavailable"
+            continue_search = False
+        else:
+            opponent_result = execute_query(
+                db.table("users")
+                  .select("id,is_online,last_seen_at,role,admin_level,account_status")
+                  .eq("id", opponent_id)
+                  .limit(1),
+                "quick_match_status_opponent_presence",
+                attempts=2,
+            )
+            opponent = dict(opponent_result.data[0]) if opponent_result.data else None
+            seen = parse_dt((opponent or {}).get("last_seen_at"))
+            presence_cutoff = now - timedelta(seconds=max(ONLINE_TIMEOUT_SECONDS, 90))
+            opponent_online = bool(
+                opponent
+                and (opponent.get("account_status", "approved") == "approved")
+                and seen
+                and seen >= presence_cutoff
+                and opponent.get("is_online") is not False
+            )
+
+            if not opponent_online:
+                execute_query(
+                    db.table("match_invites").update({
+                        "status": "cancelled",
+                        "updated_at": now_iso(),
+                    }).eq("id", invite_id).eq("status", "pending"),
+                    "quick_match_cancel_offline_opponent",
+                    attempts=2,
+                )
+                status = "opponent_offline"
+                reason = "opponent_offline"
+                continue_search = True
+            else:
+                availability = matchmaking_snapshot(opponent_id)
+                opponent_room = availability.get("room_a")
+                opponent_busy = bool(
+                    availability.get("match_a")
+                    or (opponent_room and not is_solo_waiting_room(opponent_room, opponent_id))
+                )
+                other_pending = any(
+                    str(row.get("id")) != str(invite_id)
+                    and str(opponent_id) in {str(row.get("from_user_id")), str(row.get("to_user_id"))}
+                    for row in (availability.get("invites") or [])
+                )
+                if opponent_busy or other_pending:
+                    execute_query(
+                        db.table("match_invites").update({
+                            "status": "cancelled",
+                            "updated_at": now_iso(),
+                        }).eq("id", invite_id).eq("status", "pending"),
+                        "quick_match_cancel_unavailable_opponent",
+                        attempts=2,
+                    )
+                    status = "opponent_unavailable"
+                    reason = "opponent_unavailable"
+                    continue_search = True
+
+    if status != "pending":
+        ttl_cache_delete("invites_raw")
+        cache_delete("_rz_invites_all")
+        cache_delete("_rz_current_pending_invites")
+
     return jsonify({
         "ok": True,
-        "status": str(invite.get("status") or ""),
+        "status": status,
+        "reason": reason,
+        "continue_search": bool(continue_search),
         "opponent_id": invite.get("to_user_id"),
         "expires_in_seconds": int(invite.get("expires_in_seconds") or 0),
     })
@@ -5503,6 +5643,16 @@ def respond_invite(invite_id):
                 "updated_at": now_iso(),
             }).eq("from_user_id", user["id"]).eq("status", "pending").neq("id", invite_id),
             "cancel_receiver_outgoing_invites_after_accept",
+            attempts=1,
+        )
+        # Khi phòng của người mời đã có khách, mọi lời mời khác do người
+        # mời gửi (bao gồm Tìm Nhanh) phải kết thúc để không còn trạng thái treo.
+        execute_query(
+            db.table("match_invites").update({
+                "status": "cancelled",
+                "updated_at": now_iso(),
+            }).eq("from_user_id", inviter_id).eq("status", "pending").neq("id", invite_id),
+            "cancel_inviter_other_outgoing_after_accept",
             attempts=1,
         )
     except Exception as exc:
