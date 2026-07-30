@@ -1,3 +1,14 @@
+# V1.14.41.14 — Rà soát CSS toàn dự án
+
+- Thời gian: 30/07/2026 18:08 (Asia/Bangkok)
+- Chuẩn hóa font toàn dự án qua `--app-font`.
+- Xóa 5 rule CSS trùng hoàn toàn.
+- Module Parsec kế thừa font chung.
+- Kiểm tra và cố định thứ tự nạp CSS.
+- File sửa: `static/style.css`, `static/css/parsec_room.css`, `templates/base.html`, `app.py`.
+
+---
+
 # V1.14.41.13 — Chuẩn hóa giao diện module Parsec
 
 - Làm lại riêng module Parsec theo ảnh mẫu; không thay đổi các khung phòng đấu khác.

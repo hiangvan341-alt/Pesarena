@@ -1,4 +1,4 @@
-/* Parsec room module — isolated UI, V1.14.41.13 */
+/* Parsec room module — isolated UI, V1.14.41.14 */
 .room-layout-v137 .room-arena-right-rail{
   display:flex;
   flex-direction:column;
@@ -11,7 +11,7 @@
 .parsec-room-panel,
 .parsec-room-panel *{
   box-sizing:border-box;
-  font-family:Inter,"Segoe UI",Arial,sans-serif;
+  font-family:inherit;
 }
 .parsec-room-panel{
   width:100%;

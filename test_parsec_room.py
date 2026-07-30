@@ -43,6 +43,6 @@ def test_parsec_logo_is_webp_and_no_polling_added():
     assert Path('static/parsec-logo.webp').is_file()
     assert not Path('static/parsec-logo.png').exists()
     src=open('static/css/parsec_room.css',encoding='utf-8').read()
-    assert 'width:22px!important' in src
-    assert 'height:22px!important' in src
+    assert 'width:18px!important' in src
+    assert 'height:18px!important' in src
     assert 'setInterval' not in src
