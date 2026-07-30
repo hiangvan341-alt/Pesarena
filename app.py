@@ -63,7 +63,11 @@ from modules.win_streaks import (
 load_dotenv()
 
 APP_NAME = "PES Arena – Bản Lĩnh Sân Cỏ"
+<<<<<<< HEAD
 APP_VERSION = "Collap_V1.14.41.6_PARSEC_ROOM_MODULE"
+=======
+APP_VERSION = "Collap_V1.14.41.1_GLOBAL_NAME_STYLE_TICKET_ONLY_HOTFIX"
+>>>>>>> 5a4a92bad288ecfeea27f19053c00394470b04ce
 DEFAULT_POINTS = 1000
 DEVICE_COOKIE_NAME = "rankzone_device_id"
 COOLDOWN_MINUTES = 3
@@ -5420,7 +5424,10 @@ from modules.room_result_routes import register_routes as _register_room_result_
 from modules.match_history_routes import register_routes as _register_match_history_routes
 from modules.zcoin import register_routes as _register_zcoin_routes
 from modules.profile import register_routes as _register_profile_routes
+<<<<<<< HEAD
 from modules.parsec_room import register_routes as _register_parsec_room_routes
+=======
+>>>>>>> 5a4a92bad288ecfeea27f19053c00394470b04ce
 from modules.shop import register_routes as _register_shop_routes
 from modules.inventory import register_routes as _register_inventory_routes
 from modules.admin_shop import register_routes as _register_admin_shop_routes
@@ -5444,7 +5451,10 @@ for _route_registrar in (
     _register_match_history_routes,
     _register_zcoin_routes,
     _register_profile_routes,
+<<<<<<< HEAD
     _register_parsec_room_routes,
+=======
+>>>>>>> 5a4a92bad288ecfeea27f19053c00394470b04ce
     _register_shop_routes,
     _register_inventory_routes,
     _register_admin_shop_routes,
