@@ -313,3 +313,10 @@ File sửa:
 - CSS Tìm Nhanh tiếp tục được cô lập trong `static/css/quick_match.css`; không phát hiện rule màu/trạng thái làm sai logic.
 - Kiểm tra: Python compile thành công, JavaScript syntax thành công, 35/35 test thành công.
 
+
+## V1.14.41.32
+- Tối ưu polling/request theo sự kiện, thêm fallback thưa.
+- Bỏ polling active-room và online-count định kỳ.
+- Giảm request lời mời, thông báo, room state, room chat và lobby chat.
+- Tắt hoạt ảnh trang trí chạy vô hạn để giảm CPU/GPU.
+- File: templates/base.html, templates/room_detail.html, static/js/quick_match.js, static/style.css.

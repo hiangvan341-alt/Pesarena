@@ -83,6 +83,7 @@
         quickMatchUrl: button.dataset.quickMatchUrl
       };
       saveState(state);
+      document.dispatchEvent(new CustomEvent('pes:invite-changed'));
       setButton('sent');
       if (window.showGameNotice) window.showGameNotice(data.message || 'Đã gửi lời mời.', 'success', 'Đã gửi lời mời');
       watchState(state);
@@ -110,6 +111,7 @@
       saveState(null);
       clearInterval(statusTimer);
       setButton('idle');
+      document.dispatchEvent(new CustomEvent('pes:room-changed'));
       window.location.reload();
       return;
     }
@@ -117,6 +119,7 @@
       clearInterval(statusTimer);
       if (!data.continue_search) {
         saveState(null);
+        document.dispatchEvent(new CustomEvent('pes:invite-changed'));
         setButton('idle');
         return;
       }
@@ -141,7 +144,7 @@
 
   function watchState(state) {
     clearInterval(statusTimer);
-    statusTimer = setInterval(function () { checkState(readState() || state); }, 3000);
+    statusTimer = setInterval(function () { checkState(readState() || state); }, 5000);
   }
 
   document.addEventListener('click', function (event) {

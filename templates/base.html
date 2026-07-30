@@ -569,7 +569,7 @@ function startLobbyChatPolling() {
     lobbyChatPoller = PESNet.createPoller({
         key: "lobby-chat",
         task: loadBottomChatSmart,
-        visibleInterval: 30000,
+        visibleInterval: 45000,
         hiddenInterval: 180000,
         runWhenHidden: false,
         immediate: true,
@@ -996,51 +996,68 @@ window.addEventListener("DOMContentLoaded", function () {
     const isGuidePage = path === "/guide";
     const isPassivePage = isHistoryPage || isGuidePage;
 
-    PESNet.createPoller({
+    // V1.14.41.32: ưu tiên gọi theo sự kiện. Polling chỉ còn là lớp dự phòng
+    // thưa để nhận thay đổi từ thiết bị khác khi không có WebSocket/Realtime.
+    const heartbeatPoller = PESNet.createPoller({
         key: "heartbeat",
         task: postHeartbeat,
-        visibleInterval: 30000,
-        hiddenInterval: 120000,
+        visibleInterval: 60000,
+        hiddenInterval: 180000,
         runWhenHidden: false,
         immediate: false,
         jitter: 5000
     });
 
-    // Lời mời phải xuất hiện cả khi người chơi đang đứng một mình trong phòng đấu.
-    // Backend vẫn chặn nhận lời nếu phòng hiện tại đã đủ hai người hoặc đang thi đấu.
+    let lastActivityHeartbeatAt = 0;
+    function refreshOnUserActivity() {
+        const now = Date.now();
+        if (now - lastActivityHeartbeatAt < 30000) return;
+        lastActivityHeartbeatAt = now;
+        if (heartbeatPoller && typeof heartbeatPoller.runNow === "function") heartbeatPoller.runNow();
+    }
+    ["pointerdown", "keydown", "touchstart"].forEach(function (eventName) {
+        document.addEventListener(eventName, refreshOnUserActivity, {passive: true});
+    });
+
+    let pendingInvitePoller = null;
     if (!isPassivePage) {
-        PESNet.createPoller({
+        pendingInvitePoller = PESNet.createPoller({
             key: "pending-invites",
             task: checkPendingInvites,
-            visibleInterval: isRoomPage ? 20000 : (isPlayersPage || isRankingPage ? 20000 : 30000),
-            hiddenInterval: 60000,
+            visibleInterval: 30000,
+            hiddenInterval: 120000,
             runWhenHidden: false,
             immediate: true,
-            jitter: 1500
+            jitter: 2000
         });
     }
 
-    if (!isRoomPage && !isPassivePage) {
-        PESNet.createPoller({
-            key: "active-room",
-            task: checkActiveRoom,
-            visibleInterval: isRankingPage ? 45000 : 60000,
-            hiddenInterval: 180000,
-            runWhenHidden: false,
-            immediate: false,
-            jitter: 2500
-        });
-    }
+    // Active room không cần polling định kỳ. Chỉ kiểm tra khi tải trang, quay lại
+    // tab hoặc sau các sự kiện lời mời/phòng.
+    if (!isRoomPage && !isPassivePage) checkActiveRoom();
 
-    PESNet.createPoller({
+    const announcementPoller = PESNet.createPoller({
         key: "announcement",
         task: checkAnnouncementSmart,
-        visibleInterval: 30000,
-        hiddenInterval: 120000,
+        visibleInterval: 300000,
+        hiddenInterval: 600000,
         runWhenHidden: false,
         immediate: true,
-        jitter: 1500
+        jitter: 10000
     });
+
+    function refreshEventDrivenData() {
+        refreshOnUserActivity();
+        if (pendingInvitePoller && typeof pendingInvitePoller.runNow === "function") pendingInvitePoller.runNow();
+        if (!isRoomPage && !isPassivePage) checkActiveRoom();
+        if (announcementPoller && typeof announcementPoller.runNow === "function") announcementPoller.runNow();
+    }
+    window.addEventListener("focus", refreshEventDrivenData);
+    document.addEventListener("visibilitychange", function () {
+        if (!document.hidden) refreshEventDrivenData();
+    });
+    document.addEventListener("pes:invite-changed", refreshEventDrivenData);
+    document.addEventListener("pes:room-changed", refreshEventDrivenData);
 });
 
 document.addEventListener("visibilitychange", function () {
@@ -1076,8 +1093,12 @@ function updateOnlineFloatingCount() {
 }
 
 window.addEventListener("DOMContentLoaded", function () {
-    if (!window.PESNet) return updateOnlineFloatingCount();
-    PESNet.createPoller({key: "online-count", task: updateOnlineFloatingCount, visibleInterval: 180000, hiddenInterval: 300000, runWhenHidden: false, immediate: true, jitter: 5000});
+    updateOnlineFloatingCount();
+    window.addEventListener("focus", updateOnlineFloatingCount);
+    document.addEventListener("visibilitychange", function () {
+        if (!document.hidden) updateOnlineFloatingCount();
+    });
+    document.addEventListener("pes:presence-changed", updateOnlineFloatingCount);
 });
 </script>
 {% endif %}

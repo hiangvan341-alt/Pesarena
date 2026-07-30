@@ -5266,3 +5266,29 @@ html[data-theme="light"] .admin-presence-control select{color:#172033!important}
 html[data-theme="light"] .account-presence-control{background:#f7f9fc;border-color:#dce3ed}
 html[data-theme="light"] .account-presence-control label{color:#172033}
 html[data-theme="light"] .account-presence-control select{background:#fff!important;color:#172033!important;border-color:#d8b24d!important}
+
+/* ============================================================
+   V1.14.41.32 — Performance: decorative motion is static
+   Keep feedback animations only when they represent a real event.
+   ============================================================ */
+.room-layout-v137 .room-arena-frame::after,
+.maintenance-orbit,
+.maintenance-icon,
+.idle-timeout-icon {
+  animation: none !important;
+}
+.room-layout-v137 .room-arena-frame::after {
+  background-position: 0 0 !important;
+}
+.room-layout-v137 .room-quick-match-row .room-quick-match-btn.is-searching {
+  animation: none !important;
+  filter: brightness(1.08);
+}
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    scroll-behavior: auto !important;
+    animation-duration: .001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: .001ms !important;
+  }
+}

@@ -797,11 +797,11 @@ let roomActionRequestInFlight = false;
 function getRoomStateInterval() {
     if (document.hidden) return 90000;
     if (currentRoomStatus === "playing") return currentRoomUserIsGuest ? 4500 : 10000;
-    if (currentRoomStatus === "friendly_playing") return 10000;
+    if (currentRoomStatus === "friendly_playing") return 15000;
     if (currentRoomStatus === "waiting_result_confirm") return currentRoomUserIsGuest ? 3000 : 6000;
-    if (currentRoomStatus === "waiting_ready") return 4000;
-    if (currentRoomStatus === "confirmed") return 6000;
-    return 10000;
+    if (currentRoomStatus === "waiting_ready") return 6000;
+    if (currentRoomStatus === "confirmed") return 8000;
+    return 15000;
 }
 
 function shouldShowRoomAjaxNotice(flash) {
@@ -1336,8 +1336,8 @@ function startRoomChatPolling() {
     roomChatPoller = PESNet.createPoller({
         key: "room-chat:{{ room.id }}",
         task: loadRoomChat,
-        visibleInterval: 15000,
-        hiddenInterval: 90000,
+        visibleInterval: 30000,
+        hiddenInterval: 120000,
         runWhenHidden: false,
         immediate: true,
         jitter: 1000
@@ -1347,8 +1347,11 @@ function startRoomChatPolling() {
 
 window.addEventListener("DOMContentLoaded", function () {
     bindRoomChatForm();
-    startRoomChatPolling();
+    const chatPanel = document.querySelector('.room-chat-side, [data-room-chat-panel]');
+    if (chatPanel && chatPanel.offsetParent !== null) startRoomChatPolling();
 });
+document.addEventListener('pes:room-chat-opened', startRoomChatPolling);
+document.addEventListener('pes:room-chat-closed', stopRoomChatPolling);
 
 function stopRoomLiveWork() {
     stopRoomStatePolling();
