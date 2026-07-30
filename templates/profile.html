@@ -119,7 +119,7 @@
         <h2>Parsec ID của bạn</h2>
         <p class="small">ID này chỉ được hiển thị cho đối thủ đang ở cùng phòng đấu với bạn.</p>
         <form class="parsec-profile-form" method="post" action="{{ url_for('update_parsec_id') }}">
-            <input type="text" name="parsec_id" value="{{ player.parsec_id or '' }}" minlength="3" maxlength="64" pattern="[A-Za-z0-9][A-Za-z0-9._-]{2,63}" placeholder="Nhập Parsec ID">
+            <input type="text" name="parsec_id" value="{{ player.parsec_id or '' }}" minlength="3" maxlength="64" pattern="[A-Za-z0-9][A-Za-z0-9._-]{1,41}(#[0-9]{1,20})?" placeholder="Ví dụ: Salem6556#18473949" title="Nhập đầy đủ Parsec ID, bao gồm dấu # và dãy số phía sau" autocomplete="off" autocapitalize="off" spellcheck="false">
             <button class="btn green" type="submit">Lưu Parsec ID</button>
         </form>
     </section>

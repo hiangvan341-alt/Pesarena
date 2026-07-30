@@ -1,6 +1,7 @@
 from modules.parsec_room.service import validate_parsec_id, validate_parsec_link
 
 def test_parsec_id_valid(): assert validate_parsec_id('Player_01') == 'Player_01'
+def test_parsec_id_with_hash_valid(): assert validate_parsec_id('Salem6556#18473949') == 'Salem6556#18473949'
 def test_parsec_id_empty_allowed(): assert validate_parsec_id('') is None
 def test_parsec_id_rejects_spaces():
     try: validate_parsec_id('bad id')

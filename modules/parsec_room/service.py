@@ -4,7 +4,7 @@ from urllib.parse import urlsplit
 
 EXPORTED_NAMES = ("build_room_parsec_context",)
 
-PARSEC_ID_RE = re.compile(r"^[A-Za-z0-9][A-Za-z0-9._-]{2,63}$")
+PARSEC_ID_RE = re.compile(r"^[A-Za-z0-9][A-Za-z0-9._-]{1,41}(?:#[0-9]{1,20})?$")
 
 
 def configure(context):
@@ -16,7 +16,7 @@ def validate_parsec_id(value):
     if not value:
         return None
     if not PARSEC_ID_RE.fullmatch(value):
-        raise ValueError("Parsec ID chỉ được gồm chữ, số, dấu chấm, gạch dưới hoặc gạch ngang; dài 3–64 ký tự.")
+        raise ValueError("Parsec ID phải có dạng Tên#MãSố, ví dụ Salem6556#18473949; không được có khoảng trắng.")
     return value
 
 

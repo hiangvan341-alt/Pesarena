@@ -210,3 +210,8 @@ File sửa:
 - Giữ toàn bộ module và mã nguồn dự án.
 - Áp dụng sửa CSS Parsec chống màu vàng ghi đè.
 - Chỉ bỏ các ảnh đã có trên Supabase theo `SUPABASE_ASSET_MANIFEST.csv`.
+
+## V1.14.41.18 — 2026-07-30 18:36 (Asia/Bangkok)
+- Sửa định dạng Parsec ID để chấp nhận dấu `#` và dãy số phía sau.
+- Ví dụ hợp lệ: `Salem6556#18473949`.
+- Đồng bộ HTML pattern, backend validator và constraint Supabase.
