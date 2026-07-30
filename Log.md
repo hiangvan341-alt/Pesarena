@@ -227,3 +227,12 @@ File sửa:
 ## V1.14.41.21
 - Sửa logo dự án PES Arena ở sidebar hiển thị đầy đủ; bỏ giới hạn chiều cao/chiều rộng gây cắt hoặc thu thiếu.
 - Hoàn tác thay đổi nhầm kích thước logo Parsec về 18×18 px.
+
+## V1.14.41.22 — 2026-07-30 22:49 (Asia/Bangkok)
+
+- Sửa Random 3 chọn 1 đôi khi báo không có CLB phù hợp.
+- Giữ 6 lựa chọn trong cùng lượt luôn khác nhau.
+- Khi Tier theo Rank hết CLB, tự chuyển sang Tier gần nhất còn phù hợp.
+- Khi lịch sử đối đầu làm cạn pool, chỉ nới lịch sử; không cho trùng đội trong lượt hiện tại.
+- File sửa: `app.py`, `UPDATE_MANIFEST_V1.14.41.22.md`, `Log.md`.
+- Kiểm tra: 31/31 test thành công.

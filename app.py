@@ -1260,14 +1260,17 @@ def build_friendly_random3_state(host_player, guest_player):
 
     def pick_three(player, side):
         options = []
-        excluded = list(selected_history.get(side) or [])
+        opponent_id = guest_player.get("id") if side == "host" else host_player.get("id")
         for _ in range(3):
+            # picked_names là danh sách cấm cứng để 6 lựa chọn của hai bên
+            # không bao giờ trùng nhau. Lịch sử đối đầu là danh sách cấm mềm:
+            # hệ thống ưu tiên tránh, nhưng có thể nới khi pool Tier đã cạn.
             team, _, _, _ = _pick_rank_team(
                 player,
                 all_teams,
-                extra_excluded=excluded + picked_names,
-                opponent_id=(guest_player.get("id") if side == "host" else host_player.get("id")),
-                include_pair_history=False,
+                extra_excluded=picked_names,
+                opponent_id=opponent_id,
+                include_pair_history=True,
             )
             name = team.get("display")
             picked_names.append(name)
@@ -1475,6 +1478,45 @@ def _weighted_tier_choice(tier_weights, teams, excluded_names):
     tier, _, candidates = available[-1]
     return tier, candidates
 
+def _nearest_rank_tier_candidates(tier_weights, teams, excluded_names):
+    """Tìm CLB ở Tier gần nhất khi các Tier có tỷ lệ đã hết lựa chọn.
+
+    Danh sách cấm vẫn được tôn trọng. Cơ chế này chỉ mở rộng sang Tier liền kề,
+    tránh làm Random 3 chọn 1 thất bại khi một Rank chỉ được cấu hình 1 Tier
+    nhưng Tier đó không đủ 6 CLB khác nhau cho cả hai người.
+    """
+    excluded = {_normalize_team_name(name) for name in (excluded_names or []) if name}
+    available_by_tier = {}
+    for team in teams:
+        if _normalize_team_name(team.get("display")) in excluded:
+            continue
+        tier = str(team.get("tier") or "").upper()
+        if tier in CLUB_TIER_ORDER:
+            available_by_tier.setdefault(tier, []).append(team)
+
+    preferred_indexes = [
+        CLUB_TIER_ORDER.index(str(tier).upper())
+        for tier, weight in (tier_weights or {}).items()
+        if str(tier).upper() in CLUB_TIER_ORDER and float(weight or 0) > 0
+    ]
+    if not preferred_indexes:
+        preferred_indexes = list(range(len(CLUB_TIER_ORDER)))
+
+    ranked_tiers = []
+    for tier, candidates in available_by_tier.items():
+        tier_index = CLUB_TIER_ORDER.index(tier)
+        distance = min(abs(tier_index - preferred) for preferred in preferred_indexes)
+        ranked_tiers.append((distance, tier_index, tier, candidates))
+    if not ranked_tiers:
+        return None, []
+
+    ranked_tiers.sort(key=lambda item: (item[0], item[1]))
+    nearest_distance = ranked_tiers[0][0]
+    nearest = [item for item in ranked_tiers if item[0] == nearest_distance]
+    _, _, selected_tier, candidates = random.choice(nearest)
+    return selected_tier, candidates
+
+
 def _pick_rank_team(player, all_teams, extra_excluded=None, opponent_id=None, include_pair_history=True):
     level = get_rank_level(player.get("rank_points", 0))
     tier_weights = get_rank_tier_weights(level)
@@ -1483,14 +1525,30 @@ def _pick_rank_team(player, all_teams, extra_excluded=None, opponent_id=None, in
         if include_pair_history and opponent_id
         else []
     )
+    # extra là danh sách cấm cứng (đội đã xuất hiện trong lượt hiện tại).
+    # recent là danh sách cấm mềm (đội đã dùng trong lịch sử đối đầu gần đây).
     extra = list(extra_excluded or [])
-    excluded = list(dict.fromkeys(recent + extra))
-    selected_tier, candidates = _weighted_tier_choice(tier_weights, all_teams, excluded)
+    strict_excluded = list(dict.fromkeys(recent + extra))
 
-    # Không nới danh sách cấm: CLB thuộc 5 trận Rank thường gần nhất
-    # tuyệt đối không được xuất hiện lại ở lượt random hiện tại.
+    selected_tier, candidates = _weighted_tier_choice(tier_weights, all_teams, strict_excluded)
     if not candidates:
-        raise ValueError(f"Không có CLB phù hợp cho rank {load_rank_ranges()[level]['name']}.")
+        selected_tier, candidates = _nearest_rank_tier_candidates(
+            tier_weights, all_teams, strict_excluded
+        )
+
+    # Nếu lịch sử 5 trận làm cạn toàn bộ pool, nới riêng lịch sử nhưng vẫn
+    # tuyệt đối không cho trùng đội trong 6 lựa chọn của lượt hiện tại.
+    if not candidates and recent:
+        selected_tier, candidates = _weighted_tier_choice(tier_weights, all_teams, extra)
+        if not candidates:
+            selected_tier, candidates = _nearest_rank_tier_candidates(
+                tier_weights, all_teams, extra
+            )
+
+    if not candidates:
+        raise ValueError(
+            f"Không đủ CLB hoạt động để tạo lựa chọn cho rank {load_rank_ranges()[level]['name']}."
+        )
     return random.choice(candidates), selected_tier, tier_weights, recent
 
 
