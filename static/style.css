@@ -5269,3 +5269,21 @@ html[data-theme="light"] .sidebar-version-panel{
 .brand-lockup{min-height:122px!important;height:auto!important;padding:8px 10px!important;overflow:visible!important}
 .sidebar-brand-logo{width:100%!important;max-width:208px!important;height:auto!important;max-height:106px!important;object-fit:contain!important;object-position:center!important}
 @media(max-width:900px){.brand-lockup{min-height:102px!important}.sidebar-brand-logo{max-width:188px!important;max-height:92px!important}}
+
+
+/* PARSEC LOGO SIZE GUARD V1.14.41.12 */
+img.parsec-room-logo,
+.parsec-room-heading > img.parsec-room-logo{
+  display:block!important;
+  width:18px!important;
+  height:18px!important;
+  min-width:18px!important;
+  min-height:18px!important;
+  max-width:18px!important;
+  max-height:18px!important;
+  flex:0 0 18px!important;
+  object-fit:contain!important;
+  margin:0!important;
+  padding:0!important;
+  transform:none!important;
+}

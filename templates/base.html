@@ -10,7 +10,7 @@
     <link rel="stylesheet" href="{{ url_for('static', filename='css/zcoin.css') }}?v={{ APP_VERSION|urlencode }}">
     <link rel="stylesheet" href="{{ url_for('static', filename='css/zcoin_rewards.css') }}?v={{ APP_VERSION|urlencode }}">
     <link rel="stylesheet" href="{{ url_for('static', filename='css/rank_mode_toggle.css') }}?v={{ APP_VERSION|urlencode }}">
-<link rel="stylesheet" href="{{ asset_url('css/parsec_room.css') }}?v={{ APP_VERSION }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/parsec_room.css') }}?v={{ APP_VERSION|urlencode }}">
     <script src="{{ url_for('static', filename='js/pes_polling.js') }}?v={{ APP_VERSION|urlencode }}" defer></script>
     <script src="{{ url_for('static', filename='js/zcoin.js') }}?v={{ APP_VERSION|urlencode }}" defer></script>
     <script src="{{ url_for('static', filename='js/zcoin_rewards.js') }}?v={{ APP_VERSION|urlencode }}" defer></script>

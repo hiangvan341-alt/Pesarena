@@ -1,3 +1,17 @@
+# V1.14.41.12 — Sửa logo Parsec bị phóng to
+
+- Nguyên nhân chính: `parsec_room.css` được gọi qua `asset_url()`, nên khi `STATIC_ASSET_BASE_URL` trỏ Supabase, trang có thể tải bản CSS cũ trên Supabase thay vì CSS mới trong dự án.
+- Chuyển `parsec_room.css` về tải trực tiếp từ `/static/css/parsec_room.css`.
+- Khóa logo Parsec ở 18×18 px bằng 3 lớp bảo vệ: thuộc tính HTML, inline `!important`, và quy tắc dự phòng cuối `static/style.css`.
+- Ảnh logo vẫn được phép tải từ Supabase; chỉ CSS điều khiển kích thước được giữ cục bộ để tránh cache/bản cũ.
+
+File sửa:
+- `templates/base.html`
+- `templates/partials/parsec_room_panel.html`
+- `static/css/parsec_room.css`
+- `static/style.css`
+- `app.py`
+
 
 ## V1.14.41.8 — 2026-07-30 16:54 (Asia/Bangkok)
 - Sửa lỗi khối Parsec chỉ có trong fragment polling, chưa có trong trang phòng tải lần đầu.
