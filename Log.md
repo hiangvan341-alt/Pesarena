@@ -161,3 +161,11 @@
 - Giao diện chủ phòng hiển thị `ID chủ phòng`, `ID khách`, trường nhập link và nút `Lưu` / `Xóa` rõ ràng hơn.
 - Đồng nhất font và cỡ chữ trong panel Parsec để bớt lệch với phần còn lại của giao diện.
 - Cập nhật `APP_VERSION` thành `V1.14.41.10`.
+
+## V1.14.41.11 — 2026-07-30 17:57 (Asia/Bangkok)
+
+- Chỉnh lại giao diện khối `KẾT NỐI PARSEC` theo đúng bố cục mẫu: tiêu đề gọn, logo nhỏ, trường `ID Parsec`, trường `Link Parsec`, nút `Copy ID` và `Copy Link Parsec` đồng bộ với ảnh mẫu.
+- Thu nhỏ logo Parsec bằng kích thước cố định trong CSS để tránh tình trạng logo hiển thị quá lớn sau khi deploy.
+- Giao diện khách được tối giản gần với mẫu tham chiếu: chỉ hiển thị `ID Parsec`, `Link Parsec` và ghi chú ngắn bên dưới.
+- Giao diện chủ phòng vẫn giữ quyền sửa/xóa link nhưng dùng lại cùng hệ thống font, màu và spacing để đỡ lệch giao diện.
+- Cập nhật `APP_VERSION` thành `V1.14.41.11`.

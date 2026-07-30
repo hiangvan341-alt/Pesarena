@@ -1,6 +1,6 @@
 .parsec-room-panel{
   order:2;
-  padding:18px 16px 16px;
+  padding:16px 16px 14px;
   border:1px solid rgba(255,52,111,.58);
   border-radius:16px;
   background:linear-gradient(180deg,rgba(8,21,36,.98),rgba(5,15,28,.98));
@@ -11,141 +11,138 @@
   display:flex;
   align-items:center;
   gap:10px;
-  margin-bottom:12px;
-  padding-bottom:10px;
-  border-bottom:1px solid rgba(234,190,77,.22);
+  margin-bottom:14px;
+  padding-bottom:12px;
+  border-bottom:1px solid rgba(255,255,255,.08);
 }
 .parsec-room-logo{
-  width:auto;
-  height:24px;
-  max-width:16px;
-  object-fit:contain;
+  width:22px!important;
+  height:22px!important;
+  max-width:22px!important;
+  max-height:22px!important;
   display:block;
-  flex:0 0 16px;
+  object-fit:contain;
+  flex:0 0 22px;
 }
 .parsec-room-heading h3{
   margin:0!important;
   color:#f4f7fb;
-  font-size:14px!important;
+  font-size:15px!important;
   font-weight:900;
   letter-spacing:.01em;
   text-transform:uppercase;
 }
-.parsec-room-section + .parsec-room-section{
-  margin-top:12px;
-}
-.parsec-field-row{
-  display:flex;
-  align-items:center;
-  justify-content:space-between;
-  gap:8px;
-}
-.parsec-field-label{
-  margin-bottom:6px;
-  color:#dfe7f2;
-  font-size:11px;
+.parsec-room-block + .parsec-room-block{margin-top:14px}
+.parsec-room-label{
+  margin-bottom:7px;
+  color:#cfd8e5;
+  font-size:13px;
   font-weight:800;
-  letter-spacing:.01em;
+  line-height:1.25;
 }
-.parsec-field-help{
-  color:#8f9cb0;
-  font-size:10px;
-  font-weight:700;
-}
-.parsec-inline-row{
+.parsec-room-inline{
   display:flex;
   align-items:center;
-  gap:8px;
+  gap:10px;
 }
-.parsec-value-box,
+.parsec-room-input,
 .parsec-room-link-form input{
-  flex:1 1 auto;
+  width:100%;
   min-width:0;
-  height:38px;
-  display:flex;
-  align-items:center;
+  height:40px;
   padding:0 12px;
-  border:1px solid rgba(255,255,255,.11);
+  border:1px solid rgba(255,255,255,.12);
   border-radius:9px;
-  background:rgba(13,25,41,.92);
+  background:#0d1929;
   color:#eef3f8;
-  font-size:12px;
+  font-size:13px;
   font-weight:700;
-  line-height:1;
+  line-height:40px;
   overflow:hidden;
   text-overflow:ellipsis;
   white-space:nowrap;
+  box-sizing:border-box;
 }
-.parsec-room-link-form{display:grid;gap:8px}
-.parsec-room-link-form input{width:100%}
+.parsec-room-link-form{display:grid;gap:10px}
 .parsec-room-link-form input:focus{
-  border-color:rgba(255,45,105,.74);
+  border-color:rgba(255,45,105,.72);
   outline:none;
-  box-shadow:0 0 0 2px rgba(255,45,105,.12);
+  box-shadow:0 0 0 2px rgba(255,45,105,.10);
 }
-.parsec-outline-btn,
-.parsec-gold-btn,
-.parsec-delete-btn,
-.parsec-link-copy-btn{
-  min-height:38px;
+.parsec-copy-btn{
+  flex:0 0 auto;
+  min-height:40px;
+  padding:0 16px!important;
+  border:1px solid rgba(237,193,76,.46)!important;
+  border-radius:10px!important;
+  background:linear-gradient(180deg,#f3cf69,#d7a83a)!important;
+  color:#16120b!important;
+  font-size:12px!important;
+  font-weight:900!important;
+  box-shadow:none!important;
+}
+.parsec-copy-link-btn{
+  width:100%;
+  min-height:40px;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  gap:8px;
+  padding:0 14px!important;
+  border:1px solid rgba(255,65,121,.75)!important;
+  border-radius:10px!important;
+  background:linear-gradient(180deg,#ef1c5e,#c70d48)!important;
+  color:#fff!important;
+  font-size:12px!important;
+  font-weight:900!important;
+  box-shadow:none!important;
+}
+.parsec-link-icon{font-size:13px;line-height:1}
+.parsec-room-actions{display:flex;gap:10px}
+.parsec-save-btn,
+.parsec-delete-btn{
+  min-height:40px;
+  padding:0 18px!important;
   border-radius:10px!important;
   font-size:12px!important;
   font-weight:900!important;
   box-shadow:none!important;
 }
-.parsec-outline-btn{
-  flex:0 0 auto;
-  padding:0 14px!important;
-  border:1px solid rgba(237,193,76,.5)!important;
-  background:linear-gradient(180deg,#f4cc63,#d9aa3d)!important;
-  color:#15110a!important;
-}
-.parsec-link-copy-btn{
-  width:100%;
-  padding:0 14px!important;
-  border:1px solid rgba(255,65,121,.75)!important;
-  background:linear-gradient(180deg,#ef1c5e,#c70d48)!important;
-  color:#fff!important;
-}
-.parsec-link-actions{display:flex;gap:8px}
-.parsec-gold-btn{
-  padding:0 16px!important;
-  border:1px solid rgba(237,193,76,.5)!important;
-  background:linear-gradient(180deg,#f4cc63,#d9aa3d)!important;
-  color:#15110a!important;
+.parsec-save-btn{
+  border:1px solid rgba(237,193,76,.46)!important;
+  background:linear-gradient(180deg,#f3cf69,#d7a83a)!important;
+  color:#16120b!important;
 }
 .parsec-delete-btn{
-  padding:0 16px!important;
-  border:1px solid rgba(255,125,137,.55)!important;
-  background:linear-gradient(180deg,#f39aa1,#ea6874)!important;
-  color:#321015!important;
+  border:1px solid rgba(255,149,157,.55)!important;
+  background:linear-gradient(180deg,#f59ca3,#ea6d77)!important;
+  color:#311015!important;
 }
-.parsec-empty-line{
-  min-height:24px;
-  color:#f4f7fb;
-  font-size:12px;
-  font-weight:700;
-  line-height:1.5;
-}
-.parsec-empty-note{
+.parsec-room-empty{
   padding:10px 12px;
   border:1px dashed rgba(255,255,255,.12);
   border-radius:9px;
   background:rgba(255,255,255,.02);
-  color:#8b98aa;
-}
-.parsec-room-note{
-  margin:8px 0 0;
-  color:#95a3b4;
-  font-size:11px;
+  color:#92a0b1;
+  font-size:12px;
   line-height:1.45;
 }
+.parsec-room-note{
+  display:flex;
+  align-items:flex-start;
+  gap:6px;
+  margin:10px 0 0;
+  color:#9aa8ba;
+  font-size:12px;
+  line-height:1.45;
+}
+.parsec-note-icon{color:#c8d2dd;line-height:1}
 .room-layout-v137 .room-side-info-panel{order:1}
 .room-layout-v137 .room-score-history-panel{order:3}
 .room-layout-v137 .room-chat-side{order:4}
 @media(max-width:700px){
   .parsec-room-panel{padding:14px}
-  .parsec-inline-row{flex-wrap:wrap}
-  .parsec-outline-btn,.parsec-link-copy-btn,.parsec-gold-btn,.parsec-delete-btn{width:100%}
-  .parsec-link-actions{display:grid;grid-template-columns:1fr 1fr}
+  .parsec-room-inline{flex-direction:column;align-items:stretch}
+  .parsec-copy-btn{width:100%}
+  .parsec-room-actions{display:grid;grid-template-columns:1fr 1fr}
 }
