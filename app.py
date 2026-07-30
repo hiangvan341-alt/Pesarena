@@ -63,7 +63,7 @@ from modules.win_streaks import (
 load_dotenv()
 
 APP_NAME = "PES Arena – Bản Lĩnh Sân Cỏ"
-APP_VERSION = "V1.14.41.28"
+APP_VERSION = "V1.14.41.29"
 DEFAULT_POINTS = 1000
 DEVICE_COOKIE_NAME = "rankzone_device_id"
 COOLDOWN_MINUTES = 3
@@ -5207,6 +5207,7 @@ def quick_match_invite():
         return jsonify({"ok": False, "message": "Bạn đang có một lời mời chờ xử lý."}), 409
 
     my_points = int(user.get("rank_points", 0) or 0)
+    my_rank_level = get_rank_level(my_points)
     candidates = []
     online_total = 0
     busy_total = 0
@@ -5253,8 +5254,38 @@ def quick_match_invite():
         if opponent_room and not is_solo_waiting_room(opponent_room, oid):
             busy_total += 1
             continue
-        gap = abs(int(opponent.get("rank_points", 0) or 0) - my_points)
-        candidates.append((gap, str(opponent.get("display_name") or "").casefold(), opponent))
+        opponent_points = int(opponent.get("rank_points", 0) or 0)
+        gap = abs(opponent_points - my_points)
+        same_rank = get_rank_level(opponent_points) == my_rank_level
+
+        # Thứ tự ưu tiên Tìm Nhanh:
+        # 0. Cùng bậc Rank (luôn ưu tiên trước)
+        # 1. Khác Rank, chênh tối đa 300 RP
+        # 2. Khác Rank, chênh 301-500 RP
+        # 3. Khác Rank, chênh 501-1.000 RP
+        # 4. Khác Rank, chênh 1.001-2.000 RP
+        # Người khác Rank chênh quá 2.000 RP không được chọn.
+        if same_rank:
+            priority_group = 0
+        elif gap <= 300:
+            priority_group = 1
+        elif gap <= 500:
+            priority_group = 2
+        elif gap <= 1000:
+            priority_group = 3
+        elif gap <= 2000:
+            priority_group = 4
+        else:
+            continue
+
+        # Trong cùng nhóm: ưu tiên RP gần nhất, sau đó người hoạt động
+        # gần đây hơn, cuối cùng mới dùng tên để kết quả ổn định.
+        seen_sort = -(seen.timestamp())
+        candidates.append((
+            priority_group, gap, seen_sort,
+            str(opponent.get("display_name") or opponent.get("username") or "").casefold(),
+            opponent,
+        ))
 
     if not candidates:
         if online_total == 0:
@@ -5267,8 +5298,8 @@ def quick_match_invite():
             message = "Hiện chưa có đối thủ phù hợp đang online."
         return jsonify({"ok": False, "message": message}), 404
 
-    candidates.sort(key=lambda item: (item[0], item[1]))
-    opponent = candidates[0][2]
+    candidates.sort(key=lambda item: (item[0], item[1], item[2], item[3]))
+    opponent = candidates[0][4]
     invite_result = execute_query(
         db.table("match_invites").insert({
             "from_user_id": user["id"], "to_user_id": opponent["id"],

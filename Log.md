@@ -294,3 +294,8 @@ File sửa:
 - Thông báo rút gọn thành “Đã gửi lời mời đến <Tên>”.
 - File sửa: `app.py`, `templates/base.html`.
 - Kiểm tra: 33/33 test thành công.
+
+## V1.14.41.29
+- Sắp xếp Tìm Nhanh theo bậc Rank và các mốc chênh RP 300/500/1.000/2.000.
+- Trong cùng nhóm ưu tiên RP gần nhất, sau đó hoạt động gần đây hơn.
+- Thêm kiểm thử nguồn cho thứ tự ưu tiên mới.
