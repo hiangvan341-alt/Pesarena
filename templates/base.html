@@ -217,7 +217,7 @@ function toggleTheme(){
 </div>
 
 
-{% if request.endpoint != "dashboard" %}
+{% if request.endpoint not in ["dashboard", "chat"] %}
 {% if system_features.lobby_chat_enabled %}<button id="chatToggleButton" class="chat-floating-toggle" type="button" onclick="toggleLobbyChat()">
     💬 <span id="chatToggleText">Chat sảnh</span>
     <span id="chatUnreadBadge" class="chat-unread-badge" hidden>0</span>
@@ -515,8 +515,8 @@ function startLobbyChatPolling() {
     lobbyChatPoller = PESNet.createPoller({
         key: "lobby-chat",
         task: loadBottomChatSmart,
-        visibleInterval: 20000,
-        hiddenInterval: 120000,
+        visibleInterval: 30000,
+        hiddenInterval: 180000,
         runWhenHidden: false,
         immediate: true,
         jitter: 2000
@@ -945,8 +945,8 @@ window.addEventListener("DOMContentLoaded", function () {
     PESNet.createPoller({
         key: "heartbeat",
         task: postHeartbeat,
-        visibleInterval: 60000,
-        hiddenInterval: 120000,
+        visibleInterval: 90000,
+        hiddenInterval: 180000,
         runWhenHidden: false,
         immediate: false,
         jitter: 5000
@@ -958,7 +958,7 @@ window.addEventListener("DOMContentLoaded", function () {
         PESNet.createPoller({
             key: "pending-invites",
             task: checkPendingInvites,
-            visibleInterval: isRoomPage ? 10000 : (isPlayersPage || isRankingPage ? 15000 : 20000),
+            visibleInterval: isRoomPage ? 20000 : (isPlayersPage || isRankingPage ? 20000 : 30000),
             hiddenInterval: 60000,
             runWhenHidden: false,
             immediate: true,
@@ -970,8 +970,8 @@ window.addEventListener("DOMContentLoaded", function () {
         PESNet.createPoller({
             key: "active-room",
             task: checkActiveRoom,
-            visibleInterval: isRankingPage ? 30000 : 45000,
-            hiddenInterval: 120000,
+            visibleInterval: isRankingPage ? 45000 : 60000,
+            hiddenInterval: 180000,
             runWhenHidden: false,
             immediate: false,
             jitter: 2500
@@ -981,8 +981,8 @@ window.addEventListener("DOMContentLoaded", function () {
     PESNet.createPoller({
         key: "announcement",
         task: checkAnnouncementSmart,
-        visibleInterval: 15000,
-        hiddenInterval: 60000,
+        visibleInterval: 30000,
+        hiddenInterval: 120000,
         runWhenHidden: false,
         immediate: true,
         jitter: 1500

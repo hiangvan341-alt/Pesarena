@@ -51,7 +51,7 @@ from modules.system_feature_service import post_login_endpoint, dashboard_is_ena
 from modules.session_runtime_service import (
     IDLE_TIMEOUT_SECONDS, idle_decision, room_blocks_idle_logout, client_config as session_client_config,
 )
-from modules.static_asset_service import asset_url, asset_base_url
+from modules.static_asset_service import asset_url, asset_base_url, shop_asset_base_url
 from modules.profile import equipment_service as profile_equipment_service
 from modules.win_streaks import (
     WIN_STREAK_TITLES, WIN_STREAK_EVENT_PREFIX, get_win_streak_title,
@@ -63,7 +63,7 @@ from modules.win_streaks import (
 load_dotenv()
 
 APP_NAME = "PES Arena – Bản Lĩnh Sân Cỏ"
-APP_VERSION = "Collap_V1.14.40.7_GLOBAL_AVATAR_FRAMES"
+APP_VERSION = "Collap_V1.14.41_PERFORMANCE_ASSET_PHASE_A"
 DEFAULT_POINTS = 1000
 DEVICE_COOKIE_NAME = "rankzone_device_id"
 COOLDOWN_MINUTES = 3
@@ -167,6 +167,7 @@ ACTIVITY_PRIORITY = {
 app = Flask(__name__)
 app.jinja_env.globals["asset_url"] = asset_url
 app.jinja_env.globals["asset_base_url"] = asset_base_url
+app.jinja_env.globals["shop_asset_base_url"] = shop_asset_base_url
 
 # Tên biến chính thức giữ giống bản Production v1.9.3.
 # Các tên dự phòng chỉ giúp app tương thích nếu Vercel từng được cấu hình theo tên cũ.
@@ -544,16 +545,33 @@ def has_admin_permission(user, permission_code: str) -> bool:
 
 
 def get_system_features():
+    request_key = "_system_features_cached"
+    cached = cache_get(request_key)
+    if isinstance(cached, dict):
+        return dict(cached)
+
+    cached = ttl_cache_get("system_features")
+    if isinstance(cached, dict):
+        return cache_set(request_key, dict(cached))
+
     features = dict(SYSTEM_FEATURE_DEFAULTS)
     try:
-        result = execute_query(db.table("system_settings").select("setting_value").eq("setting_key", "admin_system_features").limit(1), "get_system_features", attempts=2)
+        result = execute_query(
+            db.table("system_settings").select("setting_value")
+            .eq("setting_key", "admin_system_features").limit(1),
+            "get_system_features", attempts=2,
+        )
         row = (result.data or [{}])[0]
         raw = row.get("setting_value")
-        if isinstance(raw, str): raw = json.loads(raw)
-        if isinstance(raw, dict): features.update({k: bool(v) for k,v in raw.items() if k in features})
+        if isinstance(raw, str):
+            raw = json.loads(raw)
+        if isinstance(raw, dict):
+            features.update({key: bool(value) for key, value in raw.items() if key in features})
     except Exception as exc:
         print(f"get_system_features warning: {exc}")
-    return features
+
+    ttl_cache_set("system_features", dict(features), 45)
+    return cache_set(request_key, dict(features))
 
 
 def system_feature_enabled(key: str) -> bool:
@@ -565,10 +583,20 @@ QUICK_MATCH_COLOR_DEFAULT = "blue"
 QUICK_MATCH_COLOR_VALUES = {"blue", "green"}
 
 def get_quick_match_config():
+    request_key = "_quick_match_config_cached"
+    cached = cache_get(request_key)
+    if isinstance(cached, dict):
+        return dict(cached)
+
+    cached = ttl_cache_get("quick_match_config")
+    if isinstance(cached, dict):
+        return cache_set(request_key, dict(cached))
+
     config = {"color": QUICK_MATCH_COLOR_DEFAULT}
     try:
         result = execute_query(
-            db.table("system_settings").select("setting_value").eq("setting_key", QUICK_MATCH_SETTING_KEY).limit(1),
+            db.table("system_settings").select("setting_value")
+            .eq("setting_key", QUICK_MATCH_SETTING_KEY).limit(1),
             "get_quick_match_config", attempts=2,
         )
         raw = ((result.data or [{}])[0]).get("setting_value")
@@ -578,7 +606,9 @@ def get_quick_match_config():
             config["color"] = raw["color"]
     except Exception as exc:
         print(f"get_quick_match_config warning: {exc}")
-    return config
+
+    ttl_cache_set("quick_match_config", dict(config), 60)
+    return cache_set(request_key, dict(config))
 
 
 REPEAT_OPPONENT_CONFIG_SETTING_KEY = "repeat_opponent_rp_config"
@@ -586,6 +616,16 @@ REPEAT_OPPONENT_WINNER_FACTOR_DEFAULTS = [100, 60, 30, 0]
 REPEAT_OPPONENT_LOSER_FACTOR_DEFAULTS = [100, 70, 40, 10]
 
 def get_repeat_opponent_rp_config():
+    request_key = "_repeat_opponent_rp_config_cached"
+    cached = cache_get(request_key)
+    if isinstance(cached, dict):
+        return {key: list(value) if isinstance(value, list) else value for key, value in cached.items()}
+
+    cached = ttl_cache_get("repeat_opponent_rp_config")
+    if isinstance(cached, dict):
+        copied = {key: list(value) if isinstance(value, list) else value for key, value in cached.items()}
+        return cache_set(request_key, copied)
+
     config = {
         "winner_factors": list(REPEAT_OPPONENT_WINNER_FACTOR_DEFAULTS),
         "loser_factors": list(REPEAT_OPPONENT_LOSER_FACTOR_DEFAULTS),
@@ -609,7 +649,13 @@ def get_repeat_opponent_rp_config():
                         config[key] = normalized
     except Exception as exc:
         print(f"get_repeat_opponent_rp_config warning: {exc}")
-    return config
+
+    ttl_cache_set("repeat_opponent_rp_config", {
+        "winner_factors": list(config["winner_factors"]),
+        "loser_factors": list(config["loser_factors"]),
+    }, 60)
+    return cache_set(request_key, config)
+
 
 MAINTENANCE_SETTING_KEY = "server_maintenance_config"
 VN_TIMEZONE = timezone(timedelta(hours=7))
@@ -3781,6 +3827,7 @@ def mark_all_notifications_read():
         }).eq("user_id", user.get("id")).eq("is_read", False),
         "mark_all_notifications_read",
     )
+    ttl_cache_delete(f"bell_notifications:{user.get('id')}")
     flash("Đã đánh dấu tất cả thông báo là đã đọc.", "success")
     return redirect(url_for("notifications"))
 
@@ -3796,6 +3843,7 @@ def mark_notification_read(notification_id):
         }).eq("id", notification_id).eq("user_id", user.get("id")),
         "mark_notification_read",
     )
+    ttl_cache_delete(f"bell_notifications:{user.get('id')}")
     next_url = request.form.get("next_url", "").strip()
     if next_url.startswith("/") and not next_url.startswith("//"):
         return redirect(next_url)
