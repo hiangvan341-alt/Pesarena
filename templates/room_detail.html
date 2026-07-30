@@ -1332,8 +1332,8 @@ function startRoomChatPolling() {
     roomChatPoller = PESNet.createPoller({
         key: "room-chat:{{ room.id }}",
         task: loadRoomChat,
-        visibleInterval: 12000,
-        hiddenInterval: 60000,
+        visibleInterval: 15000,
+        hiddenInterval: 90000,
         runWhenHidden: false,
         immediate: true,
         jitter: 1000

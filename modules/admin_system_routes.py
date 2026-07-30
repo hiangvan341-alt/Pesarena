@@ -79,6 +79,8 @@ def register_routes(context):
             }, on_conflict="setting_key"),
             "update_quick_match_config",
         )
+        ttl_cache_delete("quick_match_config")
+        cache_delete("_quick_match_config_cached")
         log_admin_action("Cập nhật màu nút Tìm Nhanh", "system", details={"color": color})
         flash("Đã lưu màu nút Tìm Nhanh.", "success")
         return redirect_admin("system")
@@ -111,6 +113,8 @@ def register_routes(context):
             }, on_conflict="setting_key"),
             "update_repeat_opponent_rp_config",
         )
+        ttl_cache_delete("repeat_opponent_rp_config")
+        cache_delete("_repeat_opponent_rp_config_cached")
         log_admin_action("Cập nhật hệ số RP gặp lại đối thủ", "system", details=payload)
         flash(
             "Đã lưu hệ số gặp lại đối thủ — thắng: "
@@ -138,6 +142,8 @@ def register_routes(context):
             ),
             "update_system_features",
         )
+        ttl_cache_delete("system_features")
+        cache_delete("_system_features_cached")
 
         # Khi Admin vừa tắt Giao hữu, đưa các phòng giao hữu đang mở về trạng thái
         # chờ sẵn sàng để người chơi không bị kẹt trong một tính năng đã khóa.
