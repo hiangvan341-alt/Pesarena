@@ -1,62 +1,80 @@
 {% if parsec_room.visible %}
 <section class="panel parsec-room-panel" aria-label="Thông tin kết nối Parsec">
     <div class="parsec-room-heading">
-        <span class="parsec-room-logo-wrap" aria-hidden="true">
-            <img class="parsec-room-logo" src="{{ asset_url('parsec-logo.webp') }}?v={{ APP_VERSION|urlencode }}" alt="" loading="lazy">
-        </span>
-        <div>
-            <h3>KẾT NỐI PARSEC</h3>
-            <p>ID lưu trong hồ sơ · Link chỉ dùng cho phòng này</p>
-        </div>
+        <img class="parsec-room-logo" src="{{ asset_url('parsec-logo.webp') }}?v={{ APP_VERSION|urlencode }}" alt="Parsec" loading="lazy">
+        <h3>KẾT NỐI PARSEC</h3>
     </div>
 
-    <div class="parsec-id-list">
-        <div class="parsec-id-card">
-            <div class="parsec-id-meta">
-                <small>CHỦ PHÒNG</small>
-                <strong title="{{ parsec_room.host_parsec_id or 'Chưa thiết lập' }}">{{ parsec_room.host_parsec_id or 'Chưa thiết lập' }}</strong>
-            </div>
+    {% if parsec_room.viewer_is_host %}
+    <div class="parsec-room-section">
+        <div class="parsec-field-label">ID chủ phòng</div>
+        <div class="parsec-inline-row">
+            <div class="parsec-value-box" title="{{ parsec_room.host_parsec_id or 'Chưa thiết lập' }}">{{ parsec_room.host_parsec_id or 'Chưa thiết lập' }}</div>
             {% if parsec_room.host_parsec_id %}
-            <button type="button" class="btn parsec-copy-btn" data-copy-text="{{ parsec_room.host_parsec_id|e }}" aria-label="Sao chép ID Parsec của chủ phòng">Sao chép</button>
-            {% endif %}
-        </div>
-
-        <div class="parsec-id-card">
-            <div class="parsec-id-meta">
-                <small>KHÁCH</small>
-                <strong title="{{ parsec_room.guest_parsec_id or 'Chưa thiết lập' }}">{{ parsec_room.guest_parsec_id or 'Chưa thiết lập' }}</strong>
-            </div>
-            {% if parsec_room.guest_parsec_id %}
-            <button type="button" class="btn parsec-copy-btn" data-copy-text="{{ parsec_room.guest_parsec_id|e }}" aria-label="Sao chép ID Parsec của khách">Sao chép</button>
+            <button type="button" class="btn parsec-outline-btn" data-copy-text="{{ parsec_room.host_parsec_id|e }}" aria-label="Sao chép ID Parsec của chủ phòng">Copy ID</button>
             {% endif %}
         </div>
     </div>
 
-    <div class="parsec-link-section">
-        <div class="parsec-link-label">
-            <span>LINK PARSEC CỦA CHỦ PHÒNG</span>
-            <em>Không bắt buộc</em>
+    <div class="parsec-room-section">
+        <div class="parsec-field-label">ID khách</div>
+        {% if parsec_room.guest_parsec_id %}
+        <div class="parsec-inline-row">
+            <div class="parsec-value-box" title="{{ parsec_room.guest_parsec_id }}">{{ parsec_room.guest_parsec_id }}</div>
+            <button type="button" class="btn parsec-outline-btn" data-copy-text="{{ parsec_room.guest_parsec_id|e }}" aria-label="Sao chép ID Parsec của khách">Copy ID</button>
         </div>
+        {% else %}
+        <div class="parsec-empty-line">Chưa thiết lập</div>
+        {% endif %}
+    </div>
 
-        {% if parsec_room.viewer_is_host %}
+    <div class="parsec-room-section">
+        <div class="parsec-field-row">
+            <div class="parsec-field-label">Link Parsec của chủ phòng</div>
+            <span class="parsec-field-help">Không bắt buộc</span>
+        </div>
         <form class="parsec-room-link-form" method="post" action="{{ url_for('update_room_parsec_link', room_id=room.id) }}">
             <input type="url" name="parsec_link" value="{{ parsec_room.room_link or '' }}" maxlength="500" placeholder="https://parsec.gg/g/..." aria-label="Link Parsec tạm thời">
             <div class="parsec-link-actions">
-                <button class="btn parsec-save-btn" type="submit">Lưu link</button>
+                <button class="btn parsec-gold-btn" type="submit">Lưu</button>
                 {% if parsec_room.room_link %}
                 <button class="btn parsec-delete-btn" type="submit" name="parsec_link" value="">Xóa</button>
                 {% endif %}
             </div>
         </form>
-        {% else %}
-            {% if parsec_room.room_link %}
-            <button type="button" class="btn parsec-copy-btn parsec-copy-link-btn" data-copy-text="{{ parsec_room.room_link|e }}">Sao chép link Parsec</button>
-            {% else %}
-            <div class="parsec-link-empty">Chủ phòng chưa gửi link. Bạn vẫn có thể kết nối bằng Parsec ID.</div>
+    </div>
+    {% else %}
+    <div class="parsec-room-section">
+        <div class="parsec-field-label">ID Parsec</div>
+        <div class="parsec-inline-row">
+            <div class="parsec-value-box" title="{{ parsec_room.host_parsec_id or 'Chưa thiết lập' }}">{{ parsec_room.host_parsec_id or 'Chưa thiết lập' }}</div>
+            {% if parsec_room.host_parsec_id %}
+            <button type="button" class="btn parsec-outline-btn" data-copy-text="{{ parsec_room.host_parsec_id|e }}" aria-label="Sao chép ID Parsec của chủ phòng">Copy ID</button>
             {% endif %}
+        </div>
+    </div>
+
+    <div class="parsec-room-section">
+        <div class="parsec-field-label">ID của bạn</div>
+        {% if parsec_room.guest_parsec_id %}
+        <div class="parsec-inline-row">
+            <div class="parsec-value-box" title="{{ parsec_room.guest_parsec_id }}">{{ parsec_room.guest_parsec_id }}</div>
+            <button type="button" class="btn parsec-outline-btn" data-copy-text="{{ parsec_room.guest_parsec_id|e }}" aria-label="Sao chép ID Parsec của bạn">Copy ID</button>
+        </div>
+        {% else %}
+        <div class="parsec-empty-line">Chưa thiết lập</div>
         {% endif %}
     </div>
 
-    <p class="parsec-room-note">Chỉ chủ phòng và khách đang ở trong phòng mới xem được.</p>
+    <div class="parsec-room-section">
+        <div class="parsec-field-label">Link Parsec</div>
+        {% if parsec_room.room_link %}
+        <button type="button" class="btn parsec-link-copy-btn" data-copy-text="{{ parsec_room.room_link|e }}">Copy Link Parsec</button>
+        {% else %}
+        <div class="parsec-empty-line parsec-empty-note">Chủ phòng chưa gửi link. Bạn vẫn có thể kết nối bằng ID Parsec.</div>
+        {% endif %}
+        <p class="parsec-room-note">Khách có thể sao chép để kết nối nhanh.</p>
+    </div>
+    {% endif %}
 </section>
 {% endif %}

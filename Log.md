@@ -152,3 +152,12 @@
 - Tách giao diện Parsec thành partial dùng chung để tránh hai template lệch nhau.
 - Sắp xếp lại thứ tự cột phải: Thông tin phòng → Parsec → Lịch sử → Chat.
 - Rút gọn `APP_VERSION` thành `V1.14.41.9`.
+
+## V1.14.41.10 — 2026-07-30 17:44 (Asia/Bangkok)
+
+- Tách nền logo Parsec từ file người dùng cung cấp, giữ đúng biểu tượng và tránh nền xám/ trắng.
+- Làm lại khối `KẾT NỐI PARSEC` theo bố cục gần với ảnh mẫu: logo nhỏ bên trái, tiêu đề gọn, các hàng dữ liệu dạng ô nhập tối màu và nút đồng bộ với giao diện phòng đấu.
+- Giao diện khách hiển thị `ID Parsec`, `ID của bạn` và nút `Copy Link Parsec` theo kiểu gọn.
+- Giao diện chủ phòng hiển thị `ID chủ phòng`, `ID khách`, trường nhập link và nút `Lưu` / `Xóa` rõ ràng hơn.
+- Đồng nhất font và cỡ chữ trong panel Parsec để bớt lệch với phần còn lại của giao diện.
+- Cập nhật `APP_VERSION` thành `V1.14.41.10`.
