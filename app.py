@@ -63,7 +63,7 @@ from modules.win_streaks import (
 load_dotenv()
 
 APP_NAME = "PES Arena – Bản Lĩnh Sân Cỏ"
-APP_VERSION = "V1.14.41.21"
+APP_VERSION = "V1.14.41.23"
 DEFAULT_POINTS = 1000
 DEVICE_COOKIE_NAME = "rankzone_device_id"
 COOLDOWN_MINUTES = 3
@@ -1281,13 +1281,20 @@ def build_friendly_random3_state(host_player, guest_player):
     guest_level = get_rank_level(guest_player.get("rank_points", 0))
     rank_ranges = load_rank_ranges()
 
+    host_options = pick_three(host_player, "host")
+    guest_options = pick_three(guest_player, "guest")
+    all_options = host_options + guest_options
+    normalized_names = [_normalize_team_name(item.get("name")) for item in all_options]
+    if len(all_options) != 6 or len(set(normalized_names)) != 6:
+        raise ValueError("Không thể tạo 6 CLB khác nhau cho Random 3 chọn 1. Vui lòng thử lại.")
+
     return {
         "mode": FRIENDLY_RANDOM3_MODE,
         "distribution": "rank_weighted",
         "host_rank": rank_ranges[host_level]["name"],
         "guest_rank": rank_ranges[guest_level]["name"],
-        "host_options": pick_three(host_player, "host"),
-        "guest_options": pick_three(guest_player, "guest"),
+        "host_options": host_options,
+        "guest_options": guest_options,
         "host_choice": None,
         "guest_choice": None,
     }

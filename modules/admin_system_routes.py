@@ -131,9 +131,10 @@ def register_routes(context):
     def admin_update_system_features():
         previous_features = get_system_features()
         features = {key: request.form.get(key) == "1" for key in SYSTEM_FEATURE_DEFAULTS}
-        # Random 3 chọn 1 là chế độ bắt buộc khi Rank thường bị tắt.
+        # Luôn phải còn ít nhất một chế độ Rank để phòng không bị kẹt.
         if not features.get("rank_standard_enabled", True):
             features["friendly_random3_enabled"] = True
+
         execute_query(
             db.table("system_settings").upsert(
                 {
@@ -148,55 +149,46 @@ def register_routes(context):
         ttl_cache_delete("system_features")
         cache_delete("_system_features_cached")
 
-        # Khi Admin vừa tắt Giao hữu, đưa các phòng giao hữu đang mở về trạng thái
-        # chờ sẵn sàng để người chơi không bị kẹt trong một tính năng đã khóa.
+        cleanup_errors = []
+
+        def best_effort(query, operation_name):
+            try:
+                execute_query(query, operation_name, attempts=2)
+            except Exception as exc:
+                cleanup_errors.append(f"{operation_name}: {exc}")
+                print(f"{operation_name} warning: {exc}")
+
+        # Các thao tác dọn phòng chỉ là hậu xử lý. Nếu schema production cũ thiếu
+        # một cột phụ, việc lưu công tắc vẫn phải thành công thay vì trả HTTP 500.
         if previous_features.get("friendly_enabled", True) and not features.get("friendly_enabled", False):
-            execute_query(
+            best_effort(
                 db.table("match_rooms").update({
                     "status": "waiting_ready",
-                    "match_mode": "ranked",
+                    "match_mode": MATCH_MODE_RANKED,
                     "host_team": None,
                     "guest_team": None,
-                    "host_team_overall": None,
-                    "guest_team_overall": None,
-                    "host_team_logo_url": None,
-                    "guest_team_logo_url": None,
-                    "host_team_league": None,
-                    "guest_team_league": None,
                     "note": "Giao hữu đã được Admin tắt. Phòng đã trở về trạng thái chờ.",
                     "updated_at": now_iso(),
                 }).eq("status", "friendly_playing").neq("team_tier", FRIENDLY_RANDOM3_MODE),
                 "disable_active_friendly_rooms",
-                attempts=2,
             )
 
-
-        # Khi tắt riêng Random 3 chọn 1, chỉ hủy lượt chọn chưa bắt đầu. Trận tính RP đang chơi vẫn được hoàn tất bình thường.
         if previous_features.get("friendly_random3_enabled", True) and not features.get("friendly_random3_enabled", False):
-            execute_query(
+            # Khi Rank thường đang bật, chuyển phòng Random 3 chưa bắt đầu về Rank thường.
+            best_effort(
                 db.table("match_rooms").update({
                     "status": "waiting_ready",
-                    "match_mode": "ranked",
-                    "team_tier": None,
+                    "match_mode": MATCH_MODE_RANKED,
+                    "team_tier": SMART_RANDOM_MODE,
                     "host_team": None,
                     "guest_team": None,
-                    "host_team_overall": None,
-                    "guest_team_overall": None,
-                    "host_team_logo_url": None,
-                    "guest_team_logo_url": None,
-                    "host_team_league": None,
-                    "guest_team_league": None,
-                    "match_id": None,
-                    "note": "Random 3 chọn 1 đã được Admin tắt. Phòng đã trở về trạng thái chờ.",
+                    "note": "Random 3 chọn 1 đã được Admin tắt. Phòng chuyển về Rank thường.",
                     "updated_at": now_iso(),
                 }).eq("team_tier", FRIENDLY_RANDOM3_MODE).eq("status", "waiting_ready"),
                 "disable_random3_waiting_rooms",
-                attempts=2,
             )
 
         if previous_features.get("rank_standard_enabled", True) and not features.get("rank_standard_enabled", True):
-            # Chỉ chuyển phòng Rank thường đang chờ. Không ghi đè lượt Random 3 đang chọn
-            # và không can thiệp các trận đã bắt đầu.
             for query, operation_name in (
                 (
                     db.table("match_rooms").update({
@@ -217,10 +209,16 @@ def register_routes(context):
                     "migrate_null_rank_rooms_to_random3",
                 ),
             ):
-                execute_query(query, operation_name, attempts=2)
+                best_effort(query, operation_name)
 
-        log_admin_action("Cập nhật công tắc hệ thống", "system", details=features)
-        flash("Đã cập nhật các tính năng hệ thống.", "success")
+        log_admin_action("Cập nhật công tắc hệ thống", "system", details={
+            **features,
+            "cleanup_warnings": cleanup_errors[:3],
+        })
+        if cleanup_errors:
+            flash("Đã lưu công tắc. Một số phòng cũ chưa tự chuyển trạng thái; hệ thống sẽ xử lý khi phòng được mở lại.", "warning")
+        else:
+            flash("Đã cập nhật các tính năng hệ thống.", "success")
         return redirect_admin("system")
 
 

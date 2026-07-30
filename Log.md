@@ -236,3 +236,19 @@ File sửa:
 - Khi lịch sử đối đầu làm cạn pool, chỉ nới lịch sử; không cho trùng đội trong lượt hiện tại.
 - File sửa: `app.py`, `UPDATE_MANIFEST_V1.14.41.22.md`, `Log.md`.
 - Kiểm tra: 31/31 test thành công.
+
+## V1.14.41.23 — 2026-07-31 01:29 (Asia/Bangkok)
+- Sửa `/admin/system/features` bị 500 khi tắt Random 3 và bật Rank thường.
+- Chuyển hậu xử lý phòng cũ sang cơ chế best-effort, không làm lỗi thao tác lưu.
+- Khi tắt Random 3, phòng đang chờ chuyển về Rank thường (`Smart Tier Random`).
+- Thêm xác nhận 6 lựa chọn Random 3 phải là 6 CLB khác nhau.
+- File sửa: `app.py`, `modules/admin_system_routes.py`.
+- File thêm: `test_random3_safety_source.py`, `UPDATE_MANIFEST_V1.14.41.23.md`.
+
+## V1.14.41.23 — 2026-07-31 01:29 (Asia/Bangkok)
+- Sửa `/admin/system/features` bị 500 khi tắt Random 3 và bật Rank thường.
+- Chuyển hậu xử lý phòng cũ sang cơ chế best-effort, không làm lỗi thao tác lưu.
+- Khi tắt Random 3, phòng đang chờ chuyển về Rank thường (`Smart Tier Random`).
+- Thêm xác nhận 6 lựa chọn Random 3 phải là 6 CLB khác nhau.
+- File sửa: `app.py`, `modules/admin_system_routes.py`.
+- File thêm: `test_random3_safety_source.py`, `UPDATE_MANIFEST_V1.14.41.23.md`.
