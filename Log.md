@@ -1,3 +1,12 @@
+# V1.14.41.15 — Tinh gọn module Kết nối Parsec
+
+- Thời gian: 2026-07-30 18:18 (Asia/Bangkok).
+- Chủ phòng chỉ hiển thị ID Parsec của khách.
+- Khách chỉ hiển thị ID Parsec của chủ phòng.
+- Rút gọn nhãn `Copy Link Parsec` thành `Copy Link`.
+- Thu gọn và đồng bộ các nút Copy ID, Lưu, Xóa, Copy Link sang tông đỏ Parsec.
+- Không thay đổi database hoặc API.
+
 # V1.14.41.14 — Rà soát CSS toàn dự án
 
 - Thời gian: 30/07/2026 18:08 (Asia/Bangkok)

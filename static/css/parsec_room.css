@@ -1,4 +1,4 @@
-/* Parsec room module — isolated UI, V1.14.41.14 */
+/* Parsec room module — isolated UI, V1.14.41.15 */
 .room-layout-v137 .room-arena-right-rail{
   display:flex;
   flex-direction:column;
@@ -96,10 +96,11 @@
   border-color:rgba(255,38,100,.78);
   box-shadow:0 0 0 2px rgba(255,38,100,.1);
 }
+/* Các nút Parsec dùng cùng một tông đỏ và giữ kích thước gọn. */
 .parsec-room-panel .btn{
-  min-height:40px;
+  min-height:36px;
   margin:0;
-  border-radius:9px!important;
+  border-radius:8px!important;
   font-size:12px!important;
   font-weight:700!important;
   line-height:1!important;
@@ -107,39 +108,37 @@
   box-shadow:none!important;
   transform:none!important;
 }
-.parsec-room-panel .btn:hover{transform:none!important;filter:brightness(1.06)}
-.parsec-copy-btn{
-  min-width:102px;
-  padding:0 14px!important;
-  border:1px solid rgba(205,164,54,.55)!important;
-  background:#101d2d!important;
-  color:#f2f5f8!important;
+.parsec-room-panel .btn:hover{
+  transform:none!important;
+  filter:brightness(1.08);
 }
-.parsec-copy-link-btn{
-  display:flex!important;
-  width:100%;
-  align-items:center;
-  justify-content:center;
-  gap:8px;
-  padding:0 14px!important;
-  border:1px solid #ef1e60!important;
-  background:linear-gradient(180deg,#e61959 0%,#ca1048 100%)!important;
+.parsec-action-btn{
+  width:auto!important;
+  padding:0 12px!important;
+  border:1px solid #ff3f72!important;
+  background:linear-gradient(180deg,#ef2a62 0%,#cb164b 100%)!important;
   color:#fff!important;
 }
-.parsec-link-icon{font-size:13px;line-height:1}
-.parsec-room-actions{display:grid;grid-template-columns:1fr auto;gap:10px}
-.parsec-save-btn{
-  padding:0 18px!important;
-  border:1px solid rgba(205,164,54,.58)!important;
-  background:#101d2d!important;
-  color:#f4d46c!important;
+.parsec-action-btn:active{
+  background:linear-gradient(180deg,#d91d53 0%,#b71041 100%)!important;
 }
-.parsec-delete-btn{
-  padding:0 18px!important;
-  border:1px solid rgba(239,30,96,.58)!important;
-  background:#241322!important;
-  color:#ff8eae!important;
+.parsec-copy-btn{min-width:78px}
+.parsec-copy-link-btn{
+  display:inline-flex!important;
+  min-width:104px;
+  align-items:center;
+  justify-content:center;
+  gap:6px;
 }
+.parsec-link-icon{font-size:12px;line-height:1}
+.parsec-room-actions{
+  display:flex;
+  align-items:center;
+  justify-content:flex-end;
+  gap:8px;
+}
+.parsec-save-btn{min-width:62px}
+.parsec-delete-btn{min-width:58px}
 .parsec-room-empty{
   min-height:40px;
   padding:10px 12px;
@@ -164,7 +163,6 @@
 
 @media(max-width:700px){
   .parsec-room-panel{padding:14px}
-  .parsec-room-inline{grid-template-columns:1fr}
-  .parsec-copy-btn{width:100%}
-  .parsec-room-actions{grid-template-columns:1fr 1fr}
+  .parsec-room-inline{grid-template-columns:minmax(0,1fr) auto}
+  .parsec-room-actions{justify-content:flex-start}
 }
