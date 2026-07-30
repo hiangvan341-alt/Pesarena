@@ -267,10 +267,19 @@ File sửa:
 - Thêm modal thông báo đồng bộ PES Arena, bỏ `window.alert()` trong luồng Tìm Nhanh.
 - Kiểm tra Python compile và 33/33 test thành công.
 
-## V1.14.41.26 — 2026-07-31 01:46 (Asia/Bangkok)
+## V1.14.41.27 — 2026-07-31 01:46 (Asia/Bangkok)
 - Riêng Admin/Owner có thể tự chọn trạng thái hiển thị Online hoặc Offline.
 - Thêm bộ chọn trạng thái trên thanh trên cùng.
 - Heartbeat tôn trọng chế độ Offline do Admin lựa chọn, không tự bật Online lại.
 - Người chơi thường không có quyền chọn thủ công.
 - Không cần SQL mới.
 - Kiểm thử: 33/33 thành công.
+
+## V1.14.41.27 — 31/07/2026 01:56 (Asia/Bangkok)
+
+- Đồng bộ lời mời thủ công và Tìm Nhanh: người chơi ở phòng một mình vẫn có thể nhận lời mời.
+- Admin chọn Online được tính vào presence, bộ đếm Online, danh sách Players và ứng viên Tìm Nhanh.
+- Chuyển lựa chọn Online/Offline vào menu tài khoản cạnh mũi tên avatar.
+- Chặn beacon Offline khi chỉ chuyển trang hoặc gửi biểu mẫu nội bộ.
+- File sửa: `app.py`, `templates/base.html`, `templates/dashboard.html`, `static/style.css`.
+- Kiểm tra: 33/33 test thành công.

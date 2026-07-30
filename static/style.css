@@ -5321,3 +5321,16 @@ html[data-theme="light"] .sidebar-version-panel{
 html[data-theme="light"] .admin-presence-control{background:#fff;border-color:#d8b24d}
 html[data-theme="light"] .admin-presence-control select{color:#172033!important}
 @media(max-width:780px){.admin-presence-control{height:38px;padding:0 8px}.admin-presence-control select{min-width:70px;font-size:12px}}
+
+/* V1.14.41.27 - Trạng thái Admin nằm trong menu tài khoản */
+.account-presence-label{display:inline-flex!important;align-items:center;gap:5px}
+.account-presence-label i{width:8px;height:8px;border-radius:999px;display:inline-block;background:#22c55e;box-shadow:0 0 8px rgba(34,197,94,.75)}
+.account-presence-label.is-offline i{background:#64748b;box-shadow:none}
+.account-presence-control{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:10px 14px;border-top:1px solid rgba(148,163,184,.14);border-bottom:1px solid rgba(148,163,184,.14);background:rgba(7,16,29,.42)}
+.account-presence-control label{display:flex;align-items:center;gap:9px;color:#dce7f7;font-weight:700;font-size:13px;white-space:nowrap}
+.account-presence-control label span{color:#22c55e;font-size:11px;text-shadow:0 0 8px rgba(34,197,94,.6)}
+.account-presence-control select{min-width:88px;height:32px;padding:0 28px 0 10px!important;border:1px solid rgba(245,190,55,.35)!important;border-radius:8px!important;background:#101c2b!important;color:#eef4ff!important;font:inherit!important;font-size:12px!important;font-weight:800!important;box-shadow:none!important;cursor:pointer}
+.account-presence-control select option{background:#101c2b;color:#eef4ff}
+html[data-theme="light"] .account-presence-control{background:#f7f9fc;border-color:#dce3ed}
+html[data-theme="light"] .account-presence-control label{color:#172033}
+html[data-theme="light"] .account-presence-control select{background:#fff!important;color:#172033!important;border-color:#d8b24d!important}

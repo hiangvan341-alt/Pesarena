@@ -63,7 +63,7 @@ from modules.win_streaks import (
 load_dotenv()
 
 APP_NAME = "PES Arena – Bản Lĩnh Sân Cỏ"
-APP_VERSION = "V1.14.41.26"
+APP_VERSION = "V1.14.41.27"
 DEFAULT_POINTS = 1000
 DEVICE_COOKIE_NAME = "rankzone_device_id"
 COOLDOWN_MINUTES = 3
@@ -4706,7 +4706,7 @@ def api_admin_send_announcement():
 @app.route("/api/online-count")
 @login_required
 def api_online_count():
-    players = list_players(include_admin=False)
+    players = list_players(include_admin=True)
     online_count = sum(1 for player in players if player.get("is_online"))
     return jsonify({"ok": True, "online_count": online_count})
 
@@ -4731,11 +4731,12 @@ def dashboard():
     user = current_user()
     try:
         player_rows = list_players()
+        presence_rows = list_players(include_admin=True)
         matches = list_matches()
         rooms = list_rooms()
         invite_count = current_pending_invite_count()
     except Exception:
-        player_rows, matches, rooms = [], [], []
+        player_rows, presence_rows, matches, rooms = [], [], [], []
         invite_count = 0
         flash("Dữ liệu đang tải chậm, vui lòng thử lại sau vài giây.", "warning")
 
@@ -4762,12 +4763,20 @@ def dashboard():
     }
 
     activity_map = build_player_activity_map(rooms, matches)
-    online_players = [p for p in player_rows if p.get("is_online") and p.get("id") != user.get("id")]
+    online_players = [p for p in presence_rows if p.get("is_online") and p.get("id") != user.get("id")]
+    solo_room_user_ids = {
+        str(room.get("host_user_id"))
+        for room in rooms
+        if is_solo_waiting_room(room, room.get("host_user_id"))
+    }
     for player in online_players:
         status = activity_map.get(player.get("id"), {"code": "ready", "label": "Sẵn sàng"})
         player["activity_code"] = status["code"]
         player["activity_label"] = status["label"]
-        player["is_busy"] = status["code"] != "ready"
+        player["can_receive_invite"] = bool(
+            status["code"] == "ready" or str(player.get("id")) in solo_room_user_ids
+        )
+        player["is_busy"] = not player["can_receive_invite"]
 
     online_players.sort(key=lambda p: (p.get("is_busy", False), _player_ranking_sort_key(p)))
 
@@ -4820,7 +4829,7 @@ def create_open_room():
 @app.route("/players")
 @login_required
 def players():
-    player_rows = list_players()
+    player_rows = list_players(include_admin=True)
     rooms = list_rooms()
     activity_map = build_player_activity_map(rooms=rooms)
     solo_room_user_ids = {
@@ -5199,7 +5208,7 @@ def quick_match_invite():
     try:
         online_result = execute_query(
             db.table("users")
-            .select("id,username,display_name,role,account_status,rank_points,is_online,last_seen_at,matchmaking_cooldown_until"),
+            .select("id,username,display_name,role,admin_level,account_status,rank_points,is_online,last_seen_at,matchmaking_cooldown_until"),
             "quick_match_live_players",
             attempts=3,
         )
@@ -5213,7 +5222,9 @@ def quick_match_invite():
         oid = str(opponent.get("id") or "")
         if not oid or oid == str(user["id"]):
             continue
-        if opponent.get("role") != "player":
+        role = str(opponent.get("role") or "").strip().lower()
+        admin_level = str(opponent.get("admin_level") or "").strip().lower()
+        if role not in {"player", "admin"} and admin_level not in {"owner", "admin"}:
             continue
         if opponent.get("account_status", "approved") != "approved":
             continue

@@ -108,16 +108,6 @@ function toggleTheme(){
                     <span class="active-room-topbar-icon">🎮</span>
                     <span class="active-room-topbar-copy"><strong>Trở lại phòng đấu</strong><small>Bạn đang ở trong 1 phòng đấu</small></span>
                 </a>
-                {% if (current_user.role == "admin" or current_user.admin_level in ["owner", "admin"]) %}
-                <form class="admin-presence-control" method="post" action="{{ url_for('admin_presence_mode') }}" title="Chọn trạng thái hiển thị của Admin">
-                    <input type="hidden" name="next_url" value="{{ request.full_path if request.query_string else request.path }}">
-                    <span class="admin-presence-dot {{ 'is-offline' if session.get('admin_presence_mode') == 'offline' else 'is-online' }}"></span>
-                    <select name="presence_mode" onchange="this.form.submit()" aria-label="Trạng thái Admin">
-                        <option value="online" {{ 'selected' if session.get('admin_presence_mode') != 'offline' else '' }}>Online</option>
-                        <option value="offline" {{ 'selected' if session.get('admin_presence_mode') == 'offline' else '' }}>Offline</option>
-                    </select>
-                </form>
-                {% endif %}
                 <a class="topbar-icon" href="{{ url_for('players') }}" title="Tìm người chơi">⌕</a>
                 <button id="themeToggle" class="topbar-icon theme-toggle" type="button" onclick="toggleTheme()" title="Chuyển giao diện sáng/tối" aria-label="Chuyển giao diện sáng/tối"><span class="theme-sun">☀</span><span class="theme-moon">☾</span></button>
                 <div class="topbar-notification-wrap">
@@ -165,7 +155,7 @@ function toggleTheme(){
                 <div class="topbar-account-wrap">
                     <button id="accountMenuButton" class="topbar-profile" type="button" onclick="toggleAccountMenu(event)" aria-expanded="false" aria-haspopup="menu" aria-controls="accountDropdown">
                         {{ player_avatar(current_user, size='sm', frame=current_profile_equipment.avatar_frame if current_profile_equipment else none) }}
-                        <span><strong class="{% if current_profile_equipment and current_profile_equipment.name_style %}{{ current_profile_equipment.name_style.metadata.get('css_class', '') }}{% endif %}">{{ current_user.display_name }}</strong><small><i></i> Online</small></span><em>⌄</em>
+                        <span><strong class="{% if current_profile_equipment and current_profile_equipment.name_style %}{{ current_profile_equipment.name_style.metadata.get('css_class', '') }}{% endif %}">{{ current_user.display_name }}</strong><small class="account-presence-label {{ 'is-offline' if session.get('admin_presence_mode') == 'offline' and (current_user.role == 'admin' or current_user.admin_level in ['owner','admin']) else 'is-online' }}"><i></i> {{ 'Offline' if session.get('admin_presence_mode') == 'offline' and (current_user.role == 'admin' or current_user.admin_level in ['owner','admin']) else 'Online' }}</small></span><em>⌄</em>
                     </button>
                     <div id="accountDropdown" class="topbar-account-dropdown" role="menu" hidden>
                         <div class="account-dropdown-wallet">
@@ -179,6 +169,16 @@ function toggleTheme(){
                         <a href="{{ url_for('shop') }}"><span>🛒</span> Cửa hàng</a>
                         <a href="{{ url_for('inventory') }}"><span>🎒</span> Kho đồ</a>
                         <a href="{{ url_for('matches') }}"><span>📜</span> Lịch sử trận đấu</a>
+                        {% if (current_user.role == "admin" or current_user.admin_level in ["owner", "admin"]) %}
+                        <form class="account-presence-control" method="post" action="{{ url_for('admin_presence_mode') }}">
+                            <input type="hidden" name="next_url" value="{{ request.full_path if request.query_string else request.path }}">
+                            <label for="adminPresenceMode"><span>●</span> Trạng thái hiển thị</label>
+                            <select id="adminPresenceMode" name="presence_mode" onchange="this.form.submit()" aria-label="Trạng thái hiển thị của Admin">
+                                <option value="online" {{ 'selected' if session.get('admin_presence_mode') != 'offline' else '' }}>Online</option>
+                                <option value="offline" {{ 'selected' if session.get('admin_presence_mode') == 'offline' else '' }}>Offline</option>
+                            </select>
+                        </form>
+                        {% endif %}
                         <a class="account-dropdown-logout" href="{{ url_for('logout') }}"><span>↪</span> Đăng xuất</a>
                     </div>
                 </div>
@@ -289,8 +289,22 @@ function postHeartbeat() {
 // trường hợp trình duyệt/thiết bị không gửi được beacon.
 (function setupPresenceOfflineBeacon(){
     let sent = false;
+    let internalNavigation = false;
+
+    document.addEventListener('click', function(event){
+        const link = event.target && event.target.closest ? event.target.closest('a[href]') : null;
+        if (!link) return;
+        try {
+            const target = new URL(link.href, window.location.href);
+            if (target.origin === window.location.origin && !link.hasAttribute('download') && link.target !== '_blank') {
+                internalNavigation = true;
+            }
+        } catch (_) {}
+    }, true);
+    document.addEventListener('submit', function(){ internalNavigation = true; }, true);
+
     function sendOffline(){
-        if (sent) return;
+        if (sent || internalNavigation) return;
         sent = true;
         const url = "{{ url_for('presence_offline') }}";
         try {
