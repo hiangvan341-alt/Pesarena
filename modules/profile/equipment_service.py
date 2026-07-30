@@ -28,17 +28,31 @@ def _cache_keys(user_id):
     return f"_rz_profile_equipment_{normalized}", f"profile_equipment:{user_id}"
 
 
+PUBLIC_PROFILE_SLOTS = ("avatar_frame", "name_style")
+PUBLIC_MAP_REQUEST_KEY = "_rz_profile_public_equipment_maps"
+PUBLIC_MAP_TTL_KEY = "profile_public_equipment_maps"
+
+
 def invalidate_equipment_cache(user_id):
     request_key, ttl_key = _cache_keys(user_id)
     try:
         cache_delete(request_key)
+        cache_delete(PUBLIC_MAP_REQUEST_KEY)
+        # Dọn các khóa cũ để hotfix tương thích ngay với instance đang warm.
         cache_delete("_rz_profile_avatar_frame_map")
+        cache_delete("_rz_profile_name_style_map")
     except Exception:
         pass
     try:
-        ttl_cache_delete(ttl_key, "profile_avatar_frame_map")
+        ttl_cache_delete(
+            ttl_key,
+            PUBLIC_MAP_TTL_KEY,
+            "profile_avatar_frame_map",
+            "profile_name_style_map",
+        )
     except Exception:
         pass
+
 
 def _fallback_state(player):
     player = dict(player or {})
@@ -56,36 +70,37 @@ def _decorate_item(item):
     return item
 
 
-def build_avatar_frame_map(players=None):
-    """Đọc khung Avatar đang trang bị cho nhiều người chỉ bằng tối đa 2 truy vấn.
+def _build_public_equipment_maps(players=None):
+    """Đọc khung Avatar và màu tên cho nhiều người bằng tối đa 2 truy vấn.
 
-    Kết quả là ``{user_id: item}``, trong đó item đã có ``image_url``.
-    Bản đồ được cache ngắn để trang Players/BXH/phòng đấu không tạo truy vấn N+1.
+    Kết quả: ``{slot: {user_id: decorated_item}}``. Hai wrapper bên dưới
+    dùng chung cache nên Players/BXH không phát sinh truy vấn theo từng user.
     """
     requested_ids = set()
-    fallback = {}
+    fallback = {slot: {} for slot in PUBLIC_PROFILE_SLOTS}
     for value in players or []:
         if isinstance(value, dict):
             user_id = value.get("id")
             raw = _safe_dict(value.get("equipped_cosmetics"))
-            legacy_frame = raw.get("avatar_frame")
-            if user_id and isinstance(legacy_frame, dict):
-                fallback[str(user_id)] = dict(legacy_frame)
+            for slot in PUBLIC_PROFILE_SLOTS:
+                legacy_item = raw.get(slot)
+                if user_id and isinstance(legacy_item, dict):
+                    fallback[slot][str(user_id)] = dict(legacy_item)
         else:
             user_id = value
         if user_id:
             requested_ids.add(str(user_id))
 
     try:
-        cached = cache_get("_rz_profile_avatar_frame_map")
+        cached = cache_get(PUBLIC_MAP_REQUEST_KEY)
         if cached is None:
-            cached = ttl_cache_get("profile_avatar_frame_map")
+            cached = ttl_cache_get(PUBLIC_MAP_TTL_KEY)
         if cached is None:
             equipment_result = execute_query(
                 db.table("user_equipment")
-                .select("user_id,item_id,inventory_id,equipped_at")
-                .eq("slot", "avatar_frame"),
-                "profile_avatar_frame_rows",
+                .select("user_id,item_id,inventory_id,equipped_at,slot")
+                .in_("slot", list(PUBLIC_PROFILE_SLOTS)),
+                "profile_public_equipment_rows",
                 attempts=2,
             )
             equipment_rows = [dict(row) for row in (equipment_result.data or [])]
@@ -94,7 +109,7 @@ def build_avatar_frame_map(players=None):
             if item_ids:
                 item_result = execute_query(
                     db.table("shop_items").select("*").in_("id", item_ids),
-                    "profile_avatar_frame_items",
+                    "profile_public_equipment_items",
                     attempts=2,
                 )
                 items_by_id = {
@@ -102,31 +117,44 @@ def build_avatar_frame_map(players=None):
                     for item in (item_result.data or [])
                 }
 
-            cached = {}
+            cached = {slot: {} for slot in PUBLIC_PROFILE_SLOTS}
             for equipment in equipment_rows:
+                slot = str(equipment.get("slot") or "")
                 item = items_by_id.get(str(equipment.get("item_id")))
                 user_id = equipment.get("user_id")
-                if not item or not user_id:
+                if slot not in cached or not item or not user_id:
                     continue
                 decorated = dict(item)
                 decorated["inventory_id"] = equipment.get("inventory_id")
                 decorated["equipped_at"] = equipment.get("equipped_at")
-                cached[str(user_id)] = decorated
-            ttl_cache_set("profile_avatar_frame_map", cached, 15)
-        cache_set("_rz_profile_avatar_frame_map", cached)
+                cached[slot][str(user_id)] = decorated
+            ttl_cache_set(PUBLIC_MAP_TTL_KEY, cached, 15)
+        cache_set(PUBLIC_MAP_REQUEST_KEY, cached)
     except Exception as exc:
         try:
-            app.logger.debug("Avatar frame map fallback: %s", exc)
+            app.logger.debug("Public profile equipment map fallback: %s", exc)
         except Exception:
             pass
-        cached = {}
+        cached = {slot: {} for slot in PUBLIC_PROFILE_SLOTS}
 
-    result = dict(fallback)
-    result.update(cached or {})
-    if requested_ids:
-        return {user_id: result.get(user_id) for user_id in requested_ids if result.get(user_id)}
+    result = {slot: dict(fallback.get(slot) or {}) for slot in PUBLIC_PROFILE_SLOTS}
+    for slot in PUBLIC_PROFILE_SLOTS:
+        result[slot].update((cached or {}).get(slot) or {})
+        if requested_ids:
+            result[slot] = {
+                user_id: result[slot].get(user_id)
+                for user_id in requested_ids
+                if result[slot].get(user_id)
+            }
     return result
 
+
+def build_avatar_frame_map(players=None):
+    return _build_public_equipment_maps(players).get("avatar_frame", {})
+
+
+def build_name_style_map(players=None):
+    return _build_public_equipment_maps(players).get("name_style", {})
 
 def build_equipment_state(player):
     """Trả về dict slot -> thông tin vật phẩm đang trang bị."""

@@ -17,15 +17,15 @@
                 <div class="podium-reference-names">
                     {% if players|length > 1 %}
                     <div class="podium-name-slot podium-name-slot-second">
-                        <span class="podium-name-engrave">{{ players[1].display_name }}</span>
+                        <span class="podium-name-engrave {{ players[1].name_style_class or '' }}">{{ players[1].display_name }}</span>
                     </div>
                     {% endif %}
                     <div class="podium-name-slot podium-name-slot-first">
-                        <span class="podium-name-engrave">{{ players[0].display_name }}</span>
+                        <span class="podium-name-engrave {{ players[0].name_style_class or '' }}">{{ players[0].display_name }}</span>
                     </div>
                     {% if players|length > 2 %}
                     <div class="podium-name-slot podium-name-slot-third">
-                        <span class="podium-name-engrave">{{ players[2].display_name }}</span>
+                        <span class="podium-name-engrave {{ players[2].name_style_class or '' }}">{{ players[2].display_name }}</span>
                     </div>
                     {% endif %}
                 </div>
@@ -68,7 +68,7 @@
                                 <a class="player-link player-with-avatar leaderboard-player-cell" href="{{ url_for('profile',user_id=p.id) }}">
                                     {{ player_avatar(p, size='xs') }}
                                     <span>
-                                        <strong>{{ p.display_name }}{% if (p.streak or 0)|int >= 3 %}<span class="win-streak-mini ranking-win-streak-mini" title="{{ get_win_streak_title(p.streak) }} · {{ p.streak }} trận thắng">🔥{{ p.streak }}</span>{% endif %}{% if p.id == current_user.id %}<em>Bạn</em>{% endif %}</strong>
+                                        <strong><span class="{{ p.name_style_class or '' }}">{{ p.display_name }}</span>{% if (p.streak or 0)|int >= 3 %}<span class="win-streak-mini ranking-win-streak-mini" title="{{ get_win_streak_title(p.streak) }} · {{ p.streak }} trận thắng">🔥{{ p.streak }}</span>{% endif %}{% if p.id == current_user.id %}<em>Bạn</em>{% endif %}</strong>
                                     </span>
                                 </a>
                             </td>

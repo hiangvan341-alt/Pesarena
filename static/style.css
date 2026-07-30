@@ -5259,3 +5259,8 @@ html[data-theme="light"] .sidebar-version-panel{
 .player-avatar.has-equipped-frame>.avatar-achievement{z-index:4}
 .topbar-profile .player-avatar.avatar-sm.has-equipped-frame{width:48px;height:48px;font-size:13px;margin:-5px -2px -5px -4px}
 @media(max-width:620px){.topbar-profile .player-avatar.avatar-sm.has-equipped-frame{width:44px;height:44px;margin:-3px -2px -3px -3px}}
+
+/* V1.14.41.1 - Màu tên trang bị dùng toàn app */
+.name-style-neon-blue{display:inline-block;background:linear-gradient(90deg,#66d9ff,#1a7cff);-webkit-background-clip:text;background-clip:text;color:transparent!important;text-shadow:0 0 14px rgba(35,157,255,.48)}
+.name-style-elite-purple{display:inline-block;background:linear-gradient(90deg,#e48cff,#7b4dff,#f1a1ff);-webkit-background-clip:text;background-clip:text;color:transparent!important;text-shadow:0 0 14px rgba(153,80,255,.5)}
+.name-style-champion-gold{display:inline-block;background:linear-gradient(90deg,#fff0a6,#ffbd21,#fff4ba);-webkit-background-clip:text;background-clip:text;color:transparent!important;text-shadow:0 0 14px rgba(255,190,35,.48)}

@@ -85,42 +85,31 @@ def register_routes(context):
             flash("Tên hiển thị này đã được người khác sử dụng.", "danger")
             return redirect(url_for("profile", user_id=user.get("id")))
 
+        # Từ V1.14.41.1, mọi lần đổi tên đều bắt buộc dùng 1 Vé đổi tên.
+        ticket_count = repository.get_display_name_ticket_count(user.get("id"))
+        if ticket_count <= 0:
+            flash("Bạn cần có Vé đổi tên trong Kho đồ để đổi tên hiển thị.", "danger")
+            return redirect(url_for("profile", user_id=user.get("id")))
+
         try:
             result = repository.update_display_name_with_entitlement(user.get("id"), new_name)
-            if not result:
-                raise RuntimeError("EMPTY_DISPLAY_NAME_CHANGE_RESULT")
+            if not result or not result.get("used_ticket"):
+                raise RuntimeError("DISPLAY_NAME_TICKET_NOT_CONSUMED")
             session["display_name"] = new_name
             ttl_cache_delete(f"user:{user.get('id')}")
             cache_delete("_rz_current_user")
             cache_delete("_rz_players_all")
             cache_delete("_rz_users_map")
-            if result.get("used_ticket"):
-                flash("Đã đổi tên hiển thị và sử dụng 1 Vé đổi tên trong Kho đồ.", "success")
-            else:
-                remaining = max(0, int(result.get("free_changes_remaining") or 0))
-                flash(f"Đã đổi tên hiển thị. Bạn còn {remaining} lượt miễn phí.", "success")
+            flash("Đã đổi tên hiển thị và sử dụng 1 Vé đổi tên trong Kho đồ.", "success")
         except Exception as exc:
             lowered = str(exc).lower()
             app.logger.exception("update_display_name error: %s", exc)
-            if "display_name_change_limit_reached" in lowered:
-                flash("Bạn đã hết lượt miễn phí và không có Vé đổi tên trong Kho đồ.", "danger")
+            if "display_name_change_ticket_required" in lowered or "display_name_change_limit_reached" in lowered:
+                flash("Bạn không còn Vé đổi tên trong Kho đồ.", "danger")
             elif "display_name_duplicate" in lowered:
                 flash("Tên hiển thị này đã được người khác sử dụng.", "danger")
-            elif "pgrst202" in lowered or "change_display_name_with_shop_entitlement" in lowered:
-                # Giữ khả năng đổi tên cũ nếu Shop chưa được cài và người dùng còn lượt miễn phí.
-                change_count = int(user.get("display_name_change_count", 0) or 0)
-                if change_count < 2:
-                    try:
-                        repository.update_display_name_record(user.get("id"), new_name, change_count + 1)
-                        session["display_name"] = new_name
-                        ttl_cache_delete(f"user:{user.get('id')}")
-                        cache_delete("_rz_current_user")
-                        flash(f"Đã đổi tên hiển thị. Bạn còn {max(0, 1 - change_count)} lượt miễn phí.", "success")
-                    except Exception as fallback_exc:
-                        app.logger.exception("update_display_name fallback error: %s", fallback_exc)
-                        flash("Không thể đổi tên lúc này.", "danger")
-                else:
-                    flash("Hãy chạy SQL Shop Giai đoạn 3 để sử dụng Vé đổi tên.", "danger")
+            elif "pgrst202" in lowered or "change_display_name_with_ticket" in lowered:
+                flash("Hãy chạy SQL V1.14.41.1 để bật chế độ đổi tên chỉ bằng Vé.", "danger")
             else:
                 flash("Không thể đổi tên lúc này. Hãy kiểm tra Vercel Logs.", "danger")
         return redirect(url_for("profile", user_id=user.get("id")))
