@@ -10,8 +10,12 @@
     <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}?v={{ APP_VERSION|urlencode }}">
     <link rel="stylesheet" href="{{ url_for('static', filename='css/zcoin.css') }}?v={{ APP_VERSION|urlencode }}">
     <link rel="stylesheet" href="{{ url_for('static', filename='css/zcoin_rewards.css') }}?v={{ APP_VERSION|urlencode }}">
+    {% if request.endpoint in ['room_detail', 'admin'] %}
     <link rel="stylesheet" href="{{ url_for('static', filename='css/rank_mode_toggle.css') }}?v={{ APP_VERSION|urlencode }}">
+    {% endif %}
+    {% if request.endpoint in ['room_detail', 'profile'] %}
     <link rel="stylesheet" href="{{ url_for('static', filename='css/parsec_room.css') }}?v={{ APP_VERSION|urlencode }}">
+    {% endif %}
     <script src="{{ url_for('static', filename='js/pes_polling.js') }}?v={{ APP_VERSION|urlencode }}" defer></script>
     <script src="{{ url_for('static', filename='js/zcoin.js') }}?v={{ APP_VERSION|urlencode }}" defer></script>
     <script src="{{ url_for('static', filename='js/zcoin_rewards.js') }}?v={{ APP_VERSION|urlencode }}" defer></script>
@@ -1026,15 +1030,17 @@ function updateOnlineFloatingCount() {
 
 window.addEventListener("DOMContentLoaded", function () {
     if (!window.PESNet) return updateOnlineFloatingCount();
-    PESNet.createPoller({key: "online-count", task: updateOnlineFloatingCountSmart, visibleInterval: 180000, hiddenInterval: 300000, runWhenHidden: false, immediate: true, jitter: 5000});
+    PESNet.createPoller({key: "online-count", task: updateOnlineFloatingCount, visibleInterval: 180000, hiddenInterval: 300000, runWhenHidden: false, immediate: true, jitter: 5000});
 });
 </script>
 {% endif %}
 
 <script>
 (function maintenanceCountdowns(){
+    const countdownElements = document.querySelectorAll('[data-maintenance-countdown]');
+    if (!countdownElements.length) return;
     function tick(){
-        document.querySelectorAll('[data-maintenance-countdown]').forEach(function(el){
+        countdownElements.forEach(function(el){
             const target = Date.parse(el.dataset.maintenanceCountdown || '');
             if (!Number.isFinite(target)) return;
             const seconds = Math.max(0, Math.floor((target - Date.now()) / 1000));

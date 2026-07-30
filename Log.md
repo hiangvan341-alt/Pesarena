@@ -215,3 +215,7 @@ File sửa:
 - Sửa định dạng Parsec ID để chấp nhận dấu `#` và dãy số phía sau.
 - Ví dụ hợp lệ: `Salem6556#18473949`.
 - Đồng bộ HTML pattern, backend validator và constraint Supabase.
+
+## V1.14.41.19 — 30/07/2026 18:52 (Asia/Bangkok)
+- Rà soát cuối CSS/request/polling/tài nguyên.
+- Sửa `templates/base.html`; xóa 2 ảnh test không dùng; thêm báo cáo audit.
