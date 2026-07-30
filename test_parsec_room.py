@@ -31,7 +31,7 @@ def test_parsec_visible_on_initial_room_template():
         assert 'partials/parsec_room_panel.html' in src
     panel=open('templates/partials/parsec_room_panel.html',encoding='utf-8').read()
     assert "asset_url('parsec-logo.webp')" in panel
-    assert 'Copy Link Parsec' in panel
+    assert '<span>Copy Link</span>' in panel
 
 def test_parsec_panel_is_in_right_rail():
     for name in ('templates/room_detail.html','templates/_room_live_content.html'):
@@ -40,7 +40,10 @@ def test_parsec_panel_is_in_right_rail():
 
 def test_parsec_logo_is_webp_and_no_polling_added():
     from pathlib import Path
-    assert Path('static/parsec-logo.webp').is_file()
+    
+    # Logo đã được đưa lên Supabase và không còn đóng gói cục bộ.
+    manifest = Path('SUPABASE_ASSET_MANIFEST.csv').read_text(encoding='utf-8-sig')
+    assert 'parsec-logo.webp' in manifest
     assert not Path('static/parsec-logo.png').exists()
     src=open('static/css/parsec_room.css',encoding='utf-8').read()
     assert 'width:18px!important' in src

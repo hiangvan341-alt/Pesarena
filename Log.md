@@ -213,3 +213,9 @@ File sửa:
 - Giao diện khách được tối giản gần với mẫu tham chiếu: chỉ hiển thị `ID Parsec`, `Link Parsec` và ghi chú ngắn bên dưới.
 - Giao diện chủ phòng vẫn giữ quyền sửa/xóa link nhưng dùng lại cùng hệ thống font, màu và spacing để đỡ lệch giao diện.
 - Cập nhật `APP_VERSION` thành `V1.14.41.11`.
+
+## V1.14.41.16 — 30/07/2026 18:23 (Asia/Bangkok)
+- Sửa xung đột CSS khiến nút Parsec hiện màu vàng trong Light theme.
+- Bỏ class `.btn` khỏi toàn bộ nút Parsec; module dùng selector riêng.
+- Xóa các asset đã tải lên Supabase khỏi gói deploy và dọn file cache/test dư thừa.
+- File sửa: `templates/partials/parsec_room_panel.html`, `static/css/parsec_room.css`.

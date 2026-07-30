@@ -1,4 +1,4 @@
-/* Parsec room module — isolated UI, V1.14.41.15 */
+/* Parsec room module — isolated UI, V1.14.41.16 */
 .room-layout-v137 .room-arena-right-rail{
   display:flex;
   flex-direction:column;
@@ -96,49 +96,71 @@
   border-color:rgba(255,38,100,.78);
   box-shadow:0 0 0 2px rgba(255,38,100,.1);
 }
-/* Các nút Parsec dùng cùng một tông đỏ và giữ kích thước gọn. */
-.parsec-room-panel .btn{
-  min-height:36px;
-  margin:0;
-  border-radius:8px!important;
-  font-size:12px!important;
-  font-weight:700!important;
-  line-height:1!important;
-  white-space:nowrap;
-  box-shadow:none!important;
-  transform:none!important;
-}
-.parsec-room-panel .btn:hover{
-  transform:none!important;
-  filter:brightness(1.08);
-}
+/* Nút Parsec tách hoàn toàn khỏi .btn toàn cục để không bị theme sáng ép thành màu vàng. */
 .parsec-action-btn{
-  width:auto!important;
-  padding:0 12px!important;
-  border:1px solid #ff3f72!important;
-  background:linear-gradient(180deg,#ef2a62 0%,#cb164b 100%)!important;
-  color:#fff!important;
-}
-.parsec-action-btn:active{
-  background:linear-gradient(180deg,#d91d53 0%,#b71041 100%)!important;
-}
-.parsec-copy-btn{min-width:78px}
-.parsec-copy-link-btn{
-  display:inline-flex!important;
-  min-width:104px;
+  appearance:none;
+  -webkit-appearance:none;
+  display:inline-flex;
   align-items:center;
   justify-content:center;
-  gap:6px;
+  width:auto;
+  min-height:34px;
+  margin:0;
+  padding:0 11px;
+  border:1px solid #ff3f72;
+  border-radius:8px;
+  background:linear-gradient(180deg,#ef2a62 0%,#cb164b 100%);
+  color:#fff;
+  font:700 12px/1 var(--app-font,Inter,"Segoe UI",Arial,sans-serif);
+  white-space:nowrap;
+  cursor:pointer;
+  box-shadow:none;
+  transform:none;
 }
-.parsec-link-icon{font-size:12px;line-height:1}
+.parsec-action-btn:hover{
+  background:linear-gradient(180deg,#f43a70 0%,#d51b52 100%);
+  border-color:#ff5a84;
+  color:#fff;
+  filter:none;
+  transform:none;
+}
+.parsec-action-btn:active{
+  background:linear-gradient(180deg,#d91d53 0%,#b71041 100%);
+}
+.parsec-action-btn:focus-visible{
+  outline:2px solid rgba(255,63,114,.35);
+  outline-offset:2px;
+}
+.parsec-copy-btn{min-width:72px}
+.parsec-copy-link-btn{
+  min-width:0;
+  padding-inline:10px;
+  gap:5px;
+}
+.parsec-link-icon{font-size:11px;line-height:1}
 .parsec-room-actions{
   display:flex;
   align-items:center;
   justify-content:flex-end;
-  gap:8px;
+  gap:7px;
 }
-.parsec-save-btn{min-width:62px}
-.parsec-delete-btn{min-width:58px}
+.parsec-save-btn{min-width:54px}
+.parsec-delete-btn{min-width:52px}
+/* Chặn tuyệt đối rule theme sáng .btn màu vàng nếu HTML cũ còn cache. */
+html[data-theme="light"] .parsec-room-panel .parsec-action-btn,
+html[data-theme="light"] .parsec-room-panel button.parsec-action-btn{
+  background:linear-gradient(180deg,#ef2a62 0%,#cb164b 100%)!important;
+  border-color:#ff3f72!important;
+  color:#fff!important;
+  box-shadow:none!important;
+}
+html[data-theme="light"] .parsec-room-panel .parsec-action-btn:hover,
+html[data-theme="light"] .parsec-room-panel button.parsec-action-btn:hover{
+  background:linear-gradient(180deg,#f43a70 0%,#d51b52 100%)!important;
+  border-color:#ff5a84!important;
+  color:#fff!important;
+  transform:none!important;
+}
 .parsec-room-empty{
   min-height:40px;
   padding:10px 12px;
