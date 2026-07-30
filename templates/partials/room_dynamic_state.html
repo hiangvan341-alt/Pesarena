@@ -31,7 +31,7 @@
         <section class="room-side-card room-team-card home">
             <img class="room-rank-frame-bg" src="{{ url_for('static', filename='rank_frames/' ~ room.host_rank_info.slug ~ '.png') }}" alt="Khung rank {{ room.host_rank_info.name }}" loading="lazy" aria-hidden="true">
             <div class="room-player-heading-plain">
-                {{ player_avatar(name=room.host_name, avatar_url=room.host_avatar_url, achievement=room.host_achievement, size='md', extra_class='room-frame-avatar') }}
+                {{ player_avatar(name=room.host_name, avatar_url=room.host_avatar_url, achievement=room.host_achievement, size='md', extra_class='room-frame-avatar', frame=room.host_avatar_frame) }}
                 <div class="room-player-name">{{ room.host_name }}</div>
                 <div class="room-player-rankline">
                     <img src="{{ asset_url('ranks/' ~ room.host_rank_info.slug ~ '.webp') }}" alt="{{ room.host_rank_info.name }}" loading="lazy">
@@ -58,15 +58,17 @@
                 <div class="room-center-mode-title">CHẾ ĐỘ THI ĐẤU</div>
                 {% set rematch_mode_locked = '__RANK_MODE_LOCKED__' in (room.note or '') %}
                 {% if rematch_mode_locked %}
-                <div class="room-center-mode-note">Đã chọn: <strong>{% if room.team_tier == 'random3_pick1' %}Random 3 chọn 1{% else %}Rank thường{% endif %}</strong>{% if room.has_guest %} • Chờ khách Sẵn sàng{% else %} • Mời đối thủ vào phòng{% endif %}</div>
+                <div class="room-center-mode-note">Đã chọn: <strong>{% if room.team_tier == 'random3_pick1' or not system_features.rank_standard_enabled %}Random 3 chọn 1{% else %}Rank thường{% endif %}</strong>{% if room.has_guest %} • Chờ khách Sẵn sàng{% else %} • Mời đối thủ vào phòng{% endif %}</div>
                 {% elif room_room_viewer_is_host or current_user.role == "admin" %}
-                <div class="room-center-mode-actions">
+                <div class="room-center-mode-actions{% if not system_features.rank_standard_enabled or not system_features.friendly_random3_enabled %} room-center-mode-actions--single{% endif %}">
+                    {% if system_features.rank_standard_enabled %}
                     <form method="post" action="{{ url_for('room_select_ranked_mode', room_id=room.id) }}" data-room-async="1">
                         <input type="hidden" name="rank_mode" value="smart_random">
                         <button class="room-mode-select-btn mode-ranked {% if room.team_tier != 'random3_pick1' %}selected{% endif %}" type="submit">
                             <strong>RANK THƯỜNG</strong><small>Random trực tiếp 1 CLB</small>
                         </button>
                     </form>
+                    {% endif %}
                     {% if system_features.friendly_random3_enabled %}
                     <form method="post" action="{{ url_for('room_select_ranked_mode', room_id=room.id) }}" data-room-async="1">
                         <input type="hidden" name="rank_mode" value="random3_pick1">
@@ -76,9 +78,9 @@
                     </form>
                     {% endif %}
                 </div>
-                <div class="room-center-mode-note">Đã chọn: <strong>{% if room.team_tier == 'random3_pick1' %}Random 3 chọn 1{% else %}Rank thường{% endif %}</strong>{% if room.has_guest %} • Chờ khách Sẵn sàng{% else %} • Mời đối thủ vào phòng{% endif %}</div>
+                <div class="room-center-mode-note">Đã chọn: <strong>{% if room.team_tier == 'random3_pick1' or not system_features.rank_standard_enabled %}Random 3 chọn 1{% else %}Rank thường{% endif %}</strong>{% if room.has_guest %} • Chờ khách Sẵn sàng{% else %} • Mời đối thủ vào phòng{% endif %}</div>
                 {% else %}
-                <div class="room-center-mode-note">Chủ phòng đã chọn <strong>{% if room.team_tier == 'random3_pick1' %}Random 3 chọn 1{% else %}Rank thường{% endif %}</strong></div>
+                <div class="room-center-mode-note">Chủ phòng đã chọn <strong>{% if room.team_tier == 'random3_pick1' or not system_features.rank_standard_enabled %}Random 3 chọn 1{% else %}Rank thường{% endif %}</strong></div>
                 {% endif %}
             </div>
             {% elif room.status == "waiting_ready" and room.friendly_random3_active %}
@@ -233,7 +235,7 @@
             <img class="room-rank-frame-bg muted" src="{{ url_for('static', filename='rank_frames/ga.png') }}" alt="Khung chờ người chơi" loading="lazy" aria-hidden="true">
             {% endif %}
             <div class="room-player-heading-plain">
-                {{ player_avatar(name=room.guest_name, avatar_url=room.guest_avatar_url, achievement=room.guest_achievement, size='md', extra_class='room-frame-avatar') }}
+                {{ player_avatar(name=room.guest_name, avatar_url=room.guest_avatar_url, achievement=room.guest_achievement, size='md', extra_class='room-frame-avatar', frame=room.guest_avatar_frame) }}
                 <div class="room-player-name">{{ room.guest_name }}</div>
                 {% if room.has_guest and room.guest_rank_info %}
                 <div class="room-player-rankline">

@@ -90,8 +90,30 @@ def register_routes(context):
         report_positive_rp = 0
         report_mode_counts = {"rank_random": 0, "random3_pick1": 0}
 
+        # Khi kết quả được xác nhận, các phiên bản cũ ghi đè note của trận thành
+        # "Đã xác nhận.", làm mất dấu Random 3 chọn 1. Ưu tiên đọc team_tier
+        # của phòng liên kết để thống kê đúng cả các trận lịch sử đã bị mất note.
+        room_mode_by_match_id = {}
+        for room in all_rooms:
+            match_id = str((room or {}).get("match_id") or "").strip()
+            if not match_id:
+                continue
+            team_tier = str((room or {}).get("team_tier") or "").strip().lower()
+            room_mode_by_match_id[match_id] = team_tier
+
         def _report_match_mode(match):
-            note = str((match or {}).get("note") or "").casefold()
+            match = match or {}
+            match_id = str(match.get("id") or "").strip()
+            if room_mode_by_match_id.get(match_id) == "random3_pick1":
+                return "random3_pick1"
+
+            details = match.get("rp_details")
+            if isinstance(details, dict):
+                stored_mode = str(details.get("match_mode") or "").strip().lower()
+                if stored_mode == "random3_pick1":
+                    return "random3_pick1"
+
+            note = str(match.get("note") or "").casefold()
             if "random 3 chọn 1" in note or "random3_pick1" in note:
                 return "random3_pick1"
             return "rank_random"

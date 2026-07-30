@@ -108,6 +108,7 @@ def create_user_notification(user_id, title, message, link_url=None, notificatio
             attempts=2,
         )
         cleanup_user_notifications(user_id)
+        ttl_cache_delete(f"bell_notifications:{user_id}")
         return result.data[0] if result.data else None
     except Exception as exc:
         print(f"create_user_notification warning: {exc}")
@@ -154,25 +155,44 @@ def list_unread_notifications(user_id, limit=5):
 
 
 def list_bell_notifications(user_id, limit=20):
-    """Trả tối đa 20 thông báo mới nhất còn hạn cho chuông thông báo.
+    """Trả thông báo cho chuông với cache RAM ngắn theo từng người dùng.
 
-    Gồm cả đã đọc và chưa đọc. Chỉ lọc theo đúng user_id đang đăng nhập và
-    không chạy lệnh dọn dữ liệu trên mỗi lần render trang để tránh tăng request.
+    Cache 8 giây giúp nhiều context processor/render liên tiếp không tạo các
+    truy vấn giống nhau. Cache bị xóa ngay khi ứng dụng tạo hoặc đánh dấu đọc
+    thông báo.
     """
     if not user_id:
         return []
+
+    safe_limit = max(1, min(int(limit), NOTIFICATION_MAX_ITEMS))
+    cache_key = f"bell_notifications:{user_id}"
+    request_key = f"_bell_notifications_{user_id}"
+
+    cached = cache_get(request_key)
+    if isinstance(cached, list):
+        return [dict(item) for item in cached[:safe_limit]]
+
+    cached = ttl_cache_get(cache_key)
+    if isinstance(cached, list):
+        rows = [dict(item) for item in cached]
+        cache_set(request_key, rows)
+        return rows[:safe_limit]
+
     try:
         result = execute_query(
             db.table("user_notifications")
-            .select("*")
+            .select("id,user_id,notification_type,title,message,link_url,is_read,read_at,created_at")
             .eq("user_id", user_id)
             .gte("created_at", _cutoff_iso())
             .order("created_at", desc=True)
-            .limit(max(1, min(int(limit), NOTIFICATION_MAX_ITEMS))),
+            .limit(NOTIFICATION_MAX_ITEMS),
             "list_bell_notifications",
             attempts=2,
         )
-        return [dict(item) for item in (result.data or [])][:NOTIFICATION_MAX_ITEMS]
+        rows = [dict(item) for item in (result.data or [])][:NOTIFICATION_MAX_ITEMS]
+        ttl_cache_set(cache_key, rows, 8)
+        cache_set(request_key, rows)
+        return rows[:safe_limit]
     except Exception as exc:
         print(f"list_bell_notifications warning: {exc}")
         return []

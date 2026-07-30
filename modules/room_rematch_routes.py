@@ -239,6 +239,8 @@ def register_routes(context):
 
         # Giữ nguyên chế độ Rank đã chọn ở trận trước cho toàn bộ lượt đá tiếp.
         previous_rank_mode = room.get("team_tier") or SMART_RANDOM_MODE
+        if not system_feature_enabled("rank_standard_enabled"):
+            previous_rank_mode = FRIENDLY_RANDOM3_MODE
         previous_mode_label = "Random 3 chọn 1" if previous_rank_mode == FRIENDLY_RANDOM3_MODE else "Rank thường"
         rematch_locked_note = f"__RANK_MODE_LOCKED__|{previous_rank_mode}"
 

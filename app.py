@@ -51,7 +51,8 @@ from modules.system_feature_service import post_login_endpoint, dashboard_is_ena
 from modules.session_runtime_service import (
     IDLE_TIMEOUT_SECONDS, idle_decision, room_blocks_idle_logout, client_config as session_client_config,
 )
-from modules.static_asset_service import asset_url, asset_base_url
+from modules.static_asset_service import asset_url, asset_base_url, shop_asset_base_url
+from modules.profile import equipment_service as profile_equipment_service
 from modules.win_streaks import (
     WIN_STREAK_TITLES, WIN_STREAK_EVENT_PREFIX, get_win_streak_title,
     get_win_streak_badge, build_win_streak_event, encode_win_streak_room_note,
@@ -62,7 +63,7 @@ from modules.win_streaks import (
 load_dotenv()
 
 APP_NAME = "PES Arena – Bản Lĩnh Sân Cỏ"
-APP_VERSION = "Collap_V1.14.39.12"
+APP_VERSION = "Collap_V1.14.41.6_PARSEC_ROOM_MODULE"
 DEFAULT_POINTS = 1000
 DEVICE_COOKIE_NAME = "rankzone_device_id"
 COOLDOWN_MINUTES = 3
@@ -163,19 +164,26 @@ ACTIVITY_PRIORITY = {
 }
 
 
+APP_ENV = (os.getenv("APP_ENV") or os.getenv("VERCEL_ENV") or "production").strip().lower()
+
+# Production/Preview bắt buộc phải có secret riêng trong biến môi trường.
+# Chỉ môi trường test/development mới được tạo secret tạm thời cho phiên chạy cục bộ.
+_flask_secret_key = (os.getenv("FLASK_SECRET_KEY") or os.getenv("SECRET_KEY") or "").strip()
+if not _flask_secret_key:
+    if APP_ENV in {"test", "testing", "development"}:
+        _flask_secret_key = secrets.token_hex(32)
+    else:
+        raise RuntimeError(
+            "Thiếu FLASK_SECRET_KEY. Hãy khai báo secret dài, ngẫu nhiên trong biến môi trường Vercel trước khi chạy app."
+        )
+
 app = Flask(__name__)
+app.secret_key = _flask_secret_key
+del _flask_secret_key
 app.jinja_env.globals["asset_url"] = asset_url
 app.jinja_env.globals["asset_base_url"] = asset_base_url
+app.jinja_env.globals["shop_asset_base_url"] = shop_asset_base_url
 
-# Tên biến chính thức giữ giống bản Production v1.9.3.
-# Các tên dự phòng chỉ giúp app tương thích nếu Vercel từng được cấu hình theo tên cũ.
-app.secret_key = (
-    os.getenv("FLASK_SECRET_KEY")
-    or os.getenv("SECRET_KEY")
-    or "rankzone-fc-dev-secret-change-me"
-).strip()
-
-APP_ENV = (os.getenv("APP_ENV") or os.getenv("VERCEL_ENV") or "production").strip().lower()
 PES_ARENA_TEST_MODE = (os.getenv("PES_ARENA_TEST_MODE") or "false").strip().lower() in {"1", "true", "yes", "on"}
 ALLOW_SIMPLE_TEST_PASSWORDS = (os.getenv("ALLOW_SIMPLE_TEST_PASSWORDS") or "false").strip().lower() in {"1", "true", "yes", "on"}
 DATABASE_SAFETY_TOKEN = (os.getenv("DATABASE_SAFETY_TOKEN") or "").strip()
@@ -520,7 +528,7 @@ LEGACY_ADMIN_PERMISSION_FIELDS = {
 SYSTEM_FEATURE_DEFAULTS = {
     "dashboard_enabled": False,
     "public_ranking_enabled": True,
-    "friendly_enabled": True, "friendly_random3_enabled": True, "lobby_chat_enabled": True, "room_chat_enabled": True,
+    "friendly_enabled": True, "rank_standard_enabled": True, "friendly_random3_enabled": True, "lobby_chat_enabled": True, "room_chat_enabled": True,
     "registration_codes_enabled": True, "announcements_enabled": True, "quick_match_enabled": True,
     "repeat_opponent_rp_enabled": True,
 }
@@ -543,16 +551,33 @@ def has_admin_permission(user, permission_code: str) -> bool:
 
 
 def get_system_features():
+    request_key = "_system_features_cached"
+    cached = cache_get(request_key)
+    if isinstance(cached, dict):
+        return dict(cached)
+
+    cached = ttl_cache_get("system_features")
+    if isinstance(cached, dict):
+        return cache_set(request_key, dict(cached))
+
     features = dict(SYSTEM_FEATURE_DEFAULTS)
     try:
-        result = execute_query(db.table("system_settings").select("setting_value").eq("setting_key", "admin_system_features").limit(1), "get_system_features", attempts=2)
+        result = execute_query(
+            db.table("system_settings").select("setting_value")
+            .eq("setting_key", "admin_system_features").limit(1),
+            "get_system_features", attempts=2,
+        )
         row = (result.data or [{}])[0]
         raw = row.get("setting_value")
-        if isinstance(raw, str): raw = json.loads(raw)
-        if isinstance(raw, dict): features.update({k: bool(v) for k,v in raw.items() if k in features})
+        if isinstance(raw, str):
+            raw = json.loads(raw)
+        if isinstance(raw, dict):
+            features.update({key: bool(value) for key, value in raw.items() if key in features})
     except Exception as exc:
         print(f"get_system_features warning: {exc}")
-    return features
+
+    ttl_cache_set("system_features", dict(features), 45)
+    return cache_set(request_key, dict(features))
 
 
 def system_feature_enabled(key: str) -> bool:
@@ -564,10 +589,20 @@ QUICK_MATCH_COLOR_DEFAULT = "blue"
 QUICK_MATCH_COLOR_VALUES = {"blue", "green"}
 
 def get_quick_match_config():
+    request_key = "_quick_match_config_cached"
+    cached = cache_get(request_key)
+    if isinstance(cached, dict):
+        return dict(cached)
+
+    cached = ttl_cache_get("quick_match_config")
+    if isinstance(cached, dict):
+        return cache_set(request_key, dict(cached))
+
     config = {"color": QUICK_MATCH_COLOR_DEFAULT}
     try:
         result = execute_query(
-            db.table("system_settings").select("setting_value").eq("setting_key", QUICK_MATCH_SETTING_KEY).limit(1),
+            db.table("system_settings").select("setting_value")
+            .eq("setting_key", QUICK_MATCH_SETTING_KEY).limit(1),
             "get_quick_match_config", attempts=2,
         )
         raw = ((result.data or [{}])[0]).get("setting_value")
@@ -577,7 +612,9 @@ def get_quick_match_config():
             config["color"] = raw["color"]
     except Exception as exc:
         print(f"get_quick_match_config warning: {exc}")
-    return config
+
+    ttl_cache_set("quick_match_config", dict(config), 60)
+    return cache_set(request_key, dict(config))
 
 
 REPEAT_OPPONENT_CONFIG_SETTING_KEY = "repeat_opponent_rp_config"
@@ -585,6 +622,16 @@ REPEAT_OPPONENT_WINNER_FACTOR_DEFAULTS = [100, 60, 30, 0]
 REPEAT_OPPONENT_LOSER_FACTOR_DEFAULTS = [100, 70, 40, 10]
 
 def get_repeat_opponent_rp_config():
+    request_key = "_repeat_opponent_rp_config_cached"
+    cached = cache_get(request_key)
+    if isinstance(cached, dict):
+        return {key: list(value) if isinstance(value, list) else value for key, value in cached.items()}
+
+    cached = ttl_cache_get("repeat_opponent_rp_config")
+    if isinstance(cached, dict):
+        copied = {key: list(value) if isinstance(value, list) else value for key, value in cached.items()}
+        return cache_set(request_key, copied)
+
     config = {
         "winner_factors": list(REPEAT_OPPONENT_WINNER_FACTOR_DEFAULTS),
         "loser_factors": list(REPEAT_OPPONENT_LOSER_FACTOR_DEFAULTS),
@@ -608,7 +655,13 @@ def get_repeat_opponent_rp_config():
                         config[key] = normalized
     except Exception as exc:
         print(f"get_repeat_opponent_rp_config warning: {exc}")
-    return config
+
+    ttl_cache_set("repeat_opponent_rp_config", {
+        "winner_factors": list(config["winner_factors"]),
+        "loser_factors": list(config["loser_factors"]),
+    }, 60)
+    return cache_set(request_key, config)
+
 
 MAINTENANCE_SETTING_KEY = "server_maintenance_config"
 VN_TIMEZONE = timezone(timedelta(hours=7))
@@ -1714,6 +1767,22 @@ def list_players(include_admin=False):
             item["rank_info"] = get_rank_info(item.get("rank_points", 0))
             decorate_player_achievements(item, None, achievement_map)
 
+    # Gắn mỹ phẩm hồ sơ theo lô để Players/BXH/Dashboard dùng chung,
+    # tránh truy vấn N+1 cho từng người chơi.
+    try:
+        avatar_frame_map = profile_equipment_service.build_avatar_frame_map(safe)
+        name_style_map = profile_equipment_service.build_name_style_map(safe)
+    except Exception as exc:
+        app.logger.debug("Player cosmetic map fallback: %s", exc)
+        avatar_frame_map = {}
+        name_style_map = {}
+    for item in safe:
+        user_id = str(item.get("id"))
+        item["avatar_frame"] = avatar_frame_map.get(user_id)
+        item["name_style"] = name_style_map.get(user_id)
+        metadata = (item.get("name_style") or {}).get("metadata") if isinstance(item.get("name_style"), dict) else {}
+        item["name_style_class"] = str((metadata or {}).get("css_class") or "").strip()
+
     return safe
 
 
@@ -2081,6 +2150,8 @@ def list_matches(status=None):
         match["player2_name"] = player2.get("display_name", "Unknown")
         match["player1_avatar_url"] = player1.get("avatar_url")
         match["player2_avatar_url"] = player2.get("avatar_url")
+        match["player1_avatar_frame"] = player1.get("avatar_frame")
+        match["player2_avatar_frame"] = player2.get("avatar_frame")
         match["player1_achievement"] = player1.get("featured_achievement")
         match["player2_achievement"] = player2.get("featured_achievement")
         match["submitted_by_name"] = users.get(match.get("submitted_by_id"), {}).get("display_name", "")
@@ -2203,6 +2274,7 @@ def decorate_match_for_view(match, viewer_id=None):
     item["left_player_id"] = side_value(left_prefix, "id")
     item["left_player_name"] = side_value(left_prefix, "name")
     item["left_avatar_url"] = side_value(left_prefix, "avatar_url")
+    item["left_avatar_frame"] = side_value(left_prefix, "avatar_frame")
     item["left_achievement"] = side_value(left_prefix, "achievement")
     item["left_team"] = left_team
     item["left_score"] = left_score
@@ -2211,6 +2283,7 @@ def decorate_match_for_view(match, viewer_id=None):
     item["right_player_id"] = side_value(right_prefix, "id")
     item["right_player_name"] = side_value(right_prefix, "name")
     item["right_avatar_url"] = side_value(right_prefix, "avatar_url")
+    item["right_avatar_frame"] = side_value(right_prefix, "avatar_frame")
     item["right_achievement"] = side_value(right_prefix, "achievement")
     item["right_team"] = right_team
     item["right_score"] = right_score
@@ -2268,6 +2341,8 @@ def decorate_match_for_view(match, viewer_id=None):
     item["opponent_name"] = None
     item["my_avatar_url"] = None
     item["opponent_avatar_url"] = None
+    item["my_avatar_frame"] = None
+    item["opponent_avatar_frame"] = None
     item["my_achievement"] = None
     item["opponent_achievement"] = None
     item["my_team"] = None
@@ -2282,6 +2357,8 @@ def decorate_match_for_view(match, viewer_id=None):
         item["opponent_name"] = item["right_player_name"]
         item["my_avatar_url"] = item["left_avatar_url"]
         item["opponent_avatar_url"] = item["right_avatar_url"]
+        item["my_avatar_frame"] = item["left_avatar_frame"]
+        item["opponent_avatar_frame"] = item["right_avatar_frame"]
         item["my_achievement"] = item["left_achievement"]
         item["opponent_achievement"] = item["right_achievement"]
         item["my_team"] = item["left_team"]
@@ -2518,11 +2595,13 @@ def list_invites(status=None):
         to_user = users.get(invite.get("to_user_id"), {})
         invite["from_name"] = from_user.get("display_name", "Unknown")
         invite["from_avatar_url"] = from_user.get("avatar_url")
+        invite["from_avatar_frame"] = from_user.get("avatar_frame")
         invite["from_achievement"] = from_user.get("featured_achievement")
         invite["from_points"] = from_user.get("rank_points", 0)
         invite["from_rank"] = get_rank_display(from_user.get("rank_points", 0))
         invite["to_name"] = to_user.get("display_name", "Unknown")
         invite["to_avatar_url"] = to_user.get("avatar_url")
+        invite["to_avatar_frame"] = to_user.get("avatar_frame")
         invite["to_achievement"] = to_user.get("featured_achievement")
         invite["to_points"] = to_user.get("rank_points", 0)
         invite["to_rank"] = get_rank_display(to_user.get("rank_points", 0))
@@ -2772,6 +2851,7 @@ def enrich_room(room):
 
     room["host_name"] = host.get("display_name", "Unknown")
     room["host_avatar_url"] = host.get("avatar_url")
+    room["host_avatar_frame"] = host.get("avatar_frame")
     room["host_achievement"] = host.get("featured_achievement")
     room["host_points"] = host.get("rank_points", 0)
     room["host_rank_info"] = get_rank_info(host.get("rank_points", 0))
@@ -2781,6 +2861,7 @@ def enrich_room(room):
     room["has_guest"] = bool(room.get("guest_user_id"))
     room["guest_name"] = guest.get("display_name", "Đang chờ đối thủ") if room["has_guest"] else "Đang chờ đối thủ"
     room["guest_avatar_url"] = guest.get("avatar_url") if room["has_guest"] else None
+    room["guest_avatar_frame"] = guest.get("avatar_frame") if room["has_guest"] else None
     room["guest_achievement"] = guest.get("featured_achievement") if room["has_guest"] else None
     room["guest_points"] = guest.get("rank_points", 0) if room["has_guest"] else 0
     room["guest_rank_info"] = get_rank_info(guest.get("rank_points", 0)) if room["has_guest"] else None
@@ -2815,6 +2896,9 @@ def enrich_room(room):
     room["rematch_guest_declined"] = room.get("note") == REMATCH_GUEST_DECLINED_NOTE
     room["rematch_declined"] = room["rematch_host_declined"] or room["rematch_guest_declined"]
     room["match_mode"] = room.get("match_mode") or MATCH_MODE_RANKED
+    if (not system_feature_enabled("rank_standard_enabled") and room.get("status") == "waiting_ready"
+            and room.get("match_mode") == MATCH_MODE_RANKED and not decode_friendly_random3_state(room.get("note"))):
+        room["team_tier"] = FRIENDLY_RANDOM3_MODE
     room["friendly_tier"] = room.get("friendly_tier") or "A"
     random3_state = decode_friendly_random3_state(room.get("note"))
     room["friendly_random3"] = random3_state
@@ -3027,6 +3111,8 @@ def enrich_chat_message(message, users=None):
     user = users.get(message.get("user_id"), {})
     message["user_name"] = user.get("display_name", "Unknown")
     message["user_avatar_url"] = user.get("avatar_url")
+    message["user_avatar_frame"] = user.get("avatar_frame")
+    message["user_avatar_frame_url"] = (user.get("avatar_frame") or {}).get("image_url") if isinstance(user.get("avatar_frame"), dict) else None
     message["user_achievement"] = user.get("featured_achievement")
     message["user_role"] = "admin" if is_admin_user(user) else user.get("role", "player")
     # Giữ timestamp gốc cho logic chưa đọc, đồng thời gửi chuỗi giờ Việt Nam dễ đọc.
@@ -3756,6 +3842,7 @@ def mark_all_notifications_read():
         }).eq("user_id", user.get("id")).eq("is_read", False),
         "mark_all_notifications_read",
     )
+    ttl_cache_delete(f"bell_notifications:{user.get('id')}")
     flash("Đã đánh dấu tất cả thông báo là đã đọc.", "success")
     return redirect(url_for("notifications"))
 
@@ -3771,6 +3858,7 @@ def mark_notification_read(notification_id):
         }).eq("id", notification_id).eq("user_id", user.get("id")),
         "mark_notification_read",
     )
+    ttl_cache_delete(f"bell_notifications:{user.get('id')}")
     next_url = request.form.get("next_url", "").strip()
     if next_url.startswith("/") and not next_url.startswith("//"):
         return redirect(next_url)
@@ -3912,6 +4000,7 @@ def build_room_state_key(room):
         str(room.get("state_expires_at")),
         str((room.get("dispute") or {}).get("status")),
         str((room.get("dispute") or {}).get("updated_at")),
+        str(room.get("parsec_link")),
     ])
 
 
@@ -4608,7 +4697,7 @@ def create_open_room():
             "invite_id": None,
             "host_user_id": user["id"],
             "guest_user_id": None,
-            "team_tier": SMART_RANDOM_MODE,
+            "team_tier": (SMART_RANDOM_MODE if system_feature_enabled("rank_standard_enabled") else FRIENDLY_RANDOM3_MODE),
             "match_mode": MATCH_MODE_RANKED,
             "friendly_tier": "A",
             "status": "waiting_ready",
@@ -4928,7 +5017,7 @@ def send_invite():
                 "invite_id": invite["id"],
                 "host_user_id": user["id"],
                 "guest_user_id": None,
-                "team_tier": SMART_RANDOM_MODE,
+                "team_tier": (SMART_RANDOM_MODE if system_feature_enabled("rank_standard_enabled") else FRIENDLY_RANDOM3_MODE),
                 "match_mode": MATCH_MODE_RANKED,
                 "friendly_tier": "A",
                 "status": "waiting_ready",
@@ -5138,7 +5227,7 @@ def respond_invite(invite_id):
                     "invite_id": invite_id,
                     "host_user_id": invite["from_user_id"],
                     "guest_user_id": invite["to_user_id"],
-                    "team_tier": SMART_RANDOM_MODE,
+                    "team_tier": (SMART_RANDOM_MODE if system_feature_enabled("rank_standard_enabled") else FRIENDLY_RANDOM3_MODE),
                     "match_mode": MATCH_MODE_RANKED,
                     "friendly_tier": "A",
                     "status": "waiting_ready",
@@ -5300,6 +5389,7 @@ from modules import daily_rank_limit_service as _daily_rank_limit_service
 from modules import repeat_opponent_rp_service as _repeat_opponent_rp_service
 from modules import zcoin as _zcoin_module
 from modules import daily_checkin as _daily_checkin_module
+from modules.parsec_room import service as _parsec_room_service
 from modules import gift_codes as _gift_codes_module
 
 for _service_module in (
@@ -5311,6 +5401,7 @@ for _service_module in (
     _zcoin_module,
     _daily_checkin_module,
     _gift_codes_module,
+    _parsec_room_service,
     _match_result_service,
     _ranking_rebuild_service,
     _data_cleanup_service,
@@ -5329,6 +5420,10 @@ from modules.room_result_routes import register_routes as _register_room_result_
 from modules.match_history_routes import register_routes as _register_match_history_routes
 from modules.zcoin import register_routes as _register_zcoin_routes
 from modules.profile import register_routes as _register_profile_routes
+from modules.parsec_room import register_routes as _register_parsec_room_routes
+from modules.shop import register_routes as _register_shop_routes
+from modules.inventory import register_routes as _register_inventory_routes
+from modules.admin_shop import register_routes as _register_admin_shop_routes
 from modules.daily_checkin import register_routes as _register_daily_checkin_routes
 from modules.gift_codes import register_routes as _register_gift_code_routes
 from modules.admin_economy import register_routes as _register_admin_economy_routes
@@ -5349,6 +5444,10 @@ for _route_registrar in (
     _register_match_history_routes,
     _register_zcoin_routes,
     _register_profile_routes,
+    _register_parsec_room_routes,
+    _register_shop_routes,
+    _register_inventory_routes,
+    _register_admin_shop_routes,
     _register_daily_checkin_routes,
     _register_gift_code_routes,
     _register_admin_economy_routes,

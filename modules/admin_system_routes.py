@@ -79,6 +79,8 @@ def register_routes(context):
             }, on_conflict="setting_key"),
             "update_quick_match_config",
         )
+        ttl_cache_delete("quick_match_config")
+        cache_delete("_quick_match_config_cached")
         log_admin_action("Cập nhật màu nút Tìm Nhanh", "system", details={"color": color})
         flash("Đã lưu màu nút Tìm Nhanh.", "success")
         return redirect_admin("system")
@@ -111,6 +113,8 @@ def register_routes(context):
             }, on_conflict="setting_key"),
             "update_repeat_opponent_rp_config",
         )
+        ttl_cache_delete("repeat_opponent_rp_config")
+        cache_delete("_repeat_opponent_rp_config_cached")
         log_admin_action("Cập nhật hệ số RP gặp lại đối thủ", "system", details=payload)
         flash(
             "Đã lưu hệ số gặp lại đối thủ — thắng: "
@@ -127,6 +131,9 @@ def register_routes(context):
     def admin_update_system_features():
         previous_features = get_system_features()
         features = {key: request.form.get(key) == "1" for key in SYSTEM_FEATURE_DEFAULTS}
+        # Random 3 chọn 1 là chế độ bắt buộc khi Rank thường bị tắt.
+        if not features.get("rank_standard_enabled", True):
+            features["friendly_random3_enabled"] = True
         execute_query(
             db.table("system_settings").upsert(
                 {
@@ -138,6 +145,8 @@ def register_routes(context):
             ),
             "update_system_features",
         )
+        ttl_cache_delete("system_features")
+        cache_delete("_system_features_cached")
 
         # Khi Admin vừa tắt Giao hữu, đưa các phòng giao hữu đang mở về trạng thái
         # chờ sẵn sàng để người chơi không bị kẹt trong một tính năng đã khóa.
@@ -184,6 +193,31 @@ def register_routes(context):
                 "disable_random3_waiting_rooms",
                 attempts=2,
             )
+
+        if previous_features.get("rank_standard_enabled", True) and not features.get("rank_standard_enabled", True):
+            # Chỉ chuyển phòng Rank thường đang chờ. Không ghi đè lượt Random 3 đang chọn
+            # và không can thiệp các trận đã bắt đầu.
+            for query, operation_name in (
+                (
+                    db.table("match_rooms").update({
+                        "team_tier": FRIENDLY_RANDOM3_MODE,
+                        "friendly_tier": None,
+                        "note": "Rank thường đã tắt. Phòng chuyển sang Random 3 chọn 1.",
+                        "updated_at": now_iso(),
+                    }).eq("status", "waiting_ready").eq("match_mode", MATCH_MODE_RANKED).eq("team_tier", SMART_RANDOM_MODE),
+                    "migrate_smart_rank_rooms_to_random3",
+                ),
+                (
+                    db.table("match_rooms").update({
+                        "team_tier": FRIENDLY_RANDOM3_MODE,
+                        "friendly_tier": None,
+                        "note": "Rank thường đã tắt. Phòng chuyển sang Random 3 chọn 1.",
+                        "updated_at": now_iso(),
+                    }).eq("status", "waiting_ready").eq("match_mode", MATCH_MODE_RANKED).is_("team_tier", "null"),
+                    "migrate_null_rank_rooms_to_random3",
+                ),
+            ):
+                execute_query(query, operation_name, attempts=2)
 
         log_admin_action("Cập nhật công tắc hệ thống", "system", details=features)
         flash("Đã cập nhật các tính năng hệ thống.", "success")

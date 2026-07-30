@@ -181,7 +181,7 @@ def _matches_today(user_id):
     start_iso, end_iso = _day_bounds_utc_iso()
     result = execute_query(
         db.table("matches")
-        .select("id,player1_id,player2_id,delta1,delta2,status,note,loser_id,created_at")
+        .select("id,player1_id,player2_id,delta1,delta2,status,note,loser_id,created_at,rp_details")
         .gte("created_at", start_iso)
         .lt("created_at", end_iso)
         .or_(f"player1_id.eq.{user_id},player2_id.eq.{user_id}"),
@@ -207,11 +207,33 @@ def _is_counted_rank_match(match):
     return False
 
 
+
+
+def _match_counts_for_user(match, user_id):
+    """Cho biết trận có chiếm lượt Rank ngày của riêng người chơi hay không.
+
+    Các trận bị chuyển thành không tính RP vì một trong hai người đã hết lượt
+    sẽ lưu ``counted_user_ids=[]`` trong rp_details. Nhờ vậy người còn lượt
+    không bị mất lượt và người đã hết lượt cũng không tăng số đếm vô hạn.
+    """
+    details = (match or {}).get("rp_details")
+    if not isinstance(details, dict):
+        return True
+    daily = details.get("daily_rank_limits")
+    if not isinstance(daily, dict):
+        return True
+    counted_user_ids = daily.get("counted_user_ids")
+    if counted_user_ids is None:
+        return True
+    return str(user_id) in {str(value) for value in (counted_user_ids or [])}
+
 def _ranked_matches_started_today(user_id):
     reset_at = get_user_daily_rank_reset(user_id)
     matches = []
     for match in _matches_today(user_id):
         if not _is_counted_rank_match(match):
+            continue
+        if not _match_counts_for_user(match, user_id):
             continue
         if reset_at:
             try:

@@ -48,6 +48,19 @@ def register_routes(context):
             flash("Không tải được thông tin hai người chơi.", "danger")
             return redirect(url_for("room_detail", room_id=room_id))
 
+        if match_mode == MATCH_MODE_RANKED and not system_feature_enabled("rank_standard_enabled"):
+            execute_query(
+                db.table("match_rooms").update({
+                    "team_tier": FRIENDLY_RANDOM3_MODE,
+                    "friendly_tier": None,
+                    "note": "Rank thường đang tắt. Hãy bắt đầu Random 3 chọn 1.",
+                    "updated_at": now_iso(),
+                }).eq("id", room_id).eq("status", "waiting_ready"),
+                "force_disabled_rank_room_to_random3",
+            )
+            flash("Rank thường đang tắt. Phòng đã chuyển sang Random 3 chọn 1.", "warning")
+            return redirect(url_for("room_detail", room_id=room_id))
+
         if match_mode == MATCH_MODE_RANKED:
             try:
                 assert_can_start_ranked_match(host.get("id"), guest.get("id"))
@@ -153,6 +166,8 @@ def register_routes(context):
             flash("Lượt đá tiếp giữ nguyên chế độ của trận trước, không cần chọn lại.", "warning")
             return redirect(url_for("room_detail", room_id=room_id))
         selected_mode = (request.form.get("rank_mode") or SMART_RANDOM_MODE).strip()
+        if not system_feature_enabled("rank_standard_enabled"):
+            selected_mode = FRIENDLY_RANDOM3_MODE
         if selected_mode == FRIENDLY_RANDOM3_MODE:
             if not system_feature_enabled("friendly_random3_enabled"):
                 flash("Chế độ Random 3 chọn 1 đang tạm tắt.", "warning")

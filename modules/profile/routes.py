@@ -9,6 +9,17 @@ def register_routes(context):
     repository.configure(context)
     service.configure(context)
 
+    @app.context_processor
+    def inject_current_profile_equipment():
+        user = current_user()
+        if not user:
+            return {"current_profile_equipment": {}}
+        try:
+            return {"current_profile_equipment": service.build_equipment_state(user)}
+        except Exception as exc:
+            app.logger.debug("Topbar equipment fallback user=%s: %s", user.get("id"), exc)
+            return {"current_profile_equipment": {}}
+
     @app.route("/profile")
     @login_required
     def my_profile():
@@ -62,11 +73,6 @@ def register_routes(context):
 
         new_name = " ".join(request.form.get("display_name", "").strip().split())
         current_name = str(user.get("display_name") or "").strip()
-        change_count = int(user.get("display_name_change_count", 0) or 0)
-
-        if change_count >= 2:
-            flash("Bạn đã sử dụng hết 2 lần đổi tên hiển thị.", "danger")
-            return redirect(url_for("profile", user_id=user.get("id")))
         if len(new_name) < 2 or len(new_name) > 40:
             flash("Tên hiển thị phải có từ 2 đến 40 ký tự.", "danger")
             return redirect(url_for("profile", user_id=user.get("id")))
@@ -79,14 +85,33 @@ def register_routes(context):
             flash("Tên hiển thị này đã được người khác sử dụng.", "danger")
             return redirect(url_for("profile", user_id=user.get("id")))
 
+        # Từ V1.14.41.1, mọi lần đổi tên đều bắt buộc dùng 1 Vé đổi tên.
+        ticket_count = repository.get_display_name_ticket_count(user.get("id"))
+        if ticket_count <= 0:
+            flash("Bạn cần có Vé đổi tên trong Kho đồ để đổi tên hiển thị.", "danger")
+            return redirect(url_for("profile", user_id=user.get("id")))
+
         try:
-            repository.update_display_name_record(user.get("id"), new_name, change_count + 1)
+            result = repository.update_display_name_with_entitlement(user.get("id"), new_name)
+            if not result or not result.get("used_ticket"):
+                raise RuntimeError("DISPLAY_NAME_TICKET_NOT_CONSUMED")
             session["display_name"] = new_name
-            remaining = max(0, 2 - (change_count + 1))
-            flash(f"Đã đổi tên hiển thị. Bạn còn {remaining} lần đổi tên.", "success")
+            ttl_cache_delete(f"user:{user.get('id')}")
+            cache_delete("_rz_current_user")
+            cache_delete("_rz_players_all")
+            cache_delete("_rz_users_map")
+            flash("Đã đổi tên hiển thị và sử dụng 1 Vé đổi tên trong Kho đồ.", "success")
         except Exception as exc:
+            lowered = str(exc).lower()
             app.logger.exception("update_display_name error: %s", exc)
-            flash("Không thể đổi tên lúc này. Hãy kiểm tra đã chạy file SQL cập nhật V1.8.47.", "danger")
+            if "display_name_change_ticket_required" in lowered or "display_name_change_limit_reached" in lowered:
+                flash("Bạn không còn Vé đổi tên trong Kho đồ.", "danger")
+            elif "display_name_duplicate" in lowered:
+                flash("Tên hiển thị này đã được người khác sử dụng.", "danger")
+            elif "pgrst202" in lowered or "change_display_name_with_ticket" in lowered:
+                flash("Hãy chạy SQL V1.14.41.1 để bật chế độ đổi tên chỉ bằng Vé.", "danger")
+            else:
+                flash("Không thể đổi tên lúc này. Hãy kiểm tra Vercel Logs.", "danger")
         return redirect(url_for("profile", user_id=user.get("id")))
 
     @app.route("/profile/<user_id>")

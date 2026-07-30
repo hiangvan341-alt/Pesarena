@@ -8,6 +8,7 @@ from __future__ import annotations
 
 from datetime import datetime, timezone
 import time
+from threading import Lock
 
 EXPORTED_NAMES = [
     "process_inactivity_for_user",
@@ -25,6 +26,12 @@ BATCH_SETTING_KEY = "rp_inactivity_decay_batch"
 USER_SETTING_PREFIX = "rp_inactivity_decay_user_"
 BATCH_INTERVAL_SECONDS = 6 * 60 * 60
 RANK_ACTIVITY_STATUSES = {"playing", "waiting_confirm", "disputed", "confirmed"}
+
+# Gate RAM theo warm instance. Nếu batch chưa đến hạn, các request tiếp theo trên
+# cùng instance không cần đọc system_settings thêm lần nữa. Database vẫn là khóa
+# nguồn sự thật giữa nhiều instance Vercel.
+_batch_gate_lock = Lock()
+_batch_gate_until = 0.0
 
 
 def configure(context):
@@ -200,29 +207,46 @@ def process_inactivity_for_user(user, now=None):
 
 
 def _batch_due():
-    now_ts = int(time.time())
-    try:
-        result = execute_query(
-            db.table("system_settings").select("setting_value")
-            .eq("setting_key", BATCH_SETTING_KEY).limit(1),
-            "load_inactivity_batch_state", attempts=1,
-        )
-        value = (result.data or [{}])[0].get("setting_value") if result.data else {}
-        last_run = int((value or {}).get("last_run_ts") or 0) if isinstance(value, dict) else 0
-        if now_ts - last_run < BATCH_INTERVAL_SECONDS:
-            return False
-        execute_query(
-            db.table("system_settings").upsert({
-                "setting_key": BATCH_SETTING_KEY,
-                "setting_value": {"last_run_ts": now_ts},
-                "updated_at": now_iso(),
-            }, on_conflict="setting_key"),
-            "claim_inactivity_batch", attempts=1,
-        )
-        return True
-    except Exception as exc:
-        print(f"inactivity batch lock warning: {exc}")
+    global _batch_gate_until
+
+    mono_now = time.monotonic()
+    if mono_now < _batch_gate_until:
         return False
+
+    with _batch_gate_lock:
+        mono_now = time.monotonic()
+        if mono_now < _batch_gate_until:
+            return False
+
+        now_ts = int(time.time())
+        try:
+            result = execute_query(
+                db.table("system_settings").select("setting_value")
+                .eq("setting_key", BATCH_SETTING_KEY).limit(1),
+                "load_inactivity_batch_state", attempts=1,
+            )
+            value = (result.data or [{}])[0].get("setting_value") if result.data else {}
+            last_run = int((value or {}).get("last_run_ts") or 0) if isinstance(value, dict) else 0
+            elapsed = max(0, now_ts - last_run)
+            if elapsed < BATCH_INTERVAL_SECONDS:
+                _batch_gate_until = mono_now + max(30, BATCH_INTERVAL_SECONDS - elapsed)
+                return False
+
+            execute_query(
+                db.table("system_settings").upsert({
+                    "setting_key": BATCH_SETTING_KEY,
+                    "setting_value": {"last_run_ts": now_ts},
+                    "updated_at": now_iso(),
+                }, on_conflict="setting_key"),
+                "claim_inactivity_batch", attempts=1,
+            )
+            _batch_gate_until = mono_now + BATCH_INTERVAL_SECONDS
+            return True
+        except Exception as exc:
+            # Tránh tạo bão retry khi Supabase tạm thời lỗi.
+            _batch_gate_until = mono_now + 60
+            print(f"inactivity batch lock warning: {exc}")
+            return False
 
 
 def _latest_rank_activity_map():

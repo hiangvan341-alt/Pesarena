@@ -9,6 +9,8 @@
     <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}?v={{ APP_VERSION|urlencode }}">
     <link rel="stylesheet" href="{{ url_for('static', filename='css/zcoin.css') }}?v={{ APP_VERSION|urlencode }}">
     <link rel="stylesheet" href="{{ url_for('static', filename='css/zcoin_rewards.css') }}?v={{ APP_VERSION|urlencode }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/rank_mode_toggle.css') }}?v={{ APP_VERSION|urlencode }}">
+<link rel="stylesheet" href="{{ asset_url('css/parsec_room.css') }}?v={{ APP_VERSION }}">
     <script src="{{ url_for('static', filename='js/pes_polling.js') }}?v={{ APP_VERSION|urlencode }}" defer></script>
     <script src="{{ url_for('static', filename='js/zcoin.js') }}?v={{ APP_VERSION|urlencode }}" defer></script>
     <script src="{{ url_for('static', filename='js/zcoin_rewards.js') }}?v={{ APP_VERSION|urlencode }}" defer></script>
@@ -41,6 +43,7 @@ function toggleTheme(){
 </script>
 <style>:root{--pes-login-background:url("{{ asset_url('login-background.webp') }}")}</style>
 <script>window.PES_ASSET_BASE_URL={{ asset_base_url()|tojson }};</script>
+{% block head_extra %}{% endblock %}
 </head>
 <body>
 {% if is_test_mode %}<div style="position:fixed;z-index:99999;left:0;right:0;top:0;text-align:center;background:#ffcc00;color:#111;font-weight:800;padding:6px">🧪 PES ARENA TEST MODE — KHÔNG DÙNG DATABASE PRODUCTION</div><div style="height:34px"></div>{% endif %}
@@ -60,10 +63,9 @@ function toggleTheme(){
         <nav class="nav player-nav">
             <a class="{{ 'active' if request.endpoint == 'ranking' else '' }}" href="{{ url_for('ranking') }}"><span>🏆</span> BXH</a>
             <a class="{{ 'active' if request.endpoint in ['rooms', 'room_detail'] else '' }}" href="#" onclick="event.preventDefault(); document.getElementById('quickCreateRoomForm').submit();"><span>🎮</span> Phòng đấu</a>
-            <a class="{{ 'active' if request.endpoint == 'matches' else '' }}" href="{{ url_for('matches') }}"><span>📜</span> Lịch sử</a>
+            <a class="{{ 'active' if request.endpoint in ['shop', 'shop_purchase'] else '' }}" href="{{ url_for('shop') }}"><span>🛒</span> Cửa hàng</a>
             <a class="{{ 'active' if request.endpoint == 'guide' else '' }}" href="{{ url_for('guide') }}"><span>📘</span> Hướng dẫn</a>
-            {% if (current_user.role == "admin" or current_user.admin_level in ["owner", "admin"]) %}<a class="{{ 'active' if request.endpoint == 'admin' else '' }}" href="{{ url_for('admin') }}"><span>⚙️</span> Admin</a><a class="{{ 'active' if request.endpoint == 'admin_economy' else '' }}" href="{{ url_for('admin_economy') }}"><span>🪙</span> Zcoin & Gift Code</a>{% endif %}
-            <a class="logout" href="{{ url_for('logout') }}"><span>↪</span> Đăng xuất</a>
+            {% if (current_user.role == "admin" or current_user.admin_level in ["owner", "admin"]) %}<a class="{{ 'active' if request.endpoint == 'admin' else '' }}" href="{{ url_for('admin') }}"><span>⚙️</span> Admin</a><a class="{{ 'active' if request.endpoint == 'admin_economy' else '' }}" href="{{ url_for('admin_economy') }}"><span>🪙</span> Zcoin & Gift Code</a><a class="{{ 'active' if request.endpoint and request.endpoint.startswith('admin_shop') else '' }}" href="{{ url_for('admin_shop') }}"><span>🛍️</span> Quản trị Shop</a>{% endif %}
         </nav>
 
         <div class="sidebar-version-panel" aria-label="Thông tin phiên bản">
@@ -78,7 +80,7 @@ function toggleTheme(){
     <main class="main player-main">
         <header class="player-topbar">
             <button class="sidebar-menu-button" type="button" onclick="document.body.classList.toggle('sidebar-open')">☰</button>
-            {% set page_titles = {'dashboard':'Dashboard','ranking':'Bảng xếp hạng','players':'Players','guide':'Hướng dẫn bắt đầu','matches':'Lịch sử trận đấu','profile':'Hồ sơ cá nhân','change_password':'Đổi mật khẩu','admin':'Quản trị hệ thống','rooms':'Phòng đấu','room_detail':'Phòng đấu','zcoin_wallet':'Ví Zcoin','zcoin_rewards':'Điểm danh & Gift Code','admin_economy':'Quản trị Zcoin & Gift Code'} %}
+            {% set page_titles = {'dashboard':'Dashboard','ranking':'Bảng xếp hạng','players':'Players','guide':'Hướng dẫn bắt đầu','matches':'Lịch sử trận đấu','profile':'Hồ sơ cá nhân','change_password':'Đổi mật khẩu','admin':'Quản trị hệ thống','rooms':'Phòng đấu','room_detail':'Phòng đấu','zcoin_wallet':'Ví Zcoin','zcoin_rewards':'Điểm danh & Gift Code','admin_economy':'Quản trị Zcoin & Gift Code','shop':'Cửa hàng','inventory':'Kho đồ','admin_shop':'Quản trị Cửa hàng'} %}
             <div class="topbar-copy"><strong>{{ page_titles.get(request.endpoint, APP_NAME) }}</strong><small>Chào {{ current_user.display_name }}, chúc bạn có một ngày thi đấu tốt!</small></div>
             <div id="adminAnnouncementMount" class="topbar-announcement-mount">
                 {% if active_announcement and system_features.announcements_enabled %}
@@ -147,8 +149,8 @@ function toggleTheme(){
                 </a>
                 <div class="topbar-account-wrap">
                     <button id="accountMenuButton" class="topbar-profile" type="button" onclick="toggleAccountMenu(event)" aria-expanded="false" aria-haspopup="menu" aria-controls="accountDropdown">
-                        {{ player_avatar(current_user, size='sm') }}
-                        <span><strong>{{ current_user.display_name }}</strong><small><i></i> Online</small></span><em>⌄</em>
+                        {{ player_avatar(current_user, size='sm', frame=current_profile_equipment.avatar_frame if current_profile_equipment else none) }}
+                        <span><strong class="{% if current_profile_equipment and current_profile_equipment.name_style %}{{ current_profile_equipment.name_style.metadata.get('css_class', '') }}{% endif %}">{{ current_user.display_name }}</strong><small><i></i> Online</small></span><em>⌄</em>
                     </button>
                     <div id="accountDropdown" class="topbar-account-dropdown" role="menu" hidden>
                         <div class="account-dropdown-wallet">
@@ -159,6 +161,8 @@ function toggleTheme(){
                         <a href="{{ url_for('zcoin_rewards') }}#daily-checkin"><span>📅</span> Điểm danh hằng ngày</a>
                         <a href="{{ url_for('zcoin_rewards') }}#gift-code"><span>🎁</span> Nhập Gift Code</a>
                         <a href="{{ url_for('zcoin_wallet') }}"><span>🪙</span> Ví & lịch sử Zcoin</a>
+                        <a href="{{ url_for('shop') }}"><span>🛒</span> Cửa hàng</a>
+                        <a href="{{ url_for('inventory') }}"><span>🎒</span> Kho đồ</a>
                         <a href="{{ url_for('matches') }}"><span>📜</span> Lịch sử trận đấu</a>
                         <a class="account-dropdown-logout" href="{{ url_for('logout') }}"><span>↪</span> Đăng xuất</a>
                     </div>
@@ -183,7 +187,7 @@ function toggleTheme(){
             {% for inv in incoming_invites %}
             <div class="invite-item">
                 <div class="invite-player-inline">
-                    {{ player_avatar(name=inv.from_name, avatar_url=inv.from_avatar_url, achievement=inv.from_achievement, size='sm') }}
+                    {{ player_avatar(name=inv.from_name, avatar_url=inv.from_avatar_url, achievement=inv.from_achievement, size='sm', frame=inv.from_avatar_frame) }}
                     <div>
                         <strong>{{ inv.from_name }}</strong> mời bạn thi đấu<br>
                         <span class="small">Rank: {{ inv.from_rank }} • Điểm: {{ inv.from_points }} • Tier: {{ inv.tier }}</span>
@@ -215,7 +219,7 @@ function toggleTheme(){
 </div>
 
 
-{% if request.endpoint != "dashboard" %}
+{% if request.endpoint not in ["dashboard", "chat"] %}
 {% if system_features.lobby_chat_enabled %}<button id="chatToggleButton" class="chat-floating-toggle" type="button" onclick="toggleLobbyChat()">
     💬 <span id="chatToggleText">Chat sảnh</span>
     <span id="chatUnreadBadge" class="chat-unread-badge" hidden>0</span>
@@ -279,7 +283,7 @@ function renderInvitePopup(invite) {
     content.innerHTML = `
         <div class="invite-modal-player">
             <div class="invite-modal-person">
-                ${renderAvatarHtml(invite.from_avatar_url, invite.from_name, 'lg', invite.from_achievement)}
+                ${renderAvatarHtml(invite.from_avatar_url, invite.from_name, 'lg', invite.from_achievement, invite.from_avatar_frame && invite.from_avatar_frame.image_url)}
                 <p><strong>${escapeHtml(invite.from_name)}</strong> đang mời bạn thi đấu.</p>
             </div>
             <p class="small">Rank: ${escapeHtml(invite.from_rank)} • Điểm: ${escapeHtml(String(invite.from_points))} • Tier: ${escapeHtml(invite.tier)}</p>
@@ -400,17 +404,21 @@ function escapeHtml(text) {
     return div.innerHTML;
 }
 
-function renderAvatarHtml(url, name, size, achievement) {
+function renderAvatarHtml(url, name, size, achievement, frameUrl) {
     const safeName = escapeHtml(name || "?");
     const initial = escapeHtml((name || "?").trim().charAt(0).toUpperCase() || "?");
     const sizeClass = escapeHtml(size || "sm");
+    const safeFrame = frameUrl ? escapeHtml(frameUrl) : "";
     const badge = achievement && achievement.icon
         ? `<span class="avatar-achievement" title="${escapeHtml(achievement.name || 'Huy hiệu')}">${escapeHtml(achievement.icon)}</span>`
         : "";
-    if (url) {
-        return `<span class="player-avatar avatar-${sizeClass}" title="${safeName}"><img src="${escapeHtml(url)}" alt="Ảnh đại diện ${safeName}" loading="lazy">${badge}</span>`;
-    }
-    return `<span class="player-avatar avatar-${sizeClass}" title="${safeName}"><span>${initial}</span>${badge}</span>`;
+    const avatarBody = url
+        ? `<img class="player-avatar-image" src="${escapeHtml(url)}" alt="Ảnh đại diện ${safeName}" loading="lazy">`
+        : `<span class="player-avatar-fallback">${initial}</span>`;
+    const frame = safeFrame
+        ? `<img class="player-avatar-equipped-frame" src="${safeFrame}" alt="" aria-hidden="true" loading="lazy">`
+        : "";
+    return `<span class="player-avatar avatar-${sizeClass}${safeFrame ? ' has-equipped-frame' : ''}" title="${safeName}">${avatarBody}${frame}${badge}</span>`;
 }
 
 function renderBottomChat(messages) {
@@ -423,7 +431,7 @@ function renderBottomChat(messages) {
         return `
             <div class="bottom-chat-message">
                 <div class="chat-message-head">
-                    ${renderAvatarHtml(msg.user_avatar_url, msg.user_name, 'xs', msg.user_achievement)}
+                    ${renderAvatarHtml(msg.user_avatar_url, msg.user_name, 'xs', msg.user_achievement, msg.user_avatar_frame_url)}
                     <span class="chat-name ${adminClass}">${escapeHtml(msg.user_name)}</span>
                 </div>
                 ${adminBadge}
@@ -509,8 +517,8 @@ function startLobbyChatPolling() {
     lobbyChatPoller = PESNet.createPoller({
         key: "lobby-chat",
         task: loadBottomChatSmart,
-        visibleInterval: 20000,
-        hiddenInterval: 120000,
+        visibleInterval: 30000,
+        hiddenInterval: 180000,
         runWhenHidden: false,
         immediate: true,
         jitter: 2000
@@ -939,8 +947,8 @@ window.addEventListener("DOMContentLoaded", function () {
     PESNet.createPoller({
         key: "heartbeat",
         task: postHeartbeat,
-        visibleInterval: 60000,
-        hiddenInterval: 120000,
+        visibleInterval: 90000,
+        hiddenInterval: 180000,
         runWhenHidden: false,
         immediate: false,
         jitter: 5000
@@ -952,7 +960,7 @@ window.addEventListener("DOMContentLoaded", function () {
         PESNet.createPoller({
             key: "pending-invites",
             task: checkPendingInvites,
-            visibleInterval: isRoomPage ? 10000 : (isPlayersPage || isRankingPage ? 15000 : 20000),
+            visibleInterval: isRoomPage ? 20000 : (isPlayersPage || isRankingPage ? 20000 : 30000),
             hiddenInterval: 60000,
             runWhenHidden: false,
             immediate: true,
@@ -964,8 +972,8 @@ window.addEventListener("DOMContentLoaded", function () {
         PESNet.createPoller({
             key: "active-room",
             task: checkActiveRoom,
-            visibleInterval: isRankingPage ? 30000 : 45000,
-            hiddenInterval: 120000,
+            visibleInterval: isRankingPage ? 45000 : 60000,
+            hiddenInterval: 180000,
             runWhenHidden: false,
             immediate: false,
             jitter: 2500
@@ -975,8 +983,8 @@ window.addEventListener("DOMContentLoaded", function () {
     PESNet.createPoller({
         key: "announcement",
         task: checkAnnouncementSmart,
-        visibleInterval: 15000,
-        hiddenInterval: 60000,
+        visibleInterval: 30000,
+        hiddenInterval: 120000,
         runWhenHidden: false,
         immediate: true,
         jitter: 1500
@@ -1071,6 +1079,15 @@ window.addEventListener("DOMContentLoaded", function () {
     }
   });
 })();
+</script>
+<script>
+document.addEventListener('click', async function(event){
+  const button = event.target.closest('[data-copy-text]');
+  if(!button) return;
+  const text = button.getAttribute('data-copy-text') || '';
+  try { await navigator.clipboard.writeText(text); button.textContent='Đã sao chép'; setTimeout(()=>button.textContent=button.dataset.originalText||'Sao chép',1200); }
+  catch(e){ const area=document.createElement('textarea'); area.value=text; document.body.appendChild(area); area.select(); document.execCommand('copy'); area.remove(); }
+}, true);
 </script>
 </body>
 </html>

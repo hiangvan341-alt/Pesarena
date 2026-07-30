@@ -188,6 +188,21 @@ def apply_match_result(match):
         update_player_after_match(player1, delta1, score1, score2, affect_streak=affect_streak)
         update_player_after_match(player2, delta2, score2, score1, affect_streak=affect_streak)
 
+        original_note = str(match.get("note") or "")
+        is_random3_pick1 = (
+            "random 3 chọn 1" in original_note.casefold()
+            or "random3_pick1" in original_note.casefold()
+        )
+        daily_rp_eligible = bool(daily_game_status.get("rp_eligible", True))
+        counted_user_ids = [str(player1_id), str(player2_id)] if daily_rp_eligible else []
+        confirmed_note = (
+            "Đã xác nhận. Không tính RP và không tính lượt vì một trong hai người đã hết giới hạn trận Rank trong ngày."
+            if not daily_rp_eligible
+            else "Đã xác nhận."
+        )
+        if is_random3_pick1:
+            confirmed_note += " [MODE:random3_pick1]"
+
         execute_query(
             db.table("matches").update({
                 "delta1": int(delta1),
@@ -195,6 +210,7 @@ def apply_match_result(match):
                 "rp_formula_version": RP_FORMULA_VERSION,
                 "rp_details": {
                     "source": "modules/rp_formula.py",
+                    "match_mode": "random3_pick1" if is_random3_pick1 else "rank_random",
                     "formula": formula_summary(),
                     "seed": f"{RP_RANDOM_SEED_NAMESPACE}|{match.get('id')}",
                     "delta1": int(delta1),
@@ -202,6 +218,8 @@ def apply_match_result(match):
                     "repeat_opponent": repeat_details,
                     "daily_rank_limits": {
                         "game_limit": daily_game_status,
+                        "counted_user_ids": counted_user_ids,
+                        "count_rule": "both_players" if daily_rp_eligible else "neither_player",
                         "positive_rp_cap": {
                             "player1": daily_cap1,
                             "player2": daily_cap2,
@@ -209,11 +227,7 @@ def apply_match_result(match):
                     },
                 },
                 "status": "confirmed",
-                "note": (
-                    "Đã xác nhận. Không tính RP do vượt giới hạn trận Rank trong ngày."
-                    if not daily_game_status.get("rp_eligible", True)
-                    else "Đã xác nhận."
-                ),
+                "note": confirmed_note,
                 "updated_at": now_iso(),
             }).eq("id", match["id"]).eq("status", "processing_result"),
             "finalize_match_result",

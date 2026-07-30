@@ -164,6 +164,8 @@ def register_routes(context):
             delta1, delta2 = apply_match_result(match)
             streak_event = build_win_streak_event(match, room, users_before_streak_event)
             previous_mode = room.get("team_tier") or SMART_RANDOM_MODE
+            if not system_feature_enabled("rank_standard_enabled"):
+                previous_mode = FRIENDLY_RANDOM3_MODE
             room_update = {
                 "status": "waiting_ready",
                 "guest_ready": False,

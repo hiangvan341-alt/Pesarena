@@ -1,0 +1,3 @@
+.parsec-room-panel{margin:14px 0;padding:14px;border:1px solid var(--border-color,#334155);border-radius:14px;background:rgba(15,23,42,.45)}
+.parsec-room-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}.parsec-room-item{padding:10px;border-radius:10px;background:rgba(255,255,255,.04)}
+.parsec-room-row{display:flex;gap:8px;align-items:center;flex-wrap:wrap}.parsec-room-value{font-weight:700;word-break:break-all}.parsec-copy-btn{padding:7px 10px}.parsec-room-link-form{margin-top:10px;display:flex;gap:8px;flex-wrap:wrap}.parsec-room-link-form input{flex:1;min-width:220px}.parsec-profile-form{display:flex;gap:10px;flex-wrap:wrap}.parsec-profile-form input{flex:1;min-width:240px}@media(max-width:700px){.parsec-room-grid{grid-template-columns:1fr}}

@@ -164,6 +164,7 @@ def register_routes(context):
             # để giao diện không làm mất nút hành động của chủ/khách.
             "viewer_is_host": _same_user_id(viewer.get("id"), room.get("host_user_id")),
             "viewer_is_guest": _same_user_id(viewer.get("id"), room.get("guest_user_id")),
+            "parsec_room": build_room_parsec_context(room, viewer),
         }
 
 

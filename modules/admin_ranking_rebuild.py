@@ -408,13 +408,19 @@ def build_replay_plan(
                 game_limit = 15 if day_dt.weekday() in {5, 6} else 10
             except Exception:
                 game_limit = 10
-            p1_games = ranked_games_by_day.get((p1_id, day_key), 0) + 1
-            p2_games = ranked_games_by_day.get((p2_id, day_key), 0) + 1
-            ranked_games_by_day[(p1_id, day_key)] = p1_games
-            ranked_games_by_day[(p2_id, day_key)] = p2_games
+            p1_previous_games = ranked_games_by_day.get((p1_id, day_key), 0)
+            p2_previous_games = ranked_games_by_day.get((p2_id, day_key), 0)
+            p1_games = p1_previous_games + 1
+            p2_games = p2_previous_games + 1
+            rp_eligible = p1_games <= game_limit and p2_games <= game_limit
+            # Chỉ trận còn đủ lượt cho cả hai mới chiếm lượt. Nếu một người đã
+            # hết lượt, cả hai vẫn đá/lưu lịch sử nhưng người còn lượt không mất lượt.
+            if rp_eligible:
+                ranked_games_by_day[(p1_id, day_key)] = p1_games
+                ranked_games_by_day[(p2_id, day_key)] = p2_games
             game_status = {
                 "enabled": True,
-                "rp_eligible": p1_games <= game_limit and p2_games <= game_limit,
+                "rp_eligible": rp_eligible,
                 "game_limit": game_limit,
                 "players": {
                     p1_id: {"games_today": p1_games, "over_limit": p1_games > game_limit},
@@ -449,6 +455,8 @@ def build_replay_plan(
                     delta2 = applied
             daily_limit_details = {
                 "game_limit": game_status,
+                "counted_user_ids": [p1_id, p2_id] if game_status["rp_eligible"] else [],
+                "count_rule": "both_players" if game_status["rp_eligible"] else "neither_player",
                 "positive_rp_cap": cap_details,
             }
 
