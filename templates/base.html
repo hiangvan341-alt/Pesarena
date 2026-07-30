@@ -1074,6 +1074,53 @@ window.addEventListener("DOMContentLoaded", function () {
 })();
 </script>
 
+<div id="gameNoticeModal" class="game-notice-modal" hidden aria-hidden="true">
+  <div class="game-notice-backdrop" data-game-notice-close></div>
+  <section class="game-notice-card" role="dialog" aria-modal="true" aria-labelledby="gameNoticeTitle">
+    <div class="game-notice-accent"></div>
+    <div class="game-notice-icon" id="gameNoticeIcon">⚡</div>
+    <div class="game-notice-copy">
+      <h3 id="gameNoticeTitle">Tìm Nhanh</h3>
+      <p id="gameNoticeMessage"></p>
+    </div>
+    <button type="button" class="game-notice-button" data-game-notice-close>ĐÃ HIỂU</button>
+  </section>
+</div>
+<script>
+(function(){
+  const modal = document.getElementById('gameNoticeModal');
+  const title = document.getElementById('gameNoticeTitle');
+  const message = document.getElementById('gameNoticeMessage');
+  const icon = document.getElementById('gameNoticeIcon');
+  let lastFocus = null;
+  window.showGameNotice = function(text, tone, heading){
+    if (!modal) return;
+    lastFocus = document.activeElement;
+    modal.className = 'game-notice-modal tone-' + (tone || 'warning');
+    title.textContent = heading || ((tone === 'success') ? 'Đã gửi lời mời' : 'Tìm Nhanh');
+    message.textContent = text || '';
+    icon.textContent = tone === 'success' ? '✓' : (tone === 'danger' ? '!' : '⚡');
+    modal.hidden = false;
+    modal.setAttribute('aria-hidden','false');
+    document.body.classList.add('game-notice-open');
+    const close = modal.querySelector('.game-notice-button');
+    if (close) close.focus();
+  };
+  function closeNotice(){
+    if (!modal) return;
+    modal.hidden = true;
+    modal.setAttribute('aria-hidden','true');
+    document.body.classList.remove('game-notice-open');
+    if (lastFocus && lastFocus.focus) lastFocus.focus();
+  }
+  document.addEventListener('click', function(e){
+    if (e.target.closest('[data-game-notice-close]')) closeNotice();
+  });
+  document.addEventListener('keydown', function(e){
+    if (e.key === 'Escape' && modal && !modal.hidden) closeNotice();
+  });
+})();
+</script>
 <script>
 (function(){
   document.addEventListener('click', async function(event){
@@ -1094,14 +1141,14 @@ window.addEventListener("DOMContentLoaded", function () {
       button.classList.add('is-sent');
       if (icon) icon.textContent = '✓';
       if (label) label.textContent = 'ĐÃ GỬI LỜI MỜI';
-      if (window.showToast) window.showToast(data.message || 'Đã gửi lời mời.', 'success');
+      if (window.showGameNotice) window.showGameNotice(data.message || 'Đã gửi lời mời.', 'success', 'Đã gửi lời mời');
       setTimeout(function(){ window.location.reload(); }, 1200);
     } catch (error) {
       button.classList.remove('is-searching');
       button.disabled = false;
       if (icon) icon.textContent = '⚡';
       if (label) label.textContent = original;
-      if (window.showToast) window.showToast(error.message, 'warning'); else alert(error.message);
+      if (window.showGameNotice) window.showGameNotice(error.message, 'warning', 'Tìm Nhanh');
     }
   });
 })();

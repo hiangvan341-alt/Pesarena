@@ -259,3 +259,10 @@ File sửa:
 - File sửa: `app.py`, `templates/base.html`.
 - Thêm: `UPDATE_MANIFEST_V1.14.41.24.md`.
 - Kiểm thử: 33/33.
+
+## V1.14.41.25 — 31/07/2026 01:43 (Asia/Bangkok)
+
+- Sửa Tìm Nhanh không phát hiện người chơi online do đọc danh sách cache.
+- Truy vấn presence trực tiếp từ Supabase bằng `last_seen_at`.
+- Thêm modal thông báo đồng bộ PES Arena, bỏ `window.alert()` trong luồng Tìm Nhanh.
+- Kiểm tra Python compile và 33/33 test thành công.

@@ -63,7 +63,7 @@ from modules.win_streaks import (
 load_dotenv()
 
 APP_NAME = "PES Arena – Bản Lĩnh Sân Cỏ"
-APP_VERSION = "V1.14.41.24"
+APP_VERSION = "V1.14.41.25"
 DEFAULT_POINTS = 1000
 DEVICE_COOKIE_NAME = "rankzone_device_id"
 COOLDOWN_MINUTES = 3
@@ -5182,11 +5182,34 @@ def quick_match_invite():
     online_total = 0
     busy_total = 0
     cooldown_total = 0
-    for opponent in list_players(include_admin=False):
-        oid = str(opponent.get("id"))
+
+    # Tìm Nhanh phải đọc presence trực tiếp từ Supabase thay vì dùng danh sách
+    # người chơi đã cache. Cache ngắn vẫn có thể làm một tài khoản vừa heartbeat
+    # bị coi là offline trên instance Vercel khác. last_seen_at là nguồn xác thực
+    # chính; is_online chỉ là cờ hiển thị nhanh.
+    try:
+        online_result = execute_query(
+            db.table("users")
+            .select("id,username,display_name,role,account_status,rank_points,is_online,last_seen_at,matchmaking_cooldown_until"),
+            "quick_match_live_players",
+            attempts=3,
+        )
+        quick_players = [dict(row) for row in (online_result.data or [])]
+    except Exception as exc:
+        print(f"quick_match players ERROR user={user.get('id')}: {type(exc).__name__}: {exc}")
+        return jsonify({"ok": False, "message": "Không thể đọc danh sách người chơi online lúc này."}), 503
+
+    presence_cutoff = now_dt() - timedelta(seconds=max(ONLINE_TIMEOUT_SECONDS, 90))
+    for opponent in quick_players:
+        oid = str(opponent.get("id") or "")
         if not oid or oid == str(user["id"]):
             continue
-        if not is_user_online_now(opponent):
+        if opponent.get("role") != "player":
+            continue
+        if opponent.get("account_status", "approved") != "approved":
+            continue
+        seen = parse_dt(opponent.get("last_seen_at"))
+        if not seen or seen < presence_cutoff:
             continue
         online_total += 1
         if is_player_in_cooldown(opponent):
