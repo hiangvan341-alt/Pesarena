@@ -30,6 +30,7 @@ from flask import (
 )
 from supabase import create_client
 
+from modules.quick_match.service import build_candidate_sort_key, quick_match_priority_group
 from modules.cache_utils import (
     cache_get, cache_set, cache_delete, ttl_cache_get, ttl_cache_set, ttl_cache_delete,
 )
@@ -63,7 +64,7 @@ from modules.win_streaks import (
 load_dotenv()
 
 APP_NAME = "PES Arena – Bản Lĩnh Sân Cỏ"
-APP_VERSION = "V1.14.41.29"
+APP_VERSION = "V1.14.41.30"
 DEFAULT_POINTS = 1000
 DEVICE_COOKIE_NAME = "rankzone_device_id"
 COOLDOWN_MINUTES = 3
@@ -5265,27 +5266,19 @@ def quick_match_invite():
         # 3. Khác Rank, chênh 501-1.000 RP
         # 4. Khác Rank, chênh 1.001-2.000 RP
         # Người khác Rank chênh quá 2.000 RP không được chọn.
-        if same_rank:
-            priority_group = 0
-        elif gap <= 300:
-            priority_group = 1
-        elif gap <= 500:
-            priority_group = 2
-        elif gap <= 1000:
-            priority_group = 3
-        elif gap <= 2000:
-            priority_group = 4
-        else:
+        priority_group = quick_match_priority_group(same_rank=same_rank, points_gap=gap)
+        if priority_group is None:
             continue
 
         # Trong cùng nhóm: ưu tiên RP gần nhất, sau đó người hoạt động
         # gần đây hơn, cuối cùng mới dùng tên để kết quả ổn định.
-        seen_sort = -(seen.timestamp())
-        candidates.append((
-            priority_group, gap, seen_sort,
-            str(opponent.get("display_name") or opponent.get("username") or "").casefold(),
-            opponent,
-        ))
+        sort_key = build_candidate_sort_key(
+            priority_group=priority_group,
+            points_gap=gap,
+            last_seen=seen,
+            display_name=opponent.get("display_name") or opponent.get("username") or "",
+        )
+        candidates.append((*sort_key, opponent))
 
     if not candidates:
         if online_total == 0:
