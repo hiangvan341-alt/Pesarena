@@ -5309,3 +5309,15 @@ html[data-theme="light"] .sidebar-version-panel{
 .game-notice-modal.tone-danger .game-notice-accent{background:linear-gradient(90deg,transparent,#ff4d63,transparent)}
 .game-notice-modal.tone-danger .game-notice-icon{border-color:#e13c52;background:radial-gradient(circle at 35% 30%,#45131c,#21070c 72%);color:#ff8292}
 @media(max-width:520px){.game-notice-card{padding:24px 18px 20px}.game-notice-copy h3{font-size:18px}.game-notice-copy p{font-size:13px}}
+
+
+/* V1.14.41.26 — Admin chọn trạng thái hiện diện */
+.admin-presence-control{display:inline-flex;align-items:center;gap:7px;height:42px;padding:0 10px;border:1px solid rgba(245,190,55,.34);border-radius:12px;background:rgba(8,18,31,.78)}
+.admin-presence-control select{min-width:82px;border:0!important;outline:0;background:transparent!important;color:#eef4ff!important;font:inherit;font-weight:800;cursor:pointer;padding:0!important;box-shadow:none!important}
+.admin-presence-control select option{background:#101c2b;color:#eef4ff}
+.admin-presence-dot{width:9px;height:9px;border-radius:999px;flex:0 0 auto}
+.admin-presence-dot.is-online{background:#22c55e;box-shadow:0 0 9px rgba(34,197,94,.8)}
+.admin-presence-dot.is-offline{background:#64748b;box-shadow:none}
+html[data-theme="light"] .admin-presence-control{background:#fff;border-color:#d8b24d}
+html[data-theme="light"] .admin-presence-control select{color:#172033!important}
+@media(max-width:780px){.admin-presence-control{height:38px;padding:0 8px}.admin-presence-control select{min-width:70px;font-size:12px}}

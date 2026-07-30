@@ -266,3 +266,11 @@ File sửa:
 - Truy vấn presence trực tiếp từ Supabase bằng `last_seen_at`.
 - Thêm modal thông báo đồng bộ PES Arena, bỏ `window.alert()` trong luồng Tìm Nhanh.
 - Kiểm tra Python compile và 33/33 test thành công.
+
+## V1.14.41.26 — 2026-07-31 01:46 (Asia/Bangkok)
+- Riêng Admin/Owner có thể tự chọn trạng thái hiển thị Online hoặc Offline.
+- Thêm bộ chọn trạng thái trên thanh trên cùng.
+- Heartbeat tôn trọng chế độ Offline do Admin lựa chọn, không tự bật Online lại.
+- Người chơi thường không có quyền chọn thủ công.
+- Không cần SQL mới.
+- Kiểm thử: 33/33 thành công.

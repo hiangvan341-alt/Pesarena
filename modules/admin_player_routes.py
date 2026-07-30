@@ -7,6 +7,40 @@ def register_routes(context):
     """Đăng ký nhóm route vào Flask app hiện tại."""
     globals().update(context)
 
+    @app.route("/admin/presence-mode", methods=["POST"])
+    @login_required
+    @admin_required
+    def admin_presence_mode():
+        """Cho phép riêng Admin tự chọn hiển thị Online hoặc Offline."""
+        mode = (request.form.get("presence_mode") or "online").strip().lower()
+        if mode not in {"online", "offline"}:
+            mode = "online"
+
+        actor = current_user()
+        session["admin_presence_mode"] = mode
+        session.modified = True
+        db.table("users").update({
+            "is_online": mode == "online",
+            "last_seen_at": now_iso(),
+        }).eq("id", actor["id"]).execute()
+        ttl_cache_delete("players_raw", f"user:{actor['id']}")
+        cache_delete("_rz_players_all")
+        cache_delete("_rz_current_user")
+        log_admin_action(
+            "Chọn trạng thái hiện diện",
+            "user",
+            actor["id"],
+            actor.get("username"),
+            f"presence_mode: {mode}",
+        )
+        flash(
+            "Đã chuyển trạng thái Admin sang Online." if mode == "online" else "Đã ẩn trạng thái Admin (Offline).",
+            "success",
+        )
+        next_url = request.form.get("next_url") or request.referrer or url_for("admin")
+        return redirect(next_url)
+
+
     @app.route("/admin/toggle-online/<user_id>", methods=["POST"])
     @login_required
     @admin_required

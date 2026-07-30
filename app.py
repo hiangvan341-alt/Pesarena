@@ -63,7 +63,7 @@ from modules.win_streaks import (
 load_dotenv()
 
 APP_NAME = "PES Arena – Bản Lĩnh Sân Cỏ"
-APP_VERSION = "V1.14.41.25"
+APP_VERSION = "V1.14.41.26"
 DEFAULT_POINTS = 1000
 DEVICE_COOKIE_NAME = "rankzone_device_id"
 COOLDOWN_MINUTES = 3
@@ -3600,9 +3600,18 @@ def mark_current_user_active():
     if not user_id:
         return
 
+    # Admin có thể chủ động ẩn trạng thái Online trong chính phiên đăng nhập.
+    # Người chơi thường luôn dùng presence tự động như trước.
+    try:
+        cached_user = current_user()
+    except Exception:
+        cached_user = None
+    is_admin_account = bool(cached_user and is_admin_user(cached_user))
+    forced_offline = is_admin_account and session.get("admin_presence_mode") == "offline"
+
     try:
         db.table("users").update({
-            "is_online": True,
+            "is_online": not forced_offline,
             "last_seen_at": now_iso(),
         }).eq("id", user_id).execute()
         # Dữ liệu Players được cache RAM ngắn. Xóa cache sau heartbeat để các

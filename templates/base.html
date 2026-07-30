@@ -108,6 +108,16 @@ function toggleTheme(){
                     <span class="active-room-topbar-icon">🎮</span>
                     <span class="active-room-topbar-copy"><strong>Trở lại phòng đấu</strong><small>Bạn đang ở trong 1 phòng đấu</small></span>
                 </a>
+                {% if (current_user.role == "admin" or current_user.admin_level in ["owner", "admin"]) %}
+                <form class="admin-presence-control" method="post" action="{{ url_for('admin_presence_mode') }}" title="Chọn trạng thái hiển thị của Admin">
+                    <input type="hidden" name="next_url" value="{{ request.full_path if request.query_string else request.path }}">
+                    <span class="admin-presence-dot {{ 'is-offline' if session.get('admin_presence_mode') == 'offline' else 'is-online' }}"></span>
+                    <select name="presence_mode" onchange="this.form.submit()" aria-label="Trạng thái Admin">
+                        <option value="online" {{ 'selected' if session.get('admin_presence_mode') != 'offline' else '' }}>Online</option>
+                        <option value="offline" {{ 'selected' if session.get('admin_presence_mode') == 'offline' else '' }}>Offline</option>
+                    </select>
+                </form>
+                {% endif %}
                 <a class="topbar-icon" href="{{ url_for('players') }}" title="Tìm người chơi">⌕</a>
                 <button id="themeToggle" class="topbar-icon theme-toggle" type="button" onclick="toggleTheme()" title="Chuyển giao diện sáng/tối" aria-label="Chuyển giao diện sáng/tối"><span class="theme-sun">☀</span><span class="theme-moon">☾</span></button>
                 <div class="topbar-notification-wrap">
