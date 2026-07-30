@@ -1,4 +1,4 @@
-/* Parsec room module — isolated UI, V1.14.41.16 */
+/* Parsec room module — isolated UI, V1.14.41.21 */
 .room-layout-v137 .room-arena-right-rail{
   display:flex;
   flex-direction:column;
@@ -39,11 +39,12 @@
   min-height:18px!important;
   max-width:18px!important;
   max-height:18px!important;
-  flex:0 0 18px!important;
-  margin:0!important;
+  flex:0 0 20px!important;
+  margin:-3px 0!important;
   padding:0!important;
   object-fit:contain!important;
   object-position:center!important;
+  overflow:visible!important;
   transform:none!important;
 }
 .parsec-room-heading h3{

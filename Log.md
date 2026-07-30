@@ -1,3 +1,7 @@
+## V1.14.41.20 — 2026-07-30 18:55 (Asia/Bangkok)
+- Sửa logo Parsec hiển thị chưa đầy đủ: bỏ khung vuông 18x18, dùng 20x30 theo tỷ lệ dọc.
+- File: `static/css/parsec_room.css`, `templates/partials/parsec_room_panel.html`.
+
 # V1.14.41.14 — Rà soát CSS toàn dự án
 
 - Thời gian: 30/07/2026 18:08 (Asia/Bangkok)
@@ -219,3 +223,7 @@ File sửa:
 ## V1.14.41.19 — 30/07/2026 18:52 (Asia/Bangkok)
 - Rà soát cuối CSS/request/polling/tài nguyên.
 - Sửa `templates/base.html`; xóa 2 ảnh test không dùng; thêm báo cáo audit.
+
+## V1.14.41.21
+- Sửa logo dự án PES Arena ở sidebar hiển thị đầy đủ; bỏ giới hạn chiều cao/chiều rộng gây cắt hoặc thu thiếu.
+- Hoàn tác thay đổi nhầm kích thước logo Parsec về 18×18 px.
