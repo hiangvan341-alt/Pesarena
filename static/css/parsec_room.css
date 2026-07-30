@@ -1,131 +1,152 @@
+/* Parsec room module — isolated UI, V1.14.41.13 */
+.room-layout-v137 .room-arena-right-rail{
+  display:flex;
+  flex-direction:column;
+}
+.room-layout-v137 .room-side-info-panel{order:1}
+.room-layout-v137 .parsec-room-panel{order:2}
+.room-layout-v137 .room-score-history-panel{order:3}
+.room-layout-v137 .room-chat-side{order:4}
+
+.parsec-room-panel,
+.parsec-room-panel *{
+  box-sizing:border-box;
+  font-family:Inter,"Segoe UI",Arial,sans-serif;
+}
 .parsec-room-panel{
-  order:2;
-  padding:16px 16px 14px;
-  border:1px solid rgba(255,52,111,.58);
-  border-radius:16px;
-  background:linear-gradient(180deg,rgba(8,21,36,.98),rgba(5,15,28,.98));
-  box-shadow:0 10px 28px rgba(0,0,0,.26),inset 0 1px 0 rgba(255,255,255,.035);
-  font-family:inherit;
+  width:100%;
+  margin:0;
+  padding:16px;
+  border:1px solid rgba(255,36,99,.9);
+  border-radius:15px;
+  background:linear-gradient(180deg,#091728 0%,#071321 100%);
+  box-shadow:0 0 0 1px rgba(255,36,99,.12),0 10px 26px rgba(0,0,0,.24);
+  overflow:hidden;
 }
 .parsec-room-heading{
   display:flex;
   align-items:center;
   gap:10px;
-  margin-bottom:14px;
-  padding-bottom:12px;
-  border-bottom:1px solid rgba(255,255,255,.08);
+  margin:0 0 14px;
+  padding:0 0 12px;
+  border-bottom:1px solid rgba(221,174,56,.26);
 }
 .parsec-room-logo{
+  display:block!important;
   width:18px!important;
   height:18px!important;
   min-width:18px!important;
   min-height:18px!important;
   max-width:18px!important;
   max-height:18px!important;
-  display:block;
-  object-fit:contain;
   flex:0 0 18px!important;
+  margin:0!important;
+  padding:0!important;
+  object-fit:contain!important;
+  object-position:center!important;
+  transform:none!important;
 }
 .parsec-room-heading h3{
   margin:0!important;
   color:#f4f7fb;
   font-size:15px!important;
-  font-weight:900;
-  letter-spacing:.01em;
+  font-weight:800;
+  line-height:1.2;
+  letter-spacing:0;
   text-transform:uppercase;
 }
-.parsec-room-block + .parsec-room-block{margin-top:14px}
+.parsec-room-block{margin:0}
+.parsec-room-block+.parsec-room-block{margin-top:16px}
 .parsec-room-label{
-  margin-bottom:7px;
-  color:#cfd8e5;
+  margin:0 0 8px;
+  color:#b7c2d0;
   font-size:13px;
-  font-weight:800;
-  line-height:1.25;
+  font-weight:500;
+  line-height:1.3;
 }
 .parsec-room-inline{
-  display:flex;
+  display:grid;
+  grid-template-columns:minmax(0,1fr) auto;
   align-items:center;
   gap:10px;
 }
 .parsec-room-input,
 .parsec-room-link-form input{
+  display:block;
   width:100%;
   min-width:0;
   height:40px;
+  margin:0;
   padding:0 12px;
-  border:1px solid rgba(255,255,255,.12);
+  border:1px solid #28384b;
   border-radius:9px;
-  background:#0d1929;
-  color:#eef3f8;
+  outline:0;
+  background:#0d1a2a;
+  color:#edf2f8;
   font-size:13px;
-  font-weight:700;
-  line-height:40px;
+  font-weight:600;
+  line-height:38px;
+  white-space:nowrap;
   overflow:hidden;
   text-overflow:ellipsis;
-  white-space:nowrap;
-  box-sizing:border-box;
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.02);
 }
-.parsec-room-link-form{display:grid;gap:10px}
+.parsec-room-link-form{display:grid;gap:10px;margin:0}
 .parsec-room-link-form input:focus{
-  border-color:rgba(255,45,105,.72);
-  outline:none;
-  box-shadow:0 0 0 2px rgba(255,45,105,.10);
+  border-color:rgba(255,38,100,.78);
+  box-shadow:0 0 0 2px rgba(255,38,100,.1);
 }
-.parsec-copy-btn{
-  flex:0 0 auto;
+.parsec-room-panel .btn{
   min-height:40px;
-  padding:0 16px!important;
-  border:1px solid rgba(237,193,76,.46)!important;
-  border-radius:10px!important;
-  background:linear-gradient(180deg,#f3cf69,#d7a83a)!important;
-  color:#16120b!important;
+  margin:0;
+  border-radius:9px!important;
   font-size:12px!important;
-  font-weight:900!important;
+  font-weight:700!important;
+  line-height:1!important;
+  white-space:nowrap;
   box-shadow:none!important;
+  transform:none!important;
+}
+.parsec-room-panel .btn:hover{transform:none!important;filter:brightness(1.06)}
+.parsec-copy-btn{
+  min-width:102px;
+  padding:0 14px!important;
+  border:1px solid rgba(205,164,54,.55)!important;
+  background:#101d2d!important;
+  color:#f2f5f8!important;
 }
 .parsec-copy-link-btn{
+  display:flex!important;
   width:100%;
-  min-height:40px;
-  display:flex;
   align-items:center;
   justify-content:center;
   gap:8px;
   padding:0 14px!important;
-  border:1px solid rgba(255,65,121,.75)!important;
-  border-radius:10px!important;
-  background:linear-gradient(180deg,#ef1c5e,#c70d48)!important;
+  border:1px solid #ef1e60!important;
+  background:linear-gradient(180deg,#e61959 0%,#ca1048 100%)!important;
   color:#fff!important;
-  font-size:12px!important;
-  font-weight:900!important;
-  box-shadow:none!important;
 }
 .parsec-link-icon{font-size:13px;line-height:1}
-.parsec-room-actions{display:flex;gap:10px}
-.parsec-save-btn,
-.parsec-delete-btn{
-  min-height:40px;
-  padding:0 18px!important;
-  border-radius:10px!important;
-  font-size:12px!important;
-  font-weight:900!important;
-  box-shadow:none!important;
-}
+.parsec-room-actions{display:grid;grid-template-columns:1fr auto;gap:10px}
 .parsec-save-btn{
-  border:1px solid rgba(237,193,76,.46)!important;
-  background:linear-gradient(180deg,#f3cf69,#d7a83a)!important;
-  color:#16120b!important;
+  padding:0 18px!important;
+  border:1px solid rgba(205,164,54,.58)!important;
+  background:#101d2d!important;
+  color:#f4d46c!important;
 }
 .parsec-delete-btn{
-  border:1px solid rgba(255,149,157,.55)!important;
-  background:linear-gradient(180deg,#f59ca3,#ea6d77)!important;
-  color:#311015!important;
+  padding:0 18px!important;
+  border:1px solid rgba(239,30,96,.58)!important;
+  background:#241322!important;
+  color:#ff8eae!important;
 }
 .parsec-room-empty{
+  min-height:40px;
   padding:10px 12px;
-  border:1px dashed rgba(255,255,255,.12);
+  border:1px dashed #2a394b;
   border-radius:9px;
-  background:rgba(255,255,255,.02);
-  color:#92a0b1;
+  background:#0d1a2a;
+  color:#8f9dae;
   font-size:12px;
   line-height:1.45;
 }
@@ -133,18 +154,17 @@
   display:flex;
   align-items:flex-start;
   gap:6px;
-  margin:10px 0 0;
-  color:#9aa8ba;
-  font-size:12px;
+  margin:12px 0 0;
+  color:#91a0b2;
+  font-size:11px;
+  font-weight:400;
   line-height:1.45;
 }
-.parsec-note-icon{color:#c8d2dd;line-height:1}
-.room-layout-v137 .room-side-info-panel{order:1}
-.room-layout-v137 .room-score-history-panel{order:3}
-.room-layout-v137 .room-chat-side{order:4}
+.parsec-note-icon{flex:0 0 auto;color:#b9c4d1;line-height:1.35}
+
 @media(max-width:700px){
   .parsec-room-panel{padding:14px}
-  .parsec-room-inline{flex-direction:column;align-items:stretch}
+  .parsec-room-inline{grid-template-columns:1fr}
   .parsec-copy-btn{width:100%}
-  .parsec-room-actions{display:grid;grid-template-columns:1fr 1fr}
+  .parsec-room-actions{grid-template-columns:1fr 1fr}
 }
