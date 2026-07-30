@@ -1,12 +1,3 @@
-# V1.14.41.15 — Tinh gọn module Kết nối Parsec
-
-- Thời gian: 2026-07-30 18:18 (Asia/Bangkok).
-- Chủ phòng chỉ hiển thị ID Parsec của khách.
-- Khách chỉ hiển thị ID Parsec của chủ phòng.
-- Rút gọn nhãn `Copy Link Parsec` thành `Copy Link`.
-- Thu gọn và đồng bộ các nút Copy ID, Lưu, Xóa, Copy Link sang tông đỏ Parsec.
-- Không thay đổi database hoặc API.
-
 # V1.14.41.14 — Rà soát CSS toàn dự án
 
 - Thời gian: 30/07/2026 18:08 (Asia/Bangkok)
@@ -214,8 +205,8 @@ File sửa:
 - Giao diện chủ phòng vẫn giữ quyền sửa/xóa link nhưng dùng lại cùng hệ thống font, màu và spacing để đỡ lệch giao diện.
 - Cập nhật `APP_VERSION` thành `V1.14.41.11`.
 
-## V1.14.41.16 — 30/07/2026 18:23 (Asia/Bangkok)
-- Sửa xung đột CSS khiến nút Parsec hiện màu vàng trong Light theme.
-- Bỏ class `.btn` khỏi toàn bộ nút Parsec; module dùng selector riêng.
-- Xóa các asset đã tải lên Supabase khỏi gói deploy và dọn file cache/test dư thừa.
-- File sửa: `templates/partials/parsec_room_panel.html`, `static/css/parsec_room.css`.
+## V1.14.41.17 — 2026-07-30 18:29 (Asia/Bangkok)
+- Tạo lại bản đầy đủ từ V1.14.41.15.
+- Giữ toàn bộ module và mã nguồn dự án.
+- Áp dụng sửa CSS Parsec chống màu vàng ghi đè.
+- Chỉ bỏ các ảnh đã có trên Supabase theo `SUPABASE_ASSET_MANIFEST.csv`.
