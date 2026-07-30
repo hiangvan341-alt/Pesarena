@@ -252,3 +252,10 @@ File sửa:
 - Thêm xác nhận 6 lựa chọn Random 3 phải là 6 CLB khác nhau.
 - File sửa: `app.py`, `modules/admin_system_routes.py`.
 - File thêm: `test_random3_safety_source.py`, `UPDATE_MANIFEST_V1.14.41.23.md`.
+
+## V1.14.41.24
+- Thời gian: 2026-07-31 01:34 (Asia/Bangkok)
+- Sửa hiện diện Online/Offline và nút Tìm Nhanh.
+- File sửa: `app.py`, `templates/base.html`.
+- Thêm: `UPDATE_MANIFEST_V1.14.41.24.md`.
+- Kiểm thử: 33/33.

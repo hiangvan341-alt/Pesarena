@@ -63,11 +63,11 @@ from modules.win_streaks import (
 load_dotenv()
 
 APP_NAME = "PES Arena – Bản Lĩnh Sân Cỏ"
-APP_VERSION = "V1.14.41.23"
+APP_VERSION = "V1.14.41.24"
 DEFAULT_POINTS = 1000
 DEVICE_COOKIE_NAME = "rankzone_device_id"
 COOLDOWN_MINUTES = 3
-ONLINE_TIMEOUT_SECONDS = 90
+ONLINE_TIMEOUT_SECONDS = 60
 CHAT_COOLDOWN_SECONDS = 5
 CHAT_MAX_LENGTH = 200
 DISPUTE_EVIDENCE_BUCKET = "dispute-evidence"
@@ -3605,8 +3605,30 @@ def mark_current_user_active():
             "is_online": True,
             "last_seen_at": now_iso(),
         }).eq("id", user_id).execute()
+        # Dữ liệu Players được cache RAM ngắn. Xóa cache sau heartbeat để các
+        # instance đang ấm không tiếp tục dùng last_seen_at cũ.
+        ttl_cache_delete("players_raw", f"user:{user_id}")
+        cache_delete("_rz_players_all")
+        cache_delete("_rz_current_user")
     except Exception as exc:
         print(f"Heartbeat warning: {exc}")
+
+
+def mark_current_user_offline():
+    """Đánh dấu offline khi tab/trình duyệt đóng; timeout vẫn là lớp dự phòng."""
+    user_id = session.get("user_id")
+    if not user_id:
+        return
+    try:
+        db.table("users").update({
+            "is_online": False,
+            "last_seen_at": now_iso(),
+        }).eq("id", user_id).execute()
+        ttl_cache_delete("players_raw", f"user:{user_id}")
+        cache_delete("_rz_players_all")
+        cache_delete("_rz_current_user")
+    except Exception as exc:
+        print(f"Presence offline warning: {exc}")
 
 
 def ensure_admin():
@@ -3962,6 +3984,15 @@ def api_session_timeout_check():
 def heartbeat():
     mark_current_user_active()
     return jsonify({"ok": True})
+
+
+@app.route("/presence/offline", methods=["POST"])
+@login_required
+def presence_offline():
+    # sendBeacon không cần phản hồi JSON lớn. Khi chỉ chuyển trang nội bộ,
+    # before_request/heartbeat của trang mới sẽ đánh dấu online lại ngay.
+    mark_current_user_offline()
+    return ("", 204)
 
 
 @app.route("/api/invites/pending")
@@ -5148,25 +5179,42 @@ def quick_match_invite():
 
     my_points = int(user.get("rank_points", 0) or 0)
     candidates = []
+    online_total = 0
+    busy_total = 0
+    cooldown_total = 0
     for opponent in list_players(include_admin=False):
         oid = str(opponent.get("id"))
         if not oid or oid == str(user["id"]):
             continue
-        if not is_user_online_now(opponent) or is_player_in_cooldown(opponent):
+        if not is_user_online_now(opponent):
+            continue
+        online_total += 1
+        if is_player_in_cooldown(opponent):
+            cooldown_total += 1
             continue
         if oid in busy_match_ids or oid in invite_busy_ids:
+            busy_total += 1
             continue
         opponent_room = room_by_user.get(oid)
         if opponent_room and not is_solo_waiting_room(opponent_room, oid):
+            busy_total += 1
             continue
         gap = abs(int(opponent.get("rank_points", 0) or 0) - my_points)
-        candidates.append((gap, -int(opponent.get("last_seen_at") is not None), str(opponent.get("display_name") or ""), opponent))
+        candidates.append((gap, str(opponent.get("display_name") or "").casefold(), opponent))
 
     if not candidates:
-        return jsonify({"ok": False, "message": "Hiện chưa có đối thủ phù hợp đang online."}), 404
+        if online_total == 0:
+            message = "Hiện không có người chơi nào khác đang online."
+        elif busy_total:
+            message = "Người chơi đang online hiện đều bận, đang trong phòng hoặc có lời mời chờ xử lý."
+        elif cooldown_total:
+            message = "Người chơi đang online hiện đều trong thời gian chờ ghép trận."
+        else:
+            message = "Hiện chưa có đối thủ phù hợp đang online."
+        return jsonify({"ok": False, "message": message}), 404
 
-    candidates.sort(key=lambda item: (item[0], item[2].casefold()))
-    opponent = candidates[0][3]
+    candidates.sort(key=lambda item: (item[0], item[1]))
+    opponent = candidates[0][2]
     invite_result = execute_query(
         db.table("match_invites").insert({
             "from_user_id": user["id"], "to_user_id": opponent["id"],

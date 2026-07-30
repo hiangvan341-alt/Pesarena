@@ -275,6 +275,25 @@ function postHeartbeat() {
         : task();
 }
 
+// Báo offline ngay khi đóng tab/trình duyệt. ONLINE_TIMEOUT_SECONDS vẫn xử lý
+// trường hợp trình duyệt/thiết bị không gửi được beacon.
+(function setupPresenceOfflineBeacon(){
+    let sent = false;
+    function sendOffline(){
+        if (sent) return;
+        sent = true;
+        const url = "{{ url_for('presence_offline') }}";
+        try {
+            if (navigator.sendBeacon) {
+                navigator.sendBeacon(url, new Blob([], {type: 'application/octet-stream'}));
+                return;
+            }
+            fetch(url, {method:'POST', credentials:'same-origin', keepalive:true, cache:'no-store'}).catch(function(){});
+        } catch (_) {}
+    }
+    window.addEventListener('pagehide', sendOffline, {capture:true});
+})();
+
 let lastInviteId = null;
 let inviteCountdownTimer = null;
 
@@ -952,8 +971,8 @@ window.addEventListener("DOMContentLoaded", function () {
     PESNet.createPoller({
         key: "heartbeat",
         task: postHeartbeat,
-        visibleInterval: 90000,
-        hiddenInterval: 180000,
+        visibleInterval: 30000,
+        hiddenInterval: 120000,
         runWhenHidden: false,
         immediate: false,
         jitter: 5000
@@ -1068,7 +1087,7 @@ window.addEventListener("DOMContentLoaded", function () {
     if (icon) icon.textContent = '⏳';
     if (label) label.textContent = 'ĐANG TÌM ĐỐI THỦ...';
     try {
-      const response = await fetch(button.dataset.quickMatchUrl, {method:'POST', headers:{'X-Requested-With':'XMLHttpRequest','Accept':'application/json'}});
+      const response = await fetch(button.dataset.quickMatchUrl, {method:'POST', credentials:'same-origin', cache:'no-store', headers:{'X-Requested-With':'XMLHttpRequest','Accept':'application/json'}});
       const data = await response.json().catch(function(){ return {}; });
       if (!response.ok || !data.ok) throw new Error(data.message || 'Không thể tìm đối thủ lúc này.');
       button.classList.remove('is-searching');
