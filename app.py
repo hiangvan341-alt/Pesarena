@@ -64,7 +64,7 @@ from modules.win_streaks import (
 load_dotenv()
 
 APP_NAME = "PES Arena – Bản Lĩnh Sân Cỏ"
-APP_VERSION = "V1.14.41.31"
+APP_VERSION = "V1.14.41.33"
 DEFAULT_POINTS = 1000
 DEVICE_COOKIE_NAME = "rankzone_device_id"
 COOLDOWN_MINUTES = 3
@@ -5242,7 +5242,11 @@ def quick_match_invite():
         if opponent.get("account_status", "approved") != "approved":
             continue
         seen = parse_dt(opponent.get("last_seen_at"))
-        if not seen or seen < presence_cutoff:
+        # Admin chọn Offline vẫn có last_seen_at mới vì thao tác đổi trạng thái
+        # và heartbeat ẩn tiếp tục cập nhật thời gian. Vì vậy Tìm Nhanh phải
+        # kiểm tra đồng thời cờ is_online; chỉ dựa last_seen_at sẽ gửi lời mời
+        # giả tới Admin đang ẩn trạng thái, trong khi phía nhận không nhận popup.
+        if opponent.get("is_online") is not True or not seen or seen < presence_cutoff:
             continue
         online_total += 1
         if is_player_in_cooldown(opponent):

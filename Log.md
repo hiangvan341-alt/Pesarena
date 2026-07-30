@@ -320,3 +320,8 @@ File sửa:
 - Giảm request lời mời, thông báo, room state, room chat và lobby chat.
 - Tắt hoạt ảnh trang trí chạy vô hạn để giảm CPU/GPU.
 - File: templates/base.html, templates/room_detail.html, static/js/quick_match.js, static/style.css.
+
+## V1.14.41.33 — 2026-07-31
+- Sửa Tìm Nhanh chọn nhầm Admin đang đặt Offline do chỉ kiểm tra last_seen_at.
+- Bắt buộc is_online=true trước khi tạo lời mời.
+- Thêm test hồi quy test_quick_match_admin_offline.py.
