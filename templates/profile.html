@@ -80,7 +80,7 @@
             <div><span>Tài khoản</span><strong>@{{ player.username }}</strong></div>
             <div><span>Tên hiển thị</span><strong>{{ player.display_name }}</strong></div>
             {% if current_user.id == player.id %}
-            <div><span>Lượt đổi tên còn lại</span><strong>{{ [0, 2 - (player.display_name_change_count or 0)]|max }} / 2</strong></div>
+            <div><span>Vé đổi tên</span><strong>{{ display_name_ticket_count }} vé</strong></div>
             {% endif %}
             <div><span>Tên Zalo</span><strong>{{ player.zalo_name or '-' }}</strong></div>
             <div><span>Ngày tham gia</span><strong>{{ format_vn_datetime(player.created_at) }}</strong></div>
@@ -116,17 +116,15 @@
     <section class="panel display-name-manager-panel" id="display-name-manager">
         <span class="eyebrow">TÊN HIỂN THỊ</span>
         <h2>Đổi tên hiển thị</h2>
-        {% set display_name_changes = player.display_name_change_count or 0 %}
-        {% set display_name_remaining = [0, 2 - display_name_changes]|max %}
-        {% set can_change_display_name = display_name_remaining > 0 or display_name_ticket_count > 0 %}
+        {% set can_change_display_name = display_name_ticket_count > 0 %}
         <p>Tên này xuất hiện trên BXH, phòng đấu, chat và lịch sử trận.</p>
-        <p class="small">Bạn còn <strong>{{ display_name_remaining }}</strong> lượt miễn phí và <strong>{{ display_name_ticket_count }}</strong> Vé đổi tên trong Kho đồ.</p>
-        {% if display_name_remaining <= 0 and display_name_ticket_count > 0 %}<p class="display-name-ticket-note">🎟️ Lần đổi tiếp theo sẽ tự dùng 1 Vé đổi tên.</p>{% endif %}
+        <p class="small">Mỗi lần đổi tên bắt buộc sử dụng <strong>1 Vé đổi tên</strong>. Bạn hiện có <strong>{{ display_name_ticket_count }}</strong> vé trong Kho đồ.</p>
+        {% if can_change_display_name %}<p class="display-name-ticket-note">🎟️ Giao dịch thành công sẽ tự trừ 1 Vé đổi tên.</p>{% endif %}
         <form class="display-name-form" method="post" action="{{ url_for('update_display_name') }}">
             <input name="display_name" value="{{ player.display_name }}" minlength="2" maxlength="40" {% if not can_change_display_name %}disabled{% endif %} required>
             <button class="btn gold" type="submit" {% if not can_change_display_name %}disabled{% endif %}>Lưu tên mới</button>
         </form>
-        {% if not can_change_display_name %}<small class="limit-reached-note">Bạn đã hết lượt đổi tên. Có thể mua Vé đổi tên trong <a href="{{ url_for('shop', category='utility') }}">Cửa hàng</a>.</small>{% endif %}
+        {% if not can_change_display_name %}<small class="limit-reached-note">Bạn chưa có Vé đổi tên. Có thể mua vé trong <a href="{{ url_for('shop', category='utility') }}">Cửa hàng</a>.</small>{% endif %}
     </section>
     {% endif %}
 

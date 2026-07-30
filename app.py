@@ -63,7 +63,7 @@ from modules.win_streaks import (
 load_dotenv()
 
 APP_NAME = "PES Arena – Bản Lĩnh Sân Cỏ"
-APP_VERSION = "Collap_V1.14.41_PERFORMANCE_ASSET_PHASE_A"
+APP_VERSION = "Collap_V1.14.41.1_GLOBAL_NAME_STYLE_TICKET_ONLY_HOTFIX"
 DEFAULT_POINTS = 1000
 DEVICE_COOKIE_NAME = "rankzone_device_id"
 COOLDOWN_MINUTES = 3
@@ -1761,15 +1761,21 @@ def list_players(include_admin=False):
             item["rank_info"] = get_rank_info(item.get("rank_points", 0))
             decorate_player_achievements(item, None, achievement_map)
 
-    # Gắn khung Avatar theo lô để mọi bảng Players/BXH/Dashboard dùng chung,
+    # Gắn mỹ phẩm hồ sơ theo lô để Players/BXH/Dashboard dùng chung,
     # tránh truy vấn N+1 cho từng người chơi.
     try:
         avatar_frame_map = profile_equipment_service.build_avatar_frame_map(safe)
+        name_style_map = profile_equipment_service.build_name_style_map(safe)
     except Exception as exc:
-        app.logger.debug("Player avatar frame map fallback: %s", exc)
+        app.logger.debug("Player cosmetic map fallback: %s", exc)
         avatar_frame_map = {}
+        name_style_map = {}
     for item in safe:
-        item["avatar_frame"] = avatar_frame_map.get(str(item.get("id")))
+        user_id = str(item.get("id"))
+        item["avatar_frame"] = avatar_frame_map.get(user_id)
+        item["name_style"] = name_style_map.get(user_id)
+        metadata = (item.get("name_style") or {}).get("metadata") if isinstance(item.get("name_style"), dict) else {}
+        item["name_style_class"] = str((metadata or {}).get("css_class") or "").strip()
 
     return safe
 

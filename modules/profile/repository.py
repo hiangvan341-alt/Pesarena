@@ -50,16 +50,16 @@ def update_display_name_record(user_id, display_name, change_count):
 
 
 def update_display_name_with_entitlement(user_id, display_name):
-    """Đổi tên nguyên tử; tự dùng lượt miễn phí hoặc 1 vé trong Kho đồ."""
+    """Đổi tên nguyên tử và bắt buộc tiêu thụ 1 Vé đổi tên trong Kho đồ."""
     result = execute_query(
         db.rpc(
-            "change_display_name_with_shop_entitlement",
+            "change_display_name_with_ticket",
             {
                 "p_user_id": str(user_id),
                 "p_new_display_name": str(display_name),
             },
         ),
-        "profile_change_display_name_entitlement",
+        "profile_change_display_name_ticket",
         attempts=2,
     )
     data = getattr(result, "data", None)
