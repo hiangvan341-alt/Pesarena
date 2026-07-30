@@ -1147,34 +1147,102 @@ window.addEventListener("DOMContentLoaded", function () {
 </script>
 <script>
 (function(){
+  const storageKey = 'pesarena_quick_match_chain';
+  let statusTimer = null;
+
+  function readState(){
+    try { return JSON.parse(sessionStorage.getItem(storageKey) || 'null'); } catch(_e) { return null; }
+  }
+  function saveState(state){
+    if (state) sessionStorage.setItem(storageKey, JSON.stringify(state));
+    else sessionStorage.removeItem(storageKey);
+  }
+  function findButton(){ return document.querySelector('[data-quick-match-url]'); }
+  function setButton(mode){
+    const button = findButton();
+    if (!button) return;
+    const label = button.querySelector('.quick-match-label');
+    const icon = button.querySelector('.quick-match-icon');
+    button.classList.toggle('is-searching', mode === 'searching');
+    button.classList.toggle('is-sent', mode === 'sent');
+    button.disabled = mode === 'searching' || mode === 'sent';
+    if (icon) icon.textContent = mode === 'searching' ? '⏳' : (mode === 'sent' ? '✓' : '⚡');
+    if (label) label.textContent = mode === 'searching' ? 'ĐANG TÌM ĐỐI THỦ...' : (mode === 'sent' ? 'ĐÃ GỬI LỜI MỜI' : 'TÌM NHANH');
+  }
+
+  async function sendNext(button, excluded){
+    setButton('searching');
+    const response = await fetch(button.dataset.quickMatchUrl, {
+      method:'POST', credentials:'same-origin', cache:'no-store',
+      headers:{'X-Requested-With':'XMLHttpRequest','Accept':'application/json','Content-Type':'application/json'},
+      body: JSON.stringify({excluded_user_ids: excluded || []})
+    });
+    const data = await response.json().catch(function(){ return {}; });
+    if (!response.ok || !data.ok) throw new Error(data.message || 'Không thể tìm đối thủ lúc này.');
+    const state = {
+      inviteId: String(data.invite_id || ''),
+      opponentId: String(data.opponent_id || ''),
+      excluded: excluded || [],
+      quickMatchUrl: button.dataset.quickMatchUrl
+    };
+    saveState(state);
+    setButton('sent');
+    if (window.showGameNotice) window.showGameNotice(data.message || 'Đã gửi lời mời.', 'success', 'Đã gửi lời mời');
+    watchState(state);
+  }
+
+  async function checkState(state){
+    if (!state || !state.inviteId) return;
+    const response = await fetch('/api/invites/quick-match/' + encodeURIComponent(state.inviteId) + '/status', {
+      credentials:'same-origin', cache:'no-store', headers:{'Accept':'application/json'}
+    });
+    const data = await response.json().catch(function(){ return {}; });
+    if (!response.ok || !data.ok) return;
+    if (data.status === 'accepted') {
+      saveState(null);
+      clearInterval(statusTimer);
+      window.location.reload();
+      return;
+    }
+    if (['rejected','expired','cancelled'].includes(data.status)) {
+      clearInterval(statusTimer);
+      const excluded = Array.from(new Set([...(state.excluded || []), String(state.opponentId || data.opponent_id || '')].filter(Boolean)));
+      const button = findButton();
+      if (!button) { saveState(null); return; }
+      try {
+        await sendNext(button, excluded);
+      } catch(error) {
+        saveState(null);
+        setButton('idle');
+        if (window.showGameNotice) window.showGameNotice(error.message, 'warning', 'Tìm Nhanh');
+      }
+    }
+  }
+
+  function watchState(state){
+    clearInterval(statusTimer);
+    statusTimer = setInterval(function(){ checkState(readState() || state); }, 3000);
+  }
+
   document.addEventListener('click', async function(event){
     const button = event.target.closest('[data-quick-match-url]');
     if (!button || button.disabled) return;
-    const label = button.querySelector('.quick-match-label');
-    const icon = button.querySelector('.quick-match-icon');
-    const original = label ? label.textContent : 'TÌM NHANH';
-    button.disabled = true;
-    button.classList.add('is-searching');
-    if (icon) icon.textContent = '⏳';
-    if (label) label.textContent = 'ĐANG TÌM ĐỐI THỦ...';
+    saveState(null);
     try {
-      const response = await fetch(button.dataset.quickMatchUrl, {method:'POST', credentials:'same-origin', cache:'no-store', headers:{'X-Requested-With':'XMLHttpRequest','Accept':'application/json'}});
-      const data = await response.json().catch(function(){ return {}; });
-      if (!response.ok || !data.ok) throw new Error(data.message || 'Không thể tìm đối thủ lúc này.');
-      button.classList.remove('is-searching');
-      button.classList.add('is-sent');
-      if (icon) icon.textContent = '✓';
-      if (label) label.textContent = 'ĐÃ GỬI LỜI MỜI';
-      if (window.showGameNotice) window.showGameNotice(data.message || 'Đã gửi lời mời.', 'success', 'Đã gửi lời mời');
-      setTimeout(function(){ window.location.reload(); }, 1200);
-    } catch (error) {
-      button.classList.remove('is-searching');
-      button.disabled = false;
-      if (icon) icon.textContent = '⚡';
-      if (label) label.textContent = original;
+      await sendNext(button, []);
+    } catch(error) {
+      saveState(null);
+      setButton('idle');
       if (window.showGameNotice) window.showGameNotice(error.message, 'warning', 'Tìm Nhanh');
     }
   });
+
+  const existing = readState();
+  if (existing && existing.inviteId) {
+    setButton('sent');
+    watchState(existing);
+    checkState(existing);
+  }
 })();
 </script>
 <script>

@@ -283,3 +283,14 @@ File sửa:
 - Chặn beacon Offline khi chỉ chuyển trang hoặc gửi biểu mẫu nội bộ.
 - File sửa: `app.py`, `templates/base.html`, `templates/dashboard.html`, `static/style.css`.
 - Kiểm tra: 33/33 test thành công.
+
+
+## V1.14.41.28 — 31/07/2026 02:12 (Asia/Bangkok)
+
+- Tìm Nhanh tự chuyển sang đối thủ phù hợp tiếp theo khi bị từ chối hoặc không phản hồi.
+- Không tạo cooldown 5 phút và không khóa người vừa từ chối ở các lượt tìm sau.
+- Chỉ bỏ qua đối thủ đó trong đúng lượt tìm đang chạy.
+- Lời mời Tìm Nhanh bị từ chối không áp dụng cooldown 3 phút.
+- Thông báo rút gọn thành “Đã gửi lời mời đến <Tên>”.
+- File sửa: `app.py`, `templates/base.html`.
+- Kiểm tra: 33/33 test thành công.
