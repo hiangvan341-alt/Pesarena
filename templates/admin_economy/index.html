@@ -85,6 +85,7 @@
                 <option value="10080">7 ngày</option>
             </select>
         </label>
+        <label><span>Người nhận riêng</span><select name="target_user_id"><option value="">Mã công khai</option>{% for p in players %}<option value="{{ p.id }}">{{ p.display_name or p.username }} (@{{ p.username }})</option>{% endfor %}</select></label>
         <label class="gift-code-note-field"><span>Ghi chú</span><input name="note" maxlength="250" placeholder="Ví dụ: Quà cuối tuần"></label>
         <button class="btn gold" type="submit">Tạo Gift Code</button>
     </form>
@@ -95,7 +96,7 @@
             <tbody>
             {% for item in gift_codes %}
                 <tr>
-                    <td><strong class="gift-code-value">{{ item.code }}</strong>{% if item.note %}<small>{{ item.note }}</small>{% endif %}</td>
+                    <td><strong class="gift-code-value">{{ item.code }}</strong>{% if item.note %}<small>{{ item.note }}</small>{% endif %}{% if item.metadata and item.metadata.get('target_user_id') %}<small>🎯 Riêng: {{ item.metadata.get('target_display_name') or item.metadata.get('target_username') }}</small>{% endif %}</td>
                     <td><strong>{{ format_zcoin(item.reward_amount) }}</strong> Zcoin<br><small>{{ item.per_user_limit }} lần/tài khoản</small></td>
                     <td>{{ item.redemption_count }}/{{ item.max_redemptions }}<br><small>Còn {{ item.remaining }}</small></td>
                     <td>{{ format_vn_datetime(item.starts_at) }}</td>

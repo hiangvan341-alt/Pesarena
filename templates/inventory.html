@@ -1,6 +1,14 @@
 {% extends "base.html" %}
 {% block head_extra %}
 <link rel="stylesheet" href="{{ url_for('static', filename='css/shop_phase3.css') }}?v={{ APP_VERSION|urlencode }}">
+{% if focus_item_code %}
+<script>
+document.addEventListener('DOMContentLoaded', function(){
+ const target=document.getElementById({{ ('inventory-item-' ~ focus_item_code)|tojson }});
+ if(target){ target.scrollIntoView({behavior:'smooth',block:'center'}); }
+});
+</script>
+{% endif %}
 {% endblock %}
 {% block content %}
 <section class="shop3-hero inventory3-hero">
@@ -43,7 +51,7 @@
 {% if inventory_items %}
 <div class="inventory3-grid">
     {% for entry in inventory_items %}
-    <article class="inventory3-card rarity-{{ entry.rarity }} {% if entry.is_equipped %}is-equipped{% endif %}">
+    <article id="inventory-item-{{ entry.item_code }}" class="inventory3-card rarity-{{ entry.rarity }} {% if entry.is_equipped %}is-equipped{% endif %} {% if focus_item_code == entry.item_code %}is-gift-focus{% endif %}">
         <div class="inventory3-media">
             <img src="{{ entry.image_url }}" alt="{{ entry.item_name }}" loading="lazy">
             <span>{{ entry.rarity_label }}</span>
@@ -72,5 +80,13 @@
 {% else %}
 <section class="panel empty-state"><h2>Kho đồ chưa có vật phẩm phù hợp</h2><p>Hãy vào Cửa hàng để mua vật phẩm đầu tiên.</p><a class="btn gold" href="{{ url_for('shop') }}">Đến Cửa hàng</a></section>
 {% endif %}
+{% endif %}
+{% if focus_item_code %}
+<script>
+document.addEventListener('DOMContentLoaded', function(){
+ const target=document.getElementById({{ ('inventory-item-' ~ focus_item_code)|tojson }});
+ if(target){ target.scrollIntoView({behavior:'smooth',block:'center'}); }
+});
+</script>
 {% endif %}
 {% endblock %}

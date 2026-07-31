@@ -1,0 +1,7 @@
+Collap_V1.14.41.41_ROOM_NAME_ADMIN_GIFT_NOTIFICATION
+
+- Hiển thị màu tên đang trang bị trong Phòng đấu và danh sách phòng.
+- Admin tặng vật phẩm/Zcoin/Gift Code riêng sẽ tạo thông báo cho người nhận.
+- Nút Kiểm tra mở và làm nổi bật đúng vật phẩm, giao dịch hoặc Gift Code.
+- Gift Code tặng riêng chỉ đúng tài khoản nhận mới đổi được.
+- Cần chạy: docs/update_admin_gift_notification_v1_14_41_41.sql

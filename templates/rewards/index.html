@@ -68,7 +68,7 @@
         <input type="hidden" name="request_token" value="{{ gift_request_token }}">
         <label>
             <span>Gift Code</span>
-            <input id="giftCodeInput" name="code" minlength="4" maxlength="32" placeholder="VD: WEEKEND1000" autocomplete="off" required>
+            <input id="giftCodeInput" name="code" minlength="4" maxlength="32" placeholder="VD: WEEKEND1000" autocomplete="off" value="{{ gift_code_prefill or '' }}" required>
         </label>
         <button class="btn gold reward-primary-button" type="submit">Đổi Gift Code</button>
     </form>
@@ -76,5 +76,14 @@
 
 {% if reward_effect %}
 <script id="zcoinRewardEffectData" type="application/json">{{ reward_effect|tojson }}</script>
+{% endif %}
+{% if gift_code_prefill %}
+<script>
+document.addEventListener('DOMContentLoaded', function(){
+ const section=document.getElementById('gift-code'); const input=document.getElementById('giftCodeInput');
+ if(section){ section.classList.add('is-gift-focus'); section.scrollIntoView({behavior:'smooth',block:'center'}); }
+ if(input){ input.focus(); input.select(); }
+});
+</script>
 {% endif %}
 {% endblock %}

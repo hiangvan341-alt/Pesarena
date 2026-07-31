@@ -137,7 +137,7 @@ function toggleTheme(){
                                     <div class="user-notification-actions">
                                         <form method="post" action="{{ url_for('mark_notification_read', notification_id=notice.id) }}">
                                             {% if notice.link_url %}<input type="hidden" name="next_url" value="{{ notice.link_url }}">{% endif %}
-                                            <button class="btn small green" type="submit">{{ 'Xem' if notice.link_url else 'Đã đọc' }}</button>
+                                            <button class="btn small green" type="submit">{{ 'Kiểm tra' if notice.link_url else 'Đã đọc' }}</button>
                                         </form>
                                         {% if notice.link_url %}
                                         <form method="post" action="{{ url_for('mark_notification_read', notification_id=notice.id) }}">
