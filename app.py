@@ -5203,9 +5203,17 @@ def quick_match_invite():
             if uid:
                 room_by_user[str(uid)] = room
     busy_match_ids = {str(uid) for m in matches for uid in (m.get("player1_id"), m.get("player2_id")) if uid}
-    invite_busy_ids = {str(uid) for i in invites for uid in (i.get("from_user_id"), i.get("to_user_id")) if uid}
-    if str(user["id"]) in invite_busy_ids:
-        return jsonify({"ok": False, "message": "Bạn đang có một lời mời chờ xử lý."}), 409
+    # Chỉ người đang CHỦ ĐỘNG gửi một lời mời khác mới được xem là bận.
+    # Người chỉ đang NHẬN một hay nhiều lời mời vẫn có thể tiếp tục nhận thêm
+    # lời mời thủ công hoặc Tìm Nhanh. Khi họ chấp nhận một lời mời, luồng
+    # respond_invite sẽ tự hủy các lời mời chờ còn lại để tránh vào hai phòng.
+    outgoing_inviter_ids = {
+        str(i.get("from_user_id"))
+        for i in invites
+        if i.get("from_user_id")
+    }
+    if str(user["id"]) in outgoing_inviter_ids:
+        return jsonify({"ok": False, "message": "Bạn đang chờ một đối thủ phản hồi lời mời đã gửi."}), 409
 
     my_points = int(user.get("rank_points", 0) or 0)
     my_rank_level = get_rank_level(my_points)
@@ -5252,7 +5260,9 @@ def quick_match_invite():
         if is_player_in_cooldown(opponent):
             cooldown_total += 1
             continue
-        if oid in busy_match_ids or oid in invite_busy_ids:
+        # Có lời mời ĐẾN không làm người chơi bị loại khỏi danh sách.
+        # Chỉ loại khi chính họ đang có lời mời ĐI chờ phản hồi.
+        if oid in busy_match_ids or oid in outgoing_inviter_ids:
             busy_total += 1
             continue
         opponent_room = room_by_user.get(oid)
@@ -5288,7 +5298,7 @@ def quick_match_invite():
         if online_total == 0:
             message = "Hiện không có người chơi nào khác đang online."
         elif busy_total:
-            message = "Người chơi đang online hiện đều bận, đang trong phòng hoặc có lời mời chờ xử lý."
+            message = "Người chơi đang online hiện đều bận, phòng đã đủ người hoặc đang chờ đối thủ phản hồi lời mời đã gửi."
         elif cooldown_total:
             message = "Người chơi đang online hiện đều trong thời gian chờ ghép trận."
         else:
