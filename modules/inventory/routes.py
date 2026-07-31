@@ -16,9 +16,10 @@ def register_routes(context):
     def inventory_page():
         user = current_user()
         active_tab = request.args.get("tab") or "all"
+        focus_item_code = str(request.args.get("gift_item") or "").strip()
         return render_template(
             "inventory.html",
-            **service.build_inventory_context(user, active_tab),
+            **service.build_inventory_context(user, active_tab, focus_item_code),
         )
 
     @app.route(

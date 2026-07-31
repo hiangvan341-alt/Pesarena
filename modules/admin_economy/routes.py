@@ -110,6 +110,14 @@ def register_routes(context):
                 f"{result.get('balance_after', 0)} | {reason}"
             ),
         )
+        if delta > 0 and not result.get("duplicate"):
+            create_user_notification(
+                target.get("id"),
+                "Bạn nhận được Zcoin từ Admin",
+                f"Admin đã tặng bạn {format_zcoin(amount)} Zcoin. Lý do: {reason}",
+                url_for("zcoin_wallet", gift_tx=result.get("id")),
+                "admin_gift_zcoin",
+            )
         flash(
             f"Đã {action_text.lower()} {format_zcoin(amount)} cho "
             f"{target.get('display_name') or target.get('username')}. "
@@ -144,6 +152,16 @@ def register_routes(context):
                 )
             return _redirect_economy("gift-codes")
 
+        metadata = item.get("metadata") if isinstance(item.get("metadata"), dict) else {}
+        target_user_id = str(metadata.get("target_user_id") or "").strip()
+        if target_user_id:
+            create_user_notification(
+                target_user_id,
+                "Bạn nhận được Gift Code từ Admin",
+                f"Mã {item.get('code')} nhận {format_zcoin(item.get('reward_amount'))} Zcoin.",
+                url_for("zcoin_rewards", gift_code=item.get("code")) + "#gift-code",
+                "admin_gift_code",
+            )
         log_admin_action(
             "Tạo Gift Code",
             "gift_code",

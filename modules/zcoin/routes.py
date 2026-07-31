@@ -23,6 +23,7 @@ def register_routes(context):
             "zcoin/wallet.html",
             transactions=transactions,
             wallet_ready=wallet_ready,
+            focus_transaction_id=str(request.args.get("gift_tx") or "").strip(),
         )
 
     @app.route("/admin/zcoin/adjust", methods=["POST"])
@@ -98,6 +99,14 @@ def register_routes(context):
             target.get("username") or target.get("display_name"),
             f"{delta:+d} Zcoin | {result.get('balance_before', 0)} → {result.get('balance_after', 0)} | {reason}",
         )
+        if delta > 0 and not result.get("duplicate"):
+            create_user_notification(
+                target.get("id"),
+                "Bạn nhận được Zcoin từ Admin",
+                f"Admin đã tặng bạn {format_zcoin(amount)} Zcoin. Lý do: {reason}",
+                url_for("zcoin_wallet", gift_tx=result.get("id")),
+                "admin_gift_zcoin",
+            )
         flash(
             f"Đã {action_text.lower()} {format_zcoin(amount)} cho {target.get('display_name') or target.get('username')}. "
             f"Số dư mới: {format_zcoin(result.get('balance_after'))} Zcoin.",

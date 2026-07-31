@@ -64,7 +64,7 @@ from modules.win_streaks import (
 load_dotenv()
 
 APP_NAME = "PES Arena – Bản Lĩnh Sân Cỏ"
-APP_VERSION = "V1.14.41.40"
+APP_VERSION = "V1.14.41.41"
 DEFAULT_POINTS = 1000
 DEVICE_COOKIE_NAME = "rankzone_device_id"
 COOLDOWN_MINUTES = 3
@@ -2916,6 +2916,7 @@ def enrich_room(room):
     room["room_code"] = (compact_room_id[:6] or "ROOM00")
 
     room["host_name"] = host.get("display_name", "Unknown")
+    room["host_name_style_class"] = str(host.get("name_style_class") or "").strip()
     room["host_avatar_url"] = host.get("avatar_url")
     room["host_avatar_frame"] = host.get("avatar_frame")
     room["host_achievement"] = host.get("featured_achievement")
@@ -2926,6 +2927,7 @@ def enrich_room(room):
     room["host_streak_badge"] = get_win_streak_badge(room["host_streak"])
     room["has_guest"] = bool(room.get("guest_user_id"))
     room["guest_name"] = guest.get("display_name", "Đang chờ đối thủ") if room["has_guest"] else "Đang chờ đối thủ"
+    room["guest_name_style_class"] = str(guest.get("name_style_class") or "").strip() if room["has_guest"] else ""
     room["guest_avatar_url"] = guest.get("avatar_url") if room["has_guest"] else None
     room["guest_avatar_frame"] = guest.get("avatar_frame") if room["has_guest"] else None
     room["guest_achievement"] = guest.get("featured_achievement") if room["has_guest"] else None
@@ -4110,6 +4112,8 @@ def build_room_state_key(room):
         str((room.get("dispute") or {}).get("status")),
         str((room.get("dispute") or {}).get("updated_at")),
         str(room.get("parsec_link")),
+        str(room.get("host_name_style_class")),
+        str(room.get("guest_name_style_class")),
     ])
 
 

@@ -17,7 +17,7 @@
     {% elif transactions %}
     <div class="zcoin-transaction-list">
         {% for tx in transactions %}
-        <article class="zcoin-transaction-card {{ 'is-credit' if tx.is_credit else 'is-debit' }}">
+        <article id="zcoin-tx-{{ tx.id }}" class="zcoin-transaction-card {{ 'is-credit' if tx.is_credit else 'is-debit' }} {% if focus_transaction_id == (tx.id|string) %}is-gift-focus{% endif %}">
             <div class="zcoin-transaction-icon">
                 <img src="{{ asset_url('zcoin-logo.webp') }}" alt="">
             </div>
@@ -41,4 +41,12 @@
     </div>
     {% endif %}
 </section>
+{% if focus_transaction_id %}
+<script>
+document.addEventListener('DOMContentLoaded', function(){
+ const target=document.getElementById({{ ('zcoin-tx-' ~ focus_transaction_id)|tojson }});
+ if(target){ target.scrollIntoView({behavior:'smooth',block:'center'}); }
+});
+</script>
+{% endif %}
 {% endblock %}

@@ -36,6 +36,7 @@ def register_routes(context):
             daily_request_token=uuid.uuid4().hex,
             gift_request_token=uuid.uuid4().hex,
             reward_effect=reward_effect,
+            gift_code_prefill=str(request.args.get("gift_code") or "").strip().upper(),
         )
 
     @app.route("/zcoin/checkin/claim", methods=["POST"])

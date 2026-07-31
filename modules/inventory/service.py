@@ -67,7 +67,7 @@ def _decorate_inventory(row, item, equipped_by_inventory):
     return inventory
 
 
-def build_inventory_context(user, active_tab="all"):
+def build_inventory_context(user, active_tab="all", focus_item_code=""):
     active_tab = str(active_tab or "all").strip().lower()
     allowed_tabs = {tab["code"] for tab in INVENTORY_TABS}
     if active_tab not in allowed_tabs:
@@ -136,6 +136,7 @@ def build_inventory_context(user, active_tab="all"):
         "equipment_slots": equipment_slots,
         "inventory_setup_required": setup_required,
         "display_name_ticket_count": display_name_tickets,
+        "focus_item_code": str(focus_item_code or "").strip(),
     }
 
 

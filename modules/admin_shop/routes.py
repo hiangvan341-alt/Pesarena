@@ -76,6 +76,24 @@ def register_routes(context):
             return _redirect("grant-items")
 
         recipient_count = int(result.get("recipient_count") or 0)
+        item_code = str(result.get("item_code") or payload["item_code"])
+        item_name = str(result.get("item_name") or item_code)
+        granted_quantity = int(result.get("quantity") or payload["quantity"] or 1)
+        gift_message = f"Admin đã tặng bạn {granted_quantity} × {item_name}."
+        if payload["note"]:
+            gift_message += f" Ghi chú: {payload['note']}"
+        gift_link = url_for("inventory", gift_item=item_code)
+        if payload["grant_all"]:
+            recipient_ids = [row.get("id") for row in repository.list_players() if row.get("id")]
+            create_notifications_for_users(
+                recipient_ids, "Bạn nhận được vật phẩm từ Admin", gift_message,
+                gift_link, "admin_gift_item",
+            )
+        elif payload["target_user_id"]:
+            create_user_notification(
+                payload["target_user_id"], "Bạn nhận được vật phẩm từ Admin",
+                gift_message, gift_link, "admin_gift_item",
+            )
         log_admin_action(
             "Tặng vật phẩm Shop",
             "shop_item_grant",
