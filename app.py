@@ -4020,7 +4020,7 @@ def api_pending_invites():
               .eq("to_user_id", user["id"])
               .eq("status", "pending")
               .order("created_at", desc=True)
-              .limit(3),
+              .limit(1),
             "api_pending_invites_direct",
             attempts=2,
         )
@@ -4044,7 +4044,10 @@ def api_pending_invites():
                 "accept_url": url_for("respond_invite", invite_id=invite["id"]),
                 "reject_url": url_for("respond_invite", invite_id=invite["id"]),
             })
-        return jsonify({"invites": data})
+        response = jsonify({"invites": data})
+        response.headers["Cache-Control"] = "no-store, max-age=0"
+        response.headers["X-Invite-Poll"] = "fast-active"
+        return response
     except Exception as exc:
         print(f"api_pending_invites ERROR user={user.get('id')}: {type(exc).__name__}: {exc}")
         return jsonify({"invites": []})

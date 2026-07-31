@@ -1021,16 +1021,23 @@ window.addEventListener("DOMContentLoaded", function () {
 
     let pendingInvitePoller = null;
     let lastInviteActivityAt = Date.now();
+    let lastInviteImmediateCheckAt = 0;
     function markInviteActivity() {
         lastInviteActivityAt = Date.now();
+        const now = Date.now();
+        if (now - lastInviteImmediateCheckAt < 1200) return;
+        lastInviteImmediateCheckAt = now;
+        if (pendingInvitePoller && typeof pendingInvitePoller.runNow === "function") {
+            pendingInvitePoller.runNow();
+        }
     }
-    ["pointerdown", "keydown", "touchstart", "mousemove"].forEach(function (eventName) {
+    ["pointerdown", "keydown", "touchstart"].forEach(function (eventName) {
         document.addEventListener(eventName, markInviteActivity, {passive: true});
     });
     function pendingInviteInterval() {
         // Không có Realtime/WebSocket nên cần lớp dự phòng ngắn khi người dùng
         // đang thực sự thao tác. Khi bỏ máy, tự giãn chu kỳ để giảm request.
-        return (Date.now() - lastInviteActivityAt <= 60000) ? 4000 : 12000;
+        return (Date.now() - lastInviteActivityAt <= 60000) ? 1500 : 6000;
     }
     if (!isPassivePage) {
         pendingInvitePoller = PESNet.createPoller({
@@ -1040,7 +1047,7 @@ window.addEventListener("DOMContentLoaded", function () {
             hiddenInterval: 120000,
             runWhenHidden: false,
             immediate: true,
-            jitter: 500
+            jitter: 150
         });
     }
 
