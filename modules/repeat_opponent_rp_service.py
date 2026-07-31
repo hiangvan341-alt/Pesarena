@@ -118,7 +118,7 @@ def _had_draw_bonus(match):
         if isinstance(repeat, dict) and repeat.get("draw_bonus_applied"):
             return True
     try:
-        return int(match.get("delta1") or 0) == 5 or int(match.get("delta2") or 0) == 5
+        return int(match.get("delta1") or 0) in {5, 6} or int(match.get("delta2") or 0) in {5, 6}
     except Exception:
         return False
 
@@ -198,19 +198,20 @@ def apply_repeat_opponent_rules(match, player1, player2, score1, score2, delta1,
         return 0, 0, details
 
     if int(score1) == int(score2):
-        # Hòa giữ nguyên chuỗi thắng theo logic hiện tại; chuỗi thua vẫn kết thúc.
+        # Trận hòa vẫn tính trong giới hạn đối đầu; chỉ các trận thứ 7 trở đi mới nhận 0 RP.
         details["streak_eligible"] = True
-        rp1, rp2 = int(player1.get("rank_points") or 0), int(player2.get("rank_points") or 0)
-        if abs(rp1 - rp2) >= 500 and not context.get("draw_bonus_used"):
+        rp1 = int(player1.get("rank_points") or 0)
+        rp2 = int(player2.get("rank_points") or 0)
+        if abs(rp1 - rp2) >= 500:
             if rp1 < rp2:
-                delta1, delta2 = 5, 0
+                delta1, delta2 = 6, 0
             elif rp2 < rp1:
-                delta1, delta2 = 0, 5
+                delta1, delta2 = 0, 6
             else:
-                delta1, delta2 = 0, 0
-            details["draw_bonus_applied"] = bool(delta1 == 5 or delta2 == 5)
+                delta1, delta2 = 3, 3
+            details["draw_bonus_applied"] = bool(delta1 == 6 or delta2 == 6)
         else:
-            delta1, delta2 = 0, 0
+            delta1, delta2 = 3, 3
         details["reason"] = "draw"
         return int(delta1), int(delta2), details
 

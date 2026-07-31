@@ -12,7 +12,7 @@ import random
 from modules.rp_engine import calculate_deltas, validate_deltas
 from modules.rp_formula import RP_FORMULA_VERSION
 
-EXPECTED_RP_FORMULA_VERSION = "RP_V1.14.3"
+EXPECTED_RP_FORMULA_VERSION = "RP_V1.14.4"
 
 
 def rank_level(points):
@@ -81,9 +81,10 @@ def test_loss_recovery_win_steps():
     assert calculate(recovering_third, regular, 1, 0, 1)[0] >= 20
 
 
-def test_draw_rank_gap_bonus():
-    assert calculate({"rank_points": 900}, {"rank_points": 1200}, 0, 0) == (5, 0)
-    assert calculate({"rank_points": 1200}, {"rank_points": 900}, 0, 0) == (0, 5)
+def test_draw_points_by_rp_gap():
+    assert calculate({"rank_points": 900}, {"rank_points": 1200}, 0, 0) == (3, 3)
+    assert calculate({"rank_points": 900}, {"rank_points": 1400}, 0, 0) == (6, 0)
+    assert calculate({"rank_points": 1400}, {"rank_points": 900}, 0, 0) == (0, 6)
 
 
 def test_invalid_zero_loss_delta_is_rejected():
@@ -104,7 +105,7 @@ def run():
         test_regular_loss_distribution,
         test_loss_streak_ranges,
         test_loss_recovery_win_steps,
-        test_draw_rank_gap_bonus,
+        test_draw_points_by_rp_gap,
         test_invalid_zero_loss_delta_is_rejected,
         test_formula_version_is_current,
     ]

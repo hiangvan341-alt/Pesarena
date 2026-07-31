@@ -91,13 +91,20 @@ def _loser_points(loser: Mapping, rng) -> int:
 
 
 def _draw_points(player_a: Mapping, player_b: Mapping, get_rank_level: Callable) -> Tuple[int, int]:
-    level_a = int(get_rank_level(player_a.get("rank_points", 0)))
-    level_b = int(get_rank_level(player_b.get("rank_points", 0)))
-    if level_a < level_b:
-        return 5, 0
-    if level_b < level_a:
-        return 0, 5
-    return 0, 0
+    """Tính RP hòa theo chênh lệch RP trước trận.
+
+    - Chênh dưới 500 RP: mỗi bên +3 RP.
+    - Chênh từ 500 RP: người thấp hơn +6 RP, người cao hơn +0 RP.
+    """
+    del get_rank_level
+    rp_a = int(player_a.get("rank_points", 0) or 0)
+    rp_b = int(player_b.get("rank_points", 0) or 0)
+    if abs(rp_a - rp_b) >= 500:
+        if rp_a < rp_b:
+            return 6, 0
+        if rp_b < rp_a:
+            return 0, 6
+    return 3, 3
 
 
 def validate_deltas(score_a: int, score_b: int, delta_a: int, delta_b: int) -> Tuple[int, int]:
