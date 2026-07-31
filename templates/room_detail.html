@@ -1112,7 +1112,7 @@ function startRoomStatePolling() {
             task: checkRoomState,
             visibleInterval: getRoomStateInterval,
             hiddenInterval: 60000,
-            runWhenHidden: true,
+            runWhenHidden: false,
             immediate: false,
             jitter: 350
         });
