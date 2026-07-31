@@ -325,3 +325,11 @@ File sửa:
 - Sửa Tìm Nhanh chọn nhầm Admin đang đặt Offline do chỉ kiểm tra last_seen_at.
 - Bắt buộc is_online=true trước khi tạo lời mời.
 - Thêm test hồi quy test_quick_match_admin_offline.py.
+
+## V1.14.41.34 — 31/07/2026 08:07 (Asia/Bangkok)
+
+- Ẩn hoàn toàn tên, Rank và chênh RP của đối thủ ở phía người bấm Tìm Nhanh.
+- Khi đã chọn được ứng viên, giao diện chỉ hiển thị “Đã tìm thấy đối thủ. Đang chờ phản hồi...”.
+- Nút đổi sang “ĐANG CHỜ PHẢN HỒI”; chỉ khi đối thủ chấp nhận và vào phòng mới hiển thị danh tính trong giao diện phòng.
+- Backend vẫn giữ ID nội bộ để theo dõi, chống gửi lặp trong cùng lượt và chuyển sang người tiếp theo khi cần.
+- File sửa: `app.py`, `static/js/quick_match.js`, `static/css/quick_match.css`.

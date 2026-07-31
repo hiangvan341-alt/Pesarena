@@ -55,7 +55,7 @@
     button.classList.toggle('is-sent', mode === 'sent');
     button.disabled = mode === 'searching' || mode === 'sent';
     if (buttonIcon) buttonIcon.textContent = mode === 'searching' ? '⏳' : (mode === 'sent' ? '✓' : '⚡');
-    if (label) label.textContent = mode === 'searching' ? 'ĐANG TÌM ĐỐI THỦ...' : (mode === 'sent' ? 'ĐÃ GỬI LỜI MỜI' : 'TÌM NHANH');
+    if (label) label.textContent = mode === 'searching' ? 'ĐANG TÌM ĐỐI THỦ...' : (mode === 'sent' ? 'ĐANG CHỜ PHẢN HỒI' : 'TÌM NHANH');
   }
 
   async function sendNext(button, excluded) {
@@ -85,7 +85,7 @@
       saveState(state);
       document.dispatchEvent(new CustomEvent('pes:invite-changed'));
       setButton('sent');
-      if (window.showGameNotice) window.showGameNotice(data.message || 'Đã gửi lời mời.', 'success', 'Đã gửi lời mời');
+      if (window.showGameNotice) window.showGameNotice(data.message || 'Đã tìm thấy đối thủ. Đang chờ phản hồi...', 'success', 'Tìm Nhanh');
       watchState(state);
     } finally {
       requestInFlight = false;

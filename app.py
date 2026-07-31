@@ -5311,7 +5311,7 @@ def quick_match_invite():
     attach_result = execute_query(
         db.table("match_rooms").update({
             "invite_id": invite["id"],
-            "note": f'Đã tìm thấy {opponent["display_name"]} (chênh {abs(int(opponent.get("rank_points",0) or 0)-my_points)} RP). Đang chờ chấp nhận.',
+            "note": "Đã tìm thấy đối thủ phù hợp. Đang chờ phản hồi.",
             "updated_at": now_iso(),
         }).eq("id", sender_room["id"]).eq("status", "waiting_ready").is_("guest_user_id", "null"),
         "quick_match_attach_invite",
@@ -5337,9 +5337,7 @@ def quick_match_invite():
         "ok": True,
         "invite_id": invite.get("id"),
         "opponent_id": opponent.get("id"),
-        "opponent_name": opponent.get("display_name") or opponent.get("username"),
-        "points_gap": abs(int(opponent.get("rank_points", 0) or 0) - my_points),
-        "message": f'Đã gửi lời mời đến {opponent.get("display_name") or opponent.get("username")}.',
+        "message": "Đã tìm thấy đối thủ. Đang chờ phản hồi...",
     })
 
 
