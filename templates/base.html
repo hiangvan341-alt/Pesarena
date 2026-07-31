@@ -1020,15 +1020,27 @@ window.addEventListener("DOMContentLoaded", function () {
     });
 
     let pendingInvitePoller = null;
+    let lastInviteActivityAt = Date.now();
+    function markInviteActivity() {
+        lastInviteActivityAt = Date.now();
+    }
+    ["pointerdown", "keydown", "touchstart", "mousemove"].forEach(function (eventName) {
+        document.addEventListener(eventName, markInviteActivity, {passive: true});
+    });
+    function pendingInviteInterval() {
+        // Không có Realtime/WebSocket nên cần lớp dự phòng ngắn khi người dùng
+        // đang thực sự thao tác. Khi bỏ máy, tự giãn chu kỳ để giảm request.
+        return (Date.now() - lastInviteActivityAt <= 60000) ? 4000 : 12000;
+    }
     if (!isPassivePage) {
         pendingInvitePoller = PESNet.createPoller({
             key: "pending-invites",
             task: checkPendingInvites,
-            visibleInterval: 30000,
+            visibleInterval: pendingInviteInterval,
             hiddenInterval: 120000,
             runWhenHidden: false,
             immediate: true,
-            jitter: 2000
+            jitter: 500
         });
     }
 
