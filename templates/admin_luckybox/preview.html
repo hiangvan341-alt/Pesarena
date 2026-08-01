@@ -7,7 +7,7 @@
       <h1 class="h3 mb-1">Lucky Box · Quay thử Draft</h1>
       <p class="text-muted mb-0">Mô phỏng chỉ đọc, không trừ Zcoin và không phát vật phẩm.</p>
     </div>
-    <a class="btn btn-outline-secondary" href="{{ url_for('admin') }}">Về Admin</a>
+    <div class="d-flex gap-2"><a class="btn btn-outline-secondary" href="{{ url_for('admin_luckybox', rate_version_id=selected_rate_version.id if selected_rate_version else None) }}">Quản lý tỷ lệ</a><a class="btn btn-outline-secondary" href="{{ url_for('admin') }}">Về Admin</a></div>
   </div>
 
   {% if preview_error %}<div class="alert alert-danger">{{ preview_error }}</div>{% endif %}

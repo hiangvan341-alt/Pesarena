@@ -1,4 +1,4 @@
-"""Lucky Box backend routes and Admin Draft preview."""
+"""Lucky Box routes: Admin management, Draft preview and user history."""
 
 from . import repository
 from . import service
@@ -8,23 +8,126 @@ def register_routes(context):
     globals().update(context)
     service.configure(context)
 
+    def _admin_action(handler, success_message, rate_version_id=None):
+        actor = current_user()
+        try:
+            result = handler(actor)
+            flash(success_message(result), "success")
+        except ValueError as exc:
+            flash(str(exc), "warning")
+        except Exception as exc:
+            app.logger.exception(
+                "Lucky Box Admin action failed actor=%s rate=%s: %s",
+                actor.get("id"), rate_version_id, exc,
+            )
+            flash(service.error_message(exc), "danger")
+        return redirect(url_for("admin_luckybox", rate_version_id=rate_version_id) if rate_version_id else url_for("admin_luckybox"))
+
+    @app.route("/admin/lucky-box", methods=["GET"], endpoint="admin_luckybox")
+    @login_required
+    @admin_required
+    def admin_luckybox_route():
+        actor = current_user()
+        selected_rate_id = str(request.args.get("rate_version_id") or "").strip()
+        try:
+            context_data = service.build_admin_context(actor, selected_rate_id)
+        except Exception as exc:
+            app.logger.exception("Lucky Box Admin page failed actor=%s: %s", actor.get("id"), exc)
+            flash(service.error_message(exc), "danger")
+            context_data = {
+                "actor": actor,
+                "boxes": [],
+                "selected_box": None,
+                "rate_versions": [],
+                "selected_rate_version": None,
+                "active_rate_version": None,
+                "rewards": [],
+                "reward_groups": {"zcoin": [], "shop": [], "exclusive": [], "other": []},
+                "rate_validation": None,
+                "duplicate_policies": service.DUPLICATE_POLICIES,
+                "audit_logs": [],
+                "max_preview_iterations": service.MAX_PREVIEW_ITERATIONS,
+            }
+        return render_template("admin_luckybox/index.html", **context_data)
+
+    @app.route("/admin/lucky-box/box/<box_id>/save", methods=["POST"], endpoint="admin_luckybox_save_box")
+    @login_required
+    @admin_required
+    def admin_luckybox_save_box_route(box_id):
+        return _admin_action(
+            lambda actor: service.save_box(actor, box_id, request.form),
+            lambda _result: "Đã lưu cấu hình Lucky Box.",
+            request.form.get("rate_version_id") or None,
+        )
+
+    @app.route("/admin/lucky-box/rates/<rate_version_id>/save", methods=["POST"], endpoint="admin_luckybox_save_rate")
+    @login_required
+    @admin_required
+    def admin_luckybox_save_rate_route(rate_version_id):
+        return _admin_action(
+            lambda actor: service.save_rate(actor, rate_version_id, request.form),
+            lambda _result: "Đã lưu cấu hình phiên bản Draft.",
+            rate_version_id,
+        )
+
+    @app.route("/admin/lucky-box/rewards/<reward_id>/save", methods=["POST"], endpoint="admin_luckybox_save_reward")
+    @login_required
+    @admin_required
+    def admin_luckybox_save_reward_route(reward_id):
+        rate_version_id = str(request.form.get("rate_version_id") or "").strip()
+        return _admin_action(
+            lambda actor: service.save_reward(actor, reward_id, request.form),
+            lambda _result: "Đã lưu reward.",
+            rate_version_id,
+        )
+
+    @app.route("/admin/lucky-box/rates/<rate_version_id>/clone", methods=["POST"], endpoint="admin_luckybox_clone_rate")
+    @login_required
+    @admin_required
+    def admin_luckybox_clone_rate_route(rate_version_id):
+        actor = current_user()
+        try:
+            result = service.clone_rate(actor, rate_version_id, request.form.get("reason"))
+            flash(f"Đã tạo Draft Version {result.get('version_number')} với {result.get('reward_count')} reward.", "success")
+            return redirect(url_for("admin_luckybox", rate_version_id=result.get("rate_version_id")))
+        except ValueError as exc:
+            flash(str(exc), "warning")
+        except Exception as exc:
+            app.logger.exception("Lucky Box clone failed actor=%s rate=%s: %s", actor.get("id"), rate_version_id, exc)
+            flash(service.error_message(exc), "danger")
+        return redirect(url_for("admin_luckybox", rate_version_id=rate_version_id))
+
+    @app.route("/admin/lucky-box/rates/<rate_version_id>/sync", methods=["POST"], endpoint="admin_luckybox_sync_rewards")
+    @login_required
+    @admin_required
+    def admin_luckybox_sync_rewards_route(rate_version_id):
+        return _admin_action(
+            lambda actor: service.sync_rewards(actor, rate_version_id, request.form.get("reason")),
+            lambda result: f"Đã đồng bộ reward. Thêm mới {result.get('added', 0)} reward.",
+            rate_version_id,
+        )
+
+    @app.route("/admin/lucky-box/rates/<rate_version_id>/publish", methods=["POST"], endpoint="admin_luckybox_publish_rate")
+    @login_required
+    @admin_required
+    def admin_luckybox_publish_rate_route(rate_version_id):
+        return _admin_action(
+            lambda actor: service.publish_rate(actor, rate_version_id, request.form.get("reason")),
+            lambda result: f"Đã publish Version {result.get('version_number')} thành Active. Lucky Box vẫn giữ trạng thái bật/tắt riêng.",
+            rate_version_id,
+        )
+
     @app.route("/admin/lucky-box/preview", methods=["GET", "POST"], endpoint="admin_luckybox_preview")
     @login_required
     @admin_required
     def admin_luckybox_preview_route():
         actor = current_user()
-        selected_rate_id = str(
-            request.values.get("rate_version_id") or ""
-        ).strip()
+        selected_rate_id = str(request.values.get("rate_version_id") or "").strip()
         result = None
         error = None
         if request.method == "POST":
             try:
-                result = service.run_preview(
-                    actor,
-                    selected_rate_id,
-                    request.form.get("iterations") or 1000,
-                )
+                result = service.run_preview(actor, selected_rate_id, request.form.get("iterations") or 1000)
             except ValueError as exc:
                 error = str(exc)
             except Exception as exc:
@@ -35,9 +138,7 @@ def register_routes(context):
                 error = service.error_message(exc)
         return render_template(
             "admin_luckybox/preview.html",
-            **service.build_admin_preview_context(
-                actor, selected_rate_id, result=result, error=error
-            ),
+            **service.build_admin_preview_context(actor, selected_rate_id, result=result, error=error),
         )
 
     @app.route("/api/lucky-box/open", methods=["POST"], endpoint="luckybox_open")
