@@ -141,6 +141,43 @@ def register_routes(context):
             **service.build_admin_preview_context(actor, selected_rate_id, result=result, error=error),
         )
 
+
+    @app.route("/lucky-box", endpoint="luckybox_home")
+    @login_required
+    def luckybox_home_route():
+        actor = current_user()
+        preview_requested = str(request.args.get("preview") or "").strip() == "1"
+        admin_preview = preview_requested and is_admin_user(actor)
+        selected_rate_id = str(request.args.get("rate_version_id") or "").strip()
+        try:
+            context_data = service.build_user_context(actor, admin_preview, selected_rate_id)
+        except Exception as exc:
+            app.logger.exception("Lucky Box user page failed user=%s: %s", actor.get("id"), exc)
+            flash(service.error_message(exc), "danger")
+            context_data = {
+                "box": None, "active_rate": None, "selected_rate": None, "rewards": [],
+                "reward_groups": {"zcoin": [], "shop": [], "exclusive": [], "other": []},
+                "item_count_odds": [], "open_price": 0, "balance": int(actor.get("zcoin_balance") or 0),
+                "can_open": False, "is_live": False, "preview_mode": admin_preview, "openings": [],
+                "request_id": "", "reward_catalog": {},
+            }
+        return render_template("luckybox/index.html", **context_data)
+
+    @app.route("/api/lucky-box/admin-preview-open", methods=["POST"], endpoint="luckybox_admin_preview_open")
+    @login_required
+    @admin_required
+    def luckybox_admin_preview_open_route():
+        actor = current_user()
+        payload = request.get_json(silent=True) or request.form
+        try:
+            result = service.preview_open_for_admin(actor, payload.get("rate_version_id"))
+            return jsonify({"ok": True, **result})
+        except ValueError as exc:
+            return jsonify({"ok": False, "message": str(exc)}), 400
+        except Exception as exc:
+            app.logger.exception("Lucky Box player UI preview failed actor=%s: %s", actor.get("id"), exc)
+            return jsonify({"ok": False, "message": service.error_message(exc)}), 409
+
     @app.route("/api/lucky-box/open", methods=["POST"], endpoint="luckybox_open")
     @login_required
     def luckybox_open_route():
@@ -177,9 +214,10 @@ def register_routes(context):
     @login_required
     def luckybox_opening_detail_route(opening_id):
         user = current_user()
-        opening = repository.get_opening(opening_id)
+        try:
+            opening = service.build_opening_detail(user, opening_id)
+        except PermissionError:
+            return "Bạn không có quyền xem lượt mở này.", 403
         if not opening:
             return "Không tìm thấy lượt mở Lucky Box.", 404
-        if str(opening.get("user_id")) != str(user.get("id")) and not is_admin_user(user):
-            return "Bạn không có quyền xem lượt mở này.", 403
         return render_template("luckybox/opening_detail.html", opening=opening)

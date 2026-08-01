@@ -20,6 +20,30 @@ def _rpc(name, params, label):
     return payload
 
 
+
+def get_box_by_code(box_code):
+    require_db()
+    result = execute_query(
+        db.table("lucky_boxes").select("*").eq("code", str(box_code)).limit(1),
+        "luckybox_get_box",
+        attempts=2,
+    )
+    return dict(result.data[0]) if result.data else None
+
+
+def get_active_rate_version(box_id):
+    require_db()
+    result = execute_query(
+        db.table("lucky_box_rate_versions")
+        .select("*")
+        .eq("box_id", str(box_id))
+        .eq("status", "active")
+        .limit(1),
+        "luckybox_get_active_rate",
+        attempts=2,
+    )
+    return dict(result.data[0]) if result.data else None
+
 def list_boxes():
     require_db()
     result = execute_query(
@@ -227,7 +251,7 @@ def get_opening(opening_id):
         return None
     rewards = execute_query(
         db.table("lucky_box_opening_rewards")
-        .select("*")
+        .select("*,shop_items(id,code,name,item_type,category,rarity,image_path,is_unique,is_consumable)")
         .eq("opening_id", str(opening_id))
         .order("reward_slot"),
         "luckybox_get_opening_rewards",

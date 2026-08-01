@@ -12,7 +12,10 @@
     </div>
     <div class="lb-head-actions">
       <a class="btn gray" href="{{ url_for('admin') }}">← Về Admin</a>
-      {% if selected_rate_version %}<a class="btn yellow" href="{{ url_for('admin_luckybox_preview', rate_version_id=selected_rate_version.id) }}">🎲 Quay thử Draft</a>{% endif %}
+      {% if selected_rate_version %}
+      <a class="btn gray" href="{{ url_for('luckybox_home', preview=1, rate_version_id=selected_rate_version.id) }}">👤 Xem UI người chơi</a>
+      <a class="btn yellow" href="{{ url_for('admin_luckybox_preview', rate_version_id=selected_rate_version.id) }}">🎲 Quay thử Draft</a>
+      {% endif %}
     </div>
   </div>
 
