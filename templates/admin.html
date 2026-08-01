@@ -369,8 +369,7 @@
                     <td><span class="badge {{ r.status }}">{{ r.status }}</span></td>
                     <td>
                         <a class="btn" href="{{ url_for('room_detail', room_id=r.id) }}">Vào phòng</a>
-                        <form class="inline-form" method="post" action="{{ url_for('admin_cancel_room', room_id=r.id) }}" onsubmit="return confirm('Hủy phòng này? Lịch sử vẫn được giữ; nếu trận đã cộng RP thì hệ thống sẽ hoàn tác RP.')"><button class="btn gold" type="submit">Hủy</button></form>
-                        {% if not r.match_id %}<form class="inline-form" method="post" action="{{ url_for('admin_delete_room', room_id=r.id) }}" onsubmit="return confirm('Xóa phòng chờ chưa có trận? Không ảnh hưởng RP.')"><button class="btn red" type="submit">Xóa phòng chờ</button></form>{% else %}<span class="small" title="Phòng đã có trận nên chỉ được Hủy để giữ lịch sử">🔒 Giữ lịch sử</span>{% endif %}
+                        <form class="inline-form" method="post" action="{{ url_for('admin_cancel_room', room_id=r.id) }}" onsubmit="return confirm('Hủy phòng để người chơi có thể tạo phòng mới? RP, lịch sử, tỷ số, báo cáo và tranh chấp sẽ được giữ nguyên.')"><button class="btn gold" type="submit">Hủy phòng</button></form>
                     </td>
                 </tr>
                 {% else %}<tr><td colspan="5">Không có phòng đang hoạt động.</td></tr>{% endfor %}

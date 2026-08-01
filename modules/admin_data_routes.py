@@ -25,7 +25,13 @@ def register_routes(context):
     @admin_required
     @admin_permission_required("rooms_manage")
     def admin_cancel_room(room_id):
-        """Hủy phòng nhưng giữ nguyên bản ghi phòng/trận để phục vụ lịch sử và kiểm toán."""
+        """Giải phóng phòng để người chơi tạo phòng mới, không thay đổi RP.
+
+        - Luôn giữ bản ghi phòng, trận, tỷ số, báo cáo và bằng chứng tranh chấp.
+        - Trận đang chơi/chờ xác nhận/tranh chấp được chuyển sang cancelled để
+          không tiếp tục khóa người chơi ở active_match_for_user().
+        - Trận confirmed giữ nguyên confirmed và toàn bộ delta/RP đã tính.
+        """
         room = get_room(room_id)
         if not room:
             flash("Không tìm thấy phòng.", "danger")
@@ -36,30 +42,27 @@ def register_routes(context):
             return redirect_admin("rooms")
 
         linked_match = get_match(room.get("match_id")) if room.get("match_id") else None
-        reversed_rp = False
-
-        # Phải hoàn tác RP thành công trước khi đổi trạng thái phòng. Tránh tình trạng
-        # phòng đã bị hủy nhưng RP vẫn còn nguyên nếu thao tác hoàn tác gặp lỗi.
-        if linked_match and linked_match.get("status") == "confirmed":
-            if not reverse_confirmed_match_result(linked_match):
-                flash("Không thể hoàn tác RP của trận đã xác nhận; phòng và trận được giữ nguyên.", "danger")
-                return redirect_admin("rooms")
-            reversed_rp = True
-
         updated_at = now_iso()
-        if linked_match:
+        old_match_status = linked_match.get("status") if linked_match else None
+
+        # Không gọi hàm hoàn tác kết quả: Hủy phòng chỉ nhằm giải
+        # phóng trạng thái để người chơi tạo phòng mới, tuyệt đối không đổi RP.
+        if linked_match and old_match_status in {"playing", "waiting_confirm", "disputed"}:
+            previous_note = str(linked_match.get("note") or "").strip()
+            cancellation_note = "Admin đã hủy phòng để giải phóng người chơi; RP không thay đổi."
+            if previous_note:
+                cancellation_note = previous_note + " | " + cancellation_note
             db.table("matches").update({
                 "status": "cancelled",
-                "delta1": 0,
-                "delta2": 0,
-                "note": "Admin đã hủy phòng/trận; lịch sử được giữ nguyên."
-                        + (" RP đã được hoàn tác." if reversed_rp else " Trận chưa cộng RP."),
+                "note": cancellation_note,
                 "updated_at": updated_at,
             }).eq("id", linked_match.get("id")).execute()
 
+        # Với trận confirmed hoặc các trạng thái lịch sử khác, không sửa match:
+        # giữ nguyên trạng thái, tỷ số và delta để BXH/lịch sử không thay đổi.
         db.table("match_rooms").update({
             "status": "cancelled",
-            "note": "Admin đã hủy phòng; dữ liệu phòng và trận được giữ lại.",
+            "note": "Admin đã hủy phòng để người chơi có thể tạo phòng mới. RP và dữ liệu trận được giữ nguyên.",
             "state_expires_at": None,
             "updated_at": updated_at,
         }).eq("id", room_id).execute()
@@ -82,44 +85,13 @@ def register_routes(context):
             "Hủy phòng",
             "room",
             room_id,
-            details=f"Trạng thái cũ: {room.get('status')}; giữ lịch sử; hoàn tác RP: {'có' if reversed_rp else 'không cần'}",
+            details=(
+                f"Trạng thái phòng cũ: {room.get('status')}; "
+                f"trạng thái trận cũ: {old_match_status or 'không có trận'}; "
+                "giữ lịch sử/báo cáo/tranh chấp; không thay đổi RP"
+            ),
         )
-        flash("Đã hủy phòng và giữ nguyên lịch sử." + (" RP của trận đã được hoàn tác." if reversed_rp else ""), "success")
-        return redirect_admin("rooms")
-
-
-    @app.route("/admin/room/<room_id>/delete", methods=["POST"])
-    @login_required
-    @admin_required
-    @admin_permission_required("rooms_manage")
-    def admin_delete_room(room_id):
-        """Chỉ xóa vật lý phòng chờ chưa có trận; phòng có trận phải dùng Hủy."""
-        room = get_room(room_id)
-        if not room:
-            flash("Không tìm thấy phòng.", "danger")
-            return redirect_admin("rooms")
-
-        if room.get("match_id"):
-            flash("Không thể xóa phòng đã có trận. Hãy dùng Hủy để giữ lịch sử và hoàn tác RP an toàn.", "warning")
-            return redirect_admin("rooms")
-
-        # Phòng chờ chưa phát sinh trận/RP mới được phép dọn vật lý.
-        db.table("chat_messages").delete().eq("room_id", room_id).execute()
-        if room.get("invite_id"):
-            db.table("match_invites").update({
-                "status": "cancelled",
-                "updated_at": now_iso(),
-            }).eq("id", room.get("invite_id")).execute()
-        db.table("match_rooms").delete().eq("id", room_id).execute()
-
-        cache_delete("_rz_rooms_all")
-        cache_delete("_rz_invites_all")
-        cache_delete("_rz_current_pending_invites")
-        ttl_cache_delete("rooms_raw")
-        ttl_cache_delete("invites_raw")
-
-        log_admin_action("Xóa phòng chờ", "room", room_id, details=f"{room.get('host_name')} vs {room.get('guest_name')}; chưa có trận")
-        flash("Đã xóa phòng chờ. Không có trận hoặc RP nào bị ảnh hưởng.", "success")
+        flash("Đã hủy phòng. Người chơi có thể tạo phòng mới; RP và lịch sử không thay đổi.", "success")
         return redirect_admin("rooms")
 
 
