@@ -25,21 +25,21 @@ def remove_match_dispute_evidence(match_id):
         print(f"remove_match_dispute_evidence warning: {exc}")
 
 
-def delete_room_safe(room_id):
+def delete_room_safe(room_id, *, reverse_result=True):
     room = get_room(room_id)
     if not room:
         return
 
     if room.get("match_id"):
-        delete_match_safe(room.get("match_id"))
+        delete_match_safe(room.get("match_id"), reverse_result=reverse_result)
 
     db.table("chat_messages").delete().eq("room_id", room_id).execute()
     db.table("match_rooms").delete().eq("id", room_id).execute()
 
 
-def delete_match_safe(match_id):
+def delete_match_safe(match_id, *, reverse_result=True):
     match = get_match(match_id)
-    if match:
+    if match and reverse_result:
         reverse_confirmed_match_result(match)
 
     remove_match_dispute_evidence(match_id)
@@ -61,13 +61,22 @@ def delete_player_safe(user_id):
     if is_admin_user(user):
         return False, "Không được xóa tài khoản admin chính."
 
+    # Khi xóa tài khoản, chỉ xóa dữ liệu liên quan của tài khoản đó.
+    # Không hoàn tác RP/thống kê của các đối thủ đã từng thi đấu với họ.
+    # Nếu hoàn tác từng trận, toàn bộ đối thủ sẽ bị đổi điểm và có thể bị kéo về 1000 RP.
+    related_match_ids = set()
     for room in list_rooms():
         if user_id in [room.get("host_user_id"), room.get("guest_user_id")]:
-            delete_room_safe(room["id"])
+            if room.get("match_id"):
+                related_match_ids.add(str(room.get("match_id")))
+            delete_room_safe(room["id"], reverse_result=False)
 
     for match in list_matches():
         if user_id in [match.get("player1_id"), match.get("player2_id")]:
-            delete_match_safe(match["id"])
+            match_id = str(match.get("id") or "")
+            if match_id and match_id not in related_match_ids:
+                delete_match_safe(match_id, reverse_result=False)
+            related_match_ids.add(match_id)
 
     for invite in list_invites():
         if user_id in [invite.get("from_user_id"), invite.get("to_user_id")]:

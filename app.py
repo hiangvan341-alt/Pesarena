@@ -52,7 +52,7 @@ from modules.system_feature_service import post_login_endpoint, dashboard_is_ena
 from modules.session_runtime_service import (
     IDLE_TIMEOUT_SECONDS, idle_decision, room_blocks_idle_logout, client_config as session_client_config,
 )
-from modules.static_asset_service import asset_url, asset_base_url, shop_asset_base_url
+from modules.static_asset_service import asset_url, asset_base_url, shop_asset_base_url, luckybox_asset_base_url
 from modules.profile import equipment_service as profile_equipment_service
 from modules.win_streaks import (
     WIN_STREAK_TITLES, WIN_STREAK_EVENT_PREFIX, get_win_streak_title,
@@ -64,7 +64,7 @@ from modules.win_streaks import (
 load_dotenv()
 
 APP_NAME = "PES Arena – Bản Lĩnh Sân Cỏ"
-APP_VERSION = "V1.14.41.40"
+APP_VERSION = "V1.14.41.51"
 DEFAULT_POINTS = 1000
 DEVICE_COOKIE_NAME = "rankzone_device_id"
 COOLDOWN_MINUTES = 3
@@ -184,6 +184,7 @@ del _flask_secret_key
 app.jinja_env.globals["asset_url"] = asset_url
 app.jinja_env.globals["asset_base_url"] = asset_base_url
 app.jinja_env.globals["shop_asset_base_url"] = shop_asset_base_url
+app.jinja_env.globals["luckybox_asset_base_url"] = luckybox_asset_base_url
 
 PES_ARENA_TEST_MODE = (os.getenv("PES_ARENA_TEST_MODE") or "false").strip().lower() in {"1", "true", "yes", "on"}
 ALLOW_SIMPLE_TEST_PASSWORDS = (os.getenv("ALLOW_SIMPLE_TEST_PASSWORDS") or "false").strip().lower() in {"1", "true", "yes", "on"}
@@ -1838,14 +1839,17 @@ def list_players(include_admin=False):
     try:
         avatar_frame_map = profile_equipment_service.build_avatar_frame_map(safe)
         name_style_map = profile_equipment_service.build_name_style_map(safe)
+        profile_badge_map = profile_equipment_service.build_profile_badge_map(safe)
     except Exception as exc:
         app.logger.debug("Player cosmetic map fallback: %s", exc)
         avatar_frame_map = {}
         name_style_map = {}
+        profile_badge_map = {}
     for item in safe:
         user_id = str(item.get("id"))
         item["avatar_frame"] = avatar_frame_map.get(user_id)
         item["name_style"] = name_style_map.get(user_id)
+        item["profile_badge"] = profile_badge_map.get(user_id)
         metadata = (item.get("name_style") or {}).get("metadata") if isinstance(item.get("name_style"), dict) else {}
         item["name_style_class"] = str((metadata or {}).get("css_class") or "").strip()
 
@@ -2916,6 +2920,8 @@ def enrich_room(room):
     room["room_code"] = (compact_room_id[:6] or "ROOM00")
 
     room["host_name"] = host.get("display_name", "Unknown")
+    room["host_name_style_class"] = str(host.get("name_style_class") or "").strip()
+    room["host_profile_badge"] = host.get("profile_badge")
     room["host_avatar_url"] = host.get("avatar_url")
     room["host_avatar_frame"] = host.get("avatar_frame")
     room["host_achievement"] = host.get("featured_achievement")
@@ -2926,6 +2932,8 @@ def enrich_room(room):
     room["host_streak_badge"] = get_win_streak_badge(room["host_streak"])
     room["has_guest"] = bool(room.get("guest_user_id"))
     room["guest_name"] = guest.get("display_name", "Đang chờ đối thủ") if room["has_guest"] else "Đang chờ đối thủ"
+    room["guest_name_style_class"] = str(guest.get("name_style_class") or "").strip() if room["has_guest"] else ""
+    room["guest_profile_badge"] = guest.get("profile_badge") if room["has_guest"] else None
     room["guest_avatar_url"] = guest.get("avatar_url") if room["has_guest"] else None
     room["guest_avatar_frame"] = guest.get("avatar_frame") if room["has_guest"] else None
     room["guest_achievement"] = guest.get("featured_achievement") if room["has_guest"] else None
@@ -4110,6 +4118,10 @@ def build_room_state_key(room):
         str((room.get("dispute") or {}).get("status")),
         str((room.get("dispute") or {}).get("updated_at")),
         str(room.get("parsec_link")),
+        str(room.get("host_name_style_class")),
+        str(room.get("guest_name_style_class")),
+        str(((room.get("host_profile_badge") or {}).get("image_url"))),
+        str(((room.get("guest_profile_badge") or {}).get("image_url"))),
     ])
 
 
@@ -5805,6 +5817,7 @@ from modules.admin_shop import register_routes as _register_admin_shop_routes
 from modules.daily_checkin import register_routes as _register_daily_checkin_routes
 from modules.gift_codes import register_routes as _register_gift_code_routes
 from modules.admin_economy import register_routes as _register_admin_economy_routes
+from modules.luckybox import register_routes as _register_luckybox_routes
 
 # Route Admin.
 from modules.admin_system_routes import register_routes as _register_admin_system_routes
@@ -5829,6 +5842,7 @@ for _route_registrar in (
     _register_daily_checkin_routes,
     _register_gift_code_routes,
     _register_admin_economy_routes,
+    _register_luckybox_routes,
     _register_admin_system_routes,
     _register_admin_dashboard_routes,
     _register_admin_account_routes,

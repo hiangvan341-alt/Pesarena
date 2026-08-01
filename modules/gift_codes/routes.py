@@ -25,6 +25,7 @@ def register_routes(context):
                 "gift_code_expired": "Gift Code đã hết hạn.",
                 "gift_code_depleted": "Gift Code đã hết lượt sử dụng.",
                 "gift_code_user_limit": "Bạn đã sử dụng hết số lượt cho Gift Code này.",
+                "gift_code_recipient_only": "Gift Code này được Admin tặng riêng cho tài khoản khác.",
             }
             matched = next((text for key, text in errors.items() if key in message), None)
             if matched:

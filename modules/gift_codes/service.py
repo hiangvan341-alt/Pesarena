@@ -106,6 +106,7 @@ def create_gift_code(actor, form):
     per_user_limit = _safe_int(form.get("per_user_limit"), 1)
     duration_minutes = _safe_int(form.get("duration_minutes"), 120)
     note = str(form.get("note") or "").strip()
+    target_user_id = str(form.get("target_user_id") or "").strip() or None
 
     if not is_admin_user(actor):
         raise ValueError("Tài khoản không có quyền tạo Gift Code.")
@@ -122,6 +123,14 @@ def create_gift_code(actor, form):
     if len(note) > 250:
         raise ValueError("Ghi chú tối đa 250 ký tự.")
 
+    target_user = None
+    if target_user_id:
+        target_user = get_user(target_user_id)
+        if not target_user or target_user.get("role") != "player":
+            raise ValueError("Không tìm thấy người chơi nhận Gift Code.")
+        max_redemptions = 1
+        per_user_limit = 1
+
     start_utc = _parse_vn_datetime(form.get("starts_at"), datetime.now(timezone.utc))
     expires_utc = start_utc + timedelta(minutes=duration_minutes)
     now_iso_value = now_iso()
@@ -137,7 +146,13 @@ def create_gift_code(actor, form):
         "created_by": actor.get("id"),
         "created_by_name": actor.get("display_name") or actor.get("username") or "Admin",
         "note": note or None,
-        "metadata": {"app_version": APP_VERSION},
+        "metadata": {
+            "app_version": APP_VERSION,
+            "private_gift": bool(target_user_id),
+            "target_user_id": target_user_id,
+            "target_username": (target_user or {}).get("username") if target_user else None,
+            "target_display_name": ((target_user or {}).get("display_name") or (target_user or {}).get("username")) if target_user else None,
+        },
         "created_at": now_iso_value,
         "updated_at": now_iso_value,
     }

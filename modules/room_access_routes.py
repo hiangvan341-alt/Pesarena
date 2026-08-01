@@ -218,6 +218,86 @@ def register_routes(context):
         return response
 
 
+    @app.route("/room/<room_id>/kick-guest", methods=["POST"], endpoint="room_kick_guest")
+    @login_required
+    def room_kick_guest(room_id):
+        """Cho phép chủ phòng đưa khách ra khỏi phòng trước khi trận bắt đầu."""
+        user = current_user()
+        room = get_room(room_id)
+
+        if not room:
+            flash("Không tìm thấy phòng.", "danger")
+            return redirect(url_for("dashboard"))
+
+        if not _same_user_id(user.get("id"), room.get("host_user_id")):
+            flash("Chỉ chủ phòng mới có thể đưa đối thủ ra khỏi phòng.", "danger")
+            return redirect(url_for("room_detail", room_id=room_id))
+
+        if room.get("status") != "waiting_ready":
+            flash("Chỉ có thể đưa đối thủ ra khi trận chưa bắt đầu.", "warning")
+            return redirect(url_for("room_detail", room_id=room_id))
+
+        guest_id = room.get("guest_user_id")
+        if not guest_id:
+            flash("Phòng hiện chưa có đối thủ.", "warning")
+            return redirect(url_for("room_detail", room_id=room_id))
+
+        guest = get_user(guest_id) or {}
+        guest_name = guest.get("display_name") or guest.get("username") or "Đối thủ"
+        host_name = user.get("display_name") or user.get("username") or "Chủ phòng"
+        updated_at = now_iso()
+        result = execute_query(
+            db.table("match_rooms").update({
+                "guest_user_id": None,
+                "guest_ready": False,
+                "guest_team": None,
+                "guest_team_overall": None,
+                "guest_team_logo_url": None,
+                "guest_team_league": None,
+                "host_team": None,
+                "host_team_overall": None,
+                "host_team_logo_url": None,
+                "host_team_league": None,
+                "match_id": None,
+                "invite_id": None,
+                "status": "waiting_ready",
+                "note": f"{guest_name} đã được chủ phòng đưa ra khỏi phòng.",
+                "state_expires_at": None,
+                "updated_at": updated_at,
+            })
+            .eq("id", room_id)
+            .eq("host_user_id", user.get("id"))
+            .eq("status", "waiting_ready")
+            .eq("guest_user_id", guest_id),
+            "host_kick_room_guest",
+            attempts=2,
+        )
+
+        if not (result.data or []):
+            flash("Phòng vừa thay đổi trạng thái. Vui lòng tải lại và kiểm tra.", "warning")
+            return redirect(url_for("room_detail", room_id=room_id))
+
+        try:
+            create_user_notification(
+                guest_id,
+                "Bạn đã bị đưa khỏi phòng đấu",
+                f"{host_name} đã đưa bạn ra khỏi phòng #{room.get('room_code') or str(room_id)[:6].upper()}. Trận chưa bắt đầu nên bạn không bị trừ RP.",
+                url_for("players"),
+                "system",
+            )
+        except Exception as exc:
+            app.logger.warning("Kick guest notification failed room=%s guest=%s: %s", room_id, guest_id, exc)
+
+        cache_delete("_rz_rooms_all")
+        cache_delete("_rz_invites_all")
+        cache_delete("_rz_current_pending_invites")
+        ttl_cache_delete("rooms_raw")
+        ttl_cache_delete("invites_raw")
+
+        flash(f"Đã đưa {guest_name} ra khỏi phòng. Không ai bị trừ RP và bạn có thể mời đối thủ khác.", "success")
+        return redirect(url_for("room_detail", room_id=room_id))
+
+
     @app.route("/room/<room_id>/leave", methods=["POST"])
     @login_required
     def room_leave(room_id):

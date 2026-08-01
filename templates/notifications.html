@@ -30,10 +30,10 @@
         {% if not notice.is_read %}
         <form method="post" action="{{ url_for('mark_notification_read', notification_id=notice.id) }}">
             {% if notice.link_url %}<input type="hidden" name="next_url" value="{{ notice.link_url }}">{% endif %}
-            <button class="btn small green" type="submit">{{ 'Xem chi tiết' if notice.link_url else 'Đánh dấu đã đọc' }}</button>
+            <button class="btn small green" type="submit">{{ 'Kiểm tra' if notice.link_url else 'Đánh dấu đã đọc' }}</button>
         </form>
         {% elif notice.link_url %}
-        <a class="btn small" href="{{ notice.link_url }}">Xem lại chi tiết</a>
+        <a class="btn small" href="{{ notice.link_url }}">Kiểm tra lại</a>
         {% endif %}
     </div>
 </article>
