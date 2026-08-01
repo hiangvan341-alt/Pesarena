@@ -17,7 +17,7 @@ ADMIN = (ROOT / "templates/admin_luckybox/index.html").read_text(encoding="utf-8
 
 
 def test_phase3_version_and_python_parse():
-    assert 'APP_VERSION = "V1.14.41.44"' in APP
+    assert 'APP_VERSION = "V1.14.41.45"' in APP
     for relative in (
         "modules/luckybox/repository.py",
         "modules/luckybox/service.py",
@@ -54,7 +54,7 @@ def test_live_open_still_uses_atomic_rpc_and_request_id():
 def test_player_ui_has_price_rewards_odds_and_history():
     for text in (
         "Giá mỗi lượt",
-        "Số vật phẩm trong mỗi lượt",
+        "Tỷ lệ số vật phẩm trong mỗi lượt",
         "POOL PHẦN THƯỞNG",
         "Lịch sử Lucky Box",
         "Ba phần thưởng của bạn",
@@ -65,11 +65,40 @@ def test_player_ui_has_price_rewards_odds_and_history():
     assert "data-lb3-open" in TEMPLATE
 
 
-def test_phase3_stays_simple_without_phase4_animation():
-    assert "canvas" not in TEMPLATE.lower()
-    assert "confetti" not in JS.lower()
-    assert "requestAnimationFrame" not in JS
-    assert ".lb3-result-grid" in CSS
+def test_phase4_has_opening_animation_without_sound():
+    for marker in (
+        "data-lb4-overlay",
+        "data-lb4-stage",
+        "data-lb4-rewards",
+        "data-lb4-skip",
+        "data-lb4-continue",
+    ):
+        assert marker in TEMPLATE
+    for marker in (
+        "playOpeningAnimation",
+        "strongestRarity",
+        "is-charging",
+        "is-bursting",
+        "is-revealing",
+    ):
+        assert marker in JS
+    assert "@keyframes lb4BoxCharge" in CSS
+    assert "@keyframes lb4BoxBurst" in CSS
+    assert "@keyframes lb4Spark" in CSS
+    assert "Audio(" not in JS
+    assert "new Audio" not in JS
+
+
+def test_member_does_not_receive_or_see_rate_percentages():
+    assert "show_rates = preview_mode" in SERVICE
+    assert 'reward.pop("group_percent", None)' in SERVICE
+    assert 'reward.pop("weight", None)' in SERVICE
+    assert '"item_count_odds": _item_count_percentages(selected_rate) if show_rates else []' in SERVICE
+    assert "{% if show_rates %}" in TEMPLATE
+    assert "odd.percent" in TEMPLATE
+    assert "CHỈ ADMIN PREVIEW" in TEMPLATE
+    assert "{% if show_rates %}<p>Tỷ lệ trong nhóm" in TEMPLATE
+    assert "TỶ LỆ CÔNG KHAI" not in TEMPLATE
 
 
 def test_shop_and_account_navigation_link_to_luckybox():

@@ -298,6 +298,13 @@ def build_user_context(actor, admin_preview=False, selected_rate_version_id=None
         "non_item": sum(_safe_int(row.get("weight"), 0) for row in available if not row.get("counts_as_item")),
     }
     rewards = [_decorate_public_reward(row, totals) for row in rewards_raw]
+    preview_mode = bool(admin_preview and _is_admin(actor))
+    show_rates = preview_mode
+    if not show_rates:
+        # Không gửi trọng số/tỷ lệ ra giao diện member. Admin Preview vẫn thấy để kiểm thử.
+        for reward in rewards:
+            reward.pop("group_percent", None)
+            reward.pop("weight", None)
     visible_rewards = [row for row in rewards if row.get("available")]
     reward_groups = {
         "zcoin": [row for row in visible_rewards if row.get("reward_type") == "zcoin"],
@@ -308,7 +315,6 @@ def build_user_context(actor, admin_preview=False, selected_rate_version_id=None
     balance = _safe_int((actor or {}).get("zcoin_balance"), 0)
     price = _safe_int((selected_rate or {}).get("open_price_zcoin"), 0)
     is_live = bool(box and box.get("is_enabled") and active_rate and selected_rate and str(selected_rate.get("id")) == str(active_rate.get("id")))
-    preview_mode = bool(admin_preview and _is_admin(actor))
     can_open = bool(
         (preview_mode and selected_rate)
         or (is_live and actor and actor.get("role") == "player" and price > 0 and balance >= price)
@@ -320,7 +326,8 @@ def build_user_context(actor, admin_preview=False, selected_rate_version_id=None
         "selected_rate": selected_rate,
         "rewards": rewards,
         "reward_groups": reward_groups,
-        "item_count_odds": _item_count_percentages(selected_rate),
+        "item_count_odds": _item_count_percentages(selected_rate) if show_rates else [],
+        "show_rates": show_rates,
         "open_price": price,
         "balance": balance,
         "can_open": can_open,

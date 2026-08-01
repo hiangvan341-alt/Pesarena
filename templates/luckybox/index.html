@@ -9,6 +9,7 @@
      data-preview-mode="{{ '1' if preview_mode else '0' }}"
      data-rate-version-id="{{ selected_rate.id if selected_rate else '' }}"
      data-box-code="{{ box.code if box else 'lucky_box_pes_arena' }}"
+     data-box-image="{{ asset_url(box.image_path) if box else asset_url('luckybox/luckybox-pes-arena.webp') }}"
      data-open-price="{{ open_price }}">
 
   {% if preview_mode %}
@@ -55,6 +56,27 @@
     </div>
   </section>
 
+  <div class="lb4-opening" data-lb4-overlay hidden aria-hidden="true">
+    <div class="lb4-backdrop"></div>
+    <section class="lb4-dialog" role="dialog" aria-modal="true" aria-labelledby="lb4OpeningTitle">
+      <button class="lb4-skip" type="button" data-lb4-skip>Bỏ qua hiệu ứng</button>
+      <div class="lb4-stage" data-lb4-stage>
+        <div class="lb4-ring ring-one"></div>
+        <div class="lb4-ring ring-two"></div>
+        <div class="lb4-flash"></div>
+        <div class="lb4-sparks" aria-hidden="true">
+          {% for _ in range(12) %}<i></i>{% endfor %}
+        </div>
+        <img class="lb4-box" data-lb4-box src="{{ asset_url(box.image_path) if box else asset_url('luckybox/luckybox-pes-arena.webp') }}" alt="Lucky Box PES Arena">
+      </div>
+      <span class="lb3-kicker">PES ARENA · OPENING</span>
+      <h2 id="lb4OpeningTitle">Đang mở Lucky Box</h2>
+      <p class="lb4-status-text" data-lb4-status>Đang tập trung năng lượng...</p>
+      <div class="lb4-reward-grid" data-lb4-rewards hidden></div>
+      <button class="btn gold lb4-continue" type="button" data-lb4-continue hidden>Xem phần thưởng</button>
+    </section>
+  </div>
+
   <section class="lb3-result" data-lb3-result hidden aria-live="polite">
     <div class="lb3-section-head">
       <div><span class="lb3-kicker">KẾT QUẢ</span><h2>Ba phần thưởng của bạn</h2></div>
@@ -67,9 +89,10 @@
     </div>
   </section>
 
-  <section class="lb3-panel">
+  {% if show_rates %}
+  <section class="lb3-panel lb3-admin-rates">
     <div class="lb3-section-head">
-      <div><span class="lb3-kicker">TỶ LỆ CÔNG KHAI</span><h2>Số vật phẩm trong mỗi lượt</h2></div>
+      <div><span class="lb3-kicker">CHỈ ADMIN PREVIEW</span><h2>Tỷ lệ số vật phẩm trong mỗi lượt</h2></div>
       {% if selected_rate %}<span>Rate Version {{ selected_rate.version_number }} · {{ selected_rate.status|upper }}</span>{% endif %}
     </div>
     <div class="lb3-odds-grid">
@@ -77,8 +100,9 @@
       <article><strong>{{ odd.percent }}%</strong><span>{{ odd.count }} vật phẩm</span><small>Trong 3 kết quả</small></article>
       {% else %}<p>Chưa có tỷ lệ để hiển thị.</p>{% endfor %}
     </div>
-    <p class="lb3-explain">Mỗi lượt luôn nhận đúng 3 kết quả. “Vật phẩm” gồm khung, banner, badge, màu tên, theme, vé và coupon; các ô còn lại là Zcoin.</p>
+    <p class="lb3-explain">Dữ liệu tỷ lệ này chỉ hiển thị cho Admin trong chế độ Preview.</p>
   </section>
+  {% endif %}
 
   <section class="lb3-panel">
     <div class="lb3-section-head">
@@ -108,7 +132,7 @@
               <small>{{ reward.type_label }}</small>
               <h4>{{ reward.reward_name }}</h4>
               {% if reward.reward_amount %}<strong>{{ format_zcoin(reward.reward_amount) }} Zcoin</strong>{% endif %}
-              <p>Tỷ lệ trong nhóm: {{ reward.group_percent }}%</p>
+              {% if show_rates %}<p>Tỷ lệ trong nhóm: {{ reward.group_percent }}%</p>{% endif %}
             </div>
           </article>
           {% endfor %}
