@@ -242,10 +242,6 @@ def register_routes(context):
             flash("Phòng hiện chưa có đối thủ.", "warning")
             return redirect(url_for("room_detail", room_id=room_id))
 
-        if bool(room.get("guest_ready")):
-            flash("Đối thủ đã bấm Sẵn sàng nên không thể bị đưa ra khỏi phòng.", "warning")
-            return redirect(url_for("room_detail", room_id=room_id))
-
         guest = get_user(guest_id) or {}
         guest_name = guest.get("display_name") or guest.get("username") or "Đối thủ"
         host_name = user.get("display_name") or user.get("username") or "Chủ phòng"
@@ -272,8 +268,7 @@ def register_routes(context):
             .eq("id", room_id)
             .eq("host_user_id", user.get("id"))
             .eq("status", "waiting_ready")
-            .eq("guest_user_id", guest_id)
-            .eq("guest_ready", False),
+            .eq("guest_user_id", guest_id),
             "host_kick_room_guest",
             attempts=2,
         )
@@ -285,8 +280,8 @@ def register_routes(context):
         try:
             create_user_notification(
                 guest_id,
-                "Bạn đã rời phòng đấu",
-                f"{host_name} đã đưa bạn ra khỏi phòng #{room.get('room_code') or str(room_id)[:6].upper()} trước khi trận bắt đầu.",
+                "Bạn đã bị đưa khỏi phòng đấu",
+                f"{host_name} đã đưa bạn ra khỏi phòng #{room.get('room_code') or str(room_id)[:6].upper()}. Trận chưa bắt đầu nên bạn không bị trừ RP.",
                 url_for("players"),
                 "system",
             )
@@ -299,7 +294,7 @@ def register_routes(context):
         ttl_cache_delete("rooms_raw")
         ttl_cache_delete("invites_raw")
 
-        flash(f"Đã đưa {guest_name} ra khỏi phòng. Bạn có thể mời đối thủ khác.", "success")
+        flash(f"Đã đưa {guest_name} ra khỏi phòng. Không ai bị trừ RP và bạn có thể mời đối thủ khác.", "success")
         return redirect(url_for("room_detail", room_id=room_id))
 
 
