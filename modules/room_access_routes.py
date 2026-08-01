@@ -237,6 +237,12 @@ def register_routes(context):
             flash("Chỉ có thể đưa đối thủ ra khi trận chưa bắt đầu.", "warning")
             return redirect(url_for("room_detail", room_id=room_id))
 
+        # Phòng đã liên kết match tuyệt đối không được dùng thao tác kích khách,
+        # kể cả khi status bị sai do dữ liệu cũ, để tránh làm mồ côi trận/RP.
+        if room.get("match_id"):
+            flash("Phòng đã có trận đấu liên kết nên không thể đưa người chơi ra.", "danger")
+            return redirect(url_for("room_detail", room_id=room_id))
+
         guest_id = room.get("guest_user_id")
         if not guest_id:
             flash("Phòng hiện chưa có đối thủ.", "warning")
@@ -245,6 +251,7 @@ def register_routes(context):
         guest = get_user(guest_id) or {}
         guest_name = guest.get("display_name") or guest.get("username") or "Đối thủ"
         host_name = user.get("display_name") or user.get("username") or "Chủ phòng"
+        old_invite_id = room.get("invite_id")
         updated_at = now_iso()
         result = execute_query(
             db.table("match_rooms").update({
@@ -276,6 +283,21 @@ def register_routes(context):
         if not (result.data or []):
             flash("Phòng vừa thay đổi trạng thái. Vui lòng tải lại và kiểm tra.", "warning")
             return redirect(url_for("room_detail", room_id=room_id))
+
+        # Đóng lời mời gắn với lượt vào phòng này. Trước đây chỉ xóa invite_id
+        # trong room nên lời mời có thể vẫn hiện là đang xử lý ở nơi khác.
+        if old_invite_id:
+            try:
+                execute_query(
+                    db.table("match_invites").update({
+                        "status": "cancelled",
+                        "updated_at": updated_at,
+                    }).eq("id", old_invite_id),
+                    "cancel_invite_after_host_kick",
+                    attempts=2,
+                )
+            except Exception as exc:
+                app.logger.warning("Kick guest invite cleanup failed room=%s invite=%s: %s", room_id, old_invite_id, exc)
 
         try:
             create_user_notification(

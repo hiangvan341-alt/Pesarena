@@ -337,7 +337,7 @@
                                 {% endif %}
                                 {% if p.admin_level == 'none' %}
                                 <form class="inline-form" method="post" action="{{ url_for('admin_reset_player_stats', user_id=p.id) }}" onsubmit="return confirm('Reset toàn bộ chỉ số thi đấu?')"><button class="btn gold" type="submit">Reset chỉ số</button></form>
-                                <form class="inline-form" method="post" action="{{ url_for('admin_delete_player', user_id=p.id) }}" onsubmit="return confirm('XÓA ACCOUNT và toàn bộ dữ liệu liên quan?')"><button class="btn red" type="submit">Xóa account</button></form>
+                                <form class="inline-form" method="post" action="{{ url_for('admin_delete_player', user_id=p.id) }}" onsubmit="return confirm('VÔ HIỆU HÓA tài khoản này? Lịch sử trận và RP của mọi người sẽ được giữ nguyên.')"><button class="btn red" type="submit">Xóa mềm</button></form>
                                 {% endif %}
                                 <a class="btn" href="{{ url_for('profile', user_id=p.id) }}">Xem hồ sơ</a>
                             </div>
