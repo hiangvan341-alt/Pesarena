@@ -5292,3 +5292,18 @@ html[data-theme="light"] .account-presence-control select{background:#fff!import
     transition-duration: .001ms !important;
   }
 }
+
+/* V1.14.41.49 · Huy hiệu trang bị công khai + điều khiển kick phòng */
+.player-display-name-line{display:inline-flex;align-items:center;gap:7px;min-width:0}
+.equipped-profile-badge{display:inline-block;object-fit:contain;flex:0 0 auto;filter:drop-shadow(0 3px 7px rgba(0,0,0,.42))}
+.players-equipped-profile-badge{width:22px;height:22px}
+.room-equipped-profile-badge{width:30px;height:30px}
+.room-kick-guest-box{display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin:0 0 16px;padding:13px 15px;border:1px solid rgba(239,68,68,.35);border-radius:13px;background:rgba(127,29,29,.13)}
+.room-kick-guest-box p{margin:0;color:#fca5a5}
+@media(max-width:640px){.players-equipped-profile-badge{width:20px;height:20px}.room-equipped-profile-badge{width:25px;height:25px}.room-kick-guest-box{align-items:stretch}.room-kick-guest-box form,.room-kick-guest-box button{width:100%}}
+
+/* V1.14.41.50 · Kick đối thủ đã sẵn sàng, không trừ RP */
+.room-guest-card-kick{margin:10px 0 0}
+.room-guest-card-kick-btn{min-height:40px;padding:9px 14px;border-radius:11px;font-size:13px;font-weight:900;box-shadow:0 8px 18px rgba(127,29,29,.28)}
+.room-guest-card-kick-btn:hover{transform:translateY(-1px)}
+@media(max-width:640px){.room-guest-card-kick,.room-guest-card-kick-btn{width:100%}}

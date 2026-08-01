@@ -28,7 +28,7 @@ def _cache_keys(user_id):
     return f"_rz_profile_equipment_{normalized}", f"profile_equipment:{user_id}"
 
 
-PUBLIC_PROFILE_SLOTS = ("avatar_frame", "name_style")
+PUBLIC_PROFILE_SLOTS = ("avatar_frame", "name_style", "profile_badge")
 PUBLIC_MAP_REQUEST_KEY = "_rz_profile_public_equipment_maps"
 PUBLIC_MAP_TTL_KEY = "profile_public_equipment_maps"
 
@@ -155,6 +155,10 @@ def build_avatar_frame_map(players=None):
 
 def build_name_style_map(players=None):
     return _build_public_equipment_maps(players).get("name_style", {})
+
+
+def build_profile_badge_map(players=None):
+    return _build_public_equipment_maps(players).get("profile_badge", {})
 
 def build_equipment_state(player):
     """Trả về dict slot -> thông tin vật phẩm đang trang bị."""
