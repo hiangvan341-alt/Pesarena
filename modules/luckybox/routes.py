@@ -45,6 +45,8 @@ def register_routes(context):
                 "reward_groups": {"zcoin": [], "shop": [], "exclusive": [], "other": []},
                 "rate_validation": None,
                 "duplicate_policies": service.DUPLICATE_POLICIES,
+                "member_openings": [],
+                "member_history_summary": {"opening_count": 0, "member_count": 0, "zcoin_spent": 0},
                 "audit_logs": [],
                 "max_preview_iterations": service.MAX_PREVIEW_ITERATIONS,
             }

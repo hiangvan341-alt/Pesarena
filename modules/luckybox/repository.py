@@ -224,6 +224,61 @@ def open_box(user_id, box_code, request_id):
     )
 
 
+
+def list_admin_openings(limit=50):
+    """Return latest real Lucky Box openings for the Admin page.
+
+    Uses three small queries instead of a deep PostgREST join so the page keeps
+    working even when relationship names differ between environments.
+    """
+    require_db()
+    safe_limit = max(1, min(int(limit or 50), 100))
+    result = execute_query(
+        db.table("lucky_box_openings")
+        .select("id,request_id,user_id,box_code,rate_version,zcoin_cost,balance_before,balance_after,opened_at,status,metadata")
+        .order("opened_at", desc=True)
+        .limit(safe_limit),
+        "luckybox_admin_member_history",
+        attempts=2,
+    )
+    rows = [dict(row) for row in (result.data or [])]
+    if not rows:
+        return []
+
+    user_ids = sorted({str(row.get("user_id")) for row in rows if row.get("user_id")})
+    users = {}
+    if user_ids:
+        user_result = execute_query(
+            db.table("users").select("id,username,display_name").in_("id", user_ids),
+            "luckybox_admin_member_history_users",
+            attempts=2,
+        )
+        users = {str(row.get("id")): dict(row) for row in (user_result.data or [])}
+
+    opening_ids = [str(row.get("id")) for row in rows if row.get("id")]
+    rewards_by_opening = {opening_id: [] for opening_id in opening_ids}
+    if opening_ids:
+        reward_result = execute_query(
+            db.table("lucky_box_opening_rewards")
+            .select("opening_id,reward_slot,reward_type,reward_code,reward_name,reward_amount,reward_rarity,original_reward_code,duplicate_conversion")
+            .in_("opening_id", opening_ids)
+            .order("reward_slot"),
+            "luckybox_admin_member_history_rewards",
+            attempts=2,
+        )
+        for reward in (reward_result.data or []):
+            reward_row = dict(reward)
+            rewards_by_opening.setdefault(str(reward_row.get("opening_id")), []).append(reward_row)
+
+    for row in rows:
+        row["user"] = users.get(str(row.get("user_id")))
+        row["rewards"] = sorted(
+            rewards_by_opening.get(str(row.get("id")), []),
+            key=lambda item: int(item.get("reward_slot") or 0),
+        )
+    return rows
+
+
 def list_user_openings(user_id, limit=30):
     require_db()
     safe_limit = max(1, min(int(limit or 30), 100))
