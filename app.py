@@ -52,7 +52,7 @@ from modules.system_feature_service import post_login_endpoint, dashboard_is_ena
 from modules.session_runtime_service import (
     IDLE_TIMEOUT_SECONDS, idle_decision, room_blocks_idle_logout, client_config as session_client_config,
 )
-from modules.static_asset_service import asset_url, asset_base_url, shop_asset_base_url
+from modules.static_asset_service import asset_url, asset_base_url, shop_asset_base_url, luckybox_asset_base_url
 from modules.profile import equipment_service as profile_equipment_service
 from modules.win_streaks import (
     WIN_STREAK_TITLES, WIN_STREAK_EVENT_PREFIX, get_win_streak_title,
@@ -64,7 +64,7 @@ from modules.win_streaks import (
 load_dotenv()
 
 APP_NAME = "PES Arena – Bản Lĩnh Sân Cỏ"
-APP_VERSION = "V1.14.41.41"
+APP_VERSION = "V1.14.41.46"
 DEFAULT_POINTS = 1000
 DEVICE_COOKIE_NAME = "rankzone_device_id"
 COOLDOWN_MINUTES = 3
@@ -184,6 +184,7 @@ del _flask_secret_key
 app.jinja_env.globals["asset_url"] = asset_url
 app.jinja_env.globals["asset_base_url"] = asset_base_url
 app.jinja_env.globals["shop_asset_base_url"] = shop_asset_base_url
+app.jinja_env.globals["luckybox_asset_base_url"] = luckybox_asset_base_url
 
 PES_ARENA_TEST_MODE = (os.getenv("PES_ARENA_TEST_MODE") or "false").strip().lower() in {"1", "true", "yes", "on"}
 ALLOW_SIMPLE_TEST_PASSWORDS = (os.getenv("ALLOW_SIMPLE_TEST_PASSWORDS") or "false").strip().lower() in {"1", "true", "yes", "on"}
@@ -5809,6 +5810,7 @@ from modules.admin_shop import register_routes as _register_admin_shop_routes
 from modules.daily_checkin import register_routes as _register_daily_checkin_routes
 from modules.gift_codes import register_routes as _register_gift_code_routes
 from modules.admin_economy import register_routes as _register_admin_economy_routes
+from modules.luckybox import register_routes as _register_luckybox_routes
 
 # Route Admin.
 from modules.admin_system_routes import register_routes as _register_admin_system_routes
@@ -5833,6 +5835,7 @@ for _route_registrar in (
     _register_daily_checkin_routes,
     _register_gift_code_routes,
     _register_admin_economy_routes,
+    _register_luckybox_routes,
     _register_admin_system_routes,
     _register_admin_dashboard_routes,
     _register_admin_account_routes,
