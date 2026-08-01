@@ -17,7 +17,7 @@ ADMIN = (ROOT / "templates/admin_luckybox/index.html").read_text(encoding="utf-8
 
 
 def test_phase3_version_and_python_parse():
-    assert 'APP_VERSION = "V1.14.41.45"' in APP
+    assert 'APP_VERSION = "V1.14.41.46"' in APP
     for relative in (
         "modules/luckybox/repository.py",
         "modules/luckybox/service.py",
@@ -51,18 +51,18 @@ def test_live_open_still_uses_atomic_rpc_and_request_id():
     assert "request_id:requestId()" in JS
 
 
-def test_player_ui_has_price_rewards_odds_and_history():
+def test_player_ui_has_price_rewards_and_history_without_rate_panel():
     for text in (
         "Giá mỗi lượt",
-        "Tỷ lệ số vật phẩm trong mỗi lượt",
         "POOL PHẦN THƯỞNG",
         "Lịch sử Lucky Box",
         "Ba phần thưởng của bạn",
     ):
         assert text in TEMPLATE
-    assert "item_count_odds" in TEMPLATE
     assert "reward_groups" in TEMPLATE
     assert "data-lb3-open" in TEMPLATE
+    assert "Tỷ lệ số vật phẩm trong mỗi lượt" not in TEMPLATE
+    assert "Tỷ lệ trong nhóm" not in TEMPLATE
 
 
 def test_phase4_has_opening_animation_without_sound():
@@ -89,16 +89,22 @@ def test_phase4_has_opening_animation_without_sound():
     assert "new Audio" not in JS
 
 
-def test_member_does_not_receive_or_see_rate_percentages():
-    assert "show_rates = preview_mode" in SERVICE
+def test_player_style_ui_never_exposes_rate_percentages_even_in_admin_preview():
+    assert "show_rates = False" in SERVICE
     assert 'reward.pop("group_percent", None)' in SERVICE
     assert 'reward.pop("weight", None)' in SERVICE
     assert '"item_count_odds": _item_count_percentages(selected_rate) if show_rates else []' in SERVICE
-    assert "{% if show_rates %}" in TEMPLATE
-    assert "odd.percent" in TEMPLATE
-    assert "CHỈ ADMIN PREVIEW" in TEMPLATE
-    assert "{% if show_rates %}<p>Tỷ lệ trong nhóm" in TEMPLATE
-    assert "TỶ LỆ CÔNG KHAI" not in TEMPLATE
+    assert '"show_rates": False' in ROUTES
+    for forbidden in (
+        "Tỷ lệ số vật phẩm trong mỗi lượt",
+        "Tỷ lệ trong nhóm",
+        "odd.percent",
+        "CHỈ ADMIN PREVIEW",
+        "TỶ LỆ CÔNG KHAI",
+    ):
+        assert forbidden not in TEMPLATE
+    assert "Trọng số 0 vật phẩm" in ADMIN
+    assert "Trọng số 1 vật phẩm" in ADMIN
 
 
 def test_shop_and_account_navigation_link_to_luckybox():

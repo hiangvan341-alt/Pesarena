@@ -299,12 +299,12 @@ def build_user_context(actor, admin_preview=False, selected_rate_version_id=None
     }
     rewards = [_decorate_public_reward(row, totals) for row in rewards_raw]
     preview_mode = bool(admin_preview and _is_admin(actor))
-    show_rates = preview_mode
-    if not show_rates:
-        # Không gửi trọng số/tỷ lệ ra giao diện member. Admin Preview vẫn thấy để kiểm thử.
-        for reward in rewards:
-            reward.pop("group_percent", None)
-            reward.pop("weight", None)
+    # Giao diện người chơi luôn ẩn tỷ lệ, kể cả khi Admin đang xem Preview.
+    # Admin vẫn xem/chỉnh tỷ lệ tại trang quản trị và trang mô phỏng Draft riêng.
+    show_rates = False
+    for reward in rewards:
+        reward.pop("group_percent", None)
+        reward.pop("weight", None)
     visible_rewards = [row for row in rewards if row.get("available")]
     reward_groups = {
         "zcoin": [row for row in visible_rewards if row.get("reward_type") == "zcoin"],

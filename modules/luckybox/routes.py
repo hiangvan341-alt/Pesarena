@@ -157,7 +157,7 @@ def register_routes(context):
             context_data = {
                 "box": None, "active_rate": None, "selected_rate": None, "rewards": [],
                 "reward_groups": {"zcoin": [], "shop": [], "exclusive": [], "other": []},
-                "item_count_odds": [], "show_rates": admin_preview, "open_price": 0, "balance": int(actor.get("zcoin_balance") or 0),
+                "item_count_odds": [], "show_rates": False, "open_price": 0, "balance": int(actor.get("zcoin_balance") or 0),
                 "can_open": False, "is_live": False, "preview_mode": admin_preview, "openings": [],
                 "request_id": "", "reward_catalog": {},
             }
