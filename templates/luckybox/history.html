@@ -1,0 +1,16 @@
+{% extends "base.html" %}
+{% block title %}Lịch sử Lucky Box{% endblock %}
+{% block content %}
+<div class="container py-4">
+  <h1 class="h3 mb-3">Lịch sử Lucky Box</h1>
+  {% if openings %}
+  <div class="list-group">
+    {% for opening in openings %}
+    <a class="list-group-item list-group-item-action" href="{{ url_for('luckybox_opening_detail', opening_id=opening.id) }}">
+      <strong>{{ opening.box_code }}</strong> · {{ opening.opened_at }} · Version {{ opening.rate_version }}
+    </a>
+    {% endfor %}
+  </div>
+  {% else %}<div class="alert alert-secondary">Chưa có lượt mở Lucky Box.</div>{% endif %}
+</div>
+{% endblock %}

@@ -1,0 +1,20 @@
+{% extends "base.html" %}
+{% block title %}Chi tiết Lucky Box{% endblock %}
+{% block content %}
+<div class="container py-4">
+  <h1 class="h3">Chi tiết lượt mở</h1>
+  <p><strong>Mã:</strong> {{ opening.id }}</p>
+  <p><strong>Rate Version:</strong> {{ opening.rate_version }}</p>
+  <p><strong>Zcoin:</strong> {{ opening.balance_before }} → {{ opening.balance_after }}</p>
+  <div class="row g-3">
+    {% for reward in opening.rewards %}
+    <div class="col-md-4"><div class="card card-body h-100">
+      <div class="text-muted">Ô {{ reward.reward_slot }}</div>
+      <strong>{{ reward.reward_name }}</strong>
+      {% if reward.reward_amount %}<span>{{ reward.reward_amount }} Zcoin</span>{% endif %}
+      {% if reward.duplicate_conversion %}<small>Quy đổi trùng: {{ reward.duplicate_conversion }} Zcoin</small>{% endif %}
+    </div></div>
+    {% endfor %}
+  </div>
+</div>
+{% endblock %}

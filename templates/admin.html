@@ -44,6 +44,7 @@
     </div>
     <div class="admin-heading-actions">
         <a class="btn gray" href="{{ url_for('dashboard') }}">⌂ Trang người chơi</a>
+        <a class="btn" href="{{ url_for('admin_luckybox_preview') }}">🎁 Lucky Box Preview</a>
         {% if can_admin('system_features_manage') or can_admin('announcements_manage') or can_admin('daily_rank_limits_manage') %}<a class="btn" href="#system">⚙ Cài đặt hệ thống</a>{% endif %}
     </div>
 </div>
