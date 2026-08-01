@@ -36,7 +36,7 @@
         <section class="room-side-card room-team-card home" aria-label="Chủ phòng">
             <div class="room-player-heading-plain">
                 {{ player_avatar(name=room.host_name, avatar_url=room.host_avatar_url, achievement=room.host_achievement, size='sm', frame=room.host_avatar_frame) }}
-                <div class="room-player-name {{ room.host_name_style_class or '' }}">{{ room.host_name }}</div>
+                <div class="room-player-name {{ room.host_name_style_class or '' }}"><span>{{ room.host_name }}</span>{% if room.host_profile_badge %}<img class="equipped-profile-badge room-equipped-profile-badge" src="{{ room.host_profile_badge.image_url }}" alt="{{ room.host_profile_badge.name }}" title="{{ room.host_profile_badge.name }}" loading="lazy">{% endif %}</div>
                 <div class="room-player-rankline">
                     <img src="{{ asset_url('ranks/' ~ room.host_rank_info.slug ~ '.webp') }}" alt="{{ room.host_rank_info.name }}" loading="lazy">
                     <span>{{ room.host_rank_info.name }}</span>
@@ -348,7 +348,7 @@
         <section class="room-side-card room-team-card away" aria-label="Khách">
             <div class="room-player-heading-plain">
                 {{ player_avatar(name=room.guest_name, avatar_url=room.guest_avatar_url, achievement=room.guest_achievement, size='sm', frame=room.guest_avatar_frame) }}
-                <div class="room-player-name {{ room.guest_name_style_class or '' }}">{{ room.guest_name }}</div>
+                <div class="room-player-name {{ room.guest_name_style_class or '' }}"><span>{{ room.guest_name }}</span>{% if room.guest_profile_badge %}<img class="equipped-profile-badge room-equipped-profile-badge" src="{{ room.guest_profile_badge.image_url }}" alt="{{ room.guest_profile_badge.name }}" title="{{ room.guest_profile_badge.name }}" loading="lazy">{% endif %}</div>
                 {% if room.has_guest and room.guest_rank_info %}
                 <div class="room-player-rankline">
                     <img src="{{ asset_url('ranks/' ~ room.guest_rank_info.slug ~ '.webp') }}" alt="{{ room.guest_rank_info.name }}" loading="lazy">
@@ -437,6 +437,21 @@
 
     <div class="panel room-extra-controls">
     <h2 class="room-control-title">Điều khiển phòng</h2>
+
+    {% if room.status == "waiting_ready" and room.has_guest and room_room_viewer_is_host and not room.guest_ready %}
+    <div class="room-kick-guest-box">
+        <form class="inline-form room-exit-confirm-form" method="post" action="{{ url_for('room_kick_guest', room_id=room.id) }}"
+              data-modal-tone="danger"
+              data-modal-icon="🚫"
+              data-modal-title="Đưa đối thủ ra khỏi phòng?"
+              data-modal-message="Đối thủ sẽ rời phòng và bạn có thể mời người khác. Thao tác này không trừ RP vì trận chưa bắt đầu."
+              data-modal-note="KHÔNG TRỪ RP"
+              data-modal-confirm-label="Đưa ra khỏi phòng">
+            <button class="btn red" type="submit">🚫 Đưa đối thủ ra khỏi phòng</button>
+        </form>
+        <p class="small">Chỉ chủ phòng sử dụng được trước khi đối thủ bấm Sẵn sàng.</p>
+    </div>
+    {% endif %}
 
     {% if (system_features.friendly_enabled or system_features.friendly_random3_enabled) and room.status == "waiting_ready" %}
 

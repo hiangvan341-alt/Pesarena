@@ -64,7 +64,7 @@ from modules.win_streaks import (
 load_dotenv()
 
 APP_NAME = "PES Arena – Bản Lĩnh Sân Cỏ"
-APP_VERSION = "V1.14.41.48"
+APP_VERSION = "V1.14.41.49"
 DEFAULT_POINTS = 1000
 DEVICE_COOKIE_NAME = "rankzone_device_id"
 COOLDOWN_MINUTES = 3
@@ -1839,14 +1839,17 @@ def list_players(include_admin=False):
     try:
         avatar_frame_map = profile_equipment_service.build_avatar_frame_map(safe)
         name_style_map = profile_equipment_service.build_name_style_map(safe)
+        profile_badge_map = profile_equipment_service.build_profile_badge_map(safe)
     except Exception as exc:
         app.logger.debug("Player cosmetic map fallback: %s", exc)
         avatar_frame_map = {}
         name_style_map = {}
+        profile_badge_map = {}
     for item in safe:
         user_id = str(item.get("id"))
         item["avatar_frame"] = avatar_frame_map.get(user_id)
         item["name_style"] = name_style_map.get(user_id)
+        item["profile_badge"] = profile_badge_map.get(user_id)
         metadata = (item.get("name_style") or {}).get("metadata") if isinstance(item.get("name_style"), dict) else {}
         item["name_style_class"] = str((metadata or {}).get("css_class") or "").strip()
 
@@ -2918,6 +2921,7 @@ def enrich_room(room):
 
     room["host_name"] = host.get("display_name", "Unknown")
     room["host_name_style_class"] = str(host.get("name_style_class") or "").strip()
+    room["host_profile_badge"] = host.get("profile_badge")
     room["host_avatar_url"] = host.get("avatar_url")
     room["host_avatar_frame"] = host.get("avatar_frame")
     room["host_achievement"] = host.get("featured_achievement")
@@ -2929,6 +2933,7 @@ def enrich_room(room):
     room["has_guest"] = bool(room.get("guest_user_id"))
     room["guest_name"] = guest.get("display_name", "Đang chờ đối thủ") if room["has_guest"] else "Đang chờ đối thủ"
     room["guest_name_style_class"] = str(guest.get("name_style_class") or "").strip() if room["has_guest"] else ""
+    room["guest_profile_badge"] = guest.get("profile_badge") if room["has_guest"] else None
     room["guest_avatar_url"] = guest.get("avatar_url") if room["has_guest"] else None
     room["guest_avatar_frame"] = guest.get("avatar_frame") if room["has_guest"] else None
     room["guest_achievement"] = guest.get("featured_achievement") if room["has_guest"] else None
@@ -4115,6 +4120,8 @@ def build_room_state_key(room):
         str(room.get("parsec_link")),
         str(room.get("host_name_style_class")),
         str(room.get("guest_name_style_class")),
+        str(((room.get("host_profile_badge") or {}).get("image_url"))),
+        str(((room.get("guest_profile_badge") or {}).get("image_url"))),
     ])
 
 
