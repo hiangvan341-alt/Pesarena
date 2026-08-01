@@ -22,6 +22,26 @@
     </div>
 </section>
 
+<a class="shop3-luckybox-spotlight" href="{{ url_for('luckybox_home') }}" aria-label="Khám phá Lucky Box PES Arena">
+    <div class="shop3-luckybox-visual">
+        <span class="shop3-luckybox-orbit" aria-hidden="true"></span>
+        <img src="{{ asset_url('luckybox/luckybox-pes-arena.webp') }}" alt="Lucky Box PES Arena">
+        <span class="shop3-luckybox-badge">HỘP BÍ ẨN</span>
+    </div>
+    <div class="shop3-luckybox-copy">
+        <span class="eyebrow">SỰ KIỆN ĐẶC BIỆT · CHỈ CÓ TRONG LUCKY BOX</span>
+        <h2>Mở hộp, săn phần thưởng bí ẩn</h2>
+        <p>Mỗi lượt nhận 3 kết quả. Cơ hội sở hữu banner cầu thủ độc quyền, khung hiếm, Zcoin và nhiều vật phẩm đặc biệt.</p>
+        <div class="shop3-luckybox-highlights">
+            <span>🎁 3 kết quả mỗi lượt</span>
+            <span>✨ 14 vật phẩm độc quyền</span>
+            <span>🪙 Có thể nhận Zcoin</span>
+        </div>
+        <span class="btn gold shop3-luckybox-cta">Khám phá Lucky Box <b>→</b></span>
+    </div>
+    <div class="shop3-luckybox-sparkles" aria-hidden="true"><i></i><i></i><i></i><i></i></div>
+</a>
+
 {% if shop_setup_required %}
 <section class="panel shop3-setup-warning">
     <strong>⚠ Cửa hàng chưa được cài đặt trên Supabase</strong>
