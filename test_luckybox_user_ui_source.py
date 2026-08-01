@@ -17,7 +17,7 @@ ADMIN = (ROOT / "templates/admin_luckybox/index.html").read_text(encoding="utf-8
 
 
 def test_phase3_version_and_python_parse():
-    assert 'APP_VERSION = "V1.14.41.46"' in APP
+    assert 'APP_VERSION = "V1.14.41.47"' in APP
     for relative in (
         "modules/luckybox/repository.py",
         "modules/luckybox/service.py",
@@ -119,3 +119,17 @@ def test_history_and_detail_are_styled_and_user_scoped():
     assert "lb3-detail-page" in DETAIL
     assert "build_opening_detail" in ROUTES
     assert "PermissionError" in ROUTES
+
+
+def test_shop_home_has_prominent_luckybox_spotlight():
+    shop_css = (ROOT / "static/css/shop_phase3.css").read_text(encoding="utf-8")
+    for marker in (
+        "shop3-luckybox-spotlight",
+        "luckybox/luckybox-pes-arena.webp",
+        "Mở hộp, săn phần thưởng bí ẩn",
+        "14 vật phẩm độc quyền",
+        "Khám phá Lucky Box",
+    ):
+        assert marker in SHOP
+    assert "@keyframes shopLuckyFloat" in shop_css
+    assert "@keyframes shopLuckySweep" in shop_css
