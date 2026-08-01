@@ -11,7 +11,7 @@ SQL = (ROOT / "docs/update_luckybox_admin_v1_14_41_43.sql").read_text(encoding="
 
 
 def test_phase2b_version_and_python_parse():
-    assert 'APP_VERSION = "V1.14.41.47"' in APP
+    assert 'APP_VERSION = "V1.14.41.48"' in APP
     for relative in (
         "modules/luckybox/repository.py",
         "modules/luckybox/service.py",
@@ -92,3 +92,12 @@ def test_service_validates_inputs_and_limits_preview():
     assert "_required_nonnegative_int" in SERVICE
     assert "_clean_reason" in SERVICE
     assert "_parse_datetime_local" in SERVICE
+
+def test_admin_member_opening_history_is_inside_luckybox_admin():
+    assert "def list_admin_openings" in REPOSITORY
+    assert 'db.table("lucky_box_openings")' in REPOSITORY
+    assert 'db.table("lucky_box_opening_rewards")' in REPOSITORY
+    assert "Lịch sử mở Lucky Box của member" in TEMPLATE
+    assert "member_openings" in TEMPLATE
+    assert "luckybox_opening_detail" in TEMPLATE
+

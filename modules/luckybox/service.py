@@ -153,6 +153,12 @@ def build_admin_context(actor, selected_rate_version_id=None):
         "other": [row for row in decorated if row.get("reward_type") == "no_reward"],
     }
     active_version = next((row for row in versions if row.get("status") == "active"), None)
+    member_openings = repository.list_admin_openings(50)
+    member_history_summary = {
+        "opening_count": len(member_openings),
+        "member_count": len({str(row.get("user_id")) for row in member_openings if row.get("user_id")}),
+        "zcoin_spent": sum(_safe_int(row.get("zcoin_cost"), 0) for row in member_openings),
+    }
     return {
         "actor": actor,
         "boxes": boxes,
@@ -164,6 +170,8 @@ def build_admin_context(actor, selected_rate_version_id=None):
         "reward_groups": groups,
         "rate_validation": validation,
         "duplicate_policies": DUPLICATE_POLICIES,
+        "member_openings": member_openings,
+        "member_history_summary": member_history_summary,
         "audit_logs": repository.list_audit_logs(40),
         "max_preview_iterations": MAX_PREVIEW_ITERATIONS,
     }
