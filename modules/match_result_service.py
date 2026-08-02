@@ -150,11 +150,11 @@ def apply_match_result(match):
                 print(f"get_result_host warning match={match.get('id')}: {type(exc).__name__}: {exc}")
         if str(host_user_id or "") == str(player1_id) and score1 > score2:
             delta1 = delta1 if delta1 in (17, 19) else _safe_int(apply_host_xp_factor(delta1, match.get("host_xp_factor", HOST_WIN_FACTOR)))
-            if _safe_int(player1.get("total_matches")) < PLACEMENT_MATCHES:
+            if (_safe_int(player1.get("wins")) + _safe_int(player1.get("draws")) + _safe_int(player1.get("losses"))) < PLACEMENT_MATCHES:
                 delta1 = max(22, min(29, delta1))
         elif str(host_user_id or "") == str(player2_id) and score2 > score1:
             delta2 = delta2 if delta2 in (17, 19) else _safe_int(apply_host_xp_factor(delta2, match.get("host_xp_factor", HOST_WIN_FACTOR)))
-            if _safe_int(player2.get("total_matches")) < PLACEMENT_MATCHES:
+            if (_safe_int(player2.get("wins")) + _safe_int(player2.get("draws")) + _safe_int(player2.get("losses"))) < PLACEMENT_MATCHES:
                 delta2 = max(22, min(29, delta2))
 
         # Giảm RP khi gặp lại cùng một đối thủ trong ngày. Quy tắc này được áp dụng
@@ -418,13 +418,17 @@ def update_player_after_match(player, delta, goals_for, goals_against, affect_st
     else:
         new_streak = current_streak
 
+    new_wins = _safe_int(player.get("wins")) + win
+    new_draws = _safe_int(player.get("draws")) + draw
+    new_losses = _safe_int(player.get("losses")) + loss
+
     execute_query(
         db.table("users").update({
             "rank_points": new_points,
-            "total_matches": _safe_int(player.get("total_matches")) + 1,
-            "wins": _safe_int(player.get("wins")) + win,
-            "draws": _safe_int(player.get("draws")) + draw,
-            "losses": _safe_int(player.get("losses")) + loss,
+            "wins": new_wins,
+            "draws": new_draws,
+            "losses": new_losses,
+            "total_matches": new_wins + new_draws + new_losses,
             "goals_for": _safe_int(player.get("goals_for")) + goals_for,
             "goals_against": _safe_int(player.get("goals_against")) + goals_against,
             "streak": new_streak,
@@ -445,12 +449,16 @@ def reverse_player_match_stats(player, delta, goals_for, goals_against):
     draw = 1 if goals_for == goals_against else 0
     loss = 1 if goals_for < goals_against else 0
 
+    new_wins = max(0, int(player.get("wins", 0) or 0) - win)
+    new_draws = max(0, int(player.get("draws", 0) or 0) - draw)
+    new_losses = max(0, int(player.get("losses", 0) or 0) - loss)
+
     db.table("users").update({
         "rank_points": max(0, int(player.get("rank_points", 0) or 0) - int(delta or 0)),
-        "total_matches": max(0, int(player.get("total_matches", 0) or 0) - 1),
-        "wins": max(0, int(player.get("wins", 0) or 0) - win),
-        "draws": max(0, int(player.get("draws", 0) or 0) - draw),
-        "losses": max(0, int(player.get("losses", 0) or 0) - loss),
+        "wins": new_wins,
+        "draws": new_draws,
+        "losses": new_losses,
+        "total_matches": new_wins + new_draws + new_losses,
         "goals_for": max(0, int(player.get("goals_for", 0) or 0) - int(goals_for or 0)),
         "goals_against": max(0, int(player.get("goals_against", 0) or 0) - int(goals_against or 0)),
         # Không thể suy ngược chính xác chuỗi thắng lịch sử nếu có trận mới hơn.

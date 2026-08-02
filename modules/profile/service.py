@@ -129,7 +129,8 @@ def build_profile_context(user_id, viewer):
         if len(form) >= 5:
             break
 
-    total = int(user.get("total_matches", 0) or 0)
+    total = sum(int(user.get(key, 0) or 0) for key in ("wins", "draws", "losses"))
+    user["total_matches"] = total
     wins = int(user.get("wins", 0) or 0)
     user["winrate"] = round((wins / total) * 100, 1) if total else 0
     user["goal_diff"] = int(user.get("goals_for", 0) or 0) - int(user.get("goals_against", 0) or 0)

@@ -152,13 +152,16 @@ def _initial_player_state(
 ) -> dict[str, Any]:
     current_points = _int(user.get("rank_points"), default_points)
     initial_streak, initial_loss_streak = _derive_initial_streaks(user, old_confirmed_matches)
+    initial_wins = max(0, _int(user.get("wins")) - _int(confirmed_stats.get("wins")))
+    initial_draws = max(0, _int(user.get("draws")) - _int(confirmed_stats.get("draws")))
+    initial_losses = max(0, _int(user.get("losses")) - _int(confirmed_stats.get("losses")))
     return {
         "id": user.get("id"),
         "rank_points": max(0, current_points - int(confirmed_delta_sum)),
-        "total_matches": max(0, _int(user.get("total_matches")) - _int(confirmed_stats.get("total_matches"))),
-        "wins": max(0, _int(user.get("wins")) - _int(confirmed_stats.get("wins"))),
-        "draws": max(0, _int(user.get("draws")) - _int(confirmed_stats.get("draws"))),
-        "losses": max(0, _int(user.get("losses")) - _int(confirmed_stats.get("losses"))),
+        "total_matches": initial_wins + initial_draws + initial_losses,
+        "wins": initial_wins,
+        "draws": initial_draws,
+        "losses": initial_losses,
         "goals_for": max(0, _int(user.get("goals_for")) - _int(confirmed_stats.get("goals_for"))),
         "goals_against": max(0, _int(user.get("goals_against")) - _int(confirmed_stats.get("goals_against"))),
         "streak": initial_streak,
@@ -172,10 +175,10 @@ def _apply_state(state: dict[str, Any], delta: int, goals_for: int, goals_agains
     drew = goals_for == goals_against
     lost = goals_for < goals_against
     state["rank_points"] = max(0, _int(state.get("rank_points")) + _int(delta))
-    state["total_matches"] = _int(state.get("total_matches")) + 1
     state["wins"] = _int(state.get("wins")) + int(won)
     state["draws"] = _int(state.get("draws")) + int(drew)
     state["losses"] = _int(state.get("losses")) + int(lost)
+    state["total_matches"] = state["wins"] + state["draws"] + state["losses"]
     state["goals_for"] = _int(state.get("goals_for")) + _int(goals_for)
     state["goals_against"] = _int(state.get("goals_against")) + _int(goals_against)
     if not affect_streak:
@@ -315,11 +318,11 @@ def build_replay_plan(
         factor = match.get("host_xp_factor", host_win_factor)
         if host_id == p1_id and score1 > score2:
             delta1 = delta1 if delta1 in (17, 19) else _int(apply_host_factor(delta1, factor))
-            if _int(player1.get("total_matches")) < placement_matches:
+            if (_int(player1.get("wins")) + _int(player1.get("draws")) + _int(player1.get("losses"))) < placement_matches:
                 delta1 = max(22, min(29, delta1))
         elif host_id == p2_id and score2 > score1:
             delta2 = delta2 if delta2 in (17, 19) else _int(apply_host_factor(delta2, factor))
-            if _int(player2.get("total_matches")) < placement_matches:
+            if (_int(player2.get("wins")) + _int(player2.get("draws")) + _int(player2.get("losses"))) < placement_matches:
                 delta2 = max(22, min(29, delta2))
 
         day_key = _vn_day_key(match.get("created_at"))

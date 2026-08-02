@@ -64,7 +64,7 @@ from modules.win_streaks import (
 load_dotenv()
 
 APP_NAME = "PES Arena – Bản Lĩnh Sân Cỏ"
-APP_VERSION = "V1.14.41.60"
+APP_VERSION = "V1.14.41.61"
 DEFAULT_POINTS = 1000
 DEVICE_COOKIE_NAME = "rankzone_device_id"
 COOLDOWN_MINUTES = 3
@@ -352,7 +352,7 @@ def achievement_progress(player, definition, position=None):
     metric = definition.get("metric")
     threshold = max(1, int(definition.get("threshold", 1) or 1))
     if metric == "position":
-        current = 1 if position == 1 and int(player.get("total_matches", 0) or 0) >= 5 else 0
+        current = 1 if position == 1 and calculated_total_matches(player) >= 5 else 0
     else:
         current = max(0, int(player.get(metric, 0) or 0))
     return current, threshold, min(100, round((current / threshold) * 100))
@@ -1774,13 +1774,25 @@ def get_user_by_username(username):
     )
 
 
+def calculated_total_matches(player):
+    """Nguồn chuẩn duy nhất: tổng trận = thắng + hòa + thua."""
+    player = player or {}
+    return max(0, int(player.get("wins", 0) or 0)) + max(0, int(player.get("draws", 0) or 0)) + max(0, int(player.get("losses", 0) or 0))
+
+
+def normalize_player_match_totals(player):
+    item = dict(player or {})
+    item["total_matches"] = calculated_total_matches(item)
+    return item
+
+
 def get_user(user_id):
     require_db()
     result = execute_query(
         db.table("users").select("*").eq("id", user_id).limit(1),
         "get_user",
     )
-    return result.data[0] if result.data else None
+    return normalize_player_match_totals(result.data[0]) if result.data else None
 
 
 def is_user_online_now(user):
@@ -1794,7 +1806,7 @@ def _player_ranking_sort_key(player):
     wins = int(player.get("wins", 0) or 0)
     goals_for = int(player.get("goals_for", 0) or 0)
     goals_against = int(player.get("goals_against", 0) or 0)
-    total_matches = int(player.get("total_matches", 0) or 0)
+    total_matches = calculated_total_matches(player)
     name = str(player.get("display_name") or player.get("username") or "").casefold()
     return (-points, -wins, -(goals_for - goals_against), -goals_for, -total_matches, name)
 
@@ -1817,7 +1829,7 @@ def list_players(include_admin=False):
     players = cached if include_admin else [p for p in cached if p.get("role") == "player"]
     safe = []
     for player in players:
-        item = dict(player)
+        item = normalize_player_match_totals(player)
         item["is_online"] = is_user_online_now(item)
         safe.append(item)
 
@@ -2822,8 +2834,8 @@ def apply_room_abandon_penalty(user_id, amount=ROOM_ABANDON_PENALTY):
     execute_query(
         db.table("users").update({
             "rank_points": new_points,
-            "total_matches": int(player.get("total_matches", 0) or 0) + 1,
             "losses": int(player.get("losses", 0) or 0) + 1,
+            "total_matches": int(player.get("wins", 0) or 0) + int(player.get("draws", 0) or 0) + int(player.get("losses", 0) or 0) + 1,
             "streak": 0,
         }).eq("id", user_id),
         "apply_room_abandon_penalty",
@@ -4846,7 +4858,7 @@ def dashboard():
     me = next((player for player in player_rows if player.get("id") == user.get("id")), dict(user))
     my_position = next((index for index, player in enumerate(player_rows, 1) if player.get("id") == user.get("id")), None)
     my_rank_info = get_player_rank_info(me, my_position)
-    total = int(me.get("total_matches", 0) or 0)
+    total = calculated_total_matches(me)
     wins = int(me.get("wins", 0) or 0)
     me["winrate"] = round((wins / total) * 100, 1) if total else 0
 
@@ -4962,7 +4974,7 @@ def players():
             player.get("is_online")
             and (status["code"] == "ready" or str(player.get("id")) in solo_room_user_ids)
         )
-        total = int(player.get("total_matches", 0) or 0)
+        total = calculated_total_matches(player)
         player["winrate"] = round((int(player.get("wins", 0) or 0) / total) * 100, 1) if total else 0
         player["last_seen_display"] = format_vn_datetime(player.get("last_seen_at"))
 
@@ -5074,7 +5086,7 @@ def ranking():
     )
 
     for player in top_players:
-        total_matches = int(player.get("total_matches") or 0)
+        total_matches = calculated_total_matches(player)
         wins = int(player.get("wins") or 0)
         draws = int(player.get("draws") or 0)
         losses = int(player.get("losses") or 0)

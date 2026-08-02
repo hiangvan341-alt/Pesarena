@@ -38,8 +38,8 @@ def register_routes(context):
         wins = _safe_bounded_int(row.get("wins"), 0)
         draws = _safe_bounded_int(row.get("draws"), 0)
         losses = _safe_bounded_int(row.get("losses"), 0)
-        supplied_total = _safe_bounded_int(row.get("total_matches"), wins + draws + losses)
-        total_matches = max(supplied_total, wins + draws + losses)
+        # total_matches không nhận độc lập từ CSV; luôn được suy ra từ W/H/B.
+        total_matches = wins + draws + losses
 
         return {
             "username": username,
@@ -199,12 +199,11 @@ def register_routes(context):
                     else:
                         increments[field] = _safe_bounded_int(raw_value, 0, 0, 999999)
 
-                # Nếu CSV có thắng/hòa/thua nhưng không có total_matches,
-                # tự cộng tổng số trận tương ứng để dữ liệu không bị lệch.
-                if row.get("total_matches", "") == "":
-                    wdl_increment = sum(increments.get(field, 0) for field in ("wins", "draws", "losses"))
-                    if wdl_increment:
-                        increments["total_matches"] = wdl_increment
+                # total_matches luôn đi theo đúng phần tăng W/H/B, không lấy số nhập riêng.
+                increments.pop("total_matches", None)
+                wdl_increment = sum(increments.get(field, 0) for field in ("wins", "draws", "losses"))
+                if wdl_increment:
+                    increments["total_matches"] = wdl_increment
 
                 if not increments:
                     errors.append(f"Dòng {line_no}: tài khoản {username} đã tồn tại nhưng không có chỉ số nào để cộng.")

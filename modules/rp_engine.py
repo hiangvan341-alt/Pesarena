@@ -53,6 +53,14 @@ def _randint(rng, minimum: int, maximum: int) -> int:
     return int(rng.randint(minimum, maximum))
 
 
+
+
+def _calculated_total_matches(player: Mapping) -> int:
+    # Dữ liệu thật dùng W/H/B. Giữ fallback total_matches cho test/đối tượng cũ thiếu ba cột này.
+    if any(key in player for key in ("wins", "draws", "losses")):
+        return sum(max(0, int(player.get(key, 0) or 0)) for key in ("wins", "draws", "losses"))
+    return max(0, int(player.get("total_matches", 0) or 0))
+
 def _winner_points(winner: Mapping, rng) -> int:
     # Giảm RP tạm thời khi người chơi vừa thoát chuỗi thua >= 5 trận.
     recovery_step = int(winner.get("loss_recovery_win_step", 0) or 0)
@@ -61,7 +69,7 @@ def _winner_points(winner: Mapping, rng) -> int:
     if recovery_step in LOSS_RECOVERY_WIN_POINTS:
         return int(LOSS_RECOVERY_WIN_POINTS[recovery_step])
 
-    matches = int(winner.get("total_matches", 0) or 0)
+    matches = _calculated_total_matches(winner)
     points = _randint(rng, *WIN_BASE_RANGE)
     points += _randint(rng, *WIN_VARIATION_RANGE)
     if matches < PLACEMENT_MATCHES:
@@ -79,7 +87,7 @@ def _progressive_loss_streak_range(next_loss_streak: int) -> Tuple[int, int]:
 
 
 def _loser_points(loser: Mapping, rng) -> int:
-    matches = int(loser.get("total_matches", 0) or 0)
+    matches = _calculated_total_matches(loser)
     next_loss_streak = int(loser.get("loss_streak", 0) or 0) + 1
     if matches < PLACEMENT_MATCHES:
         deduction = _randint(rng, *PLACEMENT_LOSS_RANGE)
