@@ -64,7 +64,7 @@ from modules.win_streaks import (
 load_dotenv()
 
 APP_NAME = "PES Arena – Bản Lĩnh Sân Cỏ"
-APP_VERSION = "V1.14.41.56"
+APP_VERSION = "V1.14.41.57"
 DEFAULT_POINTS = 1000
 DEVICE_COOKIE_NAME = "rankzone_device_id"
 COOLDOWN_MINUTES = 3
@@ -111,7 +111,7 @@ RANKING_REBUILD_LOCK_SECONDS = 5 * 60
 
 INVITE_TIMEOUT_SECONDS = 60
 ROOM_READY_TIMEOUT_SECONDS = 30 * 60
-RESULT_CONFIRM_TIMEOUT_SECONDS = 12 * 60 * 60
+RESULT_CONFIRM_TIMEOUT_SECONDS = 60
 REMATCH_TIMEOUT_SECONDS = 60
 ROOM_EMPTY_INACTIVITY_TIMEOUT_SECONDS = 30 * 60
 ROOM_MATCH_INACTIVITY_TIMEOUT_SECONDS = 60 * 60
@@ -2201,7 +2201,7 @@ def list_registration_invite_codes(limit=100):
 
 
 def auto_confirm_expired_match_if_needed(match):
-    """Tự xác nhận trận chờ quá 12 giờ, độc lập với trạng thái phòng.
+    """Tự xác nhận trận chờ quá 1 phút, độc lập với trạng thái phòng.
 
     Hủy/đóng phòng chỉ giải phóng người chơi. Kết quả đã nhập vẫn tiếp tục
     chờ xác nhận và được tính RP sau thời hạn nếu không có tranh chấp.
@@ -2891,7 +2891,7 @@ def expire_room_if_needed(room):
             room["timeout_seconds"] = 0
             return room
 
-        # Đã nhập tỷ số nhưng chưa xác nhận: sau 12 giờ tự xác nhận kết quả.
+        # Đã nhập tỷ số nhưng chưa xác nhận: sau 1 phút tự xác nhận kết quả.
         # Không phạt người quên xác nhận và không phụ thuộc phòng còn hoạt động hay đã hủy.
         if status == "waiting_result_confirm" and mode == MATCH_MODE_RANKED:
             pending_match = get_match(room.get("match_id")) if room.get("match_id") else None

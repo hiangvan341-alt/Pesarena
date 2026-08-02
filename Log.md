@@ -1,3 +1,10 @@
+## V1.14.41.57 — 2026-08-02 07:17 (Asia/Bangkok)
+
+- Đổi thời gian chờ xác nhận kết quả Rank từ 12 giờ xuống 1 phút.
+- Hết 1 phút không xác nhận hoặc tranh chấp, hệ thống tự xác nhận và cộng/trừ RP.
+- Luồng phòng và luồng kết quả tiếp tục độc lập: hủy phòng không hủy kết quả đang chờ.
+- Trận có tranh chấp không tự xác nhận, chờ Admin xử lý.
+
 ## V1.14.41.53 — Bảo vệ Hủy/Xóa phòng Admin — 02/08/2026 01:47 (Asia/Bangkok)
 - Khách đã Sẵn sàng vẫn có thể bị chủ phòng đưa ra nếu phòng chưa tạo trận (`waiting_ready`, không có `match_id`); không ảnh hưởng RP.
 - Admin Hủy phòng giữ lịch sử phòng/trận, hoàn tác RP trước khi cập nhật trạng thái và hủy lời mời liên kết.
