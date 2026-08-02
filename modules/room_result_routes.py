@@ -258,26 +258,22 @@ def register_routes(context):
 
         reason_label = dispute_reason_label(reason_code)
         note = f"{user.get('display_name', 'Khách')} không đồng ý kết quả: {reason_label}."
+        disputed_match_id = room.get("match_id")
+        previous_mode = room.get("team_tier") or SMART_RANDOM_MODE
+        if not system_feature_enabled("rank_standard_enabled"):
+            previous_mode = FRIENDLY_RANDOM3_MODE
         try:
-            execute_query(
-                db.table("match_rooms").update({
-                    "status": "disputed",
-                    "note": note,
-                    "state_expires_at": None,
-                    "updated_at": now_iso(),
-                }).eq("id", room_id),
-                "room_dispute_update",
-            )
-
-            if room.get("match_id"):
-                execute_query(
+            if disputed_match_id:
+                match_update_result = execute_query(
                     db.table("matches").update({
                         "status": "disputed",
                         "note": note,
                         "updated_at": now_iso(),
-                    }).eq("id", room["match_id"]),
+                    }).eq("id", disputed_match_id).eq("status", "waiting_confirm"),
                     "match_dispute_update",
                 )
+                if not (match_update_result.data or []):
+                    raise ValueError("Trạng thái trận vừa thay đổi; chưa thể mở tranh chấp.")
 
             dispute = create_or_update_match_dispute(
                 room,
@@ -287,6 +283,37 @@ def register_routes(context):
                 "player",
                 evidence_path=evidence_path,
             )
+
+            # Tranh chấp chỉ thuộc về kết quả của trận cũ. Phòng được giải phóng ngay
+            # để hai người tiếp tục Sẵn sàng/đá trận mới mà không chờ Admin xử lý.
+            room_update_result = execute_query(
+                db.table("match_rooms").update({
+                    "status": "waiting_ready",
+                    "guest_ready": False,
+                    "host_team": None,
+                    "guest_team": None,
+                    "host_team_overall": None,
+                    "guest_team_overall": None,
+                    "host_team_logo_url": None,
+                    "guest_team_logo_url": None,
+                    "host_team_league": None,
+                    "guest_team_league": None,
+                    "host_score": None,
+                    "guest_score": None,
+                    "match_id": None,
+                    "submitted_by_id": None,
+                    "confirmed_by_id": None,
+                    "match_mode": MATCH_MODE_RANKED,
+                    "team_tier": previous_mode,
+                    "note": f"__RANK_MODE_LOCKED__|{previous_mode}",
+                    "state_expires_at": None,
+                    "updated_at": now_iso(),
+                }).eq("id", room_id).eq("status", "waiting_result_confirm"),
+                "room_dispute_release_room",
+            )
+            if not (room_update_result.data or []):
+                raise ValueError("Trạng thái phòng vừa thay đổi; chưa thể giải phóng phòng.")
+            ttl_cache_delete("rooms_raw")
         except Exception as exc:
             if evidence_path:
                 remove_dispute_evidence_object(evidence_path)
@@ -294,18 +321,22 @@ def register_routes(context):
                 execute_query(
                     db.table("match_rooms").update({
                         "status": "waiting_result_confirm",
+                        "match_id": disputed_match_id,
+                        "host_score": room.get("host_score"),
+                        "guest_score": room.get("guest_score"),
+                        "submitted_by_id": room.get("submitted_by_id"),
                         "state_expires_at": future_iso(RESULT_CONFIRM_TIMEOUT_SECONDS),
                         "updated_at": now_iso(),
                     }).eq("id", room_id),
                     "rollback_room_dispute",
                     attempts=1,
                 )
-                if room.get("match_id"):
+                if disputed_match_id:
                     execute_query(
                         db.table("matches").update({
                             "status": "waiting_confirm",
                             "updated_at": now_iso(),
-                        }).eq("id", room.get("match_id")),
+                        }).eq("id", disputed_match_id),
                         "rollback_match_dispute",
                         attempts=1,
                     )
@@ -326,7 +357,7 @@ def register_routes(context):
             "dispute",
         )
 
-        flash("Đã gửi tranh chấp. Trận chưa được tính điểm và cả hai có thể về sảnh trong khi Admin xử lý.", "warning")
+        flash("Đã gửi tranh chấp. Trận cũ chưa tính RP; phòng đã trở về Chờ Sẵn Sàng để hai người tiếp tục thi đấu.", "warning")
         return redirect(url_for("room_detail", room_id=room_id))
 
 

@@ -50,3 +50,9 @@
 - Giữ nguyên lịch sử, tỷ số, delta RP, báo cáo và bằng chứng tranh chấp.
 - Trận chưa hoàn tất chuyển `cancelled` để không khóa người chơi; trận đã `confirmed` giữ nguyên.
 - File: `app.py`, `modules/admin_data_routes.py`, `templates/admin.html`.
+
+## V1.14.41.55 - 02/08/2026
+- Tách trạng thái tranh chấp khỏi trạng thái phòng.
+- Trận bị tranh chấp vẫn lưu và chưa tính RP; phòng lập tức trở lại Chờ Sẵn Sàng.
+- Người chơi có thể tiếp tục thi đấu trong cùng phòng mà không chờ Admin xử lý tranh chấp cũ.
+- File: `modules/room_result_routes.py`, `app.py`.
