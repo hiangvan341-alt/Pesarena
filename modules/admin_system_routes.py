@@ -25,6 +25,7 @@ def register_routes(context):
             "quick_match_config": get_quick_match_config(),
             "repeat_opponent_rp_config": get_repeat_opponent_rp_config(),
             "weekly_rp_reward_config": get_weekly_rp_reward_config(),
+            "duplicate_ip_warning_config": get_duplicate_ip_warning_config(),
         }
 
     @app.route("/admin/system/maintenance", methods=["POST"])
@@ -62,6 +63,31 @@ def register_routes(context):
         log_admin_action("Cập nhật trạng thái bảo trì máy chủ", "system", details=config)
         flash("Đã lưu trạng thái và lịch bảo trì máy chủ.", "success")
         return redirect_admin("system")
+
+
+    @app.route("/admin/system/duplicate-ip-warning", methods=["POST"])
+    @login_required
+    @admin_required
+    @admin_permission_required("system_features_manage")
+    def admin_update_duplicate_ip_warning():
+        current = get_duplicate_ip_warning_config(force=True)
+        payload = {
+            "enabled": request.form.get("enabled") == "1",
+            "ignore_admin_managed": request.form.get("ignore_admin_managed") == "1",
+            "trusted_user_ids": list(current.get("trusted_user_ids") or []),
+        }
+        execute_query(
+            db.table("system_settings").upsert({
+                "setting_key": IP_WARNING_SETTING_KEY,
+                "setting_value": payload,
+                "updated_at": now_iso(),
+            }, on_conflict="setting_key"),
+            "update_duplicate_ip_warning_config", attempts=2,
+        )
+        _ip_warning_config_cache.update({"value": dict(payload), "expires_at": time.time() + 30})
+        log_admin_action("Cập nhật cảnh báo trùng IP", "system", details=payload)
+        flash("Đã lưu thiết lập cảnh báo IP.", "success")
+        return redirect_admin("users")
 
 
     @app.route("/admin/system/quick-match", methods=["POST"])

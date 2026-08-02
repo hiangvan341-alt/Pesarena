@@ -209,6 +209,16 @@
             </div>
         </div>
 
+        <form method="post" action="{{ url_for('admin_update_duplicate_ip_warning') }}" class="admin-ip-settings-card">
+            <div>
+                <strong>🔎 Cảnh báo IP dùng chung</strong>
+                <p class="small">Tắt chỉ ẩn cảnh báo trên Admin; hệ thống vẫn lưu IP để đối chiếu khi cần.</p>
+            </div>
+            <label class="admin-filter-toggle"><input type="checkbox" name="enabled" value="1" {% if duplicate_ip_warning_config.enabled %}checked{% endif %}> Hiển thị cảnh báo IP</label>
+            <label class="admin-filter-toggle"><input type="checkbox" name="ignore_admin_managed" value="1" {% if duplicate_ip_warning_config.ignore_admin_managed %}checked{% endif %}> Bỏ qua Admin và tài khoản thử nghiệm</label>
+            <button class="btn gold" type="submit">Lưu thiết lập</button>
+        </form>
+
         {% if duplicate_ip_groups %}
         <div class="admin-duplicate-alert" role="alert">
             <div class="admin-duplicate-alert-title">
@@ -301,6 +311,12 @@
                                     {% if p.duplicate_ip_accounts %}
                                     <p class="admin-ip-warning">Trùng với: {{ p.duplicate_ip_accounts|join(', ') }}</p>
                                     {% endif %}
+                                    <button class="btn {{ 'red' if p.duplicate_ip_trusted else 'gold' }} admin-ip-trust-form" type="submit"
+                                        name="trusted" value="{{ 0 if p.duplicate_ip_trusted else 1 }}"
+                                        formaction="{{ url_for('admin_toggle_duplicate_ip_trust', user_id=p.id) }}" formmethod="post">
+                                        {{ 'Bỏ tài khoản tin cậy' if p.duplicate_ip_trusted else 'Đánh dấu tài khoản tin cậy' }}
+                                    </button>
+                                    {% if p.duplicate_ip_trusted %}<p class="small admin-ip-safe">✓ Đang bỏ qua cảnh báo IP cho tài khoản này.</p>{% endif %}
                                 </div>
 
                                 <div class="admin-user-edit-group">

@@ -22,6 +22,7 @@
     let activityInFlight = false;
     let lifecyclePaused = false;
     let destroyed = false;
+    let visibleKeepaliveTimer = null;
 
     function ensureModal() {
         let root = document.getElementById("idleTimeoutModal");
@@ -150,7 +151,7 @@
         recordActivity(false);
     }
 
-    const activityEvents = ["pointerdown", "keydown", "touchstart", "submit"];
+    const activityEvents = ["pointerdown", "pointermove", "keydown", "touchstart", "wheel", "scroll", "submit"];
     activityEvents.forEach(function (name) {
         document.addEventListener(name, onUserActivity, {passive: true, capture: true});
     });
@@ -164,8 +165,20 @@
         lifecyclePaused = true;
         clearTimeout(warningTimer);
         clearTimeout(logoutTimer);
+        if (visibleKeepaliveTimer) clearInterval(visibleKeepaliveTimer);
+        visibleKeepaliveTimer = null;
         if (countdownTimer) clearInterval(countdownTimer);
         countdownTimer = null;
+    }
+
+    function startVisibleKeepalive() {
+        if (visibleKeepaliveTimer) clearInterval(visibleKeepaliveTimer);
+        visibleKeepaliveTimer = setInterval(function () {
+            if (!document.hidden && !lifecyclePaused && !destroyed) {
+                // Tab vẫn đang mở và được nhìn thấy: không coi người dùng là đã rời hệ thống.
+                recordActivity(true);
+            }
+        }, Math.min(syncMs, 4 * 60 * 1000));
     }
 
     function resumeLifecycle() {
@@ -174,6 +187,7 @@
         lastActivityAt = Date.now();
         hideModal();
         schedule();
+        startVisibleKeepalive();
     }
 
     function destroyLifecycle() {
@@ -197,4 +211,5 @@
     global.addEventListener("beforeunload", destroyLifecycle, {once: true});
 
     schedule();
+    startVisibleKeepalive();
 })(window);

@@ -64,7 +64,7 @@ from modules.win_streaks import (
 load_dotenv()
 
 APP_NAME = "PES Arena – Bản Lĩnh Sân Cỏ"
-APP_VERSION = "V1.14.41.62"
+APP_VERSION = "V1.14.41.63"
 DEFAULT_POINTS = 1000
 DEVICE_COOKIE_NAME = "rankzone_device_id"
 COOLDOWN_MINUTES = 3
@@ -1296,6 +1296,10 @@ def build_friendly_random3_state(host_player, guest_player):
         "distribution": "rank_weighted",
         "host_rank": rank_ranges[host_level]["name"],
         "guest_rank": rank_ranges[guest_level]["name"],
+        "host_rank_points": int(host_player.get("rank_points") or 0),
+        "guest_rank_points": int(guest_player.get("rank_points") or 0),
+        "host_tier_weights": get_rank_tier_weights(host_level),
+        "guest_tier_weights": get_rank_tier_weights(guest_level),
         "host_options": host_options,
         "guest_options": guest_options,
         "host_choice": None,
@@ -1889,6 +1893,48 @@ def is_admin_managed_test_account(user):
     return marker.startswith("ADMIN_TEST") or marker.startswith("ADMIN_CREATED")
 
 
+IP_WARNING_SETTING_KEY = "duplicate_ip_warning_config"
+_ip_warning_config_cache = {"value": None, "expires_at": 0.0}
+
+
+def get_duplicate_ip_warning_config(force=False):
+    """Cấu hình cảnh báo IP: bật/tắt toàn cục và danh sách tài khoản tin cậy."""
+    now = time.time()
+    if not force and _ip_warning_config_cache["value"] is not None and now < _ip_warning_config_cache["expires_at"]:
+        return dict(_ip_warning_config_cache["value"])
+
+    config = {"enabled": True, "ignore_admin_managed": True, "trusted_user_ids": []}
+    if db is not None:
+        try:
+            result = execute_query(
+                db.table("system_settings").select("setting_value")
+                .eq("setting_key", IP_WARNING_SETTING_KEY).limit(1),
+                "load_duplicate_ip_warning_config", attempts=2,
+            )
+            stored = (result.data or [{}])[0].get("setting_value") if result.data else {}
+            if isinstance(stored, dict):
+                config["enabled"] = bool(stored.get("enabled", True))
+                config["ignore_admin_managed"] = bool(stored.get("ignore_admin_managed", True))
+                config["trusted_user_ids"] = sorted({str(x) for x in (stored.get("trusted_user_ids") or []) if x})
+        except Exception as exc:
+            print(f"duplicate ip config warning: {exc}")
+
+    _ip_warning_config_cache.update({"value": dict(config), "expires_at": now + 30})
+    return config
+
+
+def user_ignored_for_duplicate_ip(user, config=None):
+    config = config or get_duplicate_ip_warning_config()
+    if not user:
+        return False
+    user_id = str(user.get("id") or "")
+    if user_id and user_id in set(config.get("trusted_user_ids") or []):
+        return True
+    if config.get("ignore_admin_managed", True):
+        return user.get("role") == "admin" or is_admin_user(user) or is_admin_managed_test_account(user)
+    return False
+
+
 def link_device_to_user(user):
     # Admin chính và tài khoản do Admin tạo/import không bị giới hạn thiết bị/IP.
     # Đây chỉ là ngoại lệ xác thực; mọi trận Rank vẫn tính W/H/B và RP bình thường.
@@ -2098,6 +2144,8 @@ def decorate_admin_users(users):
     for row in rows:
         row["admin_permissions"] = _admin_permissions(row)
     devices = list_user_devices()
+    ip_warning_config = get_duplicate_ip_warning_config()
+    warnings_enabled = bool(ip_warning_config.get("enabled", True))
 
     known_ips_by_user = {str(user.get("id")): set() for user in rows}
     latest_ip_by_user = {}
@@ -2105,7 +2153,7 @@ def decorate_admin_users(users):
     for user in rows:
         user_id = str(user.get("id"))
         register_ip = (user.get("register_ip") or "").strip()
-        if register_ip and not is_admin_managed_test_account(user):
+        if register_ip and warnings_enabled and not user_ignored_for_duplicate_ip(user, ip_warning_config):
             known_ips_by_user.setdefault(user_id, set()).add(register_ip)
 
     # Dữ liệu đã sắp xếp mới nhất trước, nên IP đầu tiên là IP gần nhất.
@@ -2115,7 +2163,7 @@ def decorate_admin_users(users):
         if not user_id or not ip:
             continue
         owner = next((item for item in rows if str(item.get("id")) == user_id), None)
-        if owner and is_admin_managed_test_account(owner):
+        if not warnings_enabled or (owner and user_ignored_for_duplicate_ip(owner, ip_warning_config)):
             continue
         known_ips_by_user.setdefault(user_id, set()).add(ip)
         latest_ip_by_user.setdefault(user_id, ip)
@@ -2145,6 +2193,7 @@ def decorate_admin_users(users):
             [len(ip_owners.get(ip, set())) for ip in duplicate_ips] or [0]
         )
         user["duplicate_ip_accounts"] = duplicate_accounts
+        user["duplicate_ip_trusted"] = user_ignored_for_duplicate_ip(user, ip_warning_config)
 
     return rows
 
@@ -3909,7 +3958,7 @@ def before_request():
             last_real = int(session.get("last_real_activity", 0) or 0)
             if not last_real:
                 session["last_real_activity"] = now_ts
-            elif now_ts - last_real >= IDLE_TIMEOUT_SECONDS and request.endpoint not in {"logout", "static", "api_session_timeout_check"}:
+            elif now_ts - last_real >= IDLE_TIMEOUT_SECONDS and request.endpoint not in {"logout", "static", "api_session_timeout_check", "api_session_activity"}:
                 room = None
                 try:
                     room = active_room_for_user(session.get("user_id"))
@@ -4331,6 +4380,8 @@ def admin_login():
         session["account_status"] = user.get("account_status", "approved")
         session["admin_level"] = user.get("admin_level", "none")
         session["zcoin_balance"] = int(user.get("zcoin_balance") or 0)
+        session["last_real_activity"] = int(time.time())
+        session["last_activity_touch"] = int(time.time())
         execute_query(
             db.table("users").update({"is_online": True, "last_seen_at": now_iso()}).eq("id", user["id"]),
             "admin_login_mark_online",
@@ -4386,6 +4437,8 @@ def login():
         session["account_status"] = status
         session["admin_level"] = user.get("admin_level", "none")
         session["zcoin_balance"] = int(user.get("zcoin_balance") or 0)
+        session["last_real_activity"] = int(time.time())
+        session["last_activity_touch"] = int(time.time())
         # Tính RP không hoạt động trước khi cập nhật last_seen_at của lần đăng nhập mới.
         try:
             process_inactivity_for_user(user)

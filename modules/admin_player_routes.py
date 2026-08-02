@@ -41,6 +41,41 @@ def register_routes(context):
         return redirect(next_url)
 
 
+    @app.route("/admin/player/<user_id>/duplicate-ip-trust", methods=["POST"])
+    @login_required
+    @admin_required
+    @admin_permission_required("users_edit")
+    def admin_toggle_duplicate_ip_trust(user_id):
+        player = get_user(user_id)
+        if not player:
+            flash("Không tìm thấy tài khoản.", "danger")
+            return redirect_admin("users")
+
+        config = get_duplicate_ip_warning_config(force=True)
+        trusted = {str(item) for item in (config.get("trusted_user_ids") or []) if item}
+        make_trusted = request.form.get("trusted") == "1"
+        if make_trusted:
+            trusted.add(str(user_id))
+        else:
+            trusted.discard(str(user_id))
+        config["trusted_user_ids"] = sorted(trusted)
+        execute_query(
+            db.table("system_settings").upsert({
+                "setting_key": IP_WARNING_SETTING_KEY,
+                "setting_value": config,
+                "updated_at": now_iso(),
+            }, on_conflict="setting_key"),
+            "update_duplicate_ip_trusted_user", attempts=2,
+        )
+        _ip_warning_config_cache.update({"value": dict(config), "expires_at": time.time() + 30})
+        log_admin_action(
+            "Đánh dấu tài khoản tin cậy IP" if make_trusted else "Bỏ tin cậy IP",
+            "user", user_id, player.get("username"),
+        )
+        flash("Đã cập nhật trạng thái tin cậy IP của tài khoản.", "success")
+        return redirect_admin("users")
+
+
     @app.route("/admin/toggle-online/<user_id>", methods=["POST"])
     @login_required
     @admin_required
