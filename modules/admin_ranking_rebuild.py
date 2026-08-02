@@ -314,14 +314,29 @@ def build_replay_plan(
             rng=rng,
         )
         delta1, delta2 = _int(delta1), _int(delta2)
+        def streak_bonus(state, won):
+            if not won:
+                return 0
+            next_streak = _int(state.get("streak")) + 1
+            if next_streak == 3:
+                return 5
+            if next_streak == 5:
+                return 10
+            if next_streak >= 10 and next_streak % 5 == 0:
+                return 15
+            return 0
+        streak_bonus1 = streak_bonus(player1, score1 > score2)
+        streak_bonus2 = streak_bonus(player2, score2 > score1)
         host_id = str(match.get("host_user_id") or host_by_match.get(match_id) or "")
         factor = match.get("host_xp_factor", host_win_factor)
         if host_id == p1_id and score1 > score2:
-            delta1 = delta1 if delta1 in (17, 19) else _int(apply_host_factor(delta1, factor))
+            if delta1 not in (17, 19):
+                delta1 = _int(apply_host_factor(max(0, delta1 - streak_bonus1), factor)) + streak_bonus1
             if (_int(player1.get("wins")) + _int(player1.get("draws")) + _int(player1.get("losses"))) < placement_matches:
                 delta1 = max(22, min(29, delta1))
         elif host_id == p2_id and score2 > score1:
-            delta2 = delta2 if delta2 in (17, 19) else _int(apply_host_factor(delta2, factor))
+            if delta2 not in (17, 19):
+                delta2 = _int(apply_host_factor(max(0, delta2 - streak_bonus2), factor)) + streak_bonus2
             if (_int(player2.get("wins")) + _int(player2.get("draws")) + _int(player2.get("losses"))) < placement_matches:
                 delta2 = max(22, min(29, delta2))
 
@@ -395,12 +410,26 @@ def build_replay_plan(
                 def scaled(value, coefficient):
                     sign = -1 if _int(value) < 0 else 1
                     return sign * int(math.floor(abs(_int(value)) * coefficient + 0.5))
+                effective_streak_bonus1 = streak_bonus1 if repeat_win_number < 4 else 0
+                effective_streak_bonus2 = streak_bonus2 if repeat_win_number < 4 else 0
                 if p1_won:
-                    delta1 = scaled(delta1, winner_factor)
+                    winner_base = max(0, delta1 - streak_bonus1)
+                    delta1 = scaled(winner_base, winner_factor) + effective_streak_bonus1
                     delta2 = scaled(delta2, loser_factor)
+                    repeat_details.update({
+                        "winner_base_before_factor": winner_base,
+                        "winner_streak_bonus": effective_streak_bonus1,
+                        "streak_bonus_scaled": False,
+                    })
                 else:
-                    delta2 = scaled(delta2, winner_factor)
+                    winner_base = max(0, delta2 - streak_bonus2)
+                    delta2 = scaled(winner_base, winner_factor) + effective_streak_bonus2
                     delta1 = scaled(delta1, loser_factor)
+                    repeat_details.update({
+                        "winner_base_before_factor": winner_base,
+                        "winner_streak_bonus": effective_streak_bonus2,
+                        "streak_bonus_scaled": False,
+                    })
                 if repeat_win_number >= 4:
                     affect_streak = False
                     repeat_details.update({"streak_eligible": False})

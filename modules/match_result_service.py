@@ -137,6 +137,11 @@ def apply_match_result(match):
         delta1, delta2 = validate_ranked_deltas(score1, score2, delta1, delta2)
 
         # The 0.95 coefficient belongs to the actual room host, not implicitly player1.
+        # Tách thưởng chuỗi khỏi mọi hệ số giảm RP. calculate_deltas đã cộng
+        # thưởng này vào delta thắng; các bước sau chỉ được phép giảm phần RP cơ bản.
+        streak_bonus1 = get_win_streak_bonus(player1, score1 > score2)
+        streak_bonus2 = get_win_streak_bonus(player2, score2 > score1)
+
         host_user_id = match.get("host_user_id")
         if not host_user_id:
             try:
@@ -149,11 +154,15 @@ def apply_match_result(match):
             except Exception as exc:
                 print(f"get_result_host warning match={match.get('id')}: {type(exc).__name__}: {exc}")
         if str(host_user_id or "") == str(player1_id) and score1 > score2:
-            delta1 = delta1 if delta1 in (17, 19) else _safe_int(apply_host_xp_factor(delta1, match.get("host_xp_factor", HOST_WIN_FACTOR)))
+            if delta1 not in (17, 19):
+                base_delta1 = max(0, int(delta1) - int(streak_bonus1))
+                delta1 = _safe_int(apply_host_xp_factor(base_delta1, match.get("host_xp_factor", HOST_WIN_FACTOR))) + int(streak_bonus1)
             if (_safe_int(player1.get("wins")) + _safe_int(player1.get("draws")) + _safe_int(player1.get("losses"))) < PLACEMENT_MATCHES:
                 delta1 = max(22, min(29, delta1))
         elif str(host_user_id or "") == str(player2_id) and score2 > score1:
-            delta2 = delta2 if delta2 in (17, 19) else _safe_int(apply_host_xp_factor(delta2, match.get("host_xp_factor", HOST_WIN_FACTOR)))
+            if delta2 not in (17, 19):
+                base_delta2 = max(0, int(delta2) - int(streak_bonus2))
+                delta2 = _safe_int(apply_host_xp_factor(base_delta2, match.get("host_xp_factor", HOST_WIN_FACTOR))) + int(streak_bonus2)
             if (_safe_int(player2.get("wins")) + _safe_int(player2.get("draws")) + _safe_int(player2.get("losses"))) < PLACEMENT_MATCHES:
                 delta2 = max(22, min(29, delta2))
 
@@ -163,6 +172,7 @@ def apply_match_result(match):
         delta1, delta2, repeat_details = apply_repeat_opponent_rules(
             match, player1, player2, score1, score2, delta1, delta2,
             context=repeat_context,
+            streak_bonus1=streak_bonus1, streak_bonus2=streak_bonus2,
         )
         match["_streak_eligible"] = bool(repeat_details.get("streak_eligible", True))
 

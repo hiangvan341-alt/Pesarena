@@ -12,7 +12,7 @@ import random
 from modules.rp_engine import calculate_deltas, validate_deltas
 from modules.rp_formula import RP_FORMULA_VERSION
 
-EXPECTED_RP_FORMULA_VERSION = "RP_V1.14.4"
+EXPECTED_RP_FORMULA_VERSION = "RP_V1.14.5"
 
 
 def rank_level(points):

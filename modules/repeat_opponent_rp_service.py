@@ -169,7 +169,10 @@ def _round_scaled(value, factor):
     return sign * int(math.floor(abs(int(value)) * float(factor) + 0.5))
 
 
-def apply_repeat_opponent_rules(match, player1, player2, score1, score2, delta1, delta2, context=None):
+def apply_repeat_opponent_rules(
+    match, player1, player2, score1, score2, delta1, delta2, context=None,
+    streak_bonus1=0, streak_bonus2=0,
+):
     """Áp dụng hệ số cặp đấu và trả delta + metadata điều khiển chuỗi."""
     if not repeat_opponent_rules_enabled():
         return int(delta1), int(delta2), {
@@ -232,11 +235,26 @@ def apply_repeat_opponent_rules(match, player1, player2, score1, score2, delta1,
     if repeat_win_number >= 4:
         details["streak_eligible"] = False
 
+    # Hệ số gặp lại chỉ giảm phần RP thắng cơ bản. Thưởng chuỗi là thành tích
+    # độc lập nên luôn được cộng đủ, không bị nhân 60%/30%/0%.
+    original_streak_bonus1 = max(0, int(streak_bonus1 or 0))
+    original_streak_bonus2 = max(0, int(streak_bonus2 or 0))
+    # Từ lần thắng thứ 4, trận không được tính chuỗi nên cũng không được nhận
+    # thưởng mốc chuỗi dù delta gốc đã tạm tính trước đó.
+    streak_bonus1 = original_streak_bonus1 if details["streak_eligible"] else 0
+    streak_bonus2 = original_streak_bonus2 if details["streak_eligible"] else 0
     if p1_won:
-        delta1 = _round_scaled(delta1, winner_factor)
+        base_delta1 = max(0, int(delta1) - original_streak_bonus1)
+        delta1 = _round_scaled(base_delta1, winner_factor) + streak_bonus1
         delta2 = _round_scaled(delta2, loser_factor)
+        details["winner_base_before_factor"] = base_delta1
+        details["winner_streak_bonus"] = streak_bonus1
     else:
-        delta2 = _round_scaled(delta2, winner_factor)
+        base_delta2 = max(0, int(delta2) - original_streak_bonus2)
+        delta2 = _round_scaled(base_delta2, winner_factor) + streak_bonus2
         delta1 = _round_scaled(delta1, loser_factor)
+        details["winner_base_before_factor"] = base_delta2
+        details["winner_streak_bonus"] = streak_bonus2
+    details["streak_bonus_scaled"] = False
     details["reason"] = "repeat_win"
     return int(delta1), int(delta2), details

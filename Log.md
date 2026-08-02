@@ -125,3 +125,10 @@
 - `modules/admin_dashboard_routes.py`
 - `test_v1144167_room_daily_limit.py`
 - `Log.md`
+
+
+## V1.14.41.68 — 02/08/2026 23:35 (GMT+7)
+- Sửa công thức thưởng chuỗi: chỉ RP thắng cơ bản chịu hệ số gặp lại và hệ số chủ phòng.
+- Thưởng chuỗi được cộng nguyên vẹn.
+- Đồng bộ luồng xác nhận trận và tính lại BXH Admin.
+- Thêm test riêng cho thắng lần 3 cùng đối thủ khi chạm chuỗi 10.
