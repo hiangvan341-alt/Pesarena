@@ -23,6 +23,26 @@ def register_routes(context):
                 return default
 
         all_rooms = admin_safe_load("rooms", list_rooms, [])
+
+        # Dọn các phòng chờ bị nhân đôi do double-click hoặc nhiều Vercel instance
+        # xử lý đồng thời. Chỉ xóa waiting_ready chưa có match_id nên không ảnh hưởng
+        # trận đang đá, kết quả, RP hay tranh chấp.
+        duplicate_cleanup_count = 0
+        participant_ids = {
+            str(value)
+            for room in all_rooms
+            for value in (room.get("host_user_id"), room.get("guest_user_id"))
+            if value
+        }
+        for participant_id in participant_ids:
+            duplicate_cleanup_count += admin_safe_load(
+                f"cleanup_duplicate_rooms:{participant_id}",
+                lambda uid=participant_id: cleanup_duplicate_waiting_rooms(uid),
+                0,
+            )
+        if duplicate_cleanup_count:
+            all_rooms = admin_safe_load("rooms_after_duplicate_cleanup", list_rooms, [])
+
         all_matches = admin_safe_load("matches", list_matches, [])
 
         # Báo cáo số trận theo múi giờ Việt Nam. Dùng dữ liệu matches đã tải để

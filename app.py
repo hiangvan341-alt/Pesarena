@@ -64,7 +64,7 @@ from modules.win_streaks import (
 load_dotenv()
 
 APP_NAME = "PES Arena – Bản Lĩnh Sân Cỏ"
-APP_VERSION = "V1.14.41.65"
+APP_VERSION = "V1.14.41.67"
 DEFAULT_POINTS = 1000
 DEVICE_COOKIE_NAME = "rankzone_device_id"
 COOLDOWN_MINUTES = 3
@@ -3549,40 +3549,116 @@ def room_is_active(room):
     )
 
 
-def active_room_for_user(user_id, exclude_room_id=None):
-    """Tìm trực tiếp phòng cần bảo vệ phiên; cache danh sách phòng chỉ là fallback.
+ACTIVE_ROOM_STATUSES = {
+    "waiting_ready",
+    "playing",
+    "friendly_playing",
+    "waiting_result_confirm",
+    "waiting_confirm",
+    "disputed",
+}
 
-    Vercel có nhiều serverless instance nên cache của ``list_rooms`` có thể cũ hoặc
-    khác instance. Truy vấn trực tiếp giúp người đang chơi/chờ xác nhận/tranh chấp
-    không bị đăng xuất oan sau 60 phút.
+
+def _direct_active_rooms_for_user(user_id, limit=20):
+    """Đọc phòng active trực tiếp từ bảng match_rooms, không dùng cache Vercel."""
+    if not user_id:
+        return []
+    result = execute_query(
+        db.table("match_rooms")
+        .select("*")
+        .or_(f"host_user_id.eq.{user_id},guest_user_id.eq.{user_id}")
+        .in_("status", sorted(ACTIVE_ROOM_STATUSES))
+        .order("updated_at", desc=True)
+        .limit(limit),
+        "active_room_for_user_direct",
+        attempts=2,
+    )
+    return list(result.data or [])
+
+
+def cleanup_duplicate_waiting_rooms(user_id):
+    """Xóa an toàn các phòng waiting_ready bị nhân đôi của một người chơi.
+
+    Chỉ đụng tới phòng chưa có match_id. Phòng có đối thủ được ưu tiên giữ lại;
+    nếu nhiều phòng cùng loại thì giữ phòng cập nhật mới nhất. Lời mời gắn với
+    phòng bị xóa cũng được đóng để không còn trạng thái treo.
     """
+    try:
+        rooms = [
+            room for room in _direct_active_rooms_for_user(user_id)
+            if str(room.get("status") or "") == "waiting_ready" and not room.get("match_id")
+        ]
+    except Exception as exc:
+        print(f"cleanup_duplicate_waiting_rooms load warning: {exc}")
+        return 0
+    if len(rooms) <= 1:
+        return 0
+
+    rooms.sort(
+        key=lambda room: (
+            1 if room.get("guest_user_id") else 0,
+            1 if room.get("invite_id") else 0,
+            str(room.get("updated_at") or room.get("created_at") or ""),
+            str(room.get("id") or ""),
+        ),
+        reverse=True,
+    )
+    keep_id = str(rooms[0].get("id"))
+    removed = 0
+    for room in rooms[1:]:
+        room_id = room.get("id")
+        if not room_id or str(room_id) == keep_id:
+            continue
+        try:
+            deleted = execute_query(
+                db.table("match_rooms").delete()
+                .eq("id", room_id)
+                .eq("status", "waiting_ready")
+                .is_("match_id", "null"),
+                "cleanup_duplicate_waiting_room",
+                attempts=2,
+            )
+            if deleted.data:
+                removed += 1
+                invite_id = room.get("invite_id")
+                if invite_id:
+                    execute_query(
+                        db.table("match_invites").update({
+                            "status": "cancelled",
+                            "updated_at": now_iso(),
+                        }).eq("id", invite_id).eq("status", "pending"),
+                        "cleanup_duplicate_waiting_room_invite",
+                        attempts=2,
+                    )
+        except Exception as exc:
+            print(f"cleanup duplicate room warning room={room_id}: {exc}")
+    if removed:
+        cache_delete("_rz_rooms_all")
+        cache_delete("_rz_invites_all")
+        cache_delete("_rz_current_pending_invites")
+        ttl_cache_delete("rooms_raw")
+        ttl_cache_delete("invites_raw")
+    return removed
+
+
+def active_room_for_user(user_id, exclude_room_id=None):
+    """Tìm trực tiếp mọi phòng active của người chơi từ match_rooms."""
     if not user_id:
         return None
-
-    protected_statuses = sorted(PROTECTED_ROOM_STATUSES)
     try:
-        query = (
-            db.table("rooms")
-            .select("*")
-            .or_(f"host_user_id.eq.{user_id},guest_user_id.eq.{user_id}")
-            .in_("status", protected_statuses)
-            .order("updated_at", desc=True)
-            .limit(5)
-        )
-        result = execute_query(query, "active_room_for_user_direct", attempts=2)
-        for room in result.data or []:
+        rooms = _direct_active_rooms_for_user(user_id)
+        for room in rooms:
             if exclude_room_id and str(room.get("id")) == str(exclude_room_id):
                 continue
             return room
     except Exception as exc:
         print(f"active_room_for_user direct warning: {exc}")
 
-    # Fallback giữ tương thích nếu Supabase tạm lỗi hoặc schema cũ thiếu updated_at.
     try:
         for room in list_rooms():
             if exclude_room_id and str(room.get("id")) == str(exclude_room_id):
                 continue
-            if str(room.get("status") or "").lower() in PROTECTED_ROOM_STATUSES and user_id in [room.get("host_user_id"), room.get("guest_user_id")]:
+            if str(room.get("status") or "").lower() in ACTIVE_ROOM_STATUSES and user_id in [room.get("host_user_id"), room.get("guest_user_id")]:
                 return room
     except Exception as exc:
         print(f"active_room_for_user fallback warning: {exc}")
@@ -4325,6 +4401,11 @@ def api_active_room():
 def build_room_state_key(room):
     """Tạo khóa trạng thái ổn định dùng chung cho HTML và API phòng đấu."""
     return "|".join([
+        # Thành viên phòng phải nằm trong state key. Nếu khách vừa tham gia
+        # nhưng status vẫn là waiting_ready và guest_ready vẫn False, thiếu
+        # guest_user_id sẽ khiến chủ phòng nhận 204 và không làm mới giao diện.
+        str(room.get("host_user_id")),
+        str(room.get("guest_user_id")),
         str(room.get("status")),
         str(room.get("host_team")),
         str(room.get("guest_team")),
@@ -5044,6 +5125,7 @@ def create_open_room():
     if limit_message:
         flash(limit_message, "warning")
         return redirect(url_for("dashboard"))
+    cleanup_duplicate_waiting_rooms(user["id"])
     existing = active_room_for_user(user["id"])
     if existing:
         return redirect(url_for("room_detail", room_id=existing["id"]))
@@ -5067,6 +5149,11 @@ def create_open_room():
         }),
         "create_open_room",
     ).data[0]
+    # Chống double-click / hai request chạy đồng thời trên nhiều Vercel instance.
+    cleanup_duplicate_waiting_rooms(user["id"])
+    canonical_room = active_room_for_user(user["id"])
+    if canonical_room:
+        room = canonical_room
     flash("Đã tạo phòng đấu. Bạn có thể mời đối thủ từ danh sách Players.", "success")
     return redirect(url_for("room_detail", room_id=room["id"]))
 
