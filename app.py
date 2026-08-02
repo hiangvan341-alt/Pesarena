@@ -64,7 +64,7 @@ from modules.win_streaks import (
 load_dotenv()
 
 APP_NAME = "PES Arena – Bản Lĩnh Sân Cỏ"
-APP_VERSION = "V1.14.41.57"
+APP_VERSION = "V1.14.41.58"
 DEFAULT_POINTS = 1000
 DEVICE_COOKIE_NAME = "rankzone_device_id"
 COOLDOWN_MINUTES = 3
@@ -5835,6 +5835,7 @@ def redirect_admin(tab="overview"):
 from modules import notification_service as _notification_service
 from modules import forfeit_history_service as _forfeit_history_service
 from modules import ranking_lock_service as _ranking_lock_service
+from modules import weekly_rp_rewards_service as _weekly_rp_rewards_service
 from modules import match_result_service as _match_result_service
 from modules import ranking_rebuild_service as _ranking_rebuild_service
 from modules import data_cleanup_service as _data_cleanup_service
@@ -5852,6 +5853,7 @@ for _service_module in (
     _ranking_lock_service,
     _daily_rank_limit_service,
     _repeat_opponent_rp_service,
+    _weekly_rp_rewards_service,
     _zcoin_module,
     _daily_checkin_module,
     _gift_codes_module,

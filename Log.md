@@ -1,3 +1,11 @@
+## V1.14.41.58 — 2026-08-02 07:45 (Asia/Bangkok)
+
+- Thêm thưởng RP hoạt động tuần theo số trận và số đối thủ khác nhau.
+- Mỗi mốc chỉ nhận một lần/tuần bằng bảng `weekly_rp_rewards`.
+- Mốc thưởng cộng dồn: 10 trận +20; 5 đối thủ +30; 10 đối thủ +50; 20 đối thủ +50 RP.
+- Chỉ trận confirmed được xét thưởng; tranh chấp chỉ được xét sau khi Admin xác nhận.
+- Thêm SQL `docs/update_weekly_rp_rewards_v1_14_41_58.sql`.
+
 ## V1.14.41.57 — 2026-08-02 07:17 (Asia/Bangkok)
 
 - Đổi thời gian chờ xác nhận kết quả Rank từ 12 giờ xuống 1 phút.

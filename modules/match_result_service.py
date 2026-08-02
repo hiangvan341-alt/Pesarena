@@ -264,6 +264,12 @@ def apply_match_result(match):
     except Exception as exc:
         print(f"daily rank limit notification warning: {exc}")
 
+    # Thưởng tuần là tác vụ phụ, chạy sau khi trận đã confirmed để không làm hỏng kết quả.
+    try:
+        grant_weekly_rp_rewards_for_users([player1_id, player2_id])
+    except Exception as exc:
+        print(f"weekly_rp_reward warning match={match.get('id')}: {type(exc).__name__}: {exc}")
+
     # Badge synchronization is auxiliary and must never invalidate a confirmed match.
     try:
         sync_achievements_for_users([player1_id, player2_id])
@@ -323,6 +329,11 @@ def resolve_match_dispute_with_result(
             }).eq("id", dispute.get("id")).in_("status", list(DISPUTE_PENDING_STATUSES)),
             "finish_match_dispute_chronologically",
         )
+
+        try:
+            grant_weekly_rp_rewards_for_users([match.get("player1_id"), match.get("player2_id")])
+        except Exception as exc:
+            print(f"weekly_rp_reward dispute warning match={match_id}: {type(exc).__name__}: {exc}")
 
         resolved_match = get_match(match_id) or {}
         delta1 = _safe_int(resolved_match.get("delta1"))

@@ -143,6 +143,8 @@ def register_routes(context):
                         f"tính lại {user_count} tài khoản; giữ nguyên created_at"
                     ),
                 )
+                if new_status == "confirmed":
+                    grant_weekly_rp_rewards_for_users([match.get("player1_id"), match.get("player2_id")])
                 flash(
                     "Đã đổi trạng thái và tính lại RP, thắng/thua, streak, loss_streak theo thời gian gốc.",
                     "success",
@@ -288,6 +290,7 @@ def register_routes(context):
                     lock_token=lock_token,
                     actor_id=current_user().get("id"),
                 )
+                grant_weekly_rp_rewards_for_users([match.get("player1_id"), match.get("player2_id")])
             except Exception as exc:
                 flash(f"Không thể xử lý tranh chấp: {exc}", "danger")
                 return redirect_admin("disputes")
