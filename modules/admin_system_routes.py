@@ -24,6 +24,7 @@ def register_routes(context):
             "rank_daily_limits_enabled": daily_rank_limits_enabled(),
             "quick_match_config": get_quick_match_config(),
             "repeat_opponent_rp_config": get_repeat_opponent_rp_config(),
+            "weekly_rp_reward_config": get_weekly_rp_reward_config(),
         }
 
     @app.route("/admin/system/maintenance", methods=["POST"])
@@ -123,6 +124,57 @@ def register_routes(context):
             "success",
         )
         return redirect_admin("system")
+
+    @app.route("/admin/system/weekly-rp-rewards", methods=["POST"])
+    @login_required
+    @admin_required
+    @admin_permission_required("system_features_manage")
+    def admin_update_weekly_rp_rewards():
+        fields = (
+            "opponents_5_threshold", "opponents_5_rp",
+            "opponents_10_threshold", "opponents_10_rp",
+            "opponents_20_threshold", "opponents_20_rp",
+            "matches_threshold", "matches_rp",
+        )
+        try:
+            payload = {field: int(request.form.get(field, "")) for field in fields}
+        except (TypeError, ValueError):
+            flash("Các mốc và RP thưởng phải là số nguyên.", "danger")
+            return redirect_admin("system")
+
+        thresholds = [
+            payload["opponents_5_threshold"],
+            payload["opponents_10_threshold"],
+            payload["opponents_20_threshold"],
+        ]
+        if any(value < 1 or value > 500 for value in thresholds + [payload["matches_threshold"]]):
+            flash("Mỗi mốc phải nằm trong khoảng 1–500.", "danger")
+            return redirect_admin("system")
+        if not thresholds[0] < thresholds[1] < thresholds[2]:
+            flash("Ba mốc đối thủ phải tăng dần.", "danger")
+            return redirect_admin("system")
+        reward_values = [
+            payload["opponents_5_rp"], payload["opponents_10_rp"],
+            payload["opponents_20_rp"], payload["matches_rp"],
+        ]
+        if any(value < 0 or value > 1000 for value in reward_values):
+            flash("RP thưởng mỗi mốc phải nằm trong khoảng 0–1000.", "danger")
+            return redirect_admin("system")
+
+        execute_query(
+            db.table("system_settings").upsert({
+                "setting_key": "weekly_rp_reward_config",
+                "setting_value": payload,
+                "updated_at": now_iso(),
+            }, on_conflict="setting_key"),
+            "update_weekly_rp_reward_config",
+            attempts=2,
+        )
+        get_weekly_rp_reward_config(force_refresh=True)
+        log_admin_action("Cập nhật thưởng RP theo tuần", "system", details=payload)
+        flash("Đã lưu các mốc thưởng RP theo tuần.", "success")
+        return redirect_admin("system")
+
 
     @app.route("/admin/system/features", methods=["POST"])
     @login_required

@@ -1,15 +1,54 @@
 """Thưởng RP theo hoạt động tuần, mỗi mốc chỉ nhận một lần."""
 
 from datetime import datetime, timedelta, timezone
+import time
 
-EXPORTED_NAMES = ["grant_weekly_rp_rewards_for_users"]
+EXPORTED_NAMES = ["grant_weekly_rp_rewards_for_users", "get_weekly_rp_reward_config"]
 
-REWARD_RULES = (
-    ("matches_10", "Hoàn thành 10 trận trong tuần", 20),
-    ("opponents_5", "Gặp 5 đối thủ khác nhau trong tuần", 30),
-    ("opponents_10", "Gặp 10 đối thủ khác nhau trong tuần", 50),
-    ("opponents_20", "Gặp 20 đối thủ khác nhau trong tuần", 50),
-)
+WEEKLY_RP_REWARD_SETTING_KEY = "weekly_rp_reward_config"
+DEFAULT_WEEKLY_RP_REWARD_CONFIG = {
+    "opponents_5_threshold": 5,
+    "opponents_5_rp": 20,
+    "opponents_10_threshold": 10,
+    "opponents_10_rp": 30,
+    "opponents_20_threshold": 20,
+    "opponents_20_rp": 50,
+    "matches_threshold": 10,
+    "matches_rp": 20,
+}
+_config_cache = {"value": None, "expires_at": 0.0}
+
+
+def get_weekly_rp_reward_config(force_refresh=False):
+    """Đọc cấu hình thưởng tuần từ system_settings, cache 30 giây."""
+    if not force_refresh and _config_cache["value"] is not None and time.time() < _config_cache["expires_at"]:
+        return dict(_config_cache["value"])
+    config = dict(DEFAULT_WEEKLY_RP_REWARD_CONFIG)
+    try:
+        result = execute_query(
+            db.table("system_settings").select("setting_value")
+            .eq("setting_key", WEEKLY_RP_REWARD_SETTING_KEY).limit(1),
+            "get_weekly_rp_reward_config",
+            attempts=2,
+        )
+        rows = list(result.data or [])
+        stored = (rows[0].get("setting_value") or {}) if rows else {}
+        for key, default in DEFAULT_WEEKLY_RP_REWARD_CONFIG.items():
+            config[key] = _safe_int(stored.get(key), default)
+    except Exception as exc:
+        print(f"weekly reward config warning: {type(exc).__name__}: {exc}")
+    _config_cache["value"] = dict(config)
+    _config_cache["expires_at"] = time.time() + 30
+    return config
+
+
+def _reward_rules(config):
+    return (
+        ("opponents_5", f"Gặp {config['opponents_5_threshold']} đối thủ khác nhau trong tuần", config["opponents_5_rp"]),
+        ("opponents_10", f"Gặp {config['opponents_10_threshold']} đối thủ khác nhau trong tuần", config["opponents_10_rp"]),
+        ("opponents_20", f"Gặp {config['opponents_20_threshold']} đối thủ khác nhau trong tuần", config["opponents_20_rp"]),
+        ("matches_10", f"Hoàn thành {config['matches_threshold']} trận trong tuần", config["matches_rp"]),
+    )
 
 
 def configure(context):
@@ -119,6 +158,7 @@ def _claim_and_apply_reward(user_id, week_start, reward_code, reward_name, rewar
 def grant_weekly_rp_rewards_for_users(user_ids):
     """Kiểm tra và cộng tất cả mốc tuần vừa đạt cho danh sách người chơi."""
     week_start, week_end = _week_bounds_vn()
+    config = get_weekly_rp_reward_config()
     awarded = {}
     for raw_user_id in dict.fromkeys(user_ids or []):
         user_id = str(raw_user_id or "").strip()
@@ -127,17 +167,17 @@ def grant_weekly_rp_rewards_for_users(user_ids):
         try:
             match_count, opponent_count = _load_week_activity(user_id, week_start, week_end)
             eligible_codes = set()
-            if match_count >= 10:
+            if match_count >= config["matches_threshold"]:
                 eligible_codes.add("matches_10")
-            if opponent_count >= 5:
+            if opponent_count >= config["opponents_5_threshold"]:
                 eligible_codes.add("opponents_5")
-            if opponent_count >= 10:
+            if opponent_count >= config["opponents_10_threshold"]:
                 eligible_codes.add("opponents_10")
-            if opponent_count >= 20:
+            if opponent_count >= config["opponents_20_threshold"]:
                 eligible_codes.add("opponents_20")
 
             total = 0
-            for code, name, rp in REWARD_RULES:
+            for code, name, rp in _reward_rules(config):
                 if code in eligible_codes:
                     total += _claim_and_apply_reward(user_id, week_start, code, name, rp)
             if total:

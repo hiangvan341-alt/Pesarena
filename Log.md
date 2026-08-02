@@ -77,3 +77,8 @@
 - Tách hủy phòng khỏi xử lý kết quả.
 - Tự xác nhận trận chờ sau 12 giờ, không phạt người quên xác nhận.
 - Khóa xác nhận trực tiếp trận disputed.
+
+## V1.14.41.59 — 02/08/2026 08:08 (UTC+7)
+- Điều chỉnh mốc thưởng tuần mặc định thành 20 + 30 + 50 + 20 = tối đa 120 RP.
+- Bổ sung cấu hình thưởng tuần trong Admin > Hệ thống.
+- File sửa: `modules/weekly_rp_rewards_service.py`, `modules/admin_system_routes.py`, `templates/admin.html`, `app.py`.
