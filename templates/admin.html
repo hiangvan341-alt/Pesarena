@@ -258,9 +258,9 @@
                 <tbody id="adminUserTableBody">
                 {% for p in admin_users %}
                     {% set can_edit = (not (p.role == 'admin' or p.admin_level in ['owner', 'admin'])) or current_user.admin_level == 'owner' %}
-                    <tr class="admin-user-summary-row{% if p.duplicate_ip_count %} has-duplicate-ip{% endif %}"
+                    <tr class="admin-user-summary-row{% if p.duplicate_ip_warning_visible %} has-duplicate-ip{% endif %}"
                         data-user-summary
-                        data-duplicate-ip="{{ 1 if p.duplicate_ip_count else 0 }}"
+                        data-duplicate-ip="{{ 1 if p.duplicate_ip_detected else 0 }}"
                         data-user-search="{{ (p.username ~ ' ' ~ (p.display_name or '') ~ ' ' ~ (p.zalo_name or '') ~ ' ' ~ (p.register_ip or '') ~ ' ' ~ (p.latest_ip or '') ~ ' ' ~ (p.duplicate_ip_accounts|join(' ')))|lower }}">
                         <td>{{ loop.index }}</td>
                         <td><strong>{{ p.username }}</strong></td>
@@ -277,7 +277,7 @@
                         <td><code class="admin-ip-code">{{ p.latest_ip or '-' }}</code></td>
                         <td>
                             {% if p.duplicate_ip_accounts %}
-                            <span class="badge danger">⚠️ Trùng IP</span>
+                            <span class="badge {{ 'danger' if p.duplicate_ip_warning_visible else 'gold' }}">{{ '⚠️ Trùng IP' if p.duplicate_ip_warning_visible else 'Cùng IP' }}</span>
                             <div class="admin-duplicate-with">{{ p.duplicate_ip_accounts|join(', ') }}</div>
                             {% else %}
                             <span class="admin-ip-safe">Không trùng</span>

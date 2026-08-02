@@ -11,7 +11,7 @@
             {% endfor %}
         {% endwith %}
 
-        <form method="post" id="loginForm">
+        <form method="post" id="loginForm" autocomplete="on">
             <div class="form-group"><input id="loginUsername" name="username" placeholder="Username" autocomplete="username" required></div>
             <div class="form-group password-field">
                 <input id="loginPassword" name="password" type="password" placeholder="Password" autocomplete="current-password" required>
@@ -61,15 +61,6 @@
             else localStorage.removeItem(storageKey);
         } catch (error) {}
 
-        // Yêu cầu trình duyệt lưu tài khoản/mật khẩu bằng Password Manager.
-        // Không ghi mật khẩu dạng rõ vào localStorage.
-        if (rememberBox.checked && window.PasswordCredential && navigator.credentials) {
-            event.preventDefault();
-            const credential = new PasswordCredential(form);
-            navigator.credentials.store(credential)
-                .catch(function(){})
-                .finally(function(){ form.submit(); });
-        }
     });
 })();
 </script>

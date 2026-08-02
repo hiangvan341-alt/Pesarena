@@ -9,7 +9,7 @@ from typing import Any, Mapping
 
 IDLE_TIMEOUT_SECONDS = 60 * 60
 IDLE_WARNING_SECONDS = 5 * 60
-ACTIVITY_SYNC_SECONDS = 5 * 60
+ACTIVITY_SYNC_SECONDS = 60
 
 # Không tự đăng xuất trong các trạng thái cần hoàn tất trận đấu.
 PROTECTED_ROOM_STATUSES = {

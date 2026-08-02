@@ -64,7 +64,7 @@ from modules.win_streaks import (
 load_dotenv()
 
 APP_NAME = "PES Arena – Bản Lĩnh Sân Cỏ"
-APP_VERSION = "V1.14.41.63"
+APP_VERSION = "V1.14.41.64"
 DEFAULT_POINTS = 1000
 DEVICE_COOKIE_NAME = "rankzone_device_id"
 COOLDOWN_MINUTES = 3
@@ -2139,31 +2139,34 @@ def list_user_devices():
 
 
 def decorate_admin_users(users):
-    """Bổ sung IP gần nhất và cảnh báo IP dùng chung cho danh sách Admin."""
+    """Bổ sung toàn bộ IP và trạng thái trùng IP cho danh sách Admin.
+
+    Tài khoản tin cậy/cấu hình tắt cảnh báo chỉ ảnh hưởng màu cảnh báo, không được
+    loại khỏi dữ liệu đối chiếu. Nhờ vậy bộ lọc "Chỉ hiện IP trùng" luôn thấy đủ.
+    """
     rows = [dict(user) for user in users]
     for row in rows:
         row["admin_permissions"] = _admin_permissions(row)
-    devices = list_user_devices()
-    ip_warning_config = get_duplicate_ip_warning_config()
-    warnings_enabled = bool(ip_warning_config.get("enabled", True))
 
+    devices = list_user_devices()
+    config = get_duplicate_ip_warning_config()
+    warnings_enabled = bool(config.get("enabled", True))
     known_ips_by_user = {str(user.get("id")): set() for user in rows}
     latest_ip_by_user = {}
+    row_by_id = {str(user.get("id")): user for user in rows}
 
+    # Luôn thu thập IP đăng ký, kể cả tài khoản được tin cậy/được Admin tạo.
     for user in rows:
-        user_id = str(user.get("id"))
-        register_ip = (user.get("register_ip") or "").strip()
-        if register_ip and warnings_enabled and not user_ignored_for_duplicate_ip(user, ip_warning_config):
+        user_id = str(user.get("id") or "")
+        register_ip = str(user.get("register_ip") or "").strip()
+        if user_id and register_ip and not register_ip.upper().startswith(("ADMIN_TEST", "ADMIN_CREATED")):
             known_ips_by_user.setdefault(user_id, set()).add(register_ip)
 
-    # Dữ liệu đã sắp xếp mới nhất trước, nên IP đầu tiên là IP gần nhất.
+    # Luôn thu thập IP thiết bị. Dòng đầu tiên là IP mới nhất do truy vấn đã sort desc.
     for device in devices:
         user_id = str(device.get("user_id") or "")
-        ip = (device.get("ip_address") or "").strip()
-        if not user_id or not ip:
-            continue
-        owner = next((item for item in rows if str(item.get("id")) == user_id), None)
-        if not warnings_enabled or (owner and user_ignored_for_duplicate_ip(owner, ip_warning_config)):
+        ip = str(device.get("ip_address") or "").strip()
+        if not user_id or not ip or user_id not in row_by_id:
             continue
         known_ips_by_user.setdefault(user_id, set()).add(ip)
         latest_ip_by_user.setdefault(user_id, ip)
@@ -2174,9 +2177,8 @@ def decorate_admin_users(users):
             ip_owners.setdefault(ip, set()).add(user_id)
 
     username_by_id = {str(user.get("id")): user.get("username", "-") for user in rows}
-
     for user in rows:
-        user_id = str(user.get("id"))
+        user_id = str(user.get("id") or "")
         known_ips = sorted(known_ips_by_user.get(user_id, set()))
         duplicate_ips = [ip for ip in known_ips if len(ip_owners.get(ip, set())) > 1]
         duplicate_accounts = sorted({
@@ -2185,18 +2187,19 @@ def decorate_admin_users(users):
             for owner_id in ip_owners.get(ip, set())
             if owner_id != user_id
         })
+        trusted = user_ignored_for_duplicate_ip(user, config)
+        detected = bool(duplicate_accounts)
 
         user["latest_ip"] = latest_ip_by_user.get(user_id) or user.get("register_ip") or "-"
         user["known_ips"] = known_ips
         user["duplicate_ips"] = duplicate_ips
-        user["duplicate_ip_count"] = max(
-            [len(ip_owners.get(ip, set())) for ip in duplicate_ips] or [0]
-        )
+        user["duplicate_ip_count"] = max([len(ip_owners.get(ip, set())) for ip in duplicate_ips] or [0])
         user["duplicate_ip_accounts"] = duplicate_accounts
-        user["duplicate_ip_trusted"] = user_ignored_for_duplicate_ip(user, ip_warning_config)
+        user["duplicate_ip_detected"] = detected
+        user["duplicate_ip_trusted"] = trusted
+        user["duplicate_ip_warning_visible"] = detected and warnings_enabled and not trusted
 
     return rows
-
 
 def build_duplicate_ip_groups(users):
     """Gom các IP đang được từ 2 tài khoản trở lên sử dụng để Admin dễ kiểm tra clone."""
@@ -3965,7 +3968,11 @@ def before_request():
                 except Exception as exc:
                     print(f"idle room check warning: {exc}")
                 decision = idle_decision(now_ts=now_ts, last_activity_ts=last_real, room=room)
-                if decision.expired:
+                if decision.protected:
+                    # Tuyệt đối không đăng xuất khi người chơi đang ở một trận/phòng cần hoàn tất.
+                    session["last_real_activity"] = now_ts
+                    session.modified = True
+                elif decision.expired:
                     try:
                         execute_query(
                             db.table("users").update({"is_online": False, "last_seen_at": now_iso()}).eq("id", session.get("user_id")),
@@ -4133,8 +4140,11 @@ def mark_notification_read(notification_id):
 @login_required
 def api_session_activity():
     """Gia hạn phiên chỉ khi trình duyệt báo có thao tác thật của người dùng."""
-    session["last_real_activity"] = int(time.time())
-    return jsonify({"ok": True})
+    now_ts = int(time.time())
+    session["last_real_activity"] = now_ts
+    session["last_activity_touch"] = now_ts
+    session.modified = True
+    return jsonify({"ok": True, "last_activity": now_ts})
 
 
 @app.route("/api/session/timeout-check")
@@ -4429,6 +4439,7 @@ def login():
 
         remember_account = request.form.get("remember_account") == "1"
         session.permanent = remember_account
+        session["remember_account"] = remember_account
         session["user_id"] = user["id"]
         session["username"] = user.get("username", "")
         session["display_name"] = user.get("display_name", "")

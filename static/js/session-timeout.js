@@ -208,8 +208,9 @@
     global.addEventListener("pageshow", function (event) {
         if (event.persisted) resumeLifecycle();
     });
-    global.addEventListener("beforeunload", destroyLifecycle, {once: true});
-
+    // Không destroy ở beforeunload: một số trình duyệt phát sự kiện này khi chuyển
+    // trạng thái/phòng, làm bộ gia hạn phiên dừng ngoài ý muốn.
     schedule();
     startVisibleKeepalive();
+    syncActivity(true);
 })(window);
