@@ -86,3 +86,9 @@
 ## V1.14.41.60 - 2026-08-02
 - Sửa animation Win Streak và SHUTDOWN không xuất hiện khi trận được tự xác nhận sau 1 phút.
 - File: app.py, UPDATE_MANIFEST_V1.14.41.60.md.
+
+## V1.14.41.62 — 02/08/2026 09:24 (Asia/Bangkok)
+- Sửa Remember this account: dùng phiên đăng nhập 30 ngày và Password Manager của trình duyệt.
+- Tài khoản Admin tạo/import được dùng mật khẩu 1 ký tự.
+- Tài khoản Admin tạo/import bỏ giới hạn thiết bị và cảnh báo trùng IP, nhưng vẫn tính RP bình thường.
+- File: `app.py`, `modules/admin_account_routes.py`, `templates/admin.html`, `templates/login.html`.

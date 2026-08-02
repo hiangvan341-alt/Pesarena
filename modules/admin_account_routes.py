@@ -24,7 +24,7 @@ def register_routes(context):
         return str(value or "").strip()
 
 
-    def _build_test_user_payload(row, default_password="Test@12345"):
+    def _build_test_user_payload(row, default_password="1"):
         username = str(row.get("username") or "").strip()
         display_name = str(row.get("display_name") or username).strip() or username
         supplied_password = _csv_password_value(row)
@@ -32,8 +32,8 @@ def register_routes(context):
         zalo_name = str(row.get("zalo_name") or "Tài khoản test").strip() or "Tài khoản test"
         if len(username) < 3 or len(username) > 30:
             raise ValueError("Tên tài khoản phải từ 3 đến 30 ký tự.")
-        if len(password) < minimum_password_length():
-            raise ValueError(f"Mật khẩu của {username} phải có ít nhất {minimum_password_length()} ký tự.")
+        if len(password) < 1:
+            raise ValueError(f"Mật khẩu của {username} phải có ít nhất 1 ký tự.")
 
         wins = _safe_bounded_int(row.get("wins"), 0)
         draws = _safe_bounded_int(row.get("draws"), 0)
@@ -98,8 +98,8 @@ def register_routes(context):
     def admin_download_test_account_sample():
         sample_rows = [
             ["username", "display_name", "password", "zalo_name", "rank_points", "wins", "draws", "losses", "total_matches", "goals_for", "goals_against", "register_ip", "last_ip"],
-            ["test01", "Test Player 01", "123456", "Test 01", "1200", "5", "2", "3", "10", "12", "9", "", ""],
-            ["test02", "Test Player 02", "123456", "Test 02", "-1000", "0", "0", "0", "0", "0", "0", "", ""],
+            ["test01", "Test Player 01", "1", "Test 01", "1200", "5", "2", "3", "10", "12", "9", "", ""],
+            ["test02", "Test Player 02", "1", "Test 02", "-1000", "0", "0", "0", "0", "0", "0", "", ""],
         ]
         output = io.StringIO()
         writer = csv.writer(output, lineterminator="\n")
@@ -117,9 +117,9 @@ def register_routes(context):
     def admin_import_test_accounts():
         upload = request.files.get("csv_file")
         pasted_csv = request.form.get("csv_text", "").strip()
-        default_password = request.form.get("default_password", "Test@12345").strip() or "Test@12345"
-        if len(default_password) < minimum_password_length():
-            flash(f"Mật khẩu mặc định phải có ít nhất {minimum_password_length()} ký tự.", "danger")
+        default_password = request.form.get("default_password", "1").strip() or "1"
+        if len(default_password) < 1:
+            flash("Mật khẩu mặc định phải có ít nhất 1 ký tự.", "danger")
             return redirect_admin("test-data")
 
         if upload and upload.filename:
@@ -225,8 +225,8 @@ def register_routes(context):
                 # Chỉ cập nhật mật khẩu khi CSV thực sự cung cấp một giá trị hợp lệ.
                 supplied_password = _csv_password_value(row)
                 if supplied_password:
-                    if len(supplied_password) < minimum_password_length():
-                        raise ValueError(f"Mật khẩu mới của {username} phải có ít nhất {minimum_password_length()} ký tự.")
+                    if len(supplied_password) < 1:
+                        raise ValueError(f"Mật khẩu mới của {username} phải có ít nhất 1 ký tự.")
                     update_payload["password_hash"] = hash_password(supplied_password)
                     update_payload["must_change_password"] = False
                     update_payload["password_changed_at"] = now_iso()

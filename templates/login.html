@@ -18,7 +18,7 @@
                 <button id="passwordVisibilityButton" class="password-eye" type="button" aria-label="Hiện mật khẩu" title="Hiện mật khẩu">👁</button>
             </div>
             <label class="remember-account-row">
-                <input id="rememberAccount" type="checkbox">
+                <input id="rememberAccount" name="remember_account" type="checkbox" value="1">
                 <span>Remember this account</span>
             </label>
             <button class="btn full" type="submit">Đăng nhập</button>
@@ -55,11 +55,21 @@
         passwordInput.focus();
     });
 
-    form.addEventListener('submit', function(){
+    form.addEventListener('submit', function(event){
         try {
             if (rememberBox.checked) localStorage.setItem(storageKey, usernameInput.value.trim());
             else localStorage.removeItem(storageKey);
         } catch (error) {}
+
+        // Yêu cầu trình duyệt lưu tài khoản/mật khẩu bằng Password Manager.
+        // Không ghi mật khẩu dạng rõ vào localStorage.
+        if (rememberBox.checked && window.PasswordCredential && navigator.credentials) {
+            event.preventDefault();
+            const credential = new PasswordCredential(form);
+            navigator.credentials.store(credential)
+                .catch(function(){})
+                .finally(function(){ form.submit(); });
+        }
     });
 })();
 </script>

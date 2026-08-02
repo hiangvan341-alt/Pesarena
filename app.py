@@ -64,7 +64,7 @@ from modules.win_streaks import (
 load_dotenv()
 
 APP_NAME = "PES Arena – Bản Lĩnh Sân Cỏ"
-APP_VERSION = "V1.14.41.61"
+APP_VERSION = "V1.14.41.62"
 DEFAULT_POINTS = 1000
 DEVICE_COOKIE_NAME = "rankzone_device_id"
 COOLDOWN_MINUTES = 3
@@ -180,6 +180,7 @@ if not _flask_secret_key:
 
 app = Flask(__name__)
 app.secret_key = _flask_secret_key
+app.permanent_session_lifetime = timedelta(days=30)
 del _flask_secret_key
 app.jinja_env.globals["asset_url"] = asset_url
 app.jinja_env.globals["asset_base_url"] = asset_base_url
@@ -1882,9 +1883,16 @@ def get_device_link(device_id):
     return result.data[0] if result.data else None
 
 
+def is_admin_managed_test_account(user):
+    """Tài khoản do Admin tạo/import: không bị khóa theo thiết bị hoặc cảnh báo trùng IP."""
+    marker = str((user or {}).get("register_ip") or "").strip().upper()
+    return marker.startswith("ADMIN_TEST") or marker.startswith("ADMIN_CREATED")
+
+
 def link_device_to_user(user):
-    # Tài khoản admin chính không bị giới hạn thiết bị; admin phụ vẫn là player.
-    if user.get("role") == "admin":
+    # Admin chính và tài khoản do Admin tạo/import không bị giới hạn thiết bị/IP.
+    # Đây chỉ là ngoại lệ xác thực; mọi trận Rank vẫn tính W/H/B và RP bình thường.
+    if user.get("role") == "admin" or is_admin_managed_test_account(user):
         return True, ""
 
     device_id = get_device_id()
@@ -2097,7 +2105,7 @@ def decorate_admin_users(users):
     for user in rows:
         user_id = str(user.get("id"))
         register_ip = (user.get("register_ip") or "").strip()
-        if register_ip:
+        if register_ip and not is_admin_managed_test_account(user):
             known_ips_by_user.setdefault(user_id, set()).add(register_ip)
 
     # Dữ liệu đã sắp xếp mới nhất trước, nên IP đầu tiên là IP gần nhất.
@@ -2105,6 +2113,9 @@ def decorate_admin_users(users):
         user_id = str(device.get("user_id") or "")
         ip = (device.get("ip_address") or "").strip()
         if not user_id or not ip:
+            continue
+        owner = next((item for item in rows if str(item.get("id")) == user_id), None)
+        if owner and is_admin_managed_test_account(owner):
             continue
         known_ips_by_user.setdefault(user_id, set()).add(ip)
         latest_ip_by_user.setdefault(user_id, ip)
@@ -4365,6 +4376,8 @@ def login():
             flash(msg, "danger")
             return redirect(url_for("login"))
 
+        remember_account = request.form.get("remember_account") == "1"
+        session.permanent = remember_account
         session["user_id"] = user["id"]
         session["username"] = user.get("username", "")
         session["display_name"] = user.get("display_name", "")

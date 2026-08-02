@@ -547,13 +547,13 @@
                 <div>
                     <span class="admin-kicker">TẠO NHANH</span>
                     <h2>🧪 Tạo tài khoản test</h2>
-                    <p class="small">Tài khoản được duyệt ngay, không gắn thiết bị và chỉ nên dùng để thử luồng thi đấu.</p>
+                    <p class="small">Tài khoản được duyệt ngay, cho phép mật khẩu 1 ký tự, không khóa theo thiết bị/IP và vẫn tính RP như tài khoản thường.</p>
                 </div>
             </div>
             <form class="admin-test-form" method="post" action="{{ url_for('admin_create_test_account') }}">
                 <label>Tên tài khoản<input name="username" minlength="3" maxlength="30" placeholder="test_player_01" required></label>
                 <label>Tên hiển thị<input name="display_name" maxlength="80" placeholder="Test Player 01"></label>
-                <label>Mật khẩu<input name="password" type="password" minlength="{{ minimum_password_length }}" value="{{ '1' if simple_test_passwords_enabled else 'Test@12345' }}" required></label>
+                <label>Mật khẩu<input name="password" type="password" minlength="1" value="1" required></label>
                 <label>Tên Zalo<input name="zalo_name" maxlength="80" value="Tài khoản test"></label>
                 <label>Điểm RP ban đầu<input name="rank_points" type="number" min="0" max="999999" value="1000"></label>
                 <button class="btn admin-primary-action" type="submit">Tạo tài khoản test</button>
@@ -572,7 +572,7 @@
                 </div>
             </div>
             <form class="admin-import-form" method="post" action="{{ url_for('admin_import_test_accounts') }}" enctype="multipart/form-data">
-                <label>Mật khẩu mặc định<input name="default_password" type="password" minlength="{{ minimum_password_length }}" value="{{ '1' if simple_test_passwords_enabled else 'Test@12345' }}" required></label>
+                <label>Mật khẩu mặc định<input name="default_password" type="password" minlength="1" value="1" required></label>
                 <label>Chọn file CSV<input name="csv_file" type="file" accept=".csv,text/csv"></label>
                 <div class="admin-import-divider"><span>hoặc dán CSV</span></div>
                 <label>Dữ liệu CSV<textarea name="csv_text" rows="8" placeholder="username,display_name,password,rank_points,wins,draws,losses,goals_for,goals_against&#10;test01,Test 01,Test@12345,1200,5,2,3,12,9"></textarea></label>
