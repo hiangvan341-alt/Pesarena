@@ -236,6 +236,11 @@ def register_routes(context):
             for account in group.get("accounts", [])
             if account.get("id")
         })
+        ip_device_status = dict(getattr(list_user_devices, "last_status", {}) or {})
+        ip_device_status.setdefault("ok", None)
+        ip_device_status.setdefault("row_count", 0)
+        ip_device_status["account_ip_count"] = sum(1 for user in admin_users if user.get("known_ips"))
+        ip_device_status["duplicate_group_count"] = len(duplicate_ip_groups)
 
         return render_template(
             "admin.html",
@@ -254,6 +259,7 @@ def register_routes(context):
             audit_logs=audit_logs,
             duplicate_ip_groups=duplicate_ip_groups,
             duplicate_ip_user_count=duplicate_ip_user_count,
+            ip_device_status=ip_device_status,
             pending_disputes=pending_disputes,
             can_create_test_account=has_admin_permission(current_user(), "users_edit"),
             can_import_accounts_csv=has_admin_permission(current_user(), "accounts_import"),

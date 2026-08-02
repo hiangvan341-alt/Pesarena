@@ -50,7 +50,7 @@ from modules.admin_match_service import parse_score, score_changed
 from modules.admin_ranking_rebuild import build_replay_plan
 from modules.system_feature_service import post_login_endpoint, dashboard_is_enabled
 from modules.session_runtime_service import (
-    IDLE_TIMEOUT_SECONDS, idle_decision, room_blocks_idle_logout, client_config as session_client_config,
+    IDLE_TIMEOUT_SECONDS, PROTECTED_ROOM_STATUSES, idle_decision, room_blocks_idle_logout, client_config as session_client_config,
 )
 from modules.static_asset_service import asset_url, asset_base_url, shop_asset_base_url, luckybox_asset_base_url
 from modules.profile import equipment_service as profile_equipment_service
@@ -64,7 +64,7 @@ from modules.win_streaks import (
 load_dotenv()
 
 APP_NAME = "PES Arena – Bản Lĩnh Sân Cỏ"
-APP_VERSION = "V1.14.41.64"
+APP_VERSION = "V1.14.41.65"
 DEFAULT_POINTS = 1000
 DEVICE_COOKIE_NAME = "rankzone_device_id"
 COOLDOWN_MINUTES = 3
@@ -2122,8 +2122,14 @@ def list_password_reset_requests(status=None, limit=100):
 
 
 def list_user_devices():
-    """Lấy IP gần nhất của thiết bị để Admin kiểm tra trùng IP."""
+    """Lấy IP thiết bị và lưu trạng thái tải để Admin không hiểu nhầm dữ liệu rỗng."""
     require_db()
+    list_user_devices.last_status = {
+        "ok": False,
+        "row_count": 0,
+        "error": None,
+        "source": "user_devices",
+    }
     try:
         result = execute_query(
             db.table("user_devices")
@@ -2131,11 +2137,28 @@ def list_user_devices():
             .order("last_seen_at", desc=True),
             "list_user_devices",
         )
-        return result.data or []
+        rows = result.data or []
+        list_user_devices.last_status = {
+            "ok": True,
+            "row_count": len(rows),
+            "error": None,
+            "source": "user_devices",
+        }
+        return rows
     except Exception as exc:
-        # Không làm sập trang Admin nếu bảng thiết bị tạm thời truy vấn lỗi.
+        # Không làm sập trang Admin, nhưng phải đưa trạng thái lỗi ra giao diện.
+        message = str(exc).strip() or exc.__class__.__name__
+        list_user_devices.last_status = {
+            "ok": False,
+            "row_count": 0,
+            "error": message[:240],
+            "source": "register_ip_only",
+        }
         print(f"list_user_devices warning: {exc}")
         return []
+
+
+list_user_devices.last_status = {"ok": None, "row_count": 0, "error": None, "source": "not_loaded"}
 
 
 def decorate_admin_users(users):
@@ -3527,12 +3550,42 @@ def room_is_active(room):
 
 
 def active_room_for_user(user_id, exclude_room_id=None):
-    rooms = list_rooms()
-    for room in rooms:
-        if exclude_room_id and str(room.get("id")) == str(exclude_room_id):
-            continue
-        if room_is_active(room) and user_id in [room.get("host_user_id"), room.get("guest_user_id")]:
+    """Tìm trực tiếp phòng cần bảo vệ phiên; cache danh sách phòng chỉ là fallback.
+
+    Vercel có nhiều serverless instance nên cache của ``list_rooms`` có thể cũ hoặc
+    khác instance. Truy vấn trực tiếp giúp người đang chơi/chờ xác nhận/tranh chấp
+    không bị đăng xuất oan sau 60 phút.
+    """
+    if not user_id:
+        return None
+
+    protected_statuses = sorted(PROTECTED_ROOM_STATUSES)
+    try:
+        query = (
+            db.table("rooms")
+            .select("*")
+            .or_(f"host_user_id.eq.{user_id},guest_user_id.eq.{user_id}")
+            .in_("status", protected_statuses)
+            .order("updated_at", desc=True)
+            .limit(5)
+        )
+        result = execute_query(query, "active_room_for_user_direct", attempts=2)
+        for room in result.data or []:
+            if exclude_room_id and str(room.get("id")) == str(exclude_room_id):
+                continue
             return room
+    except Exception as exc:
+        print(f"active_room_for_user direct warning: {exc}")
+
+    # Fallback giữ tương thích nếu Supabase tạm lỗi hoặc schema cũ thiếu updated_at.
+    try:
+        for room in list_rooms():
+            if exclude_room_id and str(room.get("id")) == str(exclude_room_id):
+                continue
+            if str(room.get("status") or "").lower() in PROTECTED_ROOM_STATUSES and user_id in [room.get("host_user_id"), room.get("guest_user_id")]:
+                return room
+    except Exception as exc:
+        print(f"active_room_for_user fallback warning: {exc}")
     return None
 
 

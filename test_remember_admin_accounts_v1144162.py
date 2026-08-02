@@ -7,7 +7,7 @@ ACCOUNTS = Path("modules/admin_account_routes.py").read_text(encoding="utf-8")
 
 
 def test_version_and_remember_session():
-    assert 'APP_VERSION = "V1.14.41.63"' in APP
+    assert 'APP_VERSION = "V1.14.41.65"' in APP
     assert 'app.permanent_session_lifetime = timedelta(days=30)' in APP
     assert 'request.form.get("remember_account") == "1"' in APP
     assert 'session.permanent = remember_account' in APP
@@ -15,8 +15,10 @@ def test_version_and_remember_session():
 
 def test_browser_password_manager_not_plaintext_storage():
     assert 'name="remember_account"' in LOGIN
-    assert 'new PasswordCredential(form)' in LOGIN
-    assert 'navigator.credentials.store(credential)' in LOGIN
+    assert 'autocomplete="username"' in LOGIN
+    assert 'autocomplete="current-password"' in LOGIN
+    assert 'new PasswordCredential(form)' not in LOGIN
+    assert 'navigator.credentials.store(credential)' not in LOGIN
     assert "localStorage.setItem(storageKey, usernameInput.value.trim())" in LOGIN
     assert "localStorage.setItem(storageKey, passwordInput.value" not in LOGIN
 

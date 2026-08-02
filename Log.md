@@ -92,3 +92,12 @@
 - Tài khoản Admin tạo/import được dùng mật khẩu 1 ký tự.
 - Tài khoản Admin tạo/import bỏ giới hạn thiết bị và cảnh báo trùng IP, nhưng vẫn tính RP bình thường.
 - File: `app.py`, `modules/admin_account_routes.py`, `templates/admin.html`, `templates/login.html`.
+
+## V1.14.41.65 — 2026-08-02 18:19 (Asia/Bangkok)
+- Hoàn thiện bảo vệ phiên: truy vấn trực tiếp phòng theo user và trạng thái cần bảo vệ, không phụ thuộc cache `list_rooms()`.
+- Đồng nhất trạng thái `playing`, `friendly_playing`, `waiting_result_confirm`, `waiting_confirm`, `disputed`.
+- Không đăng xuất khi một phía vừa mất kết nối nhưng phòng vẫn cần hoàn tất.
+- Admin hiển thị trạng thái tải `user_devices`, số bản ghi, số tài khoản có IP, số nhóm trùng và nút tải lại.
+- Đổi nhãn Remember thành “Ghi nhớ đăng nhập trên thiết bị này”; làm rõ mật khẩu do trình duyệt lưu.
+- Cập nhật kiểm thử: 94/94 đạt.
+- File chính: `app.py`, `modules/session_runtime_service.py`, `modules/admin_dashboard_routes.py`, `templates/admin.html`, `templates/login.html`.

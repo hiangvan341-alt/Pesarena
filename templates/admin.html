@@ -219,6 +219,18 @@
             <button class="btn gold" type="submit">Lưu thiết lập</button>
         </form>
 
+        <div class="admin-ip-data-status {{ 'is-error' if ip_device_status.ok == false else 'is-ok' }}">
+            {% if ip_device_status.ok == false %}
+                <strong>⚠️ Không tải được lịch sử IP thiết bị.</strong>
+                <span>Bộ lọc hiện chỉ đối chiếu IP đăng ký. Hãy tải lại trang hoặc kiểm tra bảng <code>user_devices</code>/quyền Supabase.</span>
+                {% if ip_device_status.error %}<small>{{ ip_device_status.error }}</small>{% endif %}
+            {% else %}
+                <strong>✓ Dữ liệu IP đã tải</strong>
+                <span>{{ ip_device_status.row_count }} bản ghi thiết bị · {{ ip_device_status.account_ip_count }} tài khoản có IP · {{ ip_device_status.duplicate_group_count }} nhóm trùng</span>
+            {% endif %}
+            <button class="btn small" type="button" onclick="window.location.reload()">Tải lại IP</button>
+        </div>
+
         {% if duplicate_ip_groups %}
         <div class="admin-duplicate-alert" role="alert">
             <div class="admin-duplicate-alert-title">

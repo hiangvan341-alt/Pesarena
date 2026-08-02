@@ -32,8 +32,10 @@ def room_blocks_idle_logout(room: Mapping[str, Any] | None) -> bool:
     if not room:
         return False
     status = str(room.get("status") or "").strip().lower()
-    has_two_players = bool(room.get("host_user_id") and room.get("guest_user_id"))
-    return has_two_players and status in PROTECTED_ROOM_STATUSES
+    # Chỉ cần còn người tham gia trong một trạng thái cần hoàn tất. Không yêu cầu
+    # đủ cả hai cột vì một phía có thể vừa mất kết nối/thoát trong lúc đang xử lý kết quả.
+    has_participant = bool(room.get("host_user_id") or room.get("guest_user_id"))
+    return has_participant and status in PROTECTED_ROOM_STATUSES
 
 
 def idle_decision(*, now_ts: int, last_activity_ts: int, room: Mapping[str, Any] | None = None) -> IdleDecision:
