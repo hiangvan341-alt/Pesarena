@@ -56,3 +56,9 @@
 - Trận bị tranh chấp vẫn lưu và chưa tính RP; phòng lập tức trở lại Chờ Sẵn Sàng.
 - Người chơi có thể tiếp tục thi đấu trong cùng phòng mà không chờ Admin xử lý tranh chấp cũ.
 - File: `modules/room_result_routes.py`, `app.py`.
+
+
+## V1.14.41.56 — 2026-08-02 07:12 (Asia/Bangkok)
+- Tách hủy phòng khỏi xử lý kết quả.
+- Tự xác nhận trận chờ sau 12 giờ, không phạt người quên xác nhận.
+- Khóa xác nhận trực tiếp trận disputed.

@@ -25,13 +25,7 @@ def register_routes(context):
     @admin_required
     @admin_permission_required("rooms_manage")
     def admin_cancel_room(room_id):
-        """Giải phóng phòng để người chơi tạo phòng mới, không thay đổi RP.
-
-        - Luôn giữ bản ghi phòng, trận, tỷ số, báo cáo và bằng chứng tranh chấp.
-        - Trận đang chơi/chờ xác nhận/tranh chấp được chuyển sang cancelled để
-          không tiếp tục khóa người chơi ở active_match_for_user().
-        - Trận confirmed giữ nguyên confirmed và toàn bộ delta/RP đã tính.
-        """
+        """Chỉ giải phóng phòng; tuyệt đối không thay đổi kết quả hoặc RP của trận."""
         room = get_room(room_id)
         if not room:
             flash("Không tìm thấy phòng.", "danger")
@@ -42,27 +36,14 @@ def register_routes(context):
             return redirect_admin("rooms")
 
         linked_match = get_match(room.get("match_id")) if room.get("match_id") else None
-        updated_at = now_iso()
         old_match_status = linked_match.get("status") if linked_match else None
+        updated_at = now_iso()
 
-        # Không gọi hàm hoàn tác kết quả: Hủy phòng chỉ nhằm giải
-        # phóng trạng thái để người chơi tạo phòng mới, tuyệt đối không đổi RP.
-        if linked_match and old_match_status in {"playing", "waiting_confirm", "disputed"}:
-            previous_note = str(linked_match.get("note") or "").strip()
-            cancellation_note = "Admin đã hủy phòng để giải phóng người chơi; RP không thay đổi."
-            if previous_note:
-                cancellation_note = previous_note + " | " + cancellation_note
-            db.table("matches").update({
-                "status": "cancelled",
-                "note": cancellation_note,
-                "updated_at": updated_at,
-            }).eq("id", linked_match.get("id")).execute()
-
-        # Với trận confirmed hoặc các trạng thái lịch sử khác, không sửa match:
-        # giữ nguyên trạng thái, tỷ số và delta để BXH/lịch sử không thay đổi.
+        # Không sửa bảng matches. Trận waiting_confirm vẫn chờ đủ 12 giờ rồi
+        # tự xác nhận/cộng trừ RP; disputed vẫn chờ Admin xử lý riêng.
         db.table("match_rooms").update({
             "status": "cancelled",
-            "note": "Admin đã hủy phòng để người chơi có thể tạo phòng mới. RP và dữ liệu trận được giữ nguyên.",
+            "note": "Admin đã hủy phòng để giải phóng người chơi. Kết quả trận được xử lý độc lập.",
             "state_expires_at": None,
             "updated_at": updated_at,
         }).eq("id", room_id).execute()
@@ -74,24 +55,19 @@ def register_routes(context):
             }).eq("id", room.get("invite_id")).execute()
 
         cache_delete("_rz_rooms_all")
-        cache_delete("_rz_matches_all")
         cache_delete("_rz_invites_all")
         cache_delete("_rz_current_pending_invites")
         ttl_cache_delete("rooms_raw")
-        ttl_cache_delete("matches_raw")
         ttl_cache_delete("invites_raw")
 
         log_admin_action(
-            "Hủy phòng",
-            "room",
-            room_id,
+            "Hủy phòng", "room", room_id,
             details=(
-                f"Trạng thái phòng cũ: {room.get('status')}; "
-                f"trạng thái trận cũ: {old_match_status or 'không có trận'}; "
-                "giữ lịch sử/báo cáo/tranh chấp; không thay đổi RP"
+                f"Phòng cũ: {room.get('status')}; trận: {old_match_status or 'không có'}; "
+                "chỉ giải phóng phòng, không sửa trạng thái trận và không đổi RP"
             ),
         )
-        flash("Đã hủy phòng. Người chơi có thể tạo phòng mới; RP và lịch sử không thay đổi.", "success")
+        flash("Đã hủy phòng. Kết quả trận vẫn được xử lý riêng và RP không bị mất.", "success")
         return redirect_admin("rooms")
 
 

@@ -91,6 +91,10 @@ def register_routes(context):
             flash("Không có thay đổi cần lưu.", "warning")
             return redirect_admin("matches")
 
+        if changed_status and old_status == "disputed" and new_status == "confirmed":
+            flash("Trận đang tranh chấp. Hãy dùng nút Xác nhận TC để đồng thời đóng hồ sơ tranh chấp và tính RP.", "warning")
+            return redirect_admin("matches")
+
         if changed_status and new_status == "confirmed":
             if not has_admin_permission(actor, "matches_confirm"):
                 abort(403)

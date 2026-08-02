@@ -64,7 +64,7 @@ from modules.win_streaks import (
 load_dotenv()
 
 APP_NAME = "PES Arena – Bản Lĩnh Sân Cỏ"
-APP_VERSION = "V1.14.41.55"
+APP_VERSION = "V1.14.41.56"
 DEFAULT_POINTS = 1000
 DEVICE_COOKIE_NAME = "rankzone_device_id"
 COOLDOWN_MINUTES = 3
@@ -111,7 +111,7 @@ RANKING_REBUILD_LOCK_SECONDS = 5 * 60
 
 INVITE_TIMEOUT_SECONDS = 60
 ROOM_READY_TIMEOUT_SECONDS = 30 * 60
-RESULT_CONFIRM_TIMEOUT_SECONDS = 60 * 60
+RESULT_CONFIRM_TIMEOUT_SECONDS = 12 * 60 * 60
 REMATCH_TIMEOUT_SECONDS = 60
 ROOM_EMPTY_INACTIVITY_TIMEOUT_SECONDS = 30 * 60
 ROOM_MATCH_INACTIVITY_TIMEOUT_SECONDS = 60 * 60
@@ -2200,6 +2200,59 @@ def list_registration_invite_codes(limit=100):
     return records
 
 
+def auto_confirm_expired_match_if_needed(match):
+    """Tự xác nhận trận chờ quá 12 giờ, độc lập với trạng thái phòng.
+
+    Hủy/đóng phòng chỉ giải phóng người chơi. Kết quả đã nhập vẫn tiếp tục
+    chờ xác nhận và được tính RP sau thời hạn nếu không có tranh chấp.
+    """
+    if not match or match.get("status") != "waiting_confirm":
+        return match
+    submitted_at = aware_utc(parse_dt(match.get("updated_at"))) or aware_utc(parse_dt(match.get("created_at")))
+    if not submitted_at or submitted_at + timedelta(seconds=RESULT_CONFIRM_TIMEOUT_SECONDS) > now_dt():
+        return match
+    try:
+        apply_match_result(dict(match))
+        fresh_result = execute_query(
+            db.table("matches").select("*").eq("id", match.get("id")).limit(1),
+            "reload_auto_confirmed_match",
+            attempts=2,
+        )
+        fresh = dict(fresh_result.data[0]) if fresh_result.data else dict(match)
+
+        # Chỉ đưa phòng đang chờ kết quả về trạng thái sẵn sàng. Nếu Admin đã
+        # hủy phòng, giữ phòng cancelled nhưng kết quả vẫn được tính bình thường.
+        room_result = execute_query(
+            db.table("match_rooms").select("id,status").eq("match_id", match.get("id")).limit(1),
+            "load_room_for_auto_confirm",
+            attempts=2,
+        )
+        linked_room = (room_result.data or [None])[0]
+        if linked_room and linked_room.get("status") == "waiting_result_confirm":
+            execute_query(
+                db.table("match_rooms").update({
+                    "status": "waiting_ready",
+                    "guest_ready": False,
+                    "host_score": None,
+                    "guest_score": None,
+                    "match_id": None,
+                    "submitted_by_id": None,
+                    "confirmed_by_id": None,
+                    "state_expires_at": None,
+                    "updated_at": now_iso(),
+                }).eq("id", linked_room.get("id")).eq("status", "waiting_result_confirm"),
+                "release_room_after_auto_confirm",
+                attempts=2,
+            )
+        cache_delete("_rz_matches_all", "_rz_rooms_all")
+        ttl_cache_delete("matches_raw")
+        ttl_cache_delete("rooms_raw")
+        return fresh
+    except Exception as exc:
+        print(f"auto_confirm_expired_match warning match={match.get('id')}: {type(exc).__name__}: {exc}")
+        return match
+
+
 def list_matches(status=None):
     require_db()
 
@@ -2210,7 +2263,8 @@ def list_matches(status=None):
         cached = result.data or []
         cache_set("_rz_matches_all", cached)
 
-    matches = [dict(m) for m in cached if not status or m.get("status") == status]
+    processed_matches = [auto_confirm_expired_match_if_needed(dict(m)) for m in cached]
+    matches = [m for m in processed_matches if not status or m.get("status") == status]
     users = users_map()
 
     for match in matches:
@@ -2478,7 +2532,8 @@ def get_match(match_id):
         db.table("matches").select("*").eq("id", match_id).limit(1),
         "get_match",
     )
-    return result.data[0] if result.data else None
+    match = dict(result.data[0]) if result.data else None
+    return auto_confirm_expired_match_if_needed(match) if match else None
 
 
 def get_match_dispute(dispute_id):
@@ -2836,13 +2891,22 @@ def expire_room_if_needed(room):
             room["timeout_seconds"] = 0
             return room
 
-        # Chủ đã nhập tỷ số nhưng khách không xác nhận/tranh chấp trong 60 phút.
+        # Đã nhập tỷ số nhưng chưa xác nhận: sau 12 giờ tự xác nhận kết quả.
+        # Không phạt người quên xác nhận và không phụ thuộc phòng còn hoạt động hay đã hủy.
         if status == "waiting_result_confirm" and mode == MATCH_MODE_RANKED:
-            close_room_with_timeout_penalty(
-                room,
-                "guest",
-                "Khách không xác nhận kết quả sau 60 phút và bị tính là thoát trận.",
-            )
+            pending_match = get_match(room.get("match_id")) if room.get("match_id") else None
+            if pending_match and pending_match.get("status") == "confirmed":
+                room.update({
+                    "status": "waiting_ready",
+                    "guest_ready": False,
+                    "host_score": None,
+                    "guest_score": None,
+                    "match_id": None,
+                    "submitted_by_id": None,
+                    "confirmed_by_id": None,
+                    "state_expires_at": None,
+                    "updated_at": now_iso(),
+                })
             room["timeout_seconds"] = 0
             return room
 
