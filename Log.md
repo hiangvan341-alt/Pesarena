@@ -82,3 +82,7 @@
 - Điều chỉnh mốc thưởng tuần mặc định thành 20 + 30 + 50 + 20 = tối đa 120 RP.
 - Bổ sung cấu hình thưởng tuần trong Admin > Hệ thống.
 - File sửa: `modules/weekly_rp_rewards_service.py`, `modules/admin_system_routes.py`, `templates/admin.html`, `app.py`.
+
+## V1.14.41.60 - 2026-08-02
+- Sửa animation Win Streak và SHUTDOWN không xuất hiện khi trận được tự xác nhận sau 1 phút.
+- File: app.py, UPDATE_MANIFEST_V1.14.41.60.md.

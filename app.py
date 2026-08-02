@@ -64,7 +64,7 @@ from modules.win_streaks import (
 load_dotenv()
 
 APP_NAME = "PES Arena – Bản Lĩnh Sân Cỏ"
-APP_VERSION = "V1.14.41.59"
+APP_VERSION = "V1.14.41.60"
 DEFAULT_POINTS = 1000
 DEVICE_COOKIE_NAME = "rankzone_device_id"
 COOLDOWN_MINUTES = 3
@@ -2212,7 +2212,30 @@ def auto_confirm_expired_match_if_needed(match):
     if not submitted_at or submitted_at + timedelta(seconds=RESULT_CONFIRM_TIMEOUT_SECONDS) > now_dt():
         return match
     try:
+        # Lưu trạng thái người chơi/phòng trước khi cộng RP để tạo đúng sự kiện
+        # chuỗi thắng hoặc SHUTDOWN cho cả luồng tự xác nhận sau 1 phút.
+        users_before_streak_event = users_map()
+        room_before_result = None
+        try:
+            room_before_result_query = execute_query(
+                db.table("match_rooms").select("*").eq("match_id", match.get("id")).limit(1),
+                "load_room_before_auto_confirm_streak_event",
+                attempts=2,
+            )
+            room_before_result = (room_before_result_query.data or [None])[0]
+        except Exception as room_exc:
+            print(
+                f"load_room_before_auto_confirm_streak_event warning match={match.get('id')}: "
+                f"{type(room_exc).__name__}: {room_exc}"
+            )
+
         apply_match_result(dict(match))
+        streak_event = build_win_streak_event(
+            match, room_before_result, users_before_streak_event
+        )
+        if streak_event:
+            publish_global_streak_event(streak_event)
+
         fresh_result = execute_query(
             db.table("matches").select("*").eq("id", match.get("id")).limit(1),
             "reload_auto_confirmed_match",
