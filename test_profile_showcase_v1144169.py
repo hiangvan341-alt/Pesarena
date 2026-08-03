@@ -8,7 +8,7 @@ def read(relative):
 
 
 def test_profile_showcase_release_version():
-    assert 'APP_VERSION = "V1.14.41.69"' in read("app.py")
+    assert 'APP_VERSION = "V1.14.41.70"' in read("app.py")
 
 
 def test_profile_banner_uses_real_image_and_preserves_full_artwork():
@@ -16,10 +16,13 @@ def test_profile_banner_uses_real_image_and_preserves_full_artwork():
     css = read("static/css/profile_showcase.css")
     assert 'class="profile-showcase-banner-image"' in template
     assert 'src="{{ equipped_banner.image_url }}"' in template
-    assert "aspect-ratio:4/1" in css
+    assert "height:clamp(220px,16vw,290px)" in css
     assert ".profile-showcase-banner-image" in css
     assert "object-fit:contain" in css
     assert "profile-header-card profile-header-with-avatar" not in template
+    assert 'grid-template-areas:"identity stats" "identity actions"' in css
+    assert "margin-top:-58px" in css
+    assert ".profile-account-panel:only-child{grid-column:1/-1}" in css
 
 
 def test_profile_showcase_includes_identity_stats_and_share_action():
