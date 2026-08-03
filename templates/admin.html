@@ -705,22 +705,57 @@
             <div class="repeat-rp-summary-row"><span>Từ trận đối đầu thứ 7 vẫn không tính RP.</span></div>
         </div>
     </div>
-    <div class="panel">
-        <h2>🎁 Thưởng RP theo tuần</h2>
-        <p class="muted">Mỗi mốc chỉ cộng một lần trong tuần. Các mốc được cộng dồn.</p>
+    <div class="panel weekly-rp-panel">
         {% set weekly = weekly_rp_reward_config %}
-        <form method="post" action="{{ url_for('admin_update_weekly_rp_rewards') }}" class="grid-form">
-            <div><label>Mốc đối thủ 1</label><input type="number" name="opponents_5_threshold" min="1" max="500" value="{{ weekly.get('opponents_5_threshold', 5) }}" required></div>
-            <div><label>RP thưởng mốc 1</label><input type="number" name="opponents_5_rp" min="0" max="1000" value="{{ weekly.get('opponents_5_rp', 20) }}" required></div>
-            <div><label>Mốc đối thủ 2</label><input type="number" name="opponents_10_threshold" min="1" max="500" value="{{ weekly.get('opponents_10_threshold', 10) }}" required></div>
-            <div><label>RP thưởng mốc 2</label><input type="number" name="opponents_10_rp" min="0" max="1000" value="{{ weekly.get('opponents_10_rp', 30) }}" required></div>
-            <div><label>Mốc đối thủ 3</label><input type="number" name="opponents_20_threshold" min="1" max="500" value="{{ weekly.get('opponents_20_threshold', 20) }}" required></div>
-            <div><label>RP thưởng mốc 3</label><input type="number" name="opponents_20_rp" min="0" max="1000" value="{{ weekly.get('opponents_20_rp', 50) }}" required></div>
-            <div><label>Mốc số trận</label><input type="number" name="matches_threshold" min="1" max="500" value="{{ weekly.get('matches_threshold', 10) }}" required></div>
-            <div><label>RP thưởng số trận</label><input type="number" name="matches_rp" min="0" max="1000" value="{{ weekly.get('matches_rp', 20) }}" required></div>
-            <button class="btn green" type="submit">Lưu thưởng tuần</button>
+        {% set weekly_total = weekly.get('opponents_5_rp', 20) + weekly.get('opponents_10_rp', 30) + weekly.get('opponents_20_rp', 50) + weekly.get('matches_rp', 20) %}
+        <div class="weekly-rp-header">
+            <div>
+                <span class="weekly-rp-eyebrow">THIẾT LẬP PHẦN THƯỞNG</span>
+                <h2>🎁 Thưởng RP theo tuần</h2>
+                <p>Mỗi mốc chỉ nhận một lần trong tuần và được cộng dồn.</p>
+            </div>
+            <div class="weekly-rp-total">
+                <span>Tối đa mỗi tuần</span>
+                <strong>{{ weekly_total }} RP</strong>
+            </div>
+        </div>
+
+        <form method="post" action="{{ url_for('admin_update_weekly_rp_rewards') }}" class="weekly-rp-form">
+            <div class="weekly-rp-section-title">Đa dạng đối thủ</div>
+            <div class="weekly-rp-milestone-list">
+                <div class="weekly-rp-milestone">
+                    <div class="weekly-rp-index">1</div>
+                    <div class="weekly-rp-copy"><strong>Mốc đối thủ đầu tiên</strong><span>Đạt đủ số đối thủ khác nhau trong tuần</span></div>
+                    <label><span>Số đối thủ</span><input type="number" name="opponents_5_threshold" min="1" max="500" value="{{ weekly.get('opponents_5_threshold', 5) }}" required></label>
+                    <label><span>Thưởng</span><div class="weekly-rp-input"><input type="number" name="opponents_5_rp" min="0" max="1000" value="{{ weekly.get('opponents_5_rp', 20) }}" required><b>RP</b></div></label>
+                </div>
+                <div class="weekly-rp-milestone">
+                    <div class="weekly-rp-index">2</div>
+                    <div class="weekly-rp-copy"><strong>Mốc đối thủ thứ hai</strong><span>Thưởng thêm khi tiếp tục gặp người chơi mới</span></div>
+                    <label><span>Số đối thủ</span><input type="number" name="opponents_10_threshold" min="1" max="500" value="{{ weekly.get('opponents_10_threshold', 10) }}" required></label>
+                    <label><span>Thưởng</span><div class="weekly-rp-input"><input type="number" name="opponents_10_rp" min="0" max="1000" value="{{ weekly.get('opponents_10_rp', 30) }}" required><b>RP</b></div></label>
+                </div>
+                <div class="weekly-rp-milestone">
+                    <div class="weekly-rp-index">3</div>
+                    <div class="weekly-rp-copy"><strong>Mốc đối thủ cao nhất</strong><span>Mốc khuyến khích thi đấu với nhiều đối thủ nhất</span></div>
+                    <label><span>Số đối thủ</span><input type="number" name="opponents_20_threshold" min="1" max="500" value="{{ weekly.get('opponents_20_threshold', 20) }}" required></label>
+                    <label><span>Thưởng</span><div class="weekly-rp-input"><input type="number" name="opponents_20_rp" min="0" max="1000" value="{{ weekly.get('opponents_20_rp', 50) }}" required><b>RP</b></div></label>
+                </div>
+            </div>
+
+            <div class="weekly-rp-section-title">Mức độ hoạt động</div>
+            <div class="weekly-rp-milestone weekly-rp-matches">
+                <div class="weekly-rp-index">✓</div>
+                <div class="weekly-rp-copy"><strong>Hoàn thành đủ số trận</strong><span>Tính các trận hợp lệ đã hoàn tất trong tuần</span></div>
+                <label><span>Số trận</span><input type="number" name="matches_threshold" min="1" max="500" value="{{ weekly.get('matches_threshold', 10) }}" required></label>
+                <label><span>Thưởng</span><div class="weekly-rp-input"><input type="number" name="matches_rp" min="0" max="1000" value="{{ weekly.get('matches_rp', 20) }}" required><b>RP</b></div></label>
+            </div>
+
+            <div class="weekly-rp-footer">
+                <div class="weekly-rp-note"><strong>Quy tắc áp dụng</strong><span>Tuần tính từ 00:00 Thứ Hai đến trước 00:00 Thứ Hai tuần sau.</span></div>
+                <button class="btn green" type="submit">Lưu cấu hình thưởng tuần</button>
+            </div>
         </form>
-        <p class="small"><strong>Tổng thưởng hiện tại:</strong> {{ weekly.get('opponents_5_rp', 20) + weekly.get('opponents_10_rp', 30) + weekly.get('opponents_20_rp', 50) + weekly.get('matches_rp', 20) }} RP/tuần.</p>
     </div>
     <div class="panel">
         <h2>⚡ Giao diện nút Tìm Nhanh</h2>
