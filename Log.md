@@ -132,3 +132,13 @@
 - Thưởng chuỗi được cộng nguyên vẹn.
 - Đồng bộ luồng xác nhận trận và tính lại BXH Admin.
 - Thêm test riêng cho thắng lần 3 cùng đối thủ khi chạm chuỗi 10.
+
+## V1.14.41.69 — 03/08/2026 10:24 (GMT+7)
+- Thiết kế lại trang Hồ sơ cá nhân thành Profile Showcase để member khoe trang bị và thành tích.
+- Banner hồ sơ hiển thị trọn vẹn bằng ảnh 4:1 và `object-fit: contain`; không còn crop khuôn mặt hoặc chi tiết quan trọng.
+- Thêm nền blur dự phòng cho banner khác tỷ lệ mà không cần phóng/cắt ảnh chính.
+- Làm nổi bật Avatar, khung Avatar, màu tên, huy hiệu, trạng thái, Rank, điểm, chuỗi thắng và thống kê nhanh.
+- Thêm nút sao chép liên kết hồ sơ để chia sẻ trang cá nhân.
+- Đồng bộ giao diện Rank progress, thành tích, thống kê và lịch sử trận theo phong cách mới.
+- Không thay đổi SQL hoặc logic RP, Shop, Lucky Box và phòng đấu.
+- Kiểm tra tự động: 107/107 test đạt.

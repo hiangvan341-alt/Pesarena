@@ -3,57 +3,96 @@
 {% from "_avatar_macros.html" import player_avatar %}
 {% block head_extra %}
 <link rel="stylesheet" href="{{ url_for('static', filename='css/shop_phase3.css') }}?v={{ APP_VERSION|urlencode }}">
+<link rel="stylesheet" href="{{ url_for('static', filename='css/profile_showcase.css') }}?v={{ APP_VERSION|urlencode }}">
+<script defer src="{{ url_for('static', filename='js/profile_showcase.js') }}?v={{ APP_VERSION|urlencode }}"></script>
 {% endblock %}
 {% block content %}
 {% set equipped_frame = profile_equipment.avatar_frame if profile_equipment else none %}
 {% set equipped_banner = profile_equipment.profile_banner if profile_equipment else none %}
 {% set equipped_badge = profile_equipment.profile_badge if profile_equipment else none %}
 {% set equipped_name_style = profile_equipment.name_style if profile_equipment else none %}
-<section class="profile-header-card profile-header-with-avatar {% if equipped_banner %}has-profile-banner{% endif %}"{% if equipped_banner %} style="--profile-banner-image:url('{{ equipped_banner.image_url }}')"{% endif %}>
-    <div class="profile-identity">
-        {% if equipped_frame %}
-        <div class="profile-avatar-cosmetic">
-            {{ player_avatar(player, size='xxl', achievement={}) }}
-            <img class="profile-avatar-frame" src="{{ equipped_frame.image_url }}" alt="{{ equipped_frame.name }}">
+<div class="profile-page-showcase">
+<section class="profile-showcase-card {% if equipped_banner %}has-showcase-banner{% else %}has-default-showcase{% endif %}">
+    <div class="profile-showcase-media">
+        {% if equipped_banner %}
+        <div class="profile-showcase-banner-backdrop" style="background-image:url('{{ equipped_banner.image_url }}')" aria-hidden="true"></div>
+        <img class="profile-showcase-banner-image" src="{{ equipped_banner.image_url }}" alt="Banner hồ sơ {{ equipped_banner.name }} của {{ player.display_name }}" fetchpriority="high" decoding="async">
+        <div class="profile-showcase-media-shade" aria-hidden="true"></div>
+        <div class="profile-showcase-banner-label">
+            <span>BANNER ĐANG TRANG BỊ</span>
+            <strong>{{ equipped_banner.name }}</strong>
         </div>
         {% else %}
-        {{ player_avatar(player, size='xxl') }}
-        {% endif %}
-        <div>
-            <span class="eyebrow">HỒ SƠ PLAYER</span>
-            <div class="profile-display-name-row">
-                <h1 class="page-title {% if equipped_name_style %}{{ equipped_name_style.metadata.get('css_class', '') }}{% endif %}">{{ player.display_name }}</h1>
-                {% if equipped_badge %}<img class="profile-equipped-badge" src="{{ equipped_badge.image_url }}" alt="{{ equipped_badge.name }}" title="{{ equipped_badge.name }}">{% endif %}
-            </div>
-            <div class="profile-rank-line">
-                {{ rank_badge(player.rank_info) }}
-                <strong>{{ player.rank_points or 0 }} điểm</strong>
-                <span>• Hạng #{{ player.position or '-' }}</span>
-                <span>• {{ "Online" if player.is_online else "Offline" }}</span>
-            </div>
-            {% set profile_streak_badge = get_win_streak_badge(player.streak or 0) %}
-            {% if profile_streak_badge %}
-            <div class="win-streak-badge profile-win-streak-badge">
-                <span>{{ profile_streak_badge.icon }}</span>
-                <strong>{{ profile_streak_badge.title }}</strong>
-                <span>· {{ profile_streak_badge.count }} trận thắng</span>
-            </div>
-            {% endif %}
-            {% if current_user.id == player.id %}
-            <div class="profile-cosmetic-actions"><a href="{{ url_for('inventory') }}">🎒 Quản lý trang bị</a><a href="{{ url_for('shop') }}">🛒 Mở Cửa hàng</a></div>
-            {% endif %}
+        <div class="profile-showcase-default-art" aria-hidden="true">
+            <span>PES ARENA</span>
+            <strong>BẢN LĨNH SÂN CỎ</strong>
         </div>
-    </div>
-    <div class="profile-actions">
-        {% if can_invite %}
-        <form method="post" action="{{ url_for('send_invite') }}">
-            <input type="hidden" name="to_user_id" value="{{ player.id }}">
-            <input type="hidden" name="tier" value="Random">
-            <button class="btn gold" type="submit">Mời đấu</button>
-        </form>
-        {% elif current_user.id != player.id and activity %}
-        <span class="presence presence-{{ activity.code }}"><i></i>{{ activity.label }}</span>
+        <div class="profile-showcase-banner-label is-empty">
+            <span>TRANG CÁ NHÂN</span>
+            <strong>Chưa trang bị banner</strong>
+        </div>
         {% endif %}
+    </div>
+
+    <div class="profile-showcase-body">
+        <div class="profile-showcase-identity">
+            {% if equipped_frame %}
+            <div class="profile-avatar-cosmetic profile-showcase-avatar">
+                {{ player_avatar(player, size='xxl', achievement={}) }}
+                <img class="profile-avatar-frame" src="{{ equipped_frame.image_url }}" alt="{{ equipped_frame.name }}">
+            </div>
+            {% else %}
+            <div class="profile-showcase-avatar profile-showcase-avatar-plain">
+                {{ player_avatar(player, size='xxl') }}
+            </div>
+            {% endif %}
+
+            <div class="profile-showcase-copy">
+                <span class="profile-showcase-eyebrow">HỒ SƠ PLAYER</span>
+                <div class="profile-display-name-row profile-showcase-name-row">
+                    <h1 class="page-title {% if equipped_name_style %}{{ equipped_name_style.metadata.get('css_class', '') }}{% endif %}">{{ player.display_name }}</h1>
+                    {% if equipped_badge %}
+                    <img class="profile-equipped-badge profile-showcase-badge" src="{{ equipped_badge.image_url }}" alt="{{ equipped_badge.name }}" title="{{ equipped_badge.name }}">
+                    {% endif %}
+                    <span class="profile-showcase-status {{ 'is-online' if player.is_online else 'is-offline' }}"><i></i>{{ 'Online' if player.is_online else 'Offline' }}</span>
+                </div>
+                <div class="profile-rank-line profile-showcase-rank-line">
+                    {{ rank_badge(player.rank_info) }}
+                    <strong>{{ player.rank_points or 0 }} điểm</strong>
+                    <span>Hạng #{{ player.position or '-' }}</span>
+                </div>
+                {% set profile_streak_badge = get_win_streak_badge(player.streak or 0) %}
+                {% if profile_streak_badge %}
+                <div class="win-streak-badge profile-win-streak-badge">
+                    <span>{{ profile_streak_badge.icon }}</span>
+                    <strong>{{ profile_streak_badge.title }}</strong>
+                    <span>· {{ profile_streak_badge.count }} trận thắng</span>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+
+        <div class="profile-showcase-quick-stats" aria-label="Thành tích nổi bật">
+            <div><span>Trận đấu</span><strong>{{ player.total_matches or 0 }}</strong></div>
+            <div><span>Chiến thắng</span><strong>{{ player.wins or 0 }}</strong></div>
+            <div><span>Winrate</span><strong>{{ player.winrate }}%</strong></div>
+        </div>
+
+        <div class="profile-showcase-actions">
+            {% if current_user.id == player.id %}
+            <a class="profile-showcase-action is-primary" href="{{ url_for('inventory') }}">🎒 Quản lý trang bị</a>
+            <a class="profile-showcase-action" href="{{ url_for('shop') }}">🛒 Mở Cửa hàng</a>
+            {% elif can_invite %}
+            <form method="post" action="{{ url_for('send_invite') }}">
+                <input type="hidden" name="to_user_id" value="{{ player.id }}">
+                <input type="hidden" name="tier" value="Random">
+                <button class="profile-showcase-action is-primary" type="submit">⚔️ Mời đấu</button>
+            </form>
+            {% elif activity %}
+            <span class="presence presence-{{ activity.code }}"><i></i>{{ activity.label }}</span>
+            {% endif %}
+            <button class="profile-showcase-action profile-share-button" type="button" data-profile-share data-share-label="🔗 Chia sẻ hồ sơ">🔗 Chia sẻ hồ sơ</button>
+        </div>
     </div>
 </section>
 
@@ -261,5 +300,6 @@
     </div>
 </article>
 {% else %}<div class="panel empty-state">Player này chưa có trận nào.</div>{% endfor %}
+</div>
 </div>
 {% endblock %}
