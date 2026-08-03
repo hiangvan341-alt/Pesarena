@@ -1,42 +1,10 @@
 {# HOTFIX V1.14.39.1: legacy Zcoin tab removed; use /admin/economy #}
 {% extends "base.html" %}
 {% block content %}
-<style>
-.admin-score-edit-cell{white-space:nowrap;min-width:150px}
-.admin-score-edit-cell input{width:58px;text-align:center;padding:7px 5px}
-.admin-score-edit-cell span{margin:0 4px;font-weight:800}
-.admin-match-status-select{min-width:145px}
-.admin-match-note-input{min-width:210px;width:100%}
-.admin-match-locked{opacity:.72;font-size:.84rem;white-space:nowrap}
-.admin-report-filter{display:flex;gap:8px;flex-wrap:wrap;margin:14px 0 18px}
-.admin-report-filter a{padding:9px 13px;border-radius:10px;border:1px solid rgba(148,163,184,.25);background:rgba(15,23,42,.45);font-weight:800;text-decoration:none}
-.admin-report-filter a.active{background:linear-gradient(135deg,#2563eb,#06b6d4);color:#fff;border-color:transparent}
-.admin-report-summary{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px;margin-bottom:18px}
-.admin-report-card{padding:16px;border-radius:14px;background:rgba(15,23,42,.55);border:1px solid rgba(148,163,184,.18)}
-.admin-report-card span{display:block;font-size:.78rem;opacity:.72;text-transform:uppercase;letter-spacing:.05em}
-.admin-report-card strong{display:block;font-size:1.8rem;margin-top:5px}
-@media(max-width:800px){.admin-report-summary{grid-template-columns:repeat(2,minmax(0,1fr))}}
+{% block page_styles %}{{ super() }}
+<link rel="stylesheet" href="{{ static_asset('css/admin_dashboard.css') }}">
+{% endblock %}
 
-.repeat-rp-layout{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:18px;margin-top:16px}
-.repeat-rp-card{padding:18px;border-radius:16px;background:rgba(15,23,42,.52);border:1px solid rgba(148,163,184,.18)}
-.repeat-rp-card h3{margin:0 0 6px;font-size:1.08rem}
-.repeat-rp-card p{margin:0 0 14px;color:rgba(226,232,240,.72);font-size:.92rem}
-.repeat-rp-grid{display:grid;grid-template-columns:1fr;gap:12px}
-.repeat-rp-grid label{display:flex;flex-direction:column;gap:6px}
-.repeat-rp-grid input{width:100%}
-.repeat-rp-grid small{color:rgba(226,232,240,.68)}
-.repeat-rp-actions{display:flex;align-items:center;gap:14px;flex-wrap:wrap;margin-top:16px}
-.repeat-rp-summary{margin-top:14px;padding:12px 14px;border-radius:12px;background:rgba(15,23,42,.36);border:1px solid rgba(148,163,184,.15)}
-.repeat-rp-summary-row{display:flex;gap:8px;flex-wrap:wrap;margin:4px 0}
-.repeat-rp-summary-label{min-width:92px;font-weight:800;color:#f8fafc}
-@media(max-width:900px){.repeat-rp-layout{grid-template-columns:1fr}}
-
-.admin-mode-compare{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px;margin:18px 0}
-.admin-mode-card{padding:18px;border-radius:16px;background:rgba(15,23,42,.55);border:1px solid rgba(148,163,184,.18)}
-.admin-mode-card h3{margin:0 0 6px}.admin-mode-card strong{display:block;font-size:2rem;margin:8px 0 2px}.admin-mode-bar{height:9px;border-radius:999px;background:rgba(148,163,184,.18);overflow:hidden;margin-top:12px}.admin-mode-bar span{display:block;height:100%;background:linear-gradient(90deg,#2563eb,#06b6d4)}
-@media(max-width:700px){.admin-mode-compare{grid-template-columns:1fr}}
-
-</style>
 <div class="admin-dashboard-heading">
     <div>
         <span class="admin-kicker">ADMIN PANEL</span>
@@ -74,6 +42,7 @@
 {% if can_create_test_account or can_import_accounts_csv %}<button class="admin-tab-button" type="button" data-admin-tab="test-data">🧪 Tài khoản test & Import</button>{% endif %}
     {% if can_admin('system_features_manage') or can_admin('announcements_manage') or can_admin('daily_rank_limits_manage') %}<button class="admin-tab-button" type="button" data-admin-tab="system">⚙️ Hệ thống</button>{% endif %}
     {% if can_admin('rp_view') %}<button class="admin-tab-button" type="button" data-admin-tab="rp-tools">📈 Công cụ RP</button>{% endif %}
+    <button class="admin-tab-button" type="button" data-admin-tab="economy">🪙 Zcoin & Gift Code</button>
     {% if can_admin('admin_logs_view') %}<button class="admin-tab-button" type="button" data-admin-tab="logs">🧾 Nhật ký</button>{% endif %}
 </div>
 
@@ -800,6 +769,16 @@
 {% endif %}
 
 {% if current_user.admin_level == 'owner' %}
+
+<section class="admin-tab-panel admin-economy-embed-panel" data-admin-panel="economy" hidden>
+    <div class="panel admin-module-shell">
+        <div class="admin-section-heading">
+            <div><h2>🪙 Quản trị Zcoin & Gift Code</h2><p class="small">Module được tải khi mở tab, không tải lại toàn bộ trang Admin.</p></div>
+            <a class="btn gray" href="{{ url_for('admin_economy') }}" target="_blank" rel="noopener">Mở trang riêng</a>
+        </div>
+        <iframe class="admin-module-frame" title="Quản trị Zcoin và Gift Code" data-admin-lazy-src="{{ url_for('admin_economy') }}?embedded=1" loading="lazy"></iframe>
+    </div>
+</section>
 <section class="admin-tab-panel" data-admin-panel="rp-tools">
     <div class="panel">
         <h2>📈 Bộ Công Cụ Tính RP</h2>
@@ -875,104 +854,8 @@
 </section>
 {% endif %}
 
-<script>
-(function () {
-    const buttons = Array.from(document.querySelectorAll('[data-admin-tab]'));
-    const panels = Array.from(document.querySelectorAll('[data-admin-panel]'));
-    const allowedTabs = new Set(buttons.map(function (button) { return button.dataset.adminTab; }));
+{% block page_scripts %}{{ super() }}
+<script src="{{ static_asset('js/admin_dashboard.js') }}" defer></script>
+{% endblock %}
 
-    function activateAdminTab(tabName) {
-        const selected = allowedTabs.has(tabName) ? tabName : 'overview';
-        buttons.forEach(function (button) {
-            const active = button.dataset.adminTab === selected;
-            button.classList.toggle('active', active);
-            button.setAttribute('aria-selected', active ? 'true' : 'false');
-        });
-        panels.forEach(function (panel) {
-            panel.hidden = panel.dataset.adminPanel !== selected;
-        });
-    }
-
-    buttons.forEach(function (button) {
-        button.addEventListener('click', function () {
-            const tabName = button.dataset.adminTab;
-            window.location.hash = tabName;
-            activateAdminTab(tabName);
-        });
-    });
-
-    window.addEventListener('hashchange', function () {
-        activateAdminTab(window.location.hash.replace('#', ''));
-    });
-    activateAdminTab(window.location.hash.replace('#', ''));
-
-    const searchInput = document.getElementById('adminUserSearch');
-    const duplicateOnly = document.getElementById('adminDuplicateOnly');
-    const userRows = Array.from(document.querySelectorAll('[data-user-summary]'));
-    const emptyState = document.getElementById('adminUserEmpty');
-
-    function applyUserFilters() {
-        const query = searchInput ? searchInput.value.trim().toLowerCase() : '';
-        const onlyDuplicate = duplicateOnly ? duplicateOnly.checked : false;
-        let visible = 0;
-
-        userRows.forEach(function (row) {
-            const matchesQuery = !query || (row.dataset.userSearch || '').includes(query);
-            const matchesDuplicate = !onlyDuplicate || row.dataset.duplicateIp === '1';
-            const shouldShow = matchesQuery && matchesDuplicate;
-            const button = row.querySelector('[data-user-toggle]');
-            const detail = button ? document.getElementById(button.dataset.userToggle) : null;
-
-            row.hidden = !shouldShow;
-            if (!shouldShow && detail) {
-                detail.hidden = true;
-                button.setAttribute('aria-expanded', 'false');
-                button.textContent = 'Quản lý';
-            }
-            if (shouldShow) visible += 1;
-        });
-
-        if (emptyState) emptyState.hidden = visible !== 0;
-    }
-
-    if (searchInput) searchInput.addEventListener('input', applyUserFilters);
-    if (duplicateOnly) duplicateOnly.addEventListener('change', applyUserFilters);
-
-    document.querySelectorAll('[data-user-toggle]').forEach(function (button) {
-        button.addEventListener('click', function () {
-            const detail = document.getElementById(button.dataset.userToggle);
-            if (!detail) return;
-            const opening = detail.hidden;
-            detail.hidden = !opening;
-            button.setAttribute('aria-expanded', opening ? 'true' : 'false');
-            button.textContent = opening ? 'Đóng' : 'Quản lý';
-        });
-    });
-
-    const showPasswords = document.getElementById('showAdminPasswords');
-    if (showPasswords) {
-        showPasswords.addEventListener('change', function () {
-            document.querySelectorAll('.admin-new-password').forEach(function (input) {
-                input.type = showPasswords.checked ? 'text' : 'password';
-            });
-        });
-    }
-
-    document.querySelectorAll('.temporary-password-input').forEach(function (input) {
-        input.addEventListener('focus', function () { input.type = 'text'; });
-        input.addEventListener('blur', function () { input.type = 'password'; });
-    });
-
-    document.querySelectorAll('.admin-permission-form').forEach(function (form) {
-        form.addEventListener('submit', function () {
-            const button = form.querySelector('.admin-save-permissions');
-            if (!button || button.disabled) return;
-            button.disabled = true;
-            button.classList.add('is-saving');
-            const label = button.querySelector('.admin-save-label');
-            if (label) label.textContent = 'Đang lưu...';
-        });
-    });
-})();
-</script>
 {% endblock %}

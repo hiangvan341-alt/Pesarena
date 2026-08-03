@@ -1,5 +1,10 @@
 {% extends "base.html" %}
 {% block content %}
+{% if request.args.get('embedded') == '1' %}
+<style id="embedded-economy-style">
+.sidebar,.mobile-menu-button,.topbar{display:none!important}.main-content{margin-left:0!important;padding:12px!important;max-width:none!important}.page-shell{max-width:none!important}
+</style>
+{% endif %}
 <div class="admin-dashboard-heading admin-economy-heading">
     <div>
         <span class="admin-kicker">ADMIN ECONOMY</span>
