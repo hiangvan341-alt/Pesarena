@@ -3,6 +3,26 @@
 Module đăng ký route theo dependency của app.py để giữ nguyên endpoint và tránh import vòng.
 """
 
+import uuid
+
+
+def _result_error_id(prefix):
+    return f"{prefix}-{uuid.uuid4().hex[:8].upper()}"
+
+
+def _parse_room_score(raw_value, label):
+    value = str(raw_value if raw_value is not None else "").strip()
+    if value == "":
+        raise ValueError(f"Chưa nhập tỷ số {label}.")
+    try:
+        score = int(value)
+    except (TypeError, ValueError):
+        raise ValueError(f"Tỷ số {label} phải là số nguyên từ 0 đến 99.")
+    if score < 0 or score > 99:
+        raise ValueError(f"Tỷ số {label} phải nằm trong khoảng 0–99.")
+    return score
+
+
 def register_routes(context):
     """Đăng ký nhóm route vào Flask app hiện tại."""
     globals().update(context)
@@ -32,14 +52,10 @@ def register_routes(context):
             return redirect(url_for("room_detail", room_id=room_id))
 
         try:
-            host_score = int(request.form.get("host_score", "0"))
-            guest_score = int(request.form.get("guest_score", "0"))
-        except (TypeError, ValueError):
-            flash("Tỉ số phải là số nguyên.", "danger")
-            return redirect(url_for("room_detail", room_id=room_id))
-
-        if host_score < 0 or guest_score < 0:
-            flash("Tỉ số không được âm.", "danger")
+            host_score = _parse_room_score(request.form.get("host_score"), "Sân Nhà")
+            guest_score = _parse_room_score(request.form.get("guest_score"), "Sân Khách")
+        except ValueError as exc:
+            flash(str(exc), "danger")
             return redirect(url_for("room_detail", room_id=room_id))
 
         match = get_match(room["match_id"])
@@ -57,22 +73,36 @@ def register_routes(context):
             winner_id = None
             loser_id = None
 
+        match_changed = False
         try:
-            saved_match = execute_query(
-                db.table("matches").update({
-                    "score1": host_score,
-                    "score2": guest_score,
-                    "submitted_by_id": user["id"],
-                    "winner_id": winner_id,
-                    "loser_id": loser_id,
-                    "status": "waiting_confirm",
-                    "updated_at": now_iso(),
-                }).eq("id", match["id"]).eq("status", "playing"),
-                "submit_room_match_result",
+            # Khôi phục an toàn nếu request trước đã lưu match nhưng chưa kịp đổi trạng thái phòng.
+            already_waiting = (
+                match.get("status") == "waiting_confirm"
+                and str(match.get("score1")) == str(host_score)
+                and str(match.get("score2")) == str(guest_score)
+                and _same_user_id(match.get("submitted_by_id"), user.get("id"))
             )
-            if not (saved_match.data or []):
-                raise ValueError("Trạng thái trận vừa thay đổi; kết quả chưa được lưu.")
-            execute_query(
+            if not already_waiting:
+                saved_match = execute_query(
+                    db.table("matches").update({
+                        "score1": host_score,
+                        "score2": guest_score,
+                        "submitted_by_id": user["id"],
+                        "winner_id": winner_id,
+                        "loser_id": loser_id,
+                        "status": "waiting_confirm",
+                        "updated_at": now_iso(),
+                    }).eq("id", match["id"]).eq("status", "playing"),
+                    "submit_room_match_result",
+                )
+                if not (saved_match.data or []):
+                    fresh_match = get_match(match["id"])
+                    if fresh_match and fresh_match.get("status") in {"waiting_confirm", "processing_result", "confirmed"}:
+                        raise ValueError("Kết quả này đã được gửi hoặc đang được xử lý. Hãy tải lại phòng.")
+                    raise ValueError("Trạng thái trận vừa thay đổi; kết quả chưa được lưu. Hãy tải lại phòng.")
+                match_changed = True
+
+            room_result = execute_query(
                 db.table("match_rooms").update({
                     "host_score": host_score,
                     "guest_score": guest_score,
@@ -83,14 +113,34 @@ def register_routes(context):
                 }).eq("id", room_id).eq("status", "playing"),
                 "submit_room_result_state",
             )
+            if not (room_result.data or []):
+                fresh_room = get_room(room_id)
+                if fresh_room and fresh_room.get("status") == "waiting_result_confirm":
+                    ttl_cache_delete("rooms_raw")
+                else:
+                    raise RuntimeError("Không đồng bộ được trạng thái phòng sau khi lưu tỷ số.")
             ttl_cache_delete("rooms_raw")
         except ValueError as exc:
             print(f"room_submit_result validation room={room_id} match={match.get('id')}: {exc}")
             flash(str(exc), "warning")
             return redirect(url_for("room_detail", room_id=room_id))
         except Exception as exc:
-            print(f"room_submit_result ERROR room={room_id} match={match.get('id')}: {type(exc).__name__}: {exc}")
-            flash("Không thể lưu kết quả do lỗi dữ liệu/kết nối. Vui lòng thử lại; chưa cộng hoặc trừ RP.", "danger")
+            error_id = _result_error_id("SCORE")
+            # Nếu match vừa được đổi sang waiting_confirm nhưng phòng chưa đổi được, trả match về playing.
+            if match_changed:
+                try:
+                    execute_query(
+                        db.table("matches").update({
+                            "score1": None, "score2": None, "submitted_by_id": None,
+                            "winner_id": None, "loser_id": None, "status": "playing",
+                            "updated_at": now_iso(),
+                        }).eq("id", match["id"]).eq("status", "waiting_confirm"),
+                        "rollback_submit_room_match_result", attempts=2,
+                    )
+                except Exception as rollback_exc:
+                    print(f"{error_id} rollback ERROR match={match.get('id')}: {type(rollback_exc).__name__}: {rollback_exc}")
+            print(f"{error_id} room_submit_result ERROR room={room_id} match={match.get('id')}: {type(exc).__name__}: {exc}")
+            flash(f"Không thể lưu tỷ số. Mã lỗi {error_id}. Điểm chưa được xử lý; hãy thử lại sau vài giây.", "danger")
             return redirect(url_for("room_detail", room_id=room_id))
 
         flash("Đã nhập kết quả. Đang chờ người được mời xác nhận.", "success")
@@ -160,9 +210,17 @@ def register_routes(context):
             return redirect(url_for("room_detail", room_id=room_id))
 
         try:
-            users_before_streak_event = users_map()
+            try:
+                users_before_streak_event = users_map()
+            except Exception as exc:
+                print(f"confirm streak snapshot warning room={room_id}: {type(exc).__name__}: {exc}")
+                users_before_streak_event = {}
             delta1, delta2 = apply_match_result(match)
-            streak_event = build_win_streak_event(match, room, users_before_streak_event)
+            try:
+                streak_event = build_win_streak_event(match, room, users_before_streak_event)
+            except Exception as exc:
+                print(f"confirm streak event warning room={room_id}: {type(exc).__name__}: {exc}")
+                streak_event = None
             previous_mode = room.get("team_tier") or SMART_RANDOM_MODE
             if not system_feature_enabled("rank_standard_enabled"):
                 previous_mode = FRIENDLY_RANDOM3_MODE
@@ -195,15 +253,30 @@ def register_routes(context):
             if not (room_update_result.data or []):
                 raise ValueError("Trạng thái phòng vừa thay đổi; vui lòng tải lại phòng.")
             if streak_event:
-                publish_global_streak_event(streak_event)
+                try:
+                    publish_global_streak_event(streak_event)
+                except Exception as exc:
+                    print(f"publish streak event warning room={room_id}: {type(exc).__name__}: {exc}")
             flash("Đã xác nhận kết quả. Phòng đã trở về Chờ Sẵn Sàng và giữ nguyên chế độ thi đấu.", "success")
         except ValueError as exc:
-            print(f"room_confirm_result validation room={room_id} match={match.get('id')}: {exc}")
-            flash(str(exc), "warning")
+            fresh_match = get_match(match.get("id"))
+            if fresh_match and fresh_match.get("status") == "confirmed":
+                error_id = _result_error_id("ROOM")
+                print(f"{error_id} confirmed but room reset pending room={room_id}: {exc}")
+                flash(f"Kết quả đã được ghi nhận, nhưng phòng chưa làm mới. Mã lỗi {error_id}. Hãy tải lại phòng.", "warning")
+            else:
+                print(f"room_confirm_result validation room={room_id} match={match.get('id')}: {exc}")
+                flash(str(exc), "warning")
             return redirect(url_for("room_detail", room_id=room_id))
         except Exception as exc:
-            print(f"room_confirm_result ERROR room={room_id} match={match.get('id')}: {type(exc).__name__}: {exc}")
-            flash("Không thể xác nhận kết quả do lỗi kết nối dữ liệu. Điểm chưa được xử lý thêm; vui lòng thử lại sau vài giây.", "danger")
+            error_id = _result_error_id("CONFIRM")
+            fresh_match = get_match(match.get("id"))
+            if fresh_match and fresh_match.get("status") == "confirmed":
+                print(f"{error_id} confirm completed but room reset failed room={room_id}: {type(exc).__name__}: {exc}")
+                flash(f"Kết quả đã được ghi nhận, nhưng phòng chưa làm mới. Mã lỗi {error_id}. Hãy tải lại phòng.", "warning")
+            else:
+                print(f"{error_id} room_confirm_result ERROR room={room_id} match={match.get('id')}: {type(exc).__name__}: {exc}")
+                flash(f"Không thể xác nhận kết quả. Mã lỗi {error_id}. Chưa ghi thêm điểm; hãy thử lại sau vài giây.", "danger")
             return redirect(url_for("room_detail", room_id=room_id))
 
         return redirect(url_for("room_detail", room_id=room_id))

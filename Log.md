@@ -161,3 +161,16 @@
 - Đối thủ bỏ cuộc: người còn lại được +1 trận thắng và +1 chuỗi thắng, nhưng +0 RP.
 - Giữ tự động xác nhận sau 60 giây và hiển thị đồng hồ đếm ngược ngay dưới tỷ số.
 - File sửa: `app.py`, `modules/match_result_service.py`, `modules/admin_ranking_rebuild.py`, `modules/room_rematch_routes.py`, 3 template phòng, `static/style.css`.
+
+
+## V1.2.0 — 04/08/2026 02:00 (GMT+7)
+
+- Nâng phiên bản chính lên V1.2.0.
+- Kiểm tra và gia cố toàn bộ luồng nhập/xác nhận tỷ số.
+- Không cho polling thay khung phòng khi chủ phòng đang nhập tỷ số.
+- Kiểm tra tỷ số 0–99 ở cả trình duyệt và máy chủ; không tự đổi ô trống thành 0.
+- Giữ bản nháp tỷ số khi lỗi mạng.
+- Chống trạng thái dở dang khi match đã lưu nhưng phòng chưa đổi trạng thái; tự hoàn tác an toàn.
+- Mỗi lỗi lưu/xác nhận có mã riêng SCORE/CONFIRM/ROOM để tra log.
+- Phân biệt rõ trường hợp RP đã ghi nhận nhưng phòng chưa làm mới.
+- Lỗi phụ của animation chuỗi thắng không còn chặn xác nhận kết quả.

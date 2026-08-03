@@ -8,7 +8,7 @@ RUNTIME = (ROOT / "modules" / "session_runtime_service.py").read_text(encoding="
 
 
 def test_version_and_python_parse():
-    assert 'APP_VERSION = "V1.14.41.80"' in APP
+    assert 'APP_VERSION = "V1.2.0"' in APP
     ast.parse(APP)
 
 

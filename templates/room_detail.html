@@ -183,11 +183,11 @@
                                 <div class="room-score-fields">
                                     <label>
                                         <span>Sân Nhà</span>
-                                        <input type="number" min="0" max="99" inputmode="numeric" name="host_score" value="0" autocomplete="off">
+                                        <input type="number" min="0" max="99" step="1" required inputmode="numeric" name="host_score" value="0" autocomplete="off">
                                     </label>
                                     <label>
                                         <span>Sân Khách</span>
-                                        <input type="number" min="0" max="99" inputmode="numeric" name="guest_score" value="0" autocomplete="off">
+                                        <input type="number" min="0" max="99" step="1" required inputmode="numeric" name="guest_score" value="0" autocomplete="off">
                                     </label>
                                 </div>
                                 <button class="btn green room-submit-result-btn" type="submit">Gửi Kết Quả</button>
@@ -963,6 +963,18 @@ function bindRoomAjaxForms() {
             }
 
             try {
+                if (form.classList.contains("room-score-form")) {
+                    const scoreFields = Array.from(form.querySelectorAll('input[name="host_score"], input[name="guest_score"]'));
+                    const invalidField = scoreFields.find(function (input) {
+                        const raw = String(input.value || "").trim();
+                        const value = Number(raw);
+                        return raw === "" || !Number.isInteger(value) || value < 0 || value > 99;
+                    });
+                    if (invalidField) {
+                        invalidField.focus();
+                        throw new Error("invalid_room_score");
+                    }
+                }
                 const body = new FormData(form);
                 if (submitter && submitter.name && !body.has(submitter.name)) body.append(submitter.name, submitter.value || "");
                 const result = await fetchRoomDocument(form.action, {method: "POST", body: body});
@@ -983,7 +995,11 @@ function bindRoomAjaxForms() {
                 }
                 if (!updated && !flash) showRoomAjaxNotice("Không thể cập nhật phòng. Vui lòng thử lại sau vài giây.", "warning");
             } catch (error) {
-                showRoomAjaxNotice("Kết nối phòng đấu bị gián đoạn. Vui lòng thử lại.", "danger");
+                if (error && error.message === "invalid_room_score") {
+                    showRoomAjaxNotice("Hãy nhập đủ hai tỷ số từ 0 đến 99.", "warning");
+                } else {
+                    showRoomAjaxNotice("Kết nối phòng đấu bị gián đoạn. Tỷ số vẫn được giữ; vui lòng thử lại.", "danger");
+                }
             } finally {
                 roomActionRequestInFlight = false;
                 if (submitter && document.contains(submitter)) {
@@ -998,6 +1014,11 @@ function bindRoomAjaxForms() {
 }
 
 function checkRoomState() {
+    // Không thay lại toàn bộ khung phòng trong lúc chủ phòng đang nhập tỷ số.
+    // Tránh mất focus hoặc có cảm giác "không điền được" khi polling trả dữ liệu mới.
+    if (roomScoreFormDirty && currentRoomStatus === "playing") {
+        return Promise.resolve();
+    }
     if (roomStateStopped || roomStateRequestInFlight || roomActionRequestInFlight || roomViewRefreshInFlight) {
         return Promise.resolve();
     }
