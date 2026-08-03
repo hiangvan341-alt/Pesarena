@@ -132,3 +132,25 @@
 - Thưởng chuỗi được cộng nguyên vẹn.
 - Đồng bộ luồng xác nhận trận và tính lại BXH Admin.
 - Thêm test riêng cho thắng lần 3 cùng đối thủ khi chạm chuỗi 10.
+
+## V1.14.41.73–77 — Profile V2
+- Làm mới trang hồ sơ theo bố cục Champion Showcase / Arena Overview.
+- Banner phủ khung, có lớp gradient; avatar, RP, Rank, huy hiệu và hành trình Rank rõ hơn.
+- Hồ sơ chưa trang bị banner không còn hiện cụm chữ lớn mặc định.
+- Không thay đổi SQL hoặc logic thi đấu.
+
+## V1.14.41.78 — Room Session Guard
+- Bảo vệ phòng đang thi đấu tối đa 4 giờ khi người chơi chuyển sang PES/Parsec.
+- Request trang/API phòng được tính là hoạt động trước bộ lọc idle.
+- Tab nền tiếp tục đồng bộ phiên; người ngoài phòng vẫn timeout sau 60 phút.
+
+## V1.14.41.79 — Result Confirmation Reliability
+- Sửa lỗi `NameError: get_win_streak_bonus is not defined` khi khách xác nhận tỷ số.
+- `match_result_service.py` import trực tiếp `random` và `get_win_streak_bonus`.
+- Giữ nguyên công thức RP, giới hạn ngày, hệ số gặp lại và session guard V1.14.41.78.
+
+## V1.14.41.79 Clean — 04/08/2026 01:42 (Asia/Bangkok)
+- Xóa toàn bộ Markdown thừa, chỉ giữ `Log.md`.
+- Xóa cache Python/Pytest và các manifest TXT cũ.
+- Xóa ảnh local đã có trong `SUPABASE_ASSET_MANIFEST.csv` cùng PNG/test image trùng hoặc không dùng.
+- ZIP không bọc thư mục cha; yêu cầu cấu hình `STATIC_ASSET_BASE_URL` và `SHOP_ASSET_BASE_URL` trên Vercel.
