@@ -3,6 +3,10 @@
 Module không khai báo route; dependency được liên kết khi app khởi động.
 """
 
+import random
+
+from modules.rp_engine import get_win_streak_bonus
+
 EXPORTED_NAMES = ['sync_room_after_admin_match_change', 'apply_match_result', 'resolve_match_dispute_with_result', 'cancel_match_dispute', 'update_player_after_match', 'reverse_player_match_stats', 'reverse_confirmed_match_result']
 
 def configure(context):

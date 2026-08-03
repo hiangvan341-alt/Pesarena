@@ -64,7 +64,7 @@ from modules.win_streaks import (
 load_dotenv()
 
 APP_NAME = "PES Arena – Bản Lĩnh Sân Cỏ"
-APP_VERSION = "V1.14.41.77"
+APP_VERSION = "V1.14.41.79"
 DEFAULT_POINTS = 1000
 DEVICE_COOKIE_NAME = "rankzone_device_id"
 COOLDOWN_MINUTES = 3
@@ -114,7 +114,7 @@ ROOM_READY_TIMEOUT_SECONDS = 30 * 60
 RESULT_CONFIRM_TIMEOUT_SECONDS = 60
 REMATCH_TIMEOUT_SECONDS = 60
 ROOM_EMPTY_INACTIVITY_TIMEOUT_SECONDS = 30 * 60
-ROOM_MATCH_INACTIVITY_TIMEOUT_SECONDS = 60 * 60
+ROOM_MATCH_INACTIVITY_TIMEOUT_SECONDS = 4 * 60 * 60
 ROOM_ABANDON_PENALTY = 20
 ROOM_TIMEOUT_PENALTY_RANGE = (22, 25)
 
@@ -4088,6 +4088,19 @@ def before_request():
         if session.get("user_id"):
             now_ts = int(time.time())
             last_real = int(session.get("last_real_activity", 0) or 0)
+
+            # V1.14.41.78: người chơi có thể chuyển sang cửa sổ PES/Parsec trong khi
+            # trang phòng nằm nền. Mọi request thuộc đúng phòng đấu được xem là
+            # hoạt động hợp lệ để không bị đăng xuất giữa trận.
+            room_request_active = (
+                request.path.startswith("/room/")
+                or request.path.startswith("/api/room/")
+            )
+            if room_request_active:
+                session["last_real_activity"] = now_ts
+                session.modified = True
+                last_real = now_ts
+
             if not last_real:
                 session["last_real_activity"] = now_ts
             elif now_ts - last_real >= IDLE_TIMEOUT_SECONDS and request.endpoint not in {"logout", "static", "api_session_timeout_check", "api_session_activity"}:
