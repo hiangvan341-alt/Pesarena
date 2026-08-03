@@ -602,3 +602,28 @@ html[data-theme="light"] .profile-v2-equipment-grid article,html[data-theme="lig
   .profile-v2-lol-honor,.profile-v2-lol-rank{min-height:124px}
   .profile-v2-lol-honor-icon{width:68px;height:68px;font-size:30px}
 }
+
+/* V1.14.41.76 — Full-bleed profile banner
+   The equipped banner now covers the complete Arena Overview hero instead of
+   occupying only the upper image band. This remains scoped to the profile page. */
+.profile-v2-hero.has-banner .profile-v2-banner-stage{
+  background-image:var(--profile-banner-image);
+  background-size:cover;
+  background-position:center center;
+  background-repeat:no-repeat;
+}
+.profile-v2-hero.has-banner .profile-v2-banner-blur{
+  display:none;
+}
+.profile-v2-hero.has-banner .profile-v2-banner-image{
+  opacity:0;
+  pointer-events:none;
+}
+.profile-v2-hero.has-banner .profile-v2-banner-vignette{
+  background:
+    linear-gradient(90deg,rgba(1,6,13,.82) 0%,rgba(2,8,16,.44) 30%,rgba(2,8,16,.08) 58%,rgba(2,8,16,.30) 100%),
+    linear-gradient(180deg,rgba(2,8,15,.06) 18%,rgba(3,10,19,.18) 48%,rgba(3,10,19,.86) 100%);
+}
+.profile-v2-hero.has-banner .profile-v2-lol-layout{
+  background:linear-gradient(180deg,transparent 0 48%,rgba(2,8,16,.12) 62%,rgba(2,8,16,.44) 100%);
+}
