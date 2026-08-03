@@ -5315,7 +5315,7 @@ html[data-theme="light"] .account-presence-control select{background:#fff!import
 /* V1.14.41.80 - đếm ngược xác nhận kết quả */
 .room-result-confirm-countdown{margin:8px 0 12px;color:#cbd8e8;font-size:13px;font-weight:700;text-align:center}.room-result-confirm-countdown strong{display:inline-flex;min-width:54px;justify-content:center;margin-left:4px;padding:4px 8px;border:1px solid rgba(245,194,66,.45);border-radius:8px;background:rgba(245,194,66,.1);color:#ffd76a;font-size:15px;font-variant-numeric:tabular-nums}
 
-/* Weekly RP reward settings — compact milestone layout */
+/* Weekly RP reward settings — two-column layout */
 .weekly-rp-panel{overflow:hidden}
 .weekly-rp-header{display:flex;align-items:flex-start;justify-content:space-between;gap:22px;margin:-2px 0 20px;padding:18px 20px;border:1px solid rgba(232,190,73,.24);border-radius:16px;background:linear-gradient(135deg,rgba(232,190,73,.11),rgba(24,77,123,.09))}
 .weekly-rp-header h2{margin:3px 0 5px}
@@ -5326,22 +5326,18 @@ html[data-theme="light"] .account-presence-control select{background:#fff!import
 .weekly-rp-total strong{display:block;margin-top:2px;color:#ffd766;font-size:24px;line-height:1.1}
 .weekly-rp-form{display:flex;flex-direction:column;gap:12px}
 .weekly-rp-section-title{margin-top:2px;color:#c9d6e6;font-size:12px;font-weight:900;letter-spacing:.08em;text-transform:uppercase}
-.weekly-rp-milestone-list{display:flex;flex-direction:column;gap:9px}
-.weekly-rp-milestone{display:grid;grid-template-columns:42px minmax(210px,1fr) minmax(120px,160px) minmax(120px,160px);align-items:end;gap:13px;padding:13px 15px;border:1px solid rgba(148,163,184,.18);border-radius:14px;background:rgba(8,20,34,.48)}
-.weekly-rp-milestone:hover{border-color:rgba(232,190,73,.35);background:rgba(11,27,45,.68)}
-.weekly-rp-index{display:grid;place-items:center;width:36px;height:36px;align-self:center;border:1px solid rgba(232,190,73,.32);border-radius:11px;background:rgba(232,190,73,.1);color:#ffd766;font-size:15px;font-weight:950}
-.weekly-rp-copy{align-self:center;min-width:0}
-.weekly-rp-copy strong,.weekly-rp-copy span{display:block}
-.weekly-rp-copy strong{color:#edf4ff;font-size:14px}
-.weekly-rp-copy span{margin-top:3px;color:#8fa3bb;font-size:12px;line-height:1.35}
-.weekly-rp-milestone label{margin:0;color:#aebdd0;font-size:11px;font-weight:800}
-.weekly-rp-milestone label>span{display:block;margin:0 0 5px}
-.weekly-rp-milestone input{width:100%;height:42px;margin:0!important;text-align:center;font-weight:900;font-variant-numeric:tabular-nums}
-.weekly-rp-input{display:flex;align-items:center;overflow:hidden;border-radius:10px}
-.weekly-rp-input input{border-radius:10px 0 0 10px!important}
-.weekly-rp-input b{display:grid;place-items:center;align-self:stretch;min-width:42px;border:1px solid rgba(232,190,73,.28);border-left:0;border-radius:0 10px 10px 0;background:rgba(232,190,73,.1);color:#ffd766;font-size:11px}
-.weekly-rp-matches{border-color:rgba(34,197,94,.22);background:rgba(21,83,54,.09)}
-.weekly-rp-matches .weekly-rp-index{border-color:rgba(34,197,94,.35);background:rgba(34,197,94,.12);color:#65e79a}
+.weekly-rp-two-column{display:grid;grid-template-columns:minmax(160px,1fr) minmax(160px,1fr);overflow:hidden;border:1px solid rgba(148,163,184,.2);border-radius:14px;background:rgba(8,20,34,.48)}
+.weekly-rp-column-head{padding:11px 14px;border-bottom:1px solid rgba(232,190,73,.25);background:rgba(232,190,73,.08);color:#ffd766;font-size:12px;font-weight:950;text-align:center;text-transform:uppercase;letter-spacing:.05em}
+.weekly-rp-column-head:nth-child(1){border-right:1px solid rgba(148,163,184,.18)}
+.weekly-rp-cell{display:flex;align-items:center;padding:10px 14px;border-bottom:1px solid rgba(148,163,184,.13)}
+.weekly-rp-cell:nth-child(even){border-right:1px solid rgba(148,163,184,.18)}
+.weekly-rp-two-column .weekly-rp-cell:nth-last-child(-n+2){border-bottom:0}
+.weekly-rp-cell input{width:100%;height:42px;margin:0!important;text-align:center;font-weight:900;font-variant-numeric:tabular-nums}
+.weekly-rp-reward-cell{gap:0}
+.weekly-rp-reward-cell input{border-radius:10px 0 0 10px!important}
+.weekly-rp-reward-cell b{display:grid;place-items:center;align-self:stretch;min-width:48px;border:1px solid rgba(232,190,73,.28);border-left:0;border-radius:0 10px 10px 0;background:rgba(232,190,73,.1);color:#ffd766;font-size:11px}
+.weekly-rp-activity-grid{border-color:rgba(34,197,94,.24);background:rgba(21,83,54,.08)}
+.weekly-rp-activity-grid .weekly-rp-column-head{border-bottom-color:rgba(34,197,94,.24);background:rgba(34,197,94,.08);color:#65e79a}
 .weekly-rp-footer{display:flex;align-items:center;justify-content:space-between;gap:18px;margin-top:4px;padding-top:15px;border-top:1px solid rgba(148,163,184,.16)}
 .weekly-rp-note strong,.weekly-rp-note span{display:block}
 .weekly-rp-note strong{color:#dbe6f3;font-size:12px}
@@ -5349,8 +5345,7 @@ html[data-theme="light"] .account-presence-control select{background:#fff!import
 .weekly-rp-footer .btn{min-width:220px}
 html[data-theme="light"] .weekly-rp-header{background:linear-gradient(135deg,#fff8df,#eef6ff)}
 html[data-theme="light"] .weekly-rp-total{background:#fff}
-html[data-theme="light"] .weekly-rp-header p,html[data-theme="light"] .weekly-rp-copy span,html[data-theme="light"] .weekly-rp-note span{color:#65758a}
-html[data-theme="light"] .weekly-rp-milestone{background:#fff;border-color:#dfe7f0}
-html[data-theme="light"] .weekly-rp-copy strong{color:#1b2738}
-@media(max-width:860px){.weekly-rp-milestone{grid-template-columns:40px 1fr 120px 120px}.weekly-rp-copy span{display:none}}
-@media(max-width:660px){.weekly-rp-header{flex-direction:column}.weekly-rp-total{width:100%;text-align:left}.weekly-rp-milestone{grid-template-columns:40px 1fr}.weekly-rp-milestone label{grid-column:auto}.weekly-rp-milestone label:nth-last-child(2){grid-column:1/2}.weekly-rp-milestone label:last-child{grid-column:2/3}.weekly-rp-index{grid-row:1}.weekly-rp-copy{grid-column:2}.weekly-rp-footer{align-items:stretch;flex-direction:column}.weekly-rp-footer .btn{width:100%;min-width:0}}
+html[data-theme="light"] .weekly-rp-header p,html[data-theme="light"] .weekly-rp-note span{color:#65758a}
+html[data-theme="light"] .weekly-rp-two-column{background:#fff;border-color:#dfe7f0}
+html[data-theme="light"] .weekly-rp-column-head{background:#fff8df}
+@media(max-width:660px){.weekly-rp-header{flex-direction:column}.weekly-rp-total{width:100%;text-align:left}.weekly-rp-two-column{grid-template-columns:1fr 1fr}.weekly-rp-cell{padding:8px}.weekly-rp-column-head{padding:10px 8px;font-size:11px}.weekly-rp-footer{align-items:stretch;flex-direction:column}.weekly-rp-footer .btn{width:100%;min-width:0}}
