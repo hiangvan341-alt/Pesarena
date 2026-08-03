@@ -12,6 +12,7 @@
     const activityUrl = cfg.activityUrl;
     const timeoutCheckUrl = cfg.timeoutCheckUrl;
     const logoutUrl = cfg.logoutUrl;
+    const isRoomPage = global.location.pathname.startsWith("/room/");
 
     let lastActivityAt = Date.now();
     let lastSyncAt = 0;
@@ -79,7 +80,7 @@
     }
 
     function syncActivity(force) {
-        if (destroyed || lifecyclePaused || !activityUrl || !navigator.onLine || document.hidden || activityInFlight) {
+        if (destroyed || lifecyclePaused || !activityUrl || !navigator.onLine || (document.hidden && !isRoomPage) || activityInFlight) {
             return Promise.resolve();
         }
         const now = Date.now();
@@ -174,8 +175,9 @@
     function startVisibleKeepalive() {
         if (visibleKeepaliveTimer) clearInterval(visibleKeepaliveTimer);
         visibleKeepaliveTimer = setInterval(function () {
-            if (!document.hidden && !lifecyclePaused && !destroyed) {
-                // Tab vẫn đang mở và được nhìn thấy: không coi người dùng là đã rời hệ thống.
+            if ((!document.hidden || isRoomPage) && !lifecyclePaused && !destroyed) {
+                // Khi đang ở phòng đấu, tab có thể nằm nền trong lúc người chơi chuyển
+                // sang PES/Parsec. Vẫn giữ phiên để không ép đăng nhập lại giữa trận.
                 recordActivity(true);
             }
         }, Math.min(syncMs, 4 * 60 * 1000));
