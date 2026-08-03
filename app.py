@@ -11,6 +11,7 @@ import uuid
 import zipfile
 from datetime import datetime, timezone, timedelta
 from functools import wraps
+from pathlib import Path
 
 from dotenv import load_dotenv
 from PIL import Image, ImageOps, UnidentifiedImageError
@@ -64,7 +65,7 @@ from modules.win_streaks import (
 load_dotenv()
 
 APP_NAME = "PES Arena – Bản Lĩnh Sân Cỏ"
-APP_VERSION = "V1.2.0"
+APP_VERSION = "V1.2.1"
 DEFAULT_POINTS = 1000
 DEVICE_COOKIE_NAME = "rankzone_device_id"
 COOLDOWN_MINUTES = 3
@@ -182,7 +183,31 @@ app = Flask(__name__)
 app.secret_key = _flask_secret_key
 app.permanent_session_lifetime = timedelta(days=30)
 del _flask_secret_key
+
+_STATIC_FINGERPRINT_CACHE = {}
+
+def static_asset(filename):
+    """Return a static URL fingerprinted from the file content.
+
+    CSS/JS cache busting no longer depends on manually bumping APP_VERSION.
+    A changed file gets a new URL; an unchanged file keeps the same URL.
+    """
+    clean_name = str(filename or "").lstrip("/")
+    file_path = Path(app.static_folder) / clean_name
+    try:
+        stat = file_path.stat()
+        cache_key = (clean_name, stat.st_mtime_ns, stat.st_size)
+        fingerprint = _STATIC_FINGERPRINT_CACHE.get(cache_key)
+        if fingerprint is None:
+            fingerprint = hashlib.sha256(file_path.read_bytes()).hexdigest()[:12]
+            _STATIC_FINGERPRINT_CACHE.clear()
+            _STATIC_FINGERPRINT_CACHE[cache_key] = fingerprint
+    except OSError:
+        fingerprint = APP_VERSION
+    return f"{url_for('static', filename=clean_name)}?v={fingerprint}"
+
 app.jinja_env.globals["asset_url"] = asset_url
+app.jinja_env.globals["static_asset"] = static_asset
 app.jinja_env.globals["asset_base_url"] = asset_base_url
 app.jinja_env.globals["shop_asset_base_url"] = shop_asset_base_url
 app.jinja_env.globals["luckybox_asset_base_url"] = luckybox_asset_base_url

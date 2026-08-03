@@ -1,6 +1,6 @@
 {% extends "base.html" %}
 {% block head_extra %}
-<link rel="stylesheet" href="{{ url_for('static', filename='css/shop_phase3.css') }}?v={{ APP_VERSION|urlencode }}">
+<link rel="stylesheet" href="{{ static_asset('css/shop_phase3.css') }}">
 {% if focus_item_code %}
 <script>
 document.addEventListener('DOMContentLoaded', function(){

@@ -174,3 +174,8 @@
 - Mỗi lỗi lưu/xác nhận có mã riêng SCORE/CONFIRM/ROOM để tra log.
 - Phân biệt rõ trường hợp RP đã ghi nhận nhưng phòng chưa làm mới.
 - Lỗi phụ của animation chuỗi thắng không còn chặn xác nhận kết quả.
+
+## V1.2.1 — 04/08/2026 02:26 (GMT+7)
+- Tự động tạo fingerprint theo nội dung cho CSS/JS, không còn phụ thuộc hoàn toàn vào việc đổi phiên bản để phá cache.
+- Tách CSS Thưởng RP tuần thành module riêng, giới hạn phạm vi trong trang Admin và loại bỏ CSS trùng/inline của module này.
+- Thêm công cụ `scripts/bump_version.py` và `scripts/check_ui_assets.py` để kiểm tra trước khi đóng gói.

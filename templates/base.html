@@ -7,25 +7,28 @@
     <title>{{ APP_NAME }}</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     {# Thứ tự CSS: nền tảng trước, module sau; module ở sau chỉ được phép tác động trong phạm vi class riêng. #}
-    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}?v={{ APP_VERSION|urlencode }}">
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/zcoin.css') }}?v={{ APP_VERSION|urlencode }}">
+    <link rel="stylesheet" href="{{ static_asset('style.css') }}">
+    <link rel="stylesheet" href="{{ static_asset('css/zcoin.css') }}">
+    {% if request.endpoint == 'admin' %}
+    <link rel="stylesheet" href="{{ static_asset('css/admin_weekly_rewards.css') }}">
+    {% endif %}
     {% if request.endpoint == 'zcoin_rewards' %}
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/zcoin_rewards.css') }}?v={{ APP_VERSION|urlencode }}">
+    <link rel="stylesheet" href="{{ static_asset('css/zcoin_rewards.css') }}">
     {% endif %}
     {% if request.endpoint in ['room_detail', 'admin'] %}
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/rank_mode_toggle.css') }}?v={{ APP_VERSION|urlencode }}">
+    <link rel="stylesheet" href="{{ static_asset('css/rank_mode_toggle.css') }}">
     {% endif %}
     {% if request.endpoint in ['room_detail', 'profile'] %}
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/parsec_room.css') }}?v={{ APP_VERSION|urlencode }}">
+    <link rel="stylesheet" href="{{ static_asset('css/parsec_room.css') }}">
     {% endif %}
     {% if request.endpoint == 'room_detail' %}
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/quick_match.css') }}?v={{ APP_VERSION|urlencode }}">
-    <script src="{{ url_for('static', filename='js/quick_match.js') }}?v={{ APP_VERSION|urlencode }}" defer></script>
+    <link rel="stylesheet" href="{{ static_asset('css/quick_match.css') }}">
+    <script src="{{ static_asset('js/quick_match.js') }}" defer></script>
     {% endif %}
-    <script src="{{ url_for('static', filename='js/pes_polling.js') }}?v={{ APP_VERSION|urlencode }}" defer></script>
-    <script src="{{ url_for('static', filename='js/zcoin.js') }}?v={{ APP_VERSION|urlencode }}" defer></script>
+    <script src="{{ static_asset('js/pes_polling.js') }}" defer></script>
+    <script src="{{ static_asset('js/zcoin.js') }}" defer></script>
     {% if request.endpoint == 'zcoin_rewards' %}
-    <script src="{{ url_for('static', filename='js/zcoin_rewards.js') }}?v={{ APP_VERSION|urlencode }}" defer></script>
+    <script src="{{ static_asset('js/zcoin_rewards.js') }}" defer></script>
     {% endif %}
     {% if current_user and not (auth_only|default(false)) %}
     <script>
@@ -39,7 +42,7 @@
         logoutUrl: {{ url_for('logout')|tojson }}
     };
     </script>
-    <script src="{{ url_for('static', filename='js/session-timeout.js') }}?v={{ APP_VERSION|urlencode }}" defer></script>
+    <script src="{{ static_asset('js/session-timeout.js') }}" defer></script>
     {% endif %}
 
 <script>
@@ -58,7 +61,7 @@ function toggleTheme(){
 <script>window.PES_ASSET_BASE_URL={{ asset_base_url()|tojson }};</script>
 {% block head_extra %}{% endblock %}
 </head>
-<body>
+<body data-page="{{ request.endpoint|default('unknown') }}">
 {% if is_test_mode %}<div style="position:fixed;z-index:99999;left:0;right:0;top:0;text-align:center;background:#ffcc00;color:#111;font-weight:800;padding:6px">🧪 PES ARENA TEST MODE — KHÔNG DÙNG DATABASE PRODUCTION</div><div style="height:34px"></div>{% endif %}
 {% if maintenance_status and maintenance_status.countdown %}
 <div class="server-transition-banner {{ 'server-closing' if maintenance_status.countdown.kind == 'close' else 'server-opening' }}">

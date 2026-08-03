@@ -1,5 +1,5 @@
 {% extends "base.html" %}
-{% block head_extra %}<link rel="stylesheet" href="{{ url_for('static', filename='css/luckybox_user.css') }}?v={{ APP_VERSION|urlencode }}">{% endblock %}
+{% block head_extra %}<link rel="stylesheet" href="{{ static_asset('css/luckybox_user.css') }}">{% endblock %}
 {% block content %}
 <div class="lb3-detail-page">
   <div class="lb3-detail-head">

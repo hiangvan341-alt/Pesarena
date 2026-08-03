@@ -1,7 +1,7 @@
 {% extends "base.html" %}
 {% block head_extra %}
-<link rel="stylesheet" href="{{ url_for('static', filename='css/shop_phase3.css') }}?v={{ APP_VERSION|urlencode }}">
-<script src="{{ url_for('static', filename='js/shop_phase3.js') }}?v={{ APP_VERSION|urlencode }}" defer></script>
+<link rel="stylesheet" href="{{ static_asset('css/shop_phase3.css') }}">
+<script src="{{ static_asset('js/shop_phase3.js') }}" defer></script>
 {% endblock %}
 {% block content %}
 <section class="shop3-hero">

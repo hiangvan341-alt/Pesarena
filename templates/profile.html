@@ -2,9 +2,9 @@
 {% from "_rank_macros.html" import rank_badge %}
 {% from "_avatar_macros.html" import player_avatar %}
 {% block head_extra %}
-<link rel="stylesheet" href="{{ url_for('static', filename='css/shop_phase3.css') }}?v={{ APP_VERSION|urlencode }}">
-<link rel="stylesheet" href="{{ url_for('static', filename='css/profile_showcase.css') }}?v={{ APP_VERSION|urlencode }}">
-<script defer src="{{ url_for('static', filename='js/profile_showcase.js') }}?v={{ APP_VERSION|urlencode }}"></script>
+<link rel="stylesheet" href="{{ static_asset('css/shop_phase3.css') }}">
+<link rel="stylesheet" href="{{ static_asset('css/profile_showcase.css') }}">
+<script defer src="{{ static_asset('js/profile_showcase.js') }}"></script>
 {% endblock %}
 {% block content %}
 {% set equipped_frame = profile_equipment.avatar_frame if profile_equipment else none %}
