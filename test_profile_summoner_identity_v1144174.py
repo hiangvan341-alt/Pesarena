@@ -2,31 +2,35 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent
 
+
 def read(relative):
     return (ROOT / relative).read_text(encoding="utf-8")
 
-def test_profile_summoner_identity_release():
-    assert 'APP_VERSION = "V1.14.41.74"' in read("app.py")
 
-def test_profile_summoner_identity_hero_is_scoped_and_complete():
+def test_profile_identity_release_has_moved_forward():
+    app = read("app.py")
+    assert 'APP_VERSION = "V1.14.41.75"' in app
+
+
+def test_profile_identity_remains_scoped_and_complete():
     template = read("templates/profile.html")
     css = read("static/css/profile_showcase.css")
     for token in (
-        "profile-v2-summoner-hero",
-        "profile-v2-summoner-layout",
-        "profile-v2-summoner-identity",
-        "profile-v2-avatar-level",
-        "profile-v2-crest-line",
-        "profile-v2-mini-id-row",
-        "profile-v2-honor-row",
-        "profile-v2-honor-chip",
+        "profile-v2-lol-layout",
+        "profile-v2-lol-identity",
+        "profile-v2-lol-avatar",
+        "profile-v2-lol-name-row",
+        "profile-v2-lol-showcase",
+        "profile-v2-lol-mastery-row",
+        "profile-v2-lol-rank",
         "PES ARENA PROFILE",
     ):
         assert token in template or token in css
     assert "object-fit:contain" in css
     assert "Scoped to .profile-v2-page" in css
 
-def test_profile_summoner_identity_keeps_existing_profile_features():
+
+def test_profile_identity_keeps_existing_profile_features():
     template = read("templates/profile.html")
     for token in (
         'data-profile-tab="overview"',

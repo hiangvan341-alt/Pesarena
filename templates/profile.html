@@ -34,82 +34,87 @@
                 <strong>{{ equipped_banner.name if equipped_banner else 'Chưa trang bị banner' }}</strong>
             </div>
 
-            <div class="profile-v2-summoner-layout">
-                <div class="profile-v2-summoner-identity">
+            <div class="profile-v2-lol-layout">
+                <div class="profile-v2-lol-identity">
                     {% if equipped_frame %}
-                    <div class="profile-avatar-cosmetic profile-v2-avatar">
+                    <div class="profile-avatar-cosmetic profile-v2-lol-avatar">
                         {{ player_avatar(player, size='xxl', achievement={}) }}
                         <img class="profile-avatar-frame" src="{{ equipped_frame.image_url }}" alt="{{ equipped_frame.name }}">
-                        <span class="profile-v2-avatar-level">#{{ player.position or '-' }}</span>
+                        <span class="profile-v2-lol-level">#{{ player.position or '-' }}</span>
                     </div>
                     {% else %}
-                    <div class="profile-v2-avatar profile-v2-avatar-plain">
+                    <div class="profile-v2-lol-avatar profile-v2-lol-avatar-plain">
                         {{ player_avatar(player, size='xxl') }}
-                        <span class="profile-v2-avatar-level">#{{ player.position or '-' }}</span>
+                        <span class="profile-v2-lol-level">#{{ player.position or '-' }}</span>
                     </div>
                     {% endif %}
 
-                    <div class="profile-v2-player-copy">
-                        <span class="profile-v2-kicker">PES ARENA PROFILE</span>
-                        <div class="profile-v2-name-row">
+                    <div class="profile-v2-lol-name-block">
+                        <span class="profile-v2-lol-kicker">PES ARENA PROFILE</span>
+                        <div class="profile-v2-lol-name-row">
                             <h1 class="page-title {% if equipped_name_style %}{{ equipped_name_style.metadata.get('css_class', '') }}{% endif %}">{{ player.display_name }}</h1>
                             {% if equipped_badge %}
-                            <img class="profile-equipped-badge profile-v2-equipped-badge" src="{{ equipped_badge.image_url }}" alt="{{ equipped_badge.name }}" title="{{ equipped_badge.name }}">
+                            <img class="profile-v2-lol-name-badge" src="{{ equipped_badge.image_url }}" alt="{{ equipped_badge.name }}" title="{{ equipped_badge.name }}">
                             {% endif %}
                             <span class="profile-v2-status {{ 'is-online' if player.is_online else 'is-offline' }}"><i></i>{{ 'Online' if player.is_online else 'Offline' }}</span>
                         </div>
-                        <div class="profile-v2-crest-line" aria-hidden="true"><span></span><i></i><span></span></div>
-                        <div class="profile-v2-mini-id-row">
+                        <div class="profile-v2-lol-crest" aria-hidden="true"><span></span><i></i><span></span></div>
+                        <div class="profile-v2-lol-account-row">
                             <span>@{{ player.username }}</span>
                             <span>{{ player.rank_points or 0 }} RP</span>
                             <span>{{ player.rank_info.name }}</span>
                         </div>
-                        <div class="profile-v2-honor-row" aria-label="Dấu ấn nổi bật của người chơi">
-                            <article class="profile-v2-honor-chip is-featured">
-                                <span class="profile-v2-honor-icon">{{ player.featured_achievement.icon if player.featured_achievement else profile_streak_badge.icon if profile_streak_badge else '🏅' }}</span>
-                                <div><small>Danh hiệu</small><strong>{{ player.featured_achievement.name if player.featured_achievement else profile_streak_badge.title if profile_streak_badge else 'Người chơi PES Arena' }}</strong></div>
-                            </article>
-                            <article class="profile-v2-honor-chip">
-                                {% if equipped_badge %}
-                                <span class="profile-v2-honor-badge"><img src="{{ equipped_badge.image_url }}" alt=""></span>
-                                {% else %}
-                                <span class="profile-v2-honor-icon">◇</span>
-                                {% endif %}
-                                <div><small>Huy hiệu</small><strong>{{ equipped_badge.name if equipped_badge else 'Chưa trang bị' }}</strong></div>
-                            </article>
-                            <article class="profile-v2-honor-chip">
-                                <span class="profile-v2-honor-icon">🔥</span>
-                                <div><small>Chuỗi hiện tại</small><strong>{{ player.streak or 0 }} trận</strong></div>
-                            </article>
-                            <article class="profile-v2-honor-chip">
-                                <span class="profile-v2-honor-rank">{{ rank_badge(player.rank_info) }}</span>
-                                <div><small>Xếp hạng</small><strong>{{ player.rank_info.name }}</strong></div>
-                            </article>
-                        </div>
                     </div>
                 </div>
 
-                <div class="profile-v2-career-side">
-                    <div class="profile-v2-stat-ribbon" aria-label="Thành tích nổi bật">
-                        <div><span>Trận đấu</span><strong>{{ player.total_matches or 0 }}</strong></div>
-                        <div><span>Chiến thắng</span><strong>{{ player.wins or 0 }}</strong></div>
-                        <div><span>Winrate</span><strong>{{ player.winrate }}%</strong></div>
+                <div class="profile-v2-lol-showcase" aria-label="Dấu ấn nổi bật của người chơi">
+                    <article class="profile-v2-lol-honor">
+                        <span class="profile-v2-lol-honor-icon">{{ player.featured_achievement.icon if player.featured_achievement else '🏆' }}</span>
+                        <strong>{{ player.featured_achievement.name if player.featured_achievement else 'Danh hiệu PES Arena' }}</strong>
+                        <small>{{ player.achievement_count }} thành tích đã mở</small>
+                    </article>
+
+                    <div class="profile-v2-lol-mastery-row">
+                        <article class="profile-v2-lol-mastery-node">
+                            <span class="profile-v2-lol-node-ring">
+                                {% if equipped_badge %}<img src="{{ equipped_badge.image_url }}" alt="{{ equipped_badge.name }}">{% else %}<b>◇</b>{% endif %}
+                            </span>
+                            <strong>{{ equipped_badge.name if equipped_badge else 'Chưa trang bị' }}</strong>
+                            <small>HUY HIỆU</small>
+                        </article>
+                        <article class="profile-v2-lol-mastery-node is-primary">
+                            <span class="profile-v2-lol-node-ring"><b>{{ player.rank_points or 0 }}</b></span>
+                            <strong>{{ player.rank_info.name }}</strong>
+                            <small>RP MÙA HIỆN TẠI</small>
+                        </article>
+                        <article class="profile-v2-lol-mastery-node">
+                            <span class="profile-v2-lol-node-ring"><b>🔥</b></span>
+                            <strong>{{ player.streak or 0 }} trận</strong>
+                            <small>CHUỖI HIỆN TẠI</small>
+                        </article>
                     </div>
-                    <div class="profile-v2-actions">
-                        {% if is_owner %}
-                        <a class="profile-v2-action is-primary" href="{{ url_for('inventory') }}">🎒 Quản lý trang bị</a>
-                        <a class="profile-v2-action" href="{{ url_for('shop') }}">🛒 Cửa hàng</a>
-                        {% elif can_invite %}
-                        <form method="post" action="{{ url_for('send_invite') }}">
-                            <input type="hidden" name="to_user_id" value="{{ player.id }}">
-                            <input type="hidden" name="tier" value="Random">
-                            <button class="profile-v2-action is-primary" type="submit">⚔️ Mời đấu</button>
-                        </form>
-                        {% elif activity %}
-                        <span class="presence presence-{{ activity.code }}"><i></i>{{ activity.label }}</span>
-                        {% endif %}
-                        <button class="profile-v2-action profile-share-button" type="button" data-profile-share data-share-label="🔗 Chia sẻ hồ sơ">🔗 Chia sẻ hồ sơ</button>
-                    </div>
+
+                    <article class="profile-v2-lol-rank">
+                        <div class="profile-v2-lol-rank-crest">{{ rank_badge(player.rank_info) }}</div>
+                        <strong>{{ player.rank_info.name }}</strong>
+                        <small>{{ player.rank_points or 0 }} RP · Hạng #{{ player.position or '-' }}</small>
+                    </article>
+                </div>
+
+                <div class="profile-v2-lol-actions">
+                    {% if is_owner %}
+                    <a class="profile-v2-action is-primary" href="{{ url_for('inventory') }}">🎒 Quản lý trang bị</a>
+                    <a class="profile-v2-action" href="{{ url_for('shop') }}">🛒 Cửa hàng</a>
+                    {% elif can_invite %}
+                    <form method="post" action="{{ url_for('send_invite') }}">
+                        <input type="hidden" name="to_user_id" value="{{ player.id }}">
+                        <input type="hidden" name="tier" value="Random">
+                        <button class="profile-v2-action is-primary" type="submit">⚔️ Mời đấu</button>
+                    </form>
+                    {% elif activity %}
+                    <span class="presence presence-{{ activity.code }}"><i></i>{{ activity.label }}</span>
+                    {% endif %}
+                    <button class="profile-v2-action profile-share-button" type="button" data-profile-share data-share-label="🔗 Chia sẻ hồ sơ">🔗 Chia sẻ hồ sơ</button>
                 </div>
             </div>
         </div>
