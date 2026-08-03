@@ -22,11 +22,7 @@
             <div class="profile-v2-banner-blur" style="background-image:url('{{ equipped_banner.image_url }}')" aria-hidden="true"></div>
             <img class="profile-v2-banner-image" src="{{ equipped_banner.image_url }}" alt="Banner hồ sơ {{ equipped_banner.name }} của {{ player.display_name }}" fetchpriority="high" decoding="async">
             {% else %}
-            <div class="profile-v2-default-banner" aria-hidden="true">
-                <span class="profile-v2-default-mark">PES ARENA</span>
-                <strong>BẢN LĨNH SÂN CỎ</strong>
-                <small>HỒ SƠ CẦU THỦ</small>
-            </div>
+            <div class="profile-v2-default-banner" aria-hidden="true"></div>
             {% endif %}
             <div class="profile-v2-banner-vignette" aria-hidden="true"></div>
             <div class="profile-v2-banner-caption">

@@ -627,3 +627,12 @@ html[data-theme="light"] .profile-v2-equipment-grid article,html[data-theme="lig
 .profile-v2-hero.has-banner .profile-v2-lol-layout{
   background:linear-gradient(180deg,transparent 0 48%,rgba(2,8,16,.12) 62%,rgba(2,8,16,.44) 100%);
 }
+
+/* V1.14.41.77 — Clean empty profile backdrop
+   Profiles without an equipped banner retain the PES Arena decorative
+   background but no longer display the large centered placeholder wording. */
+.profile-v2-hero.has-default-banner .profile-v2-default-mark,
+.profile-v2-hero.has-default-banner .profile-v2-default-banner>strong,
+.profile-v2-hero.has-default-banner .profile-v2-default-banner>small{
+  display:none!important;
+}
