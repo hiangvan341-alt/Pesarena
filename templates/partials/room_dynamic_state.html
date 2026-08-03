@@ -113,6 +113,7 @@
                 {% if room.status == 'waiting_result_confirm' %}
                     <div class="room-result-review" aria-label="Tỷ số đang chờ xác nhận">
                         <div class="room-result-score">{{ room.host_score if room.host_score is not none else 0 }} <span>-</span> {{ room.guest_score if room.guest_score is not none else 0 }}</div>
+                        <div class="room-result-confirm-countdown">Tự động xác nhận sau <strong id="roomCountdown" data-seconds="{{ room.timeout_seconds }}">01:00</strong></div>
                         {% set _viewer_id = current_user.id|string %}
                         {% set _guest_id = room.guest_user_id|string %}
                         {% set _submitted_by = room.submitted_by_id|string %}

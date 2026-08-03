@@ -197,7 +197,8 @@ def _apply_state(state: dict[str, Any], delta: int, goals_for: int, goals_agains
         state["loss_streak"] = _int(state.get("loss_streak")) + 1
         state["loss_recovery_win_step"] = 0
     else:
-        # Giữ chuỗi thắng qua trận hòa như logic hiện hành; chuỗi thua kết thúc.
+        # Hòa làm gián đoạn chuỗi thắng liên tiếp và kết thúc chuỗi thua.
+        state["streak"] = 0
         state["loss_streak"] = 0
 
 

@@ -428,7 +428,7 @@ def update_player_after_match(player, delta, goals_for, goals_against, affect_st
     new_points = max(0, _safe_int(player.get("rank_points")) + delta)
     current_streak = int(player.get("streak", 0) or 0)
     if affect_streak:
-        new_streak = current_streak + 1 if win else 0 if loss else current_streak
+        new_streak = current_streak + 1 if win else 0
     else:
         new_streak = current_streak
 

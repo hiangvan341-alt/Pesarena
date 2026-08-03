@@ -5311,3 +5311,6 @@ html[data-theme="light"] .account-presence-control select{background:#fff!import
 /* V1.14.41.63 - thiết lập cảnh báo IP */
 .admin-ip-settings-card{display:flex;align-items:center;gap:14px;flex-wrap:wrap;margin:12px 0 16px;padding:14px 16px;border:1px solid rgba(229,185,72,.35);border-radius:12px;background:rgba(229,185,72,.06)}
 .admin-ip-settings-card>div{min-width:260px;flex:1}.admin-ip-settings-card p{margin:4px 0 0}.admin-ip-trust-form{margin-top:10px}
+
+/* V1.14.41.80 - đếm ngược xác nhận kết quả */
+.room-result-confirm-countdown{margin:8px 0 12px;color:#cbd8e8;font-size:13px;font-weight:700;text-align:center}.room-result-confirm-countdown strong{display:inline-flex;min-width:54px;justify-content:center;margin-left:4px;padding:4px 8px;border:1px solid rgba(245,194,66,.45);border-radius:8px;background:rgba(245,194,66,.1);color:#ffd76a;font-size:15px;font-variant-numeric:tabular-nums}

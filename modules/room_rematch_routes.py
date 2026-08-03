@@ -7,6 +7,28 @@ def register_routes(context):
     """Đăng ký nhóm route vào Flask app hiện tại."""
     globals().update(context)
 
+    def _award_forfeit_win(winner_id):
+        """Tính một trận thắng do đối thủ bỏ cuộc, nhưng không cộng RP hoặc bàn thắng."""
+        if not winner_id:
+            return False
+        winner = get_user(winner_id)
+        if not winner:
+            return False
+        wins = int(winner.get("wins", 0) or 0) + 1
+        draws = int(winner.get("draws", 0) or 0)
+        losses = int(winner.get("losses", 0) or 0)
+        streak = int(winner.get("streak", 0) or 0) + 1
+        result = execute_query(
+            db.table("users").update({
+                "wins": wins,
+                "total_matches": wins + draws + losses,
+                "streak": streak,
+            }).eq("id", winner_id),
+            "award_forfeit_win",
+        )
+        ttl_cache_delete("players_raw", "achievement_map")
+        return bool(result is not None)
+
     @app.route("/room/<room_id>/guest-forfeit", methods=["POST"])
     @login_required
     def room_guest_forfeit(room_id):
@@ -75,6 +97,7 @@ def register_routes(context):
             return redirect(url_for("dashboard"))
 
         penalty_delta = apply_room_abandon_penalty(user["id"])
+        _award_forfeit_win(room.get("host_user_id"))
         record_room_forfeit_match(
             room,
             offender_role="guest",
@@ -86,7 +109,7 @@ def register_routes(context):
         create_user_notification(
             room.get("host_user_id"),
             "🚪 Đối thủ đã bỏ cuộc",
-            f'{user["display_name"]} đã thoát phòng và bị trừ {ROOM_ABANDON_PENALTY} RP. Bạn không bị cộng hoặc trừ RP.',
+            f'{user["display_name"]} đã thoát phòng và bị trừ {ROOM_ABANDON_PENALTY} RP. Bạn được tính 1 trận thắng và tăng chuỗi thắng, nhưng không được cộng RP.',
             "/matches",
             "guest_forfeit",
         )
@@ -168,6 +191,7 @@ def register_routes(context):
             return redirect(url_for("room_detail", room_id=room_id))
 
         penalty_delta = apply_room_abandon_penalty(user["id"])
+        _award_forfeit_win(room.get("guest_user_id"))
         record_room_forfeit_match(
             room,
             offender_role="host",
@@ -179,7 +203,7 @@ def register_routes(context):
         create_user_notification(
             room.get("guest_user_id"),
             "🚪 Chủ phòng đã bỏ cuộc",
-            f'{user["display_name"]} đã thoát phòng và bị trừ {ROOM_ABANDON_PENALTY} RP. Bạn không bị cộng hoặc trừ RP.',
+            f'{user["display_name"]} đã thoát phòng và bị trừ {ROOM_ABANDON_PENALTY} RP. Bạn được tính 1 trận thắng và tăng chuỗi thắng, nhưng không được cộng RP.',
             "/matches",
             "host_forfeit",
         )

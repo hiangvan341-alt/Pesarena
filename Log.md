@@ -154,3 +154,10 @@
 - Xóa cache Python/Pytest và các manifest TXT cũ.
 - Xóa ảnh local đã có trong `SUPABASE_ASSET_MANIFEST.csv` cùng PNG/test image trùng hoặc không dùng.
 - ZIP không bọc thư mục cha; yêu cầu cấu hình `STATIC_ASSET_BASE_URL` và `SHOP_ASSET_BASE_URL` trên Vercel.
+
+
+## V1.14.41.80 — 04/08/2026 01:55 (GMT+7)
+- Hòa đặt chuỗi thắng về 0; đồng bộ cả luồng xác nhận trực tiếp và tính lại BXH Admin.
+- Đối thủ bỏ cuộc: người còn lại được +1 trận thắng và +1 chuỗi thắng, nhưng +0 RP.
+- Giữ tự động xác nhận sau 60 giây và hiển thị đồng hồ đếm ngược ngay dưới tỷ số.
+- File sửa: `app.py`, `modules/match_result_service.py`, `modules/admin_ranking_rebuild.py`, `modules/room_rematch_routes.py`, 3 template phòng, `static/style.css`.
