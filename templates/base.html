@@ -60,6 +60,7 @@ function toggleTheme(){
 <style>:root{--pes-login-background:url("{{ asset_url('login-background.webp') }}")}</style>
 <script>window.PES_ASSET_BASE_URL={{ asset_base_url()|tojson }};</script>
 {% block head_extra %}{% endblock %}
+{% block page_styles %}{% endblock %}
 </head>
 <body data-page="{{ request.endpoint|default('unknown') }}">
 {% if is_test_mode %}<div style="position:fixed;z-index:99999;left:0;right:0;top:0;text-align:center;background:#ffcc00;color:#111;font-weight:800;padding:6px">🧪 PES ARENA TEST MODE — KHÔNG DÙNG DATABASE PRODUCTION</div><div style="height:34px"></div>{% endif %}
@@ -1162,5 +1163,6 @@ document.addEventListener('click', async function(event){
   catch(e){ const area=document.createElement('textarea'); area.value=text; document.body.appendChild(area); area.select(); document.execCommand('copy'); area.remove(); }
 }, true);
 </script>
+{% block page_scripts %}{% endblock %}
 </body>
 </html>

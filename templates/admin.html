@@ -1,9 +1,9 @@
 {# HOTFIX V1.14.39.1: legacy Zcoin tab removed; use /admin/economy #}
 {% extends "base.html" %}
-{% block content %}
-{% block page_styles %}{{ super() }}
+{% block page_styles %}
 <link rel="stylesheet" href="{{ static_asset('css/admin_dashboard.css') }}">
 {% endblock %}
+{% block content %}
 
 <div class="admin-dashboard-heading">
     <div>
@@ -768,8 +768,6 @@
 </section>
 {% endif %}
 
-{% if current_user.admin_level == 'owner' %}
-
 <section class="admin-tab-panel admin-economy-embed-panel" data-admin-panel="economy" hidden>
     <div class="panel admin-module-shell">
         <div class="admin-section-heading">
@@ -779,6 +777,8 @@
         <iframe class="admin-module-frame" title="Quản trị Zcoin và Gift Code" data-admin-lazy-src="{{ url_for('admin_economy') }}?embedded=1" loading="lazy"></iframe>
     </div>
 </section>
+
+{% if current_user.admin_level == 'owner' %}
 <section class="admin-tab-panel" data-admin-panel="rp-tools">
     <div class="panel">
         <h2>📈 Bộ Công Cụ Tính RP</h2>
@@ -854,8 +854,8 @@
 </section>
 {% endif %}
 
-{% block page_scripts %}{{ super() }}
-<script src="{{ static_asset('js/admin_dashboard.js') }}" defer></script>
 {% endblock %}
 
+{% block page_scripts %}
+<script src="{{ static_asset('js/admin_dashboard.js') }}" defer></script>
 {% endblock %}
