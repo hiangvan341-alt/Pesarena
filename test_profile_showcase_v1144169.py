@@ -8,7 +8,7 @@ def read(relative):
 
 
 def test_profile_v2_release_version():
-    assert 'APP_VERSION = "V1.2.1"' in read("app.py")
+    assert 'APP_VERSION = "V1.2.4"' in read("app.py")
 
 
 def test_profile_v2_isolated_assets_and_complete_banner():
@@ -22,7 +22,7 @@ def test_profile_v2_isolated_assets_and_complete_banner():
     assert "--profile-banner-image" in template
     assert "css/profile_showcase.css" in template
     assert "js/profile_showcase.js" in template
-    assert template.count("APP_VERSION|urlencode") >= 3
+    assert template.count("static_asset(") >= 3
 
 
 def test_profile_v2_has_showcase_tabs_and_owner_controls():

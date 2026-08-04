@@ -184,6 +184,10 @@ def register_routes(context):
             flash("Không tìm thấy phòng.", "danger")
             return redirect(url_for("rooms"))
 
+        if close_room_if_host_browser_offline(room):
+            flash("Chủ phòng đã Offline nên phòng được đóng. Khách không bị ảnh hưởng.", "warning")
+            return redirect(url_for("rooms"))
+
         if user["id"] not in [room["host_user_id"], room["guest_user_id"]] and not is_admin_user(user):
             flash("Bạn không thuộc phòng này.", "danger")
             return redirect(url_for("rooms"))
@@ -203,6 +207,10 @@ def register_routes(context):
 
         if not room:
             return "", 404
+        if close_room_if_host_browser_offline(room):
+            response = make_response("", 204)
+            response.headers["X-PES-Polling-Stop"] = "host_browser_offline"
+            return response
         is_room_member = (
             _same_user_id(user.get("id"), room.get("host_user_id"))
             or _same_user_id(user.get("id"), room.get("guest_user_id"))

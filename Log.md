@@ -179,3 +179,9 @@
 - Tự động tạo fingerprint theo nội dung cho CSS/JS, không còn phụ thuộc hoàn toàn vào việc đổi phiên bản để phá cache.
 - Tách CSS Thưởng RP tuần thành module riêng, giới hạn phạm vi trong trang Admin và loại bỏ CSS trùng/inline của module này.
 - Thêm công cụ `scripts/bump_version.py` và `scripts/check_ui_assets.py` để kiểm tra trước khi đóng gói.
+## V1.2.4
+- Khi chủ phòng đóng tab/trình duyệt trong trạng thái đang thi đấu, hệ thống xác nhận Offline qua presence rồi tự đóng phòng.
+- Chủ phòng bị tính bỏ trận, trừ 20 RP, cộng 1 trận thua và reset chuỗi thắng.
+- Khách không thay đổi RP, thống kê hoặc chuỗi; được giải phóng để tạo phòng mới.
+- Giữ nguyên quyền Admin hủy phòng mà không phạt thêm người chơi.
+

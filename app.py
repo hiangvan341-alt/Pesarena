@@ -65,7 +65,7 @@ from modules.win_streaks import (
 load_dotenv()
 
 APP_NAME = "PES Arena – Bản Lĩnh Sân Cỏ"
-APP_VERSION = "V1.2.3"
+APP_VERSION = "V1.2.4"
 DEFAULT_POINTS = 1000
 DEVICE_COOKIE_NAME = "rankzone_device_id"
 COOLDOWN_MINUTES = 3
@@ -2956,6 +2956,89 @@ def apply_room_abandon_penalty(user_id, amount=ROOM_ABANDON_PENALTY):
     return -(old_points - new_points)
 
 
+HOST_BROWSER_OFFLINE_GRACE_SECONDS = 20
+HOST_BROWSER_OFFLINE_ROOM_STATUSES = {"playing", "friendly_playing"}
+
+
+def close_room_if_host_browser_offline(room):
+    """Đóng phòng khi chủ đã đóng tab/trình duyệt và presence chuyển Offline.
+
+    Chỉ áp dụng sau khi trận đã bắt đầu. Khách không được cộng/trừ RP, không
+    thay đổi thắng/hòa/thua hoặc chuỗi. Điều kiện update theo status giúp chống
+    xử lý lặp trên nhiều instance Vercel.
+    """
+    if not room or room.get("status") not in HOST_BROWSER_OFFLINE_ROOM_STATUSES:
+        return False
+
+    host_id = room.get("host_user_id")
+    guest_id = room.get("guest_user_id")
+    if not host_id or not guest_id:
+        return False
+
+    try:
+        host = get_user(host_id)
+    except Exception as exc:
+        print(f"Host offline check warning: {exc}")
+        return False
+    if not host or host.get("is_online") is not False:
+        return False
+
+    last_seen = aware_utc(parse_dt(host.get("last_seen_at")))
+    if not last_seen:
+        return False
+    if now_dt() < last_seen + timedelta(seconds=HOST_BROWSER_OFFLINE_GRACE_SECONDS):
+        return False
+
+    original_status = room.get("status")
+    reason = (
+        f"{host.get('display_name') or host.get('username') or 'Chủ phòng'} "
+        f"đã đóng trình duyệt khi trận đang diễn ra và bị trừ {ROOM_ABANDON_PENALTY} RP."
+    )
+    update_data = {
+        "status": "cancelled",
+        "guest_ready": False,
+        "note": reason,
+        "state_expires_at": None,
+        "updated_at": now_iso(),
+    }
+    result = execute_query(
+        db.table("match_rooms").update(update_data)
+        .eq("id", room.get("id"))
+        .eq("status", original_status),
+        "host_browser_offline_close_room",
+    )
+    if not (result.data or []):
+        return False
+
+    room.update(update_data)
+    penalty_delta = apply_room_abandon_penalty(host_id, ROOM_ABANDON_PENALTY)
+    record_room_forfeit_match(
+        room,
+        offender_role="host",
+        penalty_delta=penalty_delta if penalty_delta is not None else -ROOM_ABANDON_PENALTY,
+        reason=reason,
+        event_type="host_browser_offline_forfeit",
+    )
+
+    create_user_notification(
+        host_id,
+        "⚠️ Bạn đã thoát trận",
+        f"Phòng đã đóng vì trình duyệt của bạn Offline. Bạn bị trừ {ROOM_ABANDON_PENALTY} RP và mất chuỗi thắng.",
+        "/matches",
+        "host_browser_offline_penalty",
+    )
+    create_user_notification(
+        guest_id,
+        "🚪 Chủ phòng đã Offline",
+        "Phòng đã tự đóng. Bạn không bị cộng hoặc trừ RP và có thể tạo phòng mới ngay.",
+        "/rooms",
+        "host_browser_offline_room_closed",
+    )
+    cache_delete("_rz_rooms_all")
+    ttl_cache_delete("rooms_raw")
+    return True
+
+
 def close_room_with_timeout_penalty(room, offender_role, reason):
     """Đóng phòng và phạt ngẫu nhiên 22–25 RP đúng một lần."""
     room_id = room.get("id")
@@ -4487,6 +4570,9 @@ def api_room_state(room_id):
 
     if not room:
         return polling_stop_response("room_not_found")
+
+    if close_room_if_host_browser_offline(room):
+        return polling_stop_response("host_browser_offline")
 
     if user["id"] not in [room["host_user_id"], room["guest_user_id"]] and not is_admin_user(user):
         return polling_stop_response("room_access_ended")
