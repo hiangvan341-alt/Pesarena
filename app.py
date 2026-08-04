@@ -65,7 +65,7 @@ from modules.win_streaks import (
 load_dotenv()
 
 APP_NAME = "PES Arena – Bản Lĩnh Sân Cỏ"
-APP_VERSION = "V1.2.5"
+APP_VERSION = "V1.2.6"
 DEFAULT_POINTS = 1000
 DEVICE_COOKIE_NAME = "rankzone_device_id"
 COOLDOWN_MINUTES = 3
@@ -3880,16 +3880,42 @@ def build_room_head_to_head(room):
     return empty
 
 
+def _room_by_match_id(rooms):
+    return {
+        str(room.get("match_id")): room
+        for room in (rooms or [])
+        if room.get("match_id") not in (None, "")
+    }
+
+
+def match_blocks_new_room(match, linked_room=None):
+    """Chỉ khóa người chơi khi trận còn gắn với một phòng đang hoạt động.
+
+    Một bản ghi ``matches`` còn ``playing``/``waiting_confirm`` nhưng phòng đã
+    ``cancelled`` hoặc không còn tồn tại là dữ liệu mồ côi. Nó không được tiếp
+    tục chặn người chơi tạo phòng mới.
+    """
+    if not match or match.get("status") not in {"playing", "waiting_confirm"}:
+        return False
+    return bool(linked_room and room_is_active(linked_room))
+
+
 def active_match_for_user(user_id):
-    active_statuses = {"playing", "waiting_confirm"}
+    """Trả về trận thật sự đang khóa người chơi, bỏ qua match mồ côi."""
+    user_key = str(user_id)
+    rooms = list_rooms()
+    rooms_by_match = _room_by_match_id(rooms)
     for match in list_matches():
-        if match.get("status") in active_statuses and user_id in [match.get("player1_id"), match.get("player2_id")]:
+        if user_key not in {str(match.get("player1_id")), str(match.get("player2_id"))}:
+            continue
+        linked_room = rooms_by_match.get(str(match.get("id")))
+        if match_blocks_new_room(match, linked_room):
             return match
     return None
 
 
 def busy_user_ids(rooms=None, matches=None):
-    """Trả về tập user đang có phòng hoặc trận chưa hoàn tất."""
+    """Trả về tập user đang có phòng hoặc trận thật sự chưa hoàn tất."""
     rooms = list_rooms() if rooms is None else rooms
     matches = list_matches() if matches is None else matches
     busy = set()
@@ -3899,8 +3925,10 @@ def busy_user_ids(rooms=None, matches=None):
             busy.add(room.get("host_user_id"))
             busy.add(room.get("guest_user_id"))
 
+    rooms_by_match = _room_by_match_id(rooms)
     for match in matches:
-        if match.get("status") in {"playing", "waiting_confirm"}:
+        linked_room = rooms_by_match.get(str(match.get("id")))
+        if match_blocks_new_room(match, linked_room):
             busy.add(match.get("player1_id"))
             busy.add(match.get("player2_id"))
 

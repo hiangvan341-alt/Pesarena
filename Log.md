@@ -1,3 +1,10 @@
+## V1.2.6 — 05/08/2026 00:47 (GMT+7)
+- Sửa lỗi tài khoản vẫn bị báo còn trận chưa hoàn tất dù phòng đã bị đóng hoặc không còn tồn tại.
+- Chỉ khóa tạo phòng khi bản ghi trận còn liên kết với một phòng đang hoạt động.
+- Bỏ qua các trận mồ côi có trạng thái `playing`/`waiting_confirm` nhưng phòng đã `cancelled` hoặc đã mất.
+- Đồng bộ xóa cache trận sau khi ghi nhận bỏ cuộc do chủ phòng Offline.
+- File sửa: `app.py`, `modules/forfeit_history_service.py`.
+
 ## V1.2.5 — 05/08/2026 00:43 (GMT+7)
 - Admin hiển thị riêng các phòng đã tự đóng do chủ phòng Offline.
 - Phòng đã đóng không còn khóa người chơi nhưng vẫn lưu để Admin xem chủ, khách, đội, lý do và chi tiết phòng.

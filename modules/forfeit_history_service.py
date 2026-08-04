@@ -202,6 +202,10 @@ def record_room_forfeit_match(room, offender_role, penalty_delta, reason, event_
                 attempts=2,
             )
             cache_delete("_rz_matches_all")
+            try:
+                ttl_cache_delete("matches_raw")
+            except Exception:
+                pass
             return match_id if result is not None else None
 
         payload = _new_match_payload(room, offender_role, penalty_delta, reason)
@@ -231,6 +235,10 @@ def record_room_forfeit_match(room, offender_role, penalty_delta, reason, event_
                 )
 
         cache_delete("_rz_matches_all")
+        try:
+            ttl_cache_delete("matches_raw")
+        except Exception:
+            pass
         return created_id
     except Exception as exc:
         _log_warning(
