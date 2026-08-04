@@ -377,6 +377,35 @@
     </div>
 
     <div class="panel">
+        <div class="admin-section-heading">
+            <div>
+                <h2>🕘 Phòng đã đóng do chủ Offline</h2>
+                <p class="small">Các phòng này không còn khóa người chơi nhưng vẫn được giữ lại để Admin kiểm tra.</p>
+            </div>
+            <span class="admin-count">{{ recent_closed_rooms|length }}</span>
+        </div>
+        <div class="table-wrap admin-table-wrap">
+            <table>
+                <thead><tr><th>Chủ</th><th>Khách</th><th>Đội</th><th>Trạng thái</th><th>Lý do</th><th>Hành động</th></tr></thead>
+                <tbody>
+                {% for r in recent_closed_rooms %}
+                <tr>
+                    <td>{{ r.host_name }}</td>
+                    <td>{{ r.guest_name }}</td>
+                    <td>{{ r.host_team or '-' }} vs {{ r.guest_team or '-' }}</td>
+                    <td><span class="badge cancelled">Đã đóng</span></td>
+                    <td>{{ r.note or 'Chủ phòng Offline khi trận đang diễn ra.' }}</td>
+                    <td><a class="btn" href="{{ url_for('room_detail', room_id=r.id) }}">Xem phòng</a></td>
+                </tr>
+                {% else %}
+                <tr><td colspan="6">Chưa có phòng nào bị đóng do chủ Offline.</td></tr>
+                {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <div class="panel">
         <div class="admin-section-heading"><h2>📨 Lời mời đang chờ</h2><span class="admin-count">{{ invites|length }}</span></div>
         <div class="table-wrap admin-table-wrap">
             <table>

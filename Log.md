@@ -1,3 +1,9 @@
+## V1.2.5 — 05/08/2026 00:43 (GMT+7)
+- Admin hiển thị riêng các phòng đã tự đóng do chủ phòng Offline.
+- Phòng đã đóng không còn khóa người chơi nhưng vẫn lưu để Admin xem chủ, khách, đội, lý do và chi tiết phòng.
+- Bổ sung đầy đủ trạng thái phòng đang hoạt động trong tab quản trị.
+- File sửa: `app.py`, `modules/admin_dashboard_routes.py`, `templates/admin.html`.
+
 ## V1.14.41.58 — 2026-08-02 07:45 (Asia/Bangkok)
 
 - Thêm thưởng RP hoạt động tuần theo số trận và số đối thủ khác nhau.

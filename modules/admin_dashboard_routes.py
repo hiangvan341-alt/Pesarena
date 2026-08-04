@@ -271,7 +271,16 @@ def register_routes(context):
             all_matches=all_matches[:80],
             disputed=[m for m in all_matches if m.get("status") == "disputed"],
             playing=[m for m in all_matches if m.get("status") == "playing"],
-            rooms=[r for r in all_rooms if r.get("status") in ["waiting_ready", "playing", "waiting_result_confirm", "disputed"]],
+            rooms=[r for r in all_rooms if r.get("status") in ["waiting_ready", "playing", "friendly_playing", "waiting_result_confirm", "waiting_confirm", "disputed"]],
+            recent_closed_rooms=[
+                r for r in all_rooms
+                if r.get("status") == "cancelled"
+                and (
+                    "đóng trình duyệt" in str(r.get("note") or "").casefold()
+                    or "host_browser_offline" in str(r.get("note") or "").casefold()
+                    or "chủ phòng" in str(r.get("note") or "").casefold()
+                )
+            ][:30],
             all_rooms=all_rooms[:80],
             invites=admin_safe_load("invites", lambda: list_invites("pending"), []),
             active_announcement=admin_safe_load("announcement", get_active_announcement, None),
