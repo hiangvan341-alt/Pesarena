@@ -65,7 +65,7 @@ from modules.win_streaks import (
 load_dotenv()
 
 APP_NAME = "PES Arena – Bản Lĩnh Sân Cỏ"
-APP_VERSION = "V1.2.7"
+APP_VERSION = "V1.2.8"
 DEFAULT_POINTS = 1000
 DEVICE_COOKIE_NAME = "rankzone_device_id"
 COOLDOWN_MINUTES = 3
@@ -3984,28 +3984,49 @@ def matchmaking_snapshot(user_a, user_b=None):
         ids.add(str(user_b))
     rooms_result = execute_query(
         db.table("match_rooms")
-        .select("id,host_user_id,guest_user_id,status,invite_id")
-        .in_("status", ["waiting_ready", "playing", "friendly_playing", "waiting_result_confirm"]),
+        .select("id,match_id,host_user_id,guest_user_id,status,invite_id")
+        .in_("status", ["waiting_ready", "playing", "friendly_playing", "waiting_result_confirm", "waiting_confirm", "disputed"]),
         "matchmaking_active_rooms",
         attempts=3,
     )
     matches_result = execute_query(
         db.table("matches")
         .select("id,player1_id,player2_id,status")
-        .in_("status", ["playing", "waiting_confirm", "processing_result"]),
+        .in_("status", ["playing", "waiting_confirm", "processing_result", "disputed"]),
         "matchmaking_active_matches",
         attempts=3,
     )
     invites_result = execute_query(
         db.table("match_invites")
-        .select("id,from_user_id,to_user_id,status")
+        .select("id,from_user_id,to_user_id,status,expires_at,created_at")
         .eq("status", "pending"),
         "matchmaking_pending_invites",
         attempts=3,
     )
     rooms = [dict(x) for x in (rooms_result.data or [])]
-    matches = [dict(x) for x in (matches_result.data or [])]
-    invites = [dict(x) for x in (invites_result.data or [])]
+    active_match_ids = {str(r.get("match_id")) for r in rooms if r.get("match_id")}
+    # Trận mồ côi không còn phòng hoạt động không được chặn ghép trận/lời mời.
+    matches = [dict(x) for x in (matches_result.data or []) if str(x.get("id")) in active_match_ids]
+
+    invites = []
+    now = now_dt()
+    for raw in (invites_result.data or []):
+        invite = dict(raw)
+        expires_at = parse_dt(invite.get("expires_at"))
+        if expires_at and expires_at <= now:
+            try:
+                execute_query(
+                    db.table("match_invites").update({
+                        "status": "expired",
+                        "updated_at": now_iso(),
+                    }).eq("id", invite.get("id")).eq("status", "pending"),
+                    "matchmaking_expire_stale_invite",
+                    attempts=1,
+                )
+            except Exception as exc:
+                print(f"matchmaking stale invite warning id={invite.get('id')}: {exc}")
+            continue
+        invites.append(invite)
 
     def room_for(uid):
         uid = str(uid)
@@ -5526,15 +5547,6 @@ def invites():
 def send_invite():
     user = current_user()
 
-    limit_message = daily_rank_block_message(user.get("id"))
-    if limit_message:
-        flash(limit_message, "warning")
-        return redirect(url_for("dashboard"))
-
-    if is_player_in_cooldown(user):
-        flash(f"Bạn đang trong thời gian chờ {cooldown_text(user)}.", "warning")
-        return redirect(url_for("players"))
-
     to_user_id = request.form.get("to_user_id")
     tier = SMART_RANDOM_MODE
 
@@ -5545,11 +5557,6 @@ def send_invite():
     opponent = get_user(to_user_id)
     if not opponent:
         flash("Không tìm thấy đối thủ.", "danger")
-        return redirect(url_for("players"))
-
-    limit_message = daily_rank_block_message(user.get("id"), opponent.get("id"))
-    if limit_message:
-        flash(limit_message, "warning")
         return redirect(url_for("players"))
 
     try:
@@ -5572,10 +5579,6 @@ def send_invite():
         return redirect(url_for("players"))
     if receiver_room and not is_solo_waiting_room(receiver_room, to_user_id):
         flash("Phòng của người chơi này đã có đủ 2 người hoặc đã bắt đầu.", "warning")
-        return redirect(url_for("players"))
-
-    if is_player_in_cooldown(opponent):
-        flash("Người chơi này đang trong thời gian nghỉ 3 phút. Bạn hãy mời lại sau nhé.", "warning")
         return redirect(url_for("players"))
 
     if not is_user_online_now(opponent):
@@ -5668,14 +5671,8 @@ def quick_match_invite():
     if isinstance(raw_excluded, str):
         raw_excluded = [item for item in raw_excluded.split(",") if item]
     excluded_user_ids = {str(item).strip() for item in (raw_excluded or []) if str(item).strip()}
-    limit_message = daily_rank_block_message(user.get("id"))
-    if limit_message:
-        return jsonify({"ok": False, "message": limit_message}), 409
     if not system_feature_enabled("quick_match_enabled"):
         return jsonify({"ok": False, "message": "Tính năng Tìm Nhanh đang được Admin tắt."}), 403
-    if is_player_in_cooldown(user):
-        return jsonify({"ok": False, "message": f"Bạn đang trong thời gian chờ {cooldown_text(user)}."}), 409
-
     try:
         state = matchmaking_snapshot(user["id"])
     except Exception as exc:
@@ -5749,9 +5746,6 @@ def quick_match_invite():
         if opponent.get("is_online") is not True or not seen or seen < presence_cutoff:
             continue
         online_total += 1
-        if is_player_in_cooldown(opponent):
-            cooldown_total += 1
-            continue
         # Có lời mời ĐẾN không làm người chơi bị loại khỏi danh sách.
         # Chỉ loại khi chính họ đang có lời mời ĐI chờ phản hồi.
         if oid in busy_match_ids or oid in outgoing_inviter_ids:
@@ -6013,29 +6007,12 @@ def respond_invite(invite_id):
         if is_quick_match_invite(invite):
             flash("Đã từ chối lời mời Tìm Nhanh.", "success")
         else:
-            cooldown_until = (now_dt() + timedelta(minutes=COOLDOWN_MINUTES)).isoformat()
-            db.table("users").update({"matchmaking_cooldown_until": cooldown_until}).eq("id", user["id"]).execute()
-            flash("Đã từ chối lời mời. Bạn sẽ tạm nghỉ 3 phút trước khi mời/nhận trận mới.", "success")
+            flash("Đã từ chối lời mời.", "success")
         return redirect(url_for("invites"))
 
     if action != "accept":
         flash("Hành động không hợp lệ.", "danger")
         return redirect(url_for("invites"))
-
-    if is_player_in_cooldown(user):
-        flash(f"Bạn đang trong thời gian chờ {cooldown_text(user)}.", "warning")
-        return redirect(url_for("invites"))
-
-    limit_message = daily_rank_block_message(invite.get("from_user_id"), user.get("id"))
-    if limit_message:
-        execute_query(
-            db.table("match_invites").update({"status": "cancelled", "updated_at": now_iso()})
-            .eq("id", invite_id).eq("status", "pending"),
-            "cancel_invite_daily_limit",
-            attempts=2,
-        )
-        flash(limit_message, "warning")
-        return redirect(url_for("dashboard"))
 
     receiver_match = active_match_for_user(user["id"])
     receiver_room = active_room_for_user(user["id"])

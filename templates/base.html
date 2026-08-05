@@ -419,7 +419,9 @@ function checkActiveRoom() {
 
 
 let pendingInvitesRequestPromise = null;
+let lastPendingInvitePollAt = 0;
 function checkPendingInvites() {
+    lastPendingInvitePollAt = Date.now();
     const task = function () {
         return fetch("{{ url_for('api_pending_invites') }}", {
             method: "GET",
@@ -1062,6 +1064,16 @@ window.addEventListener("DOMContentLoaded", function () {
             immediate: true,
             jitter: 250
         });
+    }
+
+    // Watchdog độc lập: nếu một module JS khác lỗi hoặc poller bị dừng quá lâu,
+    // lời mời vẫn được kiểm tra lại. Không tạo request trùng nhờ singleFlight.
+    if (!isRoomPage) {
+        window.setInterval(function () {
+            if (Date.now() - lastPendingInvitePollAt >= 15000) {
+                checkPendingInvites();
+            }
+        }, 5000);
     }
 
     // Active room không cần polling định kỳ. Chỉ kiểm tra khi tải trang, quay lại
