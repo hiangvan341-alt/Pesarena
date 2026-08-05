@@ -205,3 +205,9 @@
 - API đọc tối đa 20 lời mời pending để không bỏ sót lời mời hợp lệ cũ hơn.
 - Lỗi truy vấn API không còn bị hiểu nhầm là không có lời mời.
 - Đồng bộ cache lời mời sau khi gửi.
+
+## V1.2.9
+- Sửa lỗi người nhận đang ở trang phòng một mình không thấy lời mời.
+- Polling và watchdog lời mời tiếp tục chạy trên trang `/room/...`.
+- Không thay đổi điều kiện backend: phòng đủ hai người hoặc đã thi đấu vẫn không nhận lời mời mới.
+- Kiểm tra hồi quy toàn bộ: 166/166 test đạt.

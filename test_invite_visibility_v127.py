@@ -6,7 +6,7 @@ BASE = (ROOT / 'templates' / 'base.html').read_text(encoding='utf-8')
 
 
 def test_version_v127():
-    assert 'APP_VERSION = "V1.2.8"' in APP
+    assert 'APP_VERSION = "V1.2.9"' in APP
 
 
 def test_pending_api_reads_multiple_rows():
@@ -22,7 +22,7 @@ def test_pending_api_does_not_hide_invites_on_db_error():
 
 
 def test_invites_poll_on_history_and_guide_pages():
-    assert 'if (!isRoomPage) {' in BASE
+    assert 'pendingInvitePoller = PESNet.createPoller' in BASE
     assert 'if (!isPassivePage) {' not in BASE[BASE.index('let pendingInvitePoller'):BASE.index('// Active room')]
 
 

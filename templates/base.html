@@ -1054,8 +1054,10 @@ window.addEventListener("DOMContentLoaded", function () {
     // Lời mời phải xuất hiện trên mọi trang đã đăng nhập, kể cả Lịch sử và
     // Hướng dẫn. Khi tab chạy nền vẫn kiểm tra thưa để lời mời không hết hạn
     // trước khi người dùng quay lại trình duyệt.
-    if (!isRoomPage) {
-        pendingInvitePoller = PESNet.createPoller({
+    // Vẫn kiểm tra lời mời khi người chơi đang ở phòng một mình.
+    // Backend đã chặn gửi tới phòng đủ 2 người/đang thi đấu, vì vậy không được
+    // tắt polling chỉ vì URL hiện tại là /room/... .
+    pendingInvitePoller = PESNet.createPoller({
             key: "pending-invites",
             task: checkPendingInvites,
             visibleInterval: pendingInviteInterval,
@@ -1064,17 +1066,14 @@ window.addEventListener("DOMContentLoaded", function () {
             immediate: true,
             jitter: 250
         });
-    }
 
     // Watchdog độc lập: nếu một module JS khác lỗi hoặc poller bị dừng quá lâu,
     // lời mời vẫn được kiểm tra lại. Không tạo request trùng nhờ singleFlight.
-    if (!isRoomPage) {
-        window.setInterval(function () {
-            if (Date.now() - lastPendingInvitePollAt >= 15000) {
-                checkPendingInvites();
-            }
-        }, 5000);
-    }
+    window.setInterval(function () {
+        if (Date.now() - lastPendingInvitePollAt >= 15000) {
+            checkPendingInvites();
+        }
+    }, 5000);
 
     // Active room không cần polling định kỳ. Chỉ kiểm tra khi tải trang, quay lại
     // tab hoặc sau các sự kiện lời mời/phòng.
