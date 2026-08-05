@@ -198,3 +198,10 @@
 - Khách không thay đổi RP, thống kê hoặc chuỗi; được giải phóng để tạo phòng mới.
 - Giữ nguyên quyền Admin hủy phòng mà không phạt thêm người chơi.
 
+
+## V1.2.7 - Fix lời mời không hiển thị
+- Lời mời được kiểm tra trên mọi trang đã đăng nhập, kể cả Lịch sử và Hướng dẫn.
+- Tab nền vẫn kiểm tra lời mời theo chu kỳ 10 giây.
+- API đọc tối đa 20 lời mời pending để không bỏ sót lời mời hợp lệ cũ hơn.
+- Lỗi truy vấn API không còn bị hiểu nhầm là không có lời mời.
+- Đồng bộ cache lời mời sau khi gửi.

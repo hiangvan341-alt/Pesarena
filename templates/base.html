@@ -420,8 +420,6 @@ function checkActiveRoom() {
 
 let pendingInvitesRequestPromise = null;
 function checkPendingInvites() {
-    if (document.hidden) return Promise.resolve();
-
     const task = function () {
         return fetch("{{ url_for('api_pending_invites') }}", {
             method: "GET",
@@ -430,6 +428,9 @@ function checkPendingInvites() {
         })
         .then(function (res) {
             if (res.status === 204) return {invites: []};
+            if (!res.ok) {
+                throw new Error("invite_poll_http_" + res.status);
+            }
             return res.json();
         })
         .then(function (data) {
@@ -1048,13 +1049,16 @@ window.addEventListener("DOMContentLoaded", function () {
         // đang thực sự thao tác. Khi bỏ máy, tự giãn chu kỳ để giảm request.
         return (Date.now() - lastInviteActivityAt <= 60000) ? 2200 : 8000;
     }
-    if (!isPassivePage) {
+    // Lời mời phải xuất hiện trên mọi trang đã đăng nhập, kể cả Lịch sử và
+    // Hướng dẫn. Khi tab chạy nền vẫn kiểm tra thưa để lời mời không hết hạn
+    // trước khi người dùng quay lại trình duyệt.
+    if (!isRoomPage) {
         pendingInvitePoller = PESNet.createPoller({
             key: "pending-invites",
             task: checkPendingInvites,
             visibleInterval: pendingInviteInterval,
-            hiddenInterval: 120000,
-            runWhenHidden: false,
+            hiddenInterval: 10000,
+            runWhenHidden: true,
             immediate: true,
             jitter: 250
         });

@@ -65,7 +65,7 @@ from modules.win_streaks import (
 load_dotenv()
 
 APP_NAME = "PES Arena – Bản Lĩnh Sân Cỏ"
-APP_VERSION = "V1.2.6"
+APP_VERSION = "V1.2.7"
 DEFAULT_POINTS = 1000
 DEVICE_COOKIE_NAME = "rankzone_device_id"
 COOLDOWN_MINUTES = 3
@@ -4469,13 +4469,15 @@ def api_pending_invites():
         return jsonify({"invites": []})
 
     try:
+        # Lấy nhiều bản ghi thay vì chỉ 1 bản ghi mới nhất. Nếu lời mời mới nhất
+        # vừa hết hạn trong lúc xử lý, lời mời hợp lệ cũ hơn vẫn phải được trả về.
         result = execute_query(
             db.table("match_invites")
               .select("id,from_user_id,to_user_id,tier,status,expires_at,created_at")
               .eq("to_user_id", user["id"])
               .eq("status", "pending")
               .order("created_at", desc=True)
-              .limit(1),
+              .limit(20),
             "api_pending_invites_direct",
             attempts=2,
         )
@@ -4491,6 +4493,7 @@ def api_pending_invites():
                 "id": invite["id"],
                 "from_name": sender.get("display_name", "Unknown"),
                 "from_avatar_url": sender.get("avatar_url"),
+                "from_avatar_frame": sender.get("avatar_frame"),
                 "from_achievement": sender.get("featured_achievement"),
                 "from_rank": get_rank_display(sender.get("rank_points", 0)),
                 "from_points": sender.get("rank_points", 0),
@@ -4504,8 +4507,13 @@ def api_pending_invites():
         response.headers["X-Invite-Poll"] = "fast-active"
         return response
     except Exception as exc:
+        # Không trả danh sách rỗng khi DB lỗi vì phía trình duyệt sẽ hiểu nhầm là
+        # không còn lời mời và tự ẩn popup đang hiển thị.
         print(f"api_pending_invites ERROR user={user.get('id')}: {type(exc).__name__}: {exc}")
-        return jsonify({"invites": []})
+        response = jsonify({"ok": False, "error": "invite_poll_failed"})
+        response.status_code = 503
+        response.headers["Cache-Control"] = "no-store, max-age=0"
+        return response
 
 
 
@@ -5593,6 +5601,7 @@ def send_invite():
     invite = invite_result.data[0] if invite_result.data else None
     ttl_cache_delete("invites_raw")
     cache_delete("_rz_invites_all")
+    cache_delete("_rz_current_pending_invites")
     if not invite:
         flash("Không thể gửi lời mời lúc này. Vui lòng thử lại.", "danger")
         return redirect(url_for("players"))
