@@ -1,3 +1,10 @@
+## V1.3.17 - 2026-08-07
+
+- Bỏ hoàn toàn `light-effect-blue.webp` và `light-effect-red.webp` khỏi CSS, template, asset local và gói upload Supabase.
+- Card Chủ phòng/Đối thủ chỉ dùng trực tiếp `stadium-blue.webp` và `stadium-red.webp`, không còn request 404 hoặc lớp đèn chồng ảnh.
+- Cắt vùng trong suốt dư của `pes-arena-room-logo.webp` và tăng kích thước hiển thị cân đối trên thanh tiêu đề phòng đấu.
+- Chuyển đường dẫn Supabase mặc định sang `pes-assets/room-assets/v1.3.17` để tránh cache ảnh cũ.
+
 ## V1.3.16 - 2026-08-07
 - Bỏ đường kẻ ngang legacy trong card Chủ phòng/Đối thủ (`border-bottom` của `.room-player-heading-plain`).
 - Thay nền khu VS bằng WebP sân ngang mới và giảm lớp phủ tối để ảnh hiện rõ.

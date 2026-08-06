@@ -1,13 +1,11 @@
-PES ARENA V1.3.13 - BO ANH SAN DAU MOI
+BƯỚC 1: Vào Supabase > Storage > mở bucket pes-assets.
+BƯỚC 2: Upload thư mục room-assets nằm bên trong UPLOAD_VAO_BUCKET_pes-assets.
+KHÔNG upload thư mục UPLOAD_VAO_BUCKET_pes-assets.
 
-BUCKET SUPABASE:
-pes-assets
+Sau khi upload, đường dẫn phải là:
+pes-assets/room-assets/v1.3.17/...
 
-THU MUC CAN UPLOAD:
-Mo thu muc UPLOAD_VAO_BUCKET_pes-assets, sau do keo nguyen folder room-assets vao bucket pes-assets.
-
-Cau truc dung:
-pes-assets/room-assets/v1.3.13/
-
-Khong upload folder UPLOAD_VAO_BUCKET_pes-assets len Supabase.
-Sau khi upload, deploy ban V1.3.13. Code da tro san toi v1.3.13 de tranh cache anh cu.
+Bản V1.3.17 KHÔNG còn dùng hai file:
+- light-effect-blue.webp
+- light-effect-red.webp
+Bạn có thể xóa hai file này trong folder v1.3.16. Các folder phiên bản cũ không còn được web gọi tới; có thể giữ làm backup hoặc xóa cả folder cũ.
