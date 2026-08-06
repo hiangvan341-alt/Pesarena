@@ -1,3 +1,18 @@
+## V1.3.27 — Bỏ hai vùng khung ở đáy cột giữa
+
+- Bỏ nền và viền của vùng trạng thái `Đợi quay random đội / Đợi khách sẵn sàng`.
+- Bỏ nền bao quanh cụm nút `Sẵn sàng / Thoát phòng`.
+- Chuyển trạng thái chờ thành chữ nổi trực tiếp trên sân, nhẹ và gọn hơn.
+- Khi đủ điều kiện quay đội, chỉ hiển thị một nút vàng `Quay quân` thực sự.
+- Giữ thanh nút hành động nổi trực tiếp bên dưới, cân kích thước theo 1 hoặc 2 nút.
+- Không thay đổi logic phòng đấu.
+- Cập nhật `APP_VERSION` thành `1.3.27`.
+
+### File đã sửa
+- `app.py`
+- `static/css/arena_room_v2.css`
+
+
 ## V1.3.26 — Tinh chỉnh nút và trạng thái theo style mềm hơn
 
 - Tinh chỉnh lại bộ nút hành động trong phòng để bớt cảm giác thô: viền sáng rõ hơn, nền có chiều sâu hơn, bo góc mềm hơn và màu gần với mẫu vàng / xanh / đỏ bạn chọn.
