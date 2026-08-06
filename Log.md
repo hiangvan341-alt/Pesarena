@@ -337,9 +337,16 @@
 - Removed unused room_master.css, legacy SVG mode icons, source logo dump, stale UI tests and caches.
 - Added exact Supabase upload manifest and audit report.
 
-## V1.3.9 — Supabase Room Asset Upload Pack
+## V1.3.10 — Supabase Room Asset Upload Pack
 
-- Thêm thư mục `UPLOAD_SUPABASE/UPLOAD_VAO_BUCKET_public-assets/room-assets/v1.3.9/` chứa đúng 20 file WebP cần upload.
+- Thêm thư mục `UPLOAD_SUPABASE/UPLOAD_VAO_BUCKET_public-assets/room-assets/v1.3.10/` chứa đúng 20 file WebP cần upload.
 - Thêm manifest CSV ghi rõ bucket, object path, URL public mẫu, dung lượng và SHA-256.
 - Thêm biến `ROOM_ASSET_BASE_URL` và helper `room_asset()`; khi chưa cấu hình, hệ thống tự dùng asset local.
 - Không thay đổi API hoặc logic phòng đấu.
+
+## V1.3.10 — Fix tên chế độ và nút Neon
+- Đổi tên thẻ chế độ desktop: Random, 3 chọn 1, Chiến thuật BO3, BO3, Cấm chọn BO3, Lượt đi/về.
+- Tách class vai trò cho Mời đấu, Tìm nhanh/Sẵn sàng và Thoát phòng.
+- Sửa xung đột với rule `.btn` toàn cục có `!important` trong `static/style.css`.
+- Ba nút dùng Grid 3 cột, không chồng, không chung nền.
+- Không đổi route/API hoặc logic sẵn sàng, tìm nhanh, thoát phòng.

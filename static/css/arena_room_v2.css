@@ -42,3 +42,71 @@
 .arena-room-v2 .room-master-active-mode{box-shadow:inset 0 0 20px rgba(155,79,224,.10),0 0 9px rgba(155,79,224,.12)}
 .arena-room-v2 .room-arena-right-rail>.panel{box-shadow:inset 0 0 16px rgba(216,165,60,.025)}
 @media (max-width:1450px){.arena-room-v2 .room-master-brand{width:270px}.arena-room-v2 .room-master-card-icon{width:56px;height:62px}.arena-room-v2 .room-master-card-icon img{width:54px;height:54px}}
+
+/* V1.3.10 — scoped action-button collision fix.
+   The global stylesheet applies !important to every .btn background, so these
+   three role-specific rules must also use !important to restore the UI MASTER
+   yellow / green / red actions without affecting buttons outside the room. */
+.arena-room-v2 .room-center-primary-actions-three {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  align-items: stretch;
+  gap: 8px;
+  width: calc(100% - 16px);
+  box-sizing: border-box;
+}
+.arena-room-v2 .room-center-primary-actions-three > a,
+.arena-room-v2 .room-center-primary-actions-three > button,
+.arena-room-v2 .room-center-primary-actions-three > form {
+  position: static;
+  display: block;
+  width: auto;
+  min-width: 0;
+  margin: 0;
+  padding: 0;
+  background: transparent;
+  border: 0;
+  box-shadow: none;
+}
+.arena-room-v2 .room-center-primary-actions-three .room-center-action-btn {
+  position: static;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  min-width: 0;
+  height: 42px;
+  min-height: 42px;
+  margin: 0;
+  padding: 7px 6px;
+  box-sizing: border-box;
+  border-radius: 9px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  line-height: 1;
+}
+.arena-room-v2 .arena-action-invite {
+  background: linear-gradient(180deg, #6f4b09, #332103) !important;
+  border-color: rgba(255, 205, 83, .92) !important;
+  color: #fff2bd !important;
+  box-shadow: inset 0 0 14px rgba(255, 208, 81, .14), 0 0 10px rgba(235, 176, 37, .22) !important;
+}
+.arena-room-v2 .arena-action-quick {
+  background: linear-gradient(180deg, #0b7c47, #06472a) !important;
+  border-color: rgba(53, 235, 145, .9) !important;
+  color: #eafff3 !important;
+  box-shadow: inset 0 0 14px rgba(50, 235, 148, .13), 0 0 10px rgba(28, 205, 124, .2) !important;
+}
+.arena-room-v2 .arena-action-exit {
+  background: linear-gradient(180deg, #8c1d31, #4c0d19) !important;
+  border-color: rgba(255, 75, 96, .9) !important;
+  color: #fff0f2 !important;
+  box-shadow: inset 0 0 14px rgba(255, 77, 99, .12), 0 0 10px rgba(235, 48, 70, .2) !important;
+}
+.arena-room-v2 .arena-action-invite:hover,
+.arena-room-v2 .arena-action-quick:hover,
+.arena-room-v2 .arena-action-exit:hover {
+  filter: brightness(1.1);
+  transform: translateY(-1px);
+}
