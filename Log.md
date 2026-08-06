@@ -397,3 +397,9 @@
 - Tăng tỷ lệ card chế độ trung tâm, emblem và VS; căn lại hàng 3 nút Neon.
 - Tăng chiều cao 6 card chế độ, thu gọn sidebar Info/Parsec và chuẩn hóa typography/neon.
 - Không đổi API, route, polling hoặc logic phòng đấu. Không có SQL mới.
+
+
+## V1.3.19 - Fix state action dock
+- Giữ hiển thị Sẵn sàng, Hủy sẵn sàng, Thoát phòng và các nút theo trạng thái ở đáy khu trung tâm.
+- Giữ bảng nhập tỷ số và nút Gửi kết quả trong vùng nhìn thấy khi trận đang Playing.
+- Không thay route, API, RP hoặc logic trạng thái phòng.
