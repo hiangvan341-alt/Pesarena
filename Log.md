@@ -1,3 +1,17 @@
+## V1.3.26 — Tinh chỉnh nút và trạng thái theo style mềm hơn
+
+- Tinh chỉnh lại bộ nút hành động trong phòng để bớt cảm giác thô: viền sáng rõ hơn, nền có chiều sâu hơn, bo góc mềm hơn và màu gần với mẫu vàng / xanh / đỏ bạn chọn.
+- Bỏ khung nền dày bao quanh cụm nút giữa sân; chỉ giữ bố cục nổi trực tiếp trên giao diện để nhìn gọn và sang hơn.
+- Tăng chất lượng hiển thị cho các nút `Mời đấu`, `Sẵn sàng`, `Thoát phòng`, `Đưa khỏi phòng`, `Gửi kết quả`, `Xác nhận`, `Không đồng ý`.
+- Làm lại khối `Phòng đã sẵn sàng` + `2 / 2` theo kiểu pill tối, gọn và nổi bật hơn.
+- Tinh chỉnh khối `Đợi quay random đội` / `Đợi khách sẵn sàng` để đồng bộ phong cách với cụm nút mới.
+- Không thay đổi logic phòng đấu; chỉ tinh chỉnh giao diện và cập nhật `APP_VERSION` thành `1.3.26`.
+
+### File đã sửa
+- `app.py`
+- `static/css/arena_room_v2.css`
+
+
 ## V1.3.25 — Tinh chỉnh nút phòng đấu và đưa lịch sử sang cột phải
 
 - Làm lại cụm nút hành động ở giữa phòng theo phong cách gọn hơn: nền kính tối ấm hơn, viền neon rõ, kích thước nút hợp giao diện và không còn cảm giác thô/chiếm chỗ.
