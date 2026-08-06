@@ -616,3 +616,40 @@
   .arena-room-v2 .room-center-stage-plain > .room-center-random-form,
   .arena-room-v2 .room-center-stage-plain > .room-center-random-trigger { margin-bottom: 0; }
 }
+
+/* V1.3.20 — remove the legacy magenta wrapper from the Random 3 spin control. */
+.arena-room-v2 .room-center-random-trigger.random3-trigger,
+.arena-room-v2 .room-center-random-trigger.random3-trigger:not(.disabled),
+.arena-room-v2 .room-center-random-trigger.random3-trigger:hover,
+.arena-room-v2 .room-center-random-trigger.random3-trigger:active {
+  padding: 0 !important;
+  border: 0 !important;
+  border-radius: 0 !important;
+  background: transparent !important;
+  box-shadow: none !important;
+  transform: none !important;
+}
+
+.arena-room-v2 .room-center-random-trigger.random3-trigger .room-random-button-label {
+  width: 100%;
+  min-height: 46px;
+  margin: 0;
+  padding: 9px 16px;
+  border: 1px solid rgba(255, 201, 65, .84);
+  border-radius: 11px;
+  background: linear-gradient(180deg, #f8d66e 0%, #d9a72e 100%) !important;
+  color: #171006 !important;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, .52),
+    0 0 14px rgba(240, 180, 42, .18),
+    0 8px 18px rgba(0, 0, 0, .24) !important;
+}
+
+.arena-room-v2 .room-center-random-trigger.random3-trigger .room-center-random-sub {
+  width: 100%;
+  margin-top: 7px !important;
+  padding: 0 8px;
+  color: #aeb9c9 !important;
+  background: transparent !important;
+  box-shadow: none !important;
+}

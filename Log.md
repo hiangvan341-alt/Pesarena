@@ -403,3 +403,9 @@
 - Giữ hiển thị Sẵn sàng, Hủy sẵn sàng, Thoát phòng và các nút theo trạng thái ở đáy khu trung tâm.
 - Giữ bảng nhập tỷ số và nút Gửi kết quả trong vùng nhìn thấy khi trận đang Playing.
 - Không thay route, API, RP hoặc logic trạng thái phòng.
+
+## V1.3.20 — 2026-08-07
+- Sửa nút Quay quân của chế độ 3 chọn 1 bị nền/viền hồng tím do rule legacy `.room-center-random-trigger.random3-trigger` trong `static/style.css`.
+- Thêm override giới hạn trong `.arena-room-v2`: bỏ toàn bộ nền tím, viền tím và glow tím của wrapper.
+- Giữ riêng nút QUAY QUÂN màu vàng gold, subtitle nằm bên dưới nền trong suốt.
+- Không sửa route, API, trạng thái phòng hoặc luồng random 3 CLB.
