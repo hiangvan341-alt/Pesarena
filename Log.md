@@ -252,3 +252,12 @@
 - Giữ nguyên API chọn chế độ `room_select_ranked_mode` và cơ chế AJAX hiện có.
 - CSS mới giới hạn trong `.room-layout-v137`, không dùng selector toàn cục.
 - Gom toàn bộ SQL cũ vào `docs/sql_archive/`; chỉ để `docs/PES_ARENA_UPDATE_LATEST.sql` ở ngoài.
+
+
+## V1.3.3 - Sửa mở khóa chế độ + hiển thị desktop 100%
+- Sửa nguồn RP mở khóa: ưu tiên `rank_points`, giữ fallback `rating`/`rp`.
+- Sửa số trận Rank: ưu tiên tổng `wins + draws + losses`, tránh `total_matches` cũ khóa sai.
+- Sửa kiểm tra chênh RP của đối thủ dùng đúng `rank_points`.
+- Loại bỏ khối CSS UI MASTER bị lặp hai lần.
+- Thêm breakpoint theo chiều cao màn hình để desktop zoom 100% nhìn được khu thi đấu và 6 chế độ.
+- Không thay đổi API, polling, luồng tạo phòng/mời đấu/sẵn sàng/thoát phòng.

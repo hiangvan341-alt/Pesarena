@@ -36,22 +36,30 @@ def get_rank_mode_configs():
  return configs
 def get_rank_mode(code): return get_rank_mode_configs()[normalize_rank_mode_code(code)]
 def _completed_rank_matches(user):
+ user=user or {}
+ # Dữ liệu chuẩn của PES Arena là tổng W/H/B. Ưu tiên nguồn này để tránh
+ # total_matches cũ/chưa đồng bộ làm khóa sai chế độ.
+ if any(key in user for key in ('wins','draws','losses')):
+  try:
+   return max(0,int(user.get('wins') or 0)+int(user.get('draws') or 0)+int(user.get('losses') or 0))
+  except (TypeError,ValueError):
+   pass
  for key in ('total_matches','matches_played','rank_matches','completed_matches'):
   try:
-   value=int((user or {}).get(key) or 0)
+   value=int(user.get(key) or 0)
    if value: return value
   except (TypeError,ValueError): pass
  return 0
 def check_rank_mode_eligibility(mode_code,user,opponent=None):
  mode=get_rank_mode(mode_code); reasons=[]
  if not mode.get('enabled',True): reasons.append('Chế độ đang tạm tắt')
- user_rp=int((user or {}).get('rating') or (user or {}).get('rp') or 0); min_rp=int(mode.get('min_rp') or 0)
+ user_rp=int((user or {}).get('rank_points') or (user or {}).get('rating') or (user or {}).get('rp') or 0); min_rp=int(mode.get('min_rp') or 0)
  if user_rp<min_rp: reasons.append(f'Cần tối thiểu {min_rp:,} RP'.replace(',','.'))
  played=_completed_rank_matches(user); min_matches=int(mode.get('min_matches') or 0)
  if played<min_matches: reasons.append(f'Cần hoàn thành {min_matches} trận Rank')
  max_gap=int(mode.get('max_rp_gap') or 0)
  if opponent and max_gap>0:
-  opponent_rp=int((opponent or {}).get('rating') or (opponent or {}).get('rp') or 0)
+  opponent_rp=int((opponent or {}).get('rank_points') or (opponent or {}).get('rating') or (opponent or {}).get('rp') or 0)
   if abs(user_rp-opponent_rp)>max_gap: reasons.append(f'Hai người không được chênh quá {max_gap} RP')
  return {'eligible':not reasons,'reasons':reasons,'mode':mode}
 def rank_mode_eligibility_for_room(mode_code,host,guest=None):

@@ -40,3 +40,24 @@
 .room-layout-v137 .room-extra-controls{margin-top:12px}
 @media(max-width:1350px){.room-layout-v137 .room-arena-frame{grid-template-columns:minmax(260px,1fr) minmax(250px,.8fr) minmax(260px,1fr);grid-template-areas:'home center away' 'rail rail rail'}.room-layout-v137 .room-arena-right-rail{display:grid;grid-template-columns:repeat(2,minmax(0,1fr))}.room-layout-v137 .room-master-mode-grid{grid-template-columns:repeat(3,minmax(0,1fr))}}
 @media(max-width:900px){.room-layout-v137 .room-master-brand{display:none}.room-layout-v137 .room-arena-frame{grid-template-columns:1fr;grid-template-areas:'home' 'center' 'away' 'rail'}.room-layout-v137 .room-arena-right-rail{display:flex}.room-layout-v137 .room-master-mode-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
+/* Desktop 100%: ưu tiên nhìn thấy đầy đủ khu thi đấu và dải chế độ trên màn hình thấp. */
+@media (min-width:1351px) and (max-height:980px){
+  .room-layout-v137 .room-stage-topbar{min-height:68px;padding:10px 18px}
+  .room-layout-v137 .room-stage-title{font-size:24px}
+  .room-layout-v137 .room-share-button{padding:8px 12px}
+  .room-layout-v137 .room-arena-frame{gap:10px;padding:9px}
+  .room-layout-v137 .room-side-card,.room-layout-v137 .room-center-stage-plain{min-height:430px}
+  .room-layout-v137 .room-side-card{padding:9px 10px 11px}
+  .room-layout-v137 .room-card-club-area{padding:8px 5px 3px}
+  .room-layout-v137 .room-club-logo-large,.room-layout-v137 .room-team-placeholder-shield{width:108px;height:108px}
+  .room-layout-v137 .room-master-active-mode{min-height:210px;padding:17px 13px 11px}
+  .room-layout-v137 .room-master-mode-emblem{margin:7px auto 6px;font-size:48px}
+  .room-layout-v137 .room-master-room-ready{margin-top:8px;padding:7px 9px}
+  .room-layout-v137 .room-center-vs-image{width:82px;max-height:82px}
+  .room-layout-v137 .room-center-primary-actions .btn{min-height:40px;padding-top:8px;padding-bottom:8px}
+  .room-layout-v137 .room-master-mode-switcher{padding-bottom:10px}
+  .room-layout-v137 .room-master-mode-card{min-height:96px;padding:15px 7px 7px}
+  .room-layout-v137 .room-master-card-icon{font-size:29px;margin-bottom:3px}
+  .room-layout-v137 .room-master-mode-card strong{min-height:27px;font-size:11px}
+  .room-layout-v137 .room-master-mode-card small{margin-top:4px;padding:4px 3px}
+}
