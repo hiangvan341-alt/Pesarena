@@ -1,8 +1,10 @@
 pes-assets/
 └── room-assets/
-    └── v1.3.11/
+    └── v1.3.13/
         ├── stadium-blue.webp
         ├── stadium-red.webp
+        ├── center-stadium.webp
+        ├── room-texture-blue.webp
         ├── light-effect-blue.webp
         ├── light-effect-red.webp
         ├── pes-arena-room-logo.webp
@@ -10,16 +12,4 @@ pes-assets/
         ├── parsec-logo.webp
         ├── share-link.webp
         ├── modes/
-        │   ├── rank_random.webp
-        │   ├── random3_pick1.webp
-        │   ├── tactical_bo3.webp
-        │   ├── bo3.webp
-        │   ├── ban_pick_bo3.webp
-        │   └── home_away.webp
         └── emblems/
-            ├── rank_random.webp
-            ├── random3_pick1.webp
-            ├── tactical_bo3.webp
-            ├── bo3.webp
-            ├── ban_pick_bo3.webp
-            └── home_away.webp

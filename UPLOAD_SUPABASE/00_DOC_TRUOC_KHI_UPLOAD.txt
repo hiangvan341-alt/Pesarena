@@ -1,26 +1,13 @@
-PES ARENA V1.3.11 - UPLOAD ASSET PHONG DAU LEN SUPABASE
+PES ARENA V1.3.13 - BO ANH SAN DAU MOI
 
-BUCKET CUA BAN DA CO SAN:
+BUCKET SUPABASE:
 pes-assets
 
-BAN KHONG CAN TAO BUCKET MOI neu bucket pes-assets da ton tai va dang Public.
-
 THU MUC CAN UPLOAD:
-UPLOAD_SUPABASE/UPLOAD_VAO_BUCKET_pes-assets/room-assets
+Mo thu muc UPLOAD_VAO_BUCKET_pes-assets, sau do keo nguyen folder room-assets vao bucket pes-assets.
 
-CAC BUOC:
-1. Mo Supabase Dashboard -> Storage.
-2. Mo bucket: pes-assets
-3. Upload NGUYEN THU MUC: room-assets
-4. Neu Supabase hoi ghi de, chon ghi de folder/file trung ten.
-5. Sau khi upload, duong dan phai la:
-   pes-assets/room-assets/v1.3.11/...
+Cau truc dung:
+pes-assets/room-assets/v1.3.13/
 
-KHONG upload folder UPLOAD_VAO_BUCKET_pes-assets.
-Folder nay chi la nhan de cho biet bucket dich.
-
-URL DA GHÉP SAN TRONG DU AN:
-https://wlnvdfghatgeygecwrqb.supabase.co/storage/v1/object/public/pes-assets/room-assets/v1.3.11
-
-Ban V1.3.11 da dung URL nay mac dinh, khong bat buoc tao bien Vercel.
-Neu muon doi duong dan ve sau, co the tao bien ROOM_ASSET_BASE_URL de ghi de.
+Khong upload folder UPLOAD_VAO_BUCKET_pes-assets len Supabase.
+Sau khi upload, deploy ban V1.3.13. Code da tro san toi v1.3.13 de tranh cache anh cu.

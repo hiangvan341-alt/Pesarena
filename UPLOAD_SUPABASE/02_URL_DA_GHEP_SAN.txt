@@ -1,9 +1,11 @@
-URL GOC DA DUOC GHEP SAN TRONG modules/static_asset_service.py:
+URL goc da ghep trong code:
+https://wlnvdfghatgeygecwrqb.supabase.co/storage/v1/object/public/pes-assets/room-assets/v1.3.13
 
-https://wlnvdfghatgeygecwrqb.supabase.co/storage/v1/object/public/pes-assets/room-assets/v1.3.11
+Vi du:
+https://wlnvdfghatgeygecwrqb.supabase.co/storage/v1/object/public/pes-assets/room-assets/v1.3.13/stadium-blue.webp
+https://wlnvdfghatgeygecwrqb.supabase.co/storage/v1/object/public/pes-assets/room-assets/v1.3.13/stadium-red.webp
+https://wlnvdfghatgeygecwrqb.supabase.co/storage/v1/object/public/pes-assets/room-assets/v1.3.13/center-stadium.webp
+https://wlnvdfghatgeygecwrqb.supabase.co/storage/v1/object/public/pes-assets/room-assets/v1.3.13/room-texture-blue.webp
 
-Khong can them ROOM_ASSET_BASE_URL tren Vercel.
-Chi can upload dung folder room-assets vao bucket pes-assets, sau do deploy ban V1.3.11.
-
-Tuy chon ghi de bang bien moi truong:
-ROOM_ASSET_BASE_URL=https://domain-khac/.../room-assets/phien-ban-khac
+Khong can tao bien Vercel neu su dung dung folder v1.3.13.
+ROOM_ASSET_BASE_URL chi dung khi muon ghi de URL nay.

@@ -1,3 +1,13 @@
+# PES Arena V1.3.14
+
+- Thay thanh “CHỌN 1 TRONG 3” bằng chữ HTML và CSS thuần.
+- Cấu trúc: đường kẻ vàng, hình thoi, tiêu đề, hình thoi, đường kẻ vàng.
+- Chỉ hiển thị trong chế độ `random3_pick1`.
+- Áp dụng đồng bộ cho Host/Opponent và các template cập nhật động.
+- CSS được giới hạn trong namespace `.arena-room-v2`.
+- Không thay đổi API, JavaScript, polling hoặc logic phòng đấu.
+- Không cần SQL và không cần upload thêm ảnh Supabase.
+
 # PES Arena V1.3.6 — Room UI Asset Pack
 
 - Ngày: 2026-08-06 22:45 (Asia/Bangkok)

@@ -18,6 +18,13 @@
                 </div>
                 {% endif %}
             </div>
+            {% if selected_rank_mode == 'random3_pick1' %}
+            <div class="club-selection-title" aria-label="Chọn 1 trong 3 câu lạc bộ">
+                <span class="title-diamond" aria-hidden="true"></span>
+                <span class="club-selection-title-text">CHỌN 1 TRONG 3</span>
+                <span class="title-diamond" aria-hidden="true"></span>
+            </div>
+            {% endif %}
             <div class="room-card-club-area">
                 {% if room.host_team_logo_url %}<img class="room-club-logo-large" src="{{ room.host_team_logo_url }}" alt="Logo {{ room.host_team or 'CLB' }}" loading="lazy">{% else %}<div class="room-team-placeholder-shield">?</div>{% endif %}
                 <div class="room-team-name-lg">{{ room.host_team or 'CHƯA CHỌN ĐỘI' }}</div>
@@ -341,6 +348,13 @@
                 {% endif %}
                 {% endif %}
             </div>
+            {% if selected_rank_mode == 'random3_pick1' %}
+            <div class="club-selection-title" aria-label="Chọn 1 trong 3 câu lạc bộ">
+                <span class="title-diamond" aria-hidden="true"></span>
+                <span class="club-selection-title-text">CHỌN 1 TRONG 3</span>
+                <span class="title-diamond" aria-hidden="true"></span>
+            </div>
+            {% endif %}
             <div class="room-card-club-area">
                 {% if room.guest_team_logo_url %}<img class="room-club-logo-large" src="{{ room.guest_team_logo_url }}" alt="Logo {{ room.guest_team or 'CLB' }}" loading="lazy">{% else %}<div class="room-team-placeholder-shield">?</div>{% endif %}
                 <div class="room-team-name-lg">{{ room.guest_team or 'CHƯA CHỌN ĐỘI' }}</div>
