@@ -1,0 +1,4 @@
+ROOM_ASSET_BASE_URL=https://<PROJECT_REF>.supabase.co/storage/v1/object/public/public-assets/room-assets/v1.3.9
+
+Khong them dau / o cuoi URL.
+Sau khi luu bien moi truong, Redeploy du an.

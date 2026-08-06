@@ -4,6 +4,7 @@ Biến môi trường hỗ trợ:
 - STATIC_ASSET_BASE_URL: URL public cho tài nguyên tĩnh chung.
 - SHOP_ASSET_BASE_URL: URL public riêng cho ``static/shop``.
 - LUCKYBOX_ASSET_BASE_URL: URL public riêng cho thư mục Lucky Box.
+- ROOM_ASSET_BASE_URL: URL public riêng cho asset giao diện phòng đấu.
 
 Khi biến tương ứng để trống, hệ thống tự dùng file trong ``/static``. Việc tách
 Shop ra thành URL riêng cho phép chuyển dần ảnh nặng lên Storage mà không ảnh
@@ -32,6 +33,20 @@ def shop_asset_base_url() -> str:
 def luckybox_asset_base_url() -> str:
     return _clean_base(os.getenv("LUCKYBOX_ASSET_BASE_URL"))
 
+
+
+def room_asset_base_url() -> str:
+    return _clean_base(os.getenv("ROOM_ASSET_BASE_URL"))
+
+
+def room_asset_url(filename: str) -> str:
+    """Return URL for room_v2 assets, with local fallback."""
+    clean = str(filename or "").strip().lstrip("/")
+    encoded = quote(clean, safe="/")
+    base = room_asset_base_url()
+    if base:
+        return f"{base}/{encoded}"
+    return url_for("static", filename=f"assets/room_v2/{clean}")
 
 def asset_url(filename: str) -> str:
     clean = str(filename or "").strip().lstrip("/")

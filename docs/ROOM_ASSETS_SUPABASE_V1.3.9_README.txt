@@ -1,0 +1,28 @@
+PES ARENA V1.3.9 - HUONG DAN UPLOAD SUPABASE
+
+BAN CHI CAN UPLOAD THU MUC NAY:
+UPLOAD_SUPABASE/UPLOAD_VAO_BUCKET_public-assets/room-assets
+
+UPLOAD VAO DAU?
+1. Mo Supabase Dashboard.
+2. Chon Storage.
+3. Mo bucket: public-assets
+4. Tai len NGUYEN THU MUC: room-assets
+5. Sau khi upload phai co duong dan:
+   public-assets/room-assets/v1.3.9/...
+
+KHONG upload thu muc UPLOAD_VAO_BUCKET_public-assets vao Supabase.
+Thu muc nay chi de nhac ten bucket.
+Ben trong bucket public-assets, thu muc cap dau phai la room-assets.
+
+URL GOC SAU KHI UPLOAD:
+https://<PROJECT_REF>.supabase.co/storage/v1/object/public/public-assets/room-assets/v1.3.9
+
+CAU HINH VERCEL:
+Ten bien: ROOM_ASSET_BASE_URL
+Gia tri: https://<PROJECT_REF>.supabase.co/storage/v1/object/public/public-assets/room-assets/v1.3.9
+
+Sau khi them bien, Redeploy Vercel.
+Neu chua them bien, web van dung asset local trong static/assets/room_v2.
+
+Tong file WebP can upload: 20
