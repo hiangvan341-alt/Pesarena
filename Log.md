@@ -1,3 +1,11 @@
+# PES Arena V1.3.21 — Unified Room Buttons
+
+- Đồng bộ nút phòng đấu theo một hệ thiết kế bo góc navy/neon.
+- 4 biến thể: gold, success, secondary, danger.
+- Áp dụng cho Mời đấu, Tìm nhanh, Sẵn sàng, Hủy sẵn sàng, Thoát phòng, Gửi kết quả, xác nhận, từ chối, Quay quân, đá tiếp và điều khiển phòng.
+- Không áp dụng cho nút trong khu vực Parsec.
+- Giữ nguyên route, API, JavaScript và logic phòng đấu.
+
 ## V1.3.18 - 2026-08-07
 
 - Dùng `room-texture-dark.webp` làm nền toàn bộ khu phòng đấu.

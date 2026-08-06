@@ -79,7 +79,7 @@
                     <form method="post" action="{{ url_for('room_choose_random3_friendly', room_id=room.id) }}" class="room-center-random3-card" data-room-async="1">
                         <input type="hidden" name="choice_index" value="{{ loop.index0 }}">
                         {% if team.logo %}<img src="{{ team.logo }}" alt="Logo {{ team.name }}">{% else %}<div class="friendly-random3-placeholder">?</div>{% endif %}
-                        <strong>{{ team.name }}</strong><button type="submit">CHỌN CLB</button>
+                        <strong>{{ team.name }}</strong><button class="arena-btn is-secondary" type="submit">CHỌN CLB</button>
                     </form>
                     {% endfor %}
                 </div>
@@ -101,10 +101,10 @@
                         {% if room_viewer_is_guest or current_user.role == 'admin' %}
                         <div class="room-result-actions">
                             <form method="post" action="{{ url_for('room_confirm_result', room_id=room.id) }}">
-                                <button class="room-result-btn confirm" type="submit">✓ Xác Nhận</button>
+                                <button class="room-result-btn arena-btn is-success confirm" type="submit">✓ Xác Nhận</button>
                             </form>
                             <details class="room-result-dispute">
-                                <summary class="room-result-btn disagree">× Không Đồng Ý</summary>
+                                <summary class="room-result-btn arena-btn is-secondary disagree">× Không Đồng Ý</summary>
                                 <form class="dispute-form room-result-dispute-form" method="post" action="{{ url_for('room_dispute_result', room_id=room.id) }}" enctype="multipart/form-data" onsubmit="return confirm('Gửi tranh chấp cho Admin? Trận sẽ chưa được tính điểm.');">
                                     <label>Lý do tranh chấp</label>
                                     <select name="reason_code" required>
@@ -119,7 +119,7 @@
                                     <textarea name="details" maxlength="500" rows="3" placeholder="Mô tả ngắn vấn đề để Admin xử lý chính xác..."></textarea>
                                     <label>Ảnh bằng chứng (không bắt buộc)</label>
                                     <input type="file" name="evidence" accept="image/png,image/jpeg,image/webp">
-                                    <button class="btn red" type="submit">Gửi tranh chấp</button>
+                                    <button class="btn arena-btn red" type="submit">Gửi tranh chấp</button>
                                 </form>
                             </details>
                         </div>
@@ -136,7 +136,7 @@
                               data-modal-message="Bạn đã hoàn tất việc gửi kết quả. Trận vẫn được giữ để khách xác nhận."
                               data-modal-note="KHÔNG TRỪ RP"
                               data-modal-confirm-label="Thoát và về sảnh">
-                            <button class="btn red room-center-action-btn" type="submit">Thoát Phòng</button>
+                            <button class="btn arena-btn red room-center-action-btn" type="submit">Thoát Phòng</button>
                         </form>
 
                     </div>
@@ -157,7 +157,7 @@
                                         <input type="number" min="0" max="99" step="1" required inputmode="numeric" name="guest_score" value="0" autocomplete="off">
                                     </label>
                                 </div>
-                                <button class="btn green room-submit-result-btn" type="submit">Gửi Kết Quả</button>
+                                <button class="btn arena-btn green room-submit-result-btn" type="submit">Gửi Kết Quả</button>
                             </form>
                         </div>
                     {% elif room.status == 'playing' and room.match_mode != 'friendly' and room_viewer_is_guest %}
@@ -169,7 +169,7 @@
                                   data-modal-message="Trận đấu chưa kết thúc. Thoát phòng lúc này sẽ bị tính là bỏ cuộc và hệ thống trừ 20 RP."
                                   data-modal-note="−20 RP"
                                   data-modal-confirm-label="Bỏ cuộc và thoát">
-                                <button class="btn red room-center-action-btn" type="submit">Thoát Phòng</button>
+                                <button class="btn arena-btn red room-center-action-btn" type="submit">Thoát Phòng</button>
                             </form>
                         </div>
                     {% elif room.status == 'waiting_ready' and not room.friendly_random3_active %}
@@ -182,13 +182,13 @@
                         {% if (room_room_viewer_is_host or current_user.role == 'admin') and room.guest_ready and not daily_rank_limit_blocked %}
                         <form class="room-center-random-form" method="post" action="{% if room.team_tier == 'random3_pick1' %}{{ url_for('room_start_random3_friendly', room_id=room.id) }}{% else %}{{ url_for('room_random_teams', room_id=room.id) }}{% endif %}" onsubmit="const b=this.querySelector('button'); b.disabled=true; b.classList.add('loading');">
                             {% if room.team_tier != 'random3_pick1' %}<input type="hidden" name="match_mode" value="ranked">{% endif %}
-                            <button class="room-center-random-trigger {% if room.team_tier == 'random3_pick1' %}random3-trigger{% endif %}" type="submit">
+                            <button class="room-center-random-trigger arena-btn is-gold {% if room.team_tier == 'random3_pick1' %}random3-trigger{% endif %}" type="submit">
                                 <span class="room-center-random-title room-random-button-label">QUAY QUÂN</span>
                                 <span class="room-center-random-sub">{% if room.team_tier == 'random3_pick1' %}Random 3 CLB cho mỗi người{% else %}Random trực tiếp 1 CLB cho mỗi bên{% endif %}</span>
                             </button>
                         </form>
                         {% else %}
-                        <div class="room-center-random-trigger disabled">
+                        <div class="room-center-random-trigger arena-btn is-gold disabled">
                             <span class="room-center-random-title room-random-button-label">{% if room_viewer_is_guest %}ĐỢI QUAY RANDOM ĐỘI{% elif not room.guest_ready %}ĐỢI KHÁCH SẴN SÀNG{% else %}QUAY RANDOM ĐỘI{% endif %}</span>
                             <span class="room-center-random-sub">{% if room_viewer_is_guest %}Đang chờ chủ phòng quay đội{% elif not room.guest_ready %}Khách chưa sẵn sàng{% else %}Đang chờ chủ phòng quay đội{% endif %}</span>
                         </div>
@@ -197,11 +197,11 @@
                         <div class="room-center-primary-actions room-action-zone">
                             {% if not room.guest_ready and not daily_rank_limit_blocked %}
                             <form method="post" action="{{ url_for('room_guest_ready', room_id=room.id) }}">
-                                <button class="btn green room-center-action-btn" type="submit">Sẵn Sàng</button>
+                                <button class="btn arena-btn green room-center-action-btn" type="submit">Sẵn Sàng</button>
                             </form>
                             {% else %}
                             <form method="post" action="{{ url_for('room_guest_unready', room_id=room.id) }}">
-                                <button class="btn gray room-center-action-btn" type="submit">Hủy Sẵn Sàng</button>
+                                <button class="btn arena-btn gray room-center-action-btn" type="submit">Hủy Sẵn Sàng</button>
                             </form>
                             {% endif %}
                             {% if room.guest_ready and not daily_rank_limit_blocked %}
@@ -212,7 +212,7 @@
                                   data-modal-message="Bạn đã Sẵn Sàng. Thoát phòng lúc này sẽ bị tính là bỏ cuộc và hệ thống trừ 20 RP."
                                   data-modal-note="−20 RP"
                                   data-modal-confirm-label="Bỏ cuộc và thoát">
-                                <button class="btn red room-center-action-btn" type="submit">Thoát Phòng</button>
+                                <button class="btn arena-btn red room-center-action-btn" type="submit">Thoát Phòng</button>
                             </form>
                             {% else %}
                             <form class="room-exit-confirm-form" method="post" action="{{ url_for('room_leave', room_id=room.id) }}"
@@ -222,7 +222,7 @@
                                   data-modal-message="Bạn chưa Sẵn Sàng nên có thể rời phòng ngay. Phòng của chủ phòng vẫn được giữ lại."
                                   data-modal-note="KHÔNG TRỪ RP"
                                   data-modal-confirm-label="Rời phòng">
-                                <button class="btn red room-center-action-btn" type="submit">Thoát Phòng</button>
+                                <button class="btn arena-btn red room-center-action-btn" type="submit">Thoát Phòng</button>
                             </form>
                             {% endif %}
                         </div>
@@ -236,7 +236,7 @@
                                   data-modal-message="Khách đã Sẵn Sàng. Chủ phòng thoát lúc này sẽ bị tính là bỏ cuộc và hệ thống trừ 20 RP."
                                   data-modal-note="−20 RP"
                                   data-modal-confirm-label="Bỏ cuộc và đóng phòng">
-                                <button class="btn red room-center-action-btn" type="submit">Thoát Phòng</button>
+                                <button class="btn arena-btn red room-center-action-btn" type="submit">Thoát Phòng</button>
                             </form>
                             {% else %}
                             <form class="room-exit-confirm-form" method="post" action="{{ url_for('room_leave', room_id=room.id) }}"
@@ -246,7 +246,7 @@
                                   data-modal-message="Khách chưa Sẵn Sàng nên bạn có thể đóng phòng mà không bị trừ RP."
                                   data-modal-note="KHÔNG TRỪ RP"
                                   data-modal-confirm-label="Thoát và đóng phòng">
-                                <button class="btn red room-center-action-btn" type="submit">Thoát Phòng</button>
+                                <button class="btn arena-btn red room-center-action-btn" type="submit">Thoát Phòng</button>
                             </form>
                             {% endif %}
                         </div>
@@ -261,14 +261,14 @@
                                   data-modal-message="Bạn đã hoàn tất việc gửi kết quả. Trận vẫn được giữ để khách xác nhận hoặc Admin xử lý tranh chấp."
                                   data-modal-note="KHÔNG TRỪ RP"
                                   data-modal-confirm-label="Thoát và về sảnh">
-                                <button class="btn red room-center-action-btn" type="submit">Thoát Phòng</button>
+                                <button class="btn arena-btn red room-center-action-btn" type="submit">Thoát Phòng</button>
                             </form>
                         </div>
                         {% elif room.status == 'confirmed' and (room_room_viewer_is_host or room_viewer_is_guest) %}
                         {% set current_has_rematch_ready = (room_room_viewer_is_host and room.rematch_host_ready) or (room_viewer_is_guest and room.rematch_guest_ready) %}
                         <div class="room-center-primary-actions room-action-zone">
                             <form method="post" action="{{ url_for('room_rematch', room_id=room.id) }}">
-                                <button class="btn gold room-center-action-btn" type="submit" {% if current_has_rematch_ready %}disabled{% endif %}>{{ 'Đã Chọn Đá Tiếp' if current_has_rematch_ready else 'Đá Tiếp' }}</button>
+                                <button class="btn arena-btn gold room-center-action-btn" type="submit" {% if current_has_rematch_ready %}disabled{% endif %}>{{ 'Đã Chọn Đá Tiếp' if current_has_rematch_ready else 'Đá Tiếp' }}</button>
                             </form>
                             <form class="room-exit-confirm-form" method="post" action="{{ url_for('room_rematch_decline', room_id=room.id) }}"
                                   data-modal-tone="warning"
@@ -277,7 +277,7 @@
                                   data-modal-message="Bạn không muốn đá tiếp? Đối thủ sẽ nhận được thông báo và cả hai sẽ được đưa về sảnh chính."
                                   data-modal-note="KHÔNG TRỪ RP"
                                   data-modal-confirm-label="Thoát và về sảnh">
-                                <button class="btn red room-center-action-btn" type="submit">Thoát Phòng</button>
+                                <button class="btn arena-btn red room-center-action-btn" type="submit">Thoát Phòng</button>
                             </form>
                         </div>
                         {% elif room.status not in ['playing', 'waiting_result_confirm'] %}
@@ -290,14 +290,14 @@
                 {% if room_room_viewer_is_host or current_user.role == 'admin' %}
                 <div class="room-quick-match-row room-action-zone">
                     {% if system_features.get('quick_match_enabled', true) %}
-                    <button class="btn room-center-action-btn room-quick-match-btn room-quick-match-{{ quick_match_config.get('color', 'blue') }}" type="button"
+                    <button class="btn arena-btn room-center-action-btn room-quick-match-btn room-quick-match-{{ quick_match_config.get('color', 'blue') }}" type="button"
                             data-quick-match-url="{{ url_for('quick_match_invite') }}">
                         <span class="quick-match-icon">⚡</span><span class="quick-match-label">TÌM NHANH</span>
                     </button>
                     {% endif %}
                 </div>
                 <div class="room-center-primary-actions room-action-zone">
-                    <a class="btn gold room-center-action-btn" href="{{ url_for('players') }}">Mời Đấu</a>
+                    <a class="btn arena-btn gold room-center-action-btn" href="{{ url_for('players') }}">Mời Đấu</a>
                     <form class="room-exit-confirm-form" method="post" action="{{ url_for('room_leave', room_id=room.id) }}"
                           data-modal-tone="warning"
                           data-modal-icon="🚪"
@@ -305,7 +305,7 @@
                           data-modal-message="Phòng hiện chưa có đối thủ. Khi bạn thoát, phòng này sẽ được đóng."
                           data-modal-note="ĐÓNG PHÒNG"
                           data-modal-confirm-label="Thoát và đóng phòng">
-                        <button class="btn red room-center-action-btn" type="submit">Thoát Phòng</button>
+                        <button class="btn arena-btn red room-center-action-btn" type="submit">Thoát Phòng</button>
                     </form>
                 </div>
                 {% endif %}
@@ -343,7 +343,7 @@
                       data-modal-message="{{ room.guest_name }} sẽ rời phòng. Kể cả khi đã Sẵn sàng, thao tác này vẫn không trừ RP vì trận chưa bắt đầu."
                       data-modal-note="KHÔNG TRỪ RP"
                       data-modal-confirm-label="Đưa khỏi phòng">
-                    <button class="btn red room-guest-card-kick-btn" type="submit">🚫 Đưa khỏi phòng</button>
+                    <button class="btn arena-btn red room-guest-card-kick-btn" type="submit">🚫 Đưa khỏi phòng</button>
                 </form>
                 {% endif %}
                 {% endif %}
@@ -413,7 +413,7 @@
                 <div id="roomChatBox" class="chat-box"></div>
                 <form method="post" action="{{ url_for('send_room_chat', room_id=room.id) }}" class="chat-form" data-room-chat-form>
                     <input name="message" maxlength="200" placeholder="Nhắn với đối thủ trong phòng..." required autocomplete="off">
-                    <button class="btn green" type="submit">Gửi</button>
+                    <button class="btn arena-btn green" type="submit">Gửi</button>
                 </form>
                 <div id="roomChatStatus" class="chat-note" role="status" aria-live="polite">Chat phòng chỉ dành cho 2 người trong phòng. Chống spam: 1 tin nhắn / 5 giây.</div>
             </section>{% endif %}
@@ -440,7 +440,7 @@
                         {% endfor %}
                     </select>
                     <p class="small">Hai CLB khác nhau trong cùng Tier. Không lưu lịch sử, không tính RP.</p>
-                    <button class="btn gold" type="submit">🎲 Quay đội Giao hữu</button>
+                    <button class="btn arena-btn gold" type="submit">🎲 Quay đội Giao hữu</button>
                 </form>
                 {% endif %}
             </div>
@@ -455,10 +455,10 @@
         <p>Không lưu lịch sử • Không cộng/trừ RP • Hai đội không trùng nhau.</p>
         {% if room_room_viewer_is_host or current_user.role == "admin" %}
         <form class="inline-form" method="post" action="{{ url_for('room_reroll_friendly', room_id=room.id) }}">
-            <button class="btn gold" type="submit">🎲 Tự Random Tiếp</button>
+            <button class="btn arena-btn gold" type="submit">🎲 Tự Random Tiếp</button>
         </form>
         <form class="inline-form" method="post" action="{{ url_for('room_finish_friendly', room_id=room.id) }}">
-            <button class="btn gray" type="submit">✅ Kết thúc giao hữu</button>
+            <button class="btn arena-btn gray" type="submit">✅ Kết thúc giao hữu</button>
         </form>
         {% else %}
         <p class="small">Chờ chủ phòng kết thúc giao hữu để quay trận tiếp theo.</p>
@@ -471,12 +471,12 @@
               data-modal-message="Trận đã bắt đầu. Thoát phòng lúc này được tính là bỏ cuộc."
               data-modal-note="−20 RP"
               data-modal-confirm-label="Bỏ cuộc và thoát">
-            <button class="btn red" type="submit">🚪 Thoát Phòng</button>
+            <button class="btn arena-btn red" type="submit">🚪 Thoát Phòng</button>
         </form>
         <p class="small">Giao hữu không tính RP. Bạn có thể thoát phòng an toàn.</p>
         {% elif room_room_viewer_is_host %}
         <form class="inline-form" method="post" action="{{ url_for('room_leave', room_id=room.id) }}">
-            <button class="btn red" type="submit">🚪 Thoát phòng</button>
+            <button class="btn arena-btn red" type="submit">🚪 Thoát phòng</button>
         </form>
         {% endif %}
     </div>
@@ -491,7 +491,7 @@
               data-modal-message="Trận đã bắt đầu. Thoát phòng lúc này được tính là bỏ cuộc."
               data-modal-note="−20 RP"
               data-modal-confirm-label="Bỏ cuộc và thoát">
-            <button class="btn red" type="submit">🚪 Thoát Phòng</button>
+            <button class="btn arena-btn red" type="submit">🚪 Thoát Phòng</button>
         </form>
         <p class="small danger-text">Thoát phòng sau khi đã quay đội được tính là bỏ cuộc và bị trừ 20 RP.</p>
     </div>
@@ -506,7 +506,7 @@
               data-modal-message="Trận đã bắt đầu. Chủ phòng thoát lúc này được tính là bỏ cuộc."
               data-modal-note="−20 RP"
               data-modal-confirm-label="Bỏ cuộc và thoát">
-            <button class="btn red" type="submit">🚪 Thoát Phòng</button>
+            <button class="btn arena-btn red" type="submit">🚪 Thoát Phòng</button>
         </form>
         <p class="small danger-text">Thoát phòng sau khi đã quay đội được tính là bỏ cuộc và bị trừ 20 RP.</p>
     </div>
@@ -520,7 +520,7 @@
 
     {% if room.status == "cancelled" %}
     <p>{{ room.note or "Phòng đã bị hủy." }}</p>
-    <a class="btn gray" href="{{ url_for('dashboard') }}">Về sảnh chính</a>
+    <a class="btn arena-btn gray" href="{{ url_for('dashboard') }}">Về sảnh chính</a>
     {% endif %}
 
     {% if room.status == "disputed" %}
@@ -551,10 +551,10 @@
         <p class="small">Hai người có thể về sảnh và tiếp tục sử dụng app. Trận này chỉ được tính điểm sau khi Admin xử lý.</p>
         {% if room.dispute and current_user.id == room.dispute.raised_by_id %}
         <form class="inline-form" method="post" action="{{ url_for('room_withdraw_dispute', room_id=room.id) }}" onsubmit="return confirm('Rút tranh chấp và chấp nhận tỷ số ban đầu? Điểm rank sẽ được cập nhật ngay.');">
-            <button class="btn green" type="submit">↩️ Rút tranh chấp và chấp nhận kết quả</button>
+            <button class="btn arena-btn green" type="submit">↩️ Rút tranh chấp và chấp nhận kết quả</button>
         </form>
         {% endif %}
-        <a class="btn gray" href="{{ url_for('dashboard') }}">Về sảnh chính</a>
+        <a class="btn arena-btn gray" href="{{ url_for('dashboard') }}">Về sảnh chính</a>
     </div>
     {% endif %}
         </div>

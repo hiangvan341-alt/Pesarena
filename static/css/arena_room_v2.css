@@ -653,3 +653,86 @@
   background: transparent !important;
   box-shadow: none !important;
 }
+
+/* V1.3.21 — unified room button system. Parsec controls are intentionally excluded
+   because the Parsec panel template does not receive the .arena-btn class. */
+.arena-room-v2 .arena-btn {
+    display:inline-flex;
+    align-items:center;
+    justify-content:center;
+    gap:7px;
+    min-height:44px;
+    padding:0 18px;
+    border:1px solid rgba(101,129,188,.48) !important;
+    border-radius:13px;
+    background:linear-gradient(180deg,rgba(17,29,55,.98),rgba(8,16,34,.99)) !important;
+    color:#f5f8ff !important;
+    font-family:inherit;
+    font-size:13px;
+    font-weight:850;
+    line-height:1.15;
+    text-align:center;
+    text-decoration:none;
+    white-space:normal;
+    box-shadow:inset 0 1px 0 rgba(255,255,255,.075),0 0 0 1px rgba(255,255,255,.025),0 7px 17px rgba(0,0,0,.24) !important;
+    transition:transform .16s ease,border-color .16s ease,box-shadow .16s ease,filter .16s ease;
+    cursor:pointer;
+}
+.arena-room-v2 .arena-btn:hover:not(:disabled) {
+    transform:translateY(-1px);
+    filter:brightness(1.07);
+}
+.arena-room-v2 .arena-btn:active:not(:disabled) {transform:translateY(0)}
+.arena-room-v2 .arena-btn:focus-visible {outline:2px solid rgba(255,255,255,.8);outline-offset:2px}
+.arena-room-v2 .arena-btn:disabled {opacity:.52;cursor:not-allowed;transform:none;filter:saturate(.65)}
+
+.arena-room-v2 .arena-btn.green,
+.arena-room-v2 .arena-btn.is-success,
+.arena-room-v2 .arena-action-quick,
+.arena-room-v2 .room-submit-result-btn,
+.arena-room-v2 .room-result-btn.confirm {
+    border-color:rgba(43,229,141,.72) !important;
+    background:linear-gradient(180deg,rgba(8,65,42,.99),rgba(4,37,26,.99)) !important;
+    box-shadow:inset 0 1px 0 rgba(255,255,255,.07),0 0 15px rgba(43,229,141,.15),0 7px 17px rgba(0,0,0,.24) !important;
+}
+.arena-room-v2 .arena-btn.gray,
+.arena-room-v2 .arena-btn.is-secondary,
+.arena-room-v2 .room-result-btn.disagree {
+    border-color:rgba(101,129,188,.52) !important;
+    background:linear-gradient(180deg,rgba(21,34,64,.99),rgba(10,19,40,.99)) !important;
+    box-shadow:inset 0 1px 0 rgba(255,255,255,.07),0 0 13px rgba(71,103,185,.11),0 7px 17px rgba(0,0,0,.24) !important;
+}
+.arena-room-v2 .arena-btn.red,
+.arena-room-v2 .arena-btn.is-danger,
+.arena-room-v2 .arena-action-exit,
+.arena-room-v2 .room-guest-card-kick-btn {
+    border-color:rgba(255,91,119,.68) !important;
+    background:linear-gradient(180deg,rgba(76,18,33,.99),rgba(43,10,21,.99)) !important;
+    box-shadow:inset 0 1px 0 rgba(255,255,255,.065),0 0 15px rgba(255,74,105,.14),0 7px 17px rgba(0,0,0,.24) !important;
+}
+.arena-room-v2 .arena-btn.gold,
+.arena-room-v2 .arena-btn.yellow,
+.arena-room-v2 .arena-btn.is-gold,
+.arena-room-v2 .arena-action-invite,
+.arena-room-v2 .room-center-random-trigger {
+    border-color:rgba(246,188,66,.72) !important;
+    background:linear-gradient(180deg,rgba(82,55,9,.99),rgba(46,30,5,.99)) !important;
+    box-shadow:inset 0 1px 0 rgba(255,255,255,.07),0 0 16px rgba(246,183,43,.16),0 7px 17px rgba(0,0,0,.24) !important;
+}
+
+.arena-room-v2 .room-center-primary-actions .arena-btn,
+.arena-room-v2 .room-action-zone .arena-btn {
+    width:100%;
+    min-height:45px;
+    padding:0 10px;
+    border-radius:12px;
+    font-size:12px;
+}
+.arena-room-v2 .room-result-btn.arena-btn {min-width:116px;padding:0 15px}
+.arena-room-v2 .room-action-modal-button.arena-btn {min-width:130px}
+.arena-room-v2 .room-center-random-trigger.arena-btn {min-height:48px;border-radius:13px}
+
+@media (max-width:1450px){
+  .arena-room-v2 .arena-btn{min-height:40px;padding:0 13px;font-size:11px;border-radius:11px}
+  .arena-room-v2 .room-center-primary-actions .arena-btn,.arena-room-v2 .room-action-zone .arena-btn{min-height:41px;font-size:10px}
+}
