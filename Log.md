@@ -1,3 +1,22 @@
+## V1.3.25 — Tinh chỉnh nút phòng đấu và đưa lịch sử sang cột phải
+
+- Làm lại cụm nút hành động ở giữa phòng theo phong cách gọn hơn: nền kính tối ấm hơn, viền neon rõ, kích thước nút hợp giao diện và không còn cảm giác thô/chiếm chỗ.
+- Cân lại chiều rộng cụm nút theo số lượng nút thực tế (1 / 2 / 3 nút) để chủ phòng và đối thủ hiển thị cân đối hơn.
+- Đưa khối **Lịch sử đấu** sang cột phải, nằm bên dưới **Kết nối Parsec** để không còn chèn lên hàng 6 chế độ.
+- Tạo khung `room-bottom-shell` để hàng **6 chế độ** chỉ chiếm đúng phần ngang từ cột chủ phòng đến cột đối thủ; ô chế độ số 6 không còn đè vào lịch sử đấu.
+- Thu gọn kích thước thẻ 6 chế độ để vừa khung mới nhưng vẫn giữ icon, tên chế độ và trạng thái mở khóa rõ ràng.
+- Đồng bộ bố cục này cho cả `room_detail.html` và `_room_live_content.html` để polling realtime không làm lệch layout.
+- Tách khối lịch sử đấu thành partial riêng `templates/partials/room_history_panel.html` để dùng chung và dễ bảo trì.
+- Cập nhật `APP_VERSION` thành `1.3.25`.
+
+### File đã sửa
+- `app.py`
+- `static/css/arena_room_v2.css`
+- `templates/room_detail.html`
+- `templates/_room_live_content.html`
+- `templates/partials/room_history_panel.html`
+
+
 ## V1.3.24 — Nút kính tối viền neon, đồng bộ hai phía và ổn định lịch sử phòng
 
 - Thay hai lớp CSS nút V1.3.21/V1.3.23 bị ghi đè lẫn nhau bằng một lớp duy nhất, giới hạn trong `.arena-room-v2 .arena-btn`; khu Parsec không bị ảnh hưởng.

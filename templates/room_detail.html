@@ -454,53 +454,34 @@
         </aside>
     </div>
 
-    {% if room.status == "waiting_ready" and not room.friendly_random3_active %}
-    <section class="room-master-mode-switcher" aria-label="Các chế độ thi đấu Rank">
-        <h2><span aria-hidden="true">◇</span> CÁC CHẾ ĐỘ KHÁC <span aria-hidden="true">◇</span></h2>
-        <div class="room-master-mode-grid">
-            {% for mode in rank_mode_catalog %}
-            <form method="post" action="{{ url_for('room_select_ranked_mode', room_id=room.id) }}" data-room-async="1" class="room-master-mode-form">
-                <input type="hidden" name="rank_mode" value="{{ mode.code }}">
-                <button class="room-master-mode-card {% if selected_rank_mode == mode.code %}is-selected{% endif %} {% if not mode.eligible %}is-locked{% endif %}" data-mode="{{ mode.code }}" type="submit" {% if not mode.eligible or not (room_room_viewer_is_host or current_user.role == 'admin') %}disabled{% endif %} title="{{ mode.lock_reasons|join(' • ') if not mode.eligible else mode.label }}">
-                    <span class="room-master-card-number">{{ loop.index }}</span>
-                    <span class="room-master-card-icon" aria-hidden="true"><img src="{{ room_asset('modes/' ~ mode.code ~ '.webp') }}" alt=""></span>
-                    <strong>{% if mode.code == 'rank_random' %}Random{% elif mode.code == 'random3_pick1' %}3 chọn 1{% elif mode.code == 'tactical_bo3' %}Chiến thuật BO3{% elif mode.code == 'ban_pick_bo3' %}Cấm chọn BO3{% elif mode.code == 'home_away' %}Lượt đi/về{% else %}{{ mode.label }}{% endif %}</strong>
-                    <small>{% if mode.eligible %}✓ Đã mở khóa{% else %}🔒 {{ mode.lock_reasons[0] }}{% endif %}</small>
-                </button>
-            </form>
-            {% endfor %}
+    <div class="room-bottom-shell">
+        <div class="room-bottom-main">
+            {% if room.status == "waiting_ready" and not room.friendly_random3_active %}
+            <section class="room-master-mode-switcher" aria-label="Các chế độ thi đấu Rank">
+                <h2><span aria-hidden="true">◇</span> CÁC CHẾ ĐỘ KHÁC <span aria-hidden="true">◇</span></h2>
+                <div class="room-master-mode-grid">
+                    {% for mode in rank_mode_catalog %}
+                    <form method="post" action="{{ url_for('room_select_ranked_mode', room_id=room.id) }}" data-room-async="1" class="room-master-mode-form">
+                        <input type="hidden" name="rank_mode" value="{{ mode.code }}">
+                        <button class="room-master-mode-card {% if selected_rank_mode == mode.code %}is-selected{% endif %} {% if not mode.eligible %}is-locked{% endif %}" data-mode="{{ mode.code }}" type="submit" {% if not mode.eligible or not (room_room_viewer_is_host or current_user.role == 'admin') %}disabled{% endif %} title="{{ mode.lock_reasons|join(' • ') if not mode.eligible else mode.label }}">
+                            <span class="room-master-card-number">{{ loop.index }}</span>
+                            <span class="room-master-card-icon" aria-hidden="true"><img src="{{ room_asset('modes/' ~ mode.code ~ '.webp') }}" alt=""></span>
+                            <strong>{% if mode.code == 'rank_random' %}Random{% elif mode.code == 'random3_pick1' %}3 chọn 1{% elif mode.code == 'tactical_bo3' %}Chiến thuật BO3{% elif mode.code == 'ban_pick_bo3' %}Cấm chọn BO3{% elif mode.code == 'home_away' %}Lượt đi/về{% else %}{{ mode.label }}{% endif %}</strong>
+                            <small>{% if mode.eligible %}✓ Đã mở khóa{% else %}🔒 {{ mode.lock_reasons[0] }}{% endif %}</small>
+                        </button>
+                    </form>
+                    {% endfor %}
+                </div>
+            </section>
+            {% endif %}
         </div>
-    </section>
-    {% endif %}
-
-{% if room.has_guest %}
-<section class="panel room-session-h2h room-score-history-panel room-history-full" aria-label="Lịch sử tỷ số trong phòng">
-    <div class="room-score-history-title">
-        <h3>LỊCH SỬ ĐẤU</h3>
+        <aside class="room-bottom-side" aria-label="Lịch sử đấu trong phòng">
+            {% include "partials/room_history_panel.html" %}
+        </aside>
     </div>
 
-    {% if room_head_to_head and room_head_to_head.matches %}
-    <div class="room-score-history-board">
-        <div class="room-score-history-head">
-            <span class="{{ room.host_name_style_class or '' }}" title="{{ room.host_name }}">{{ room.host_name }}</span>
-            <strong>TỶ SỐ</strong>
-            <span class="is-right {{ room.guest_name_style_class or '' }}" title="{{ room.guest_name or 'Đối thủ' }}">{{ room.guest_name or 'Đối thủ' }}</span>
-        </div>
-        <div class="room-score-history-list">
-            {% for match in room_head_to_head.matches %}
-            <div class="room-score-history-row" aria-label="Tỷ số {{ match.host_score }} - {{ match.guest_score }}">
-                <span class="room-score-value{% if match.host_score|int > match.guest_score|int %} is-winner{% endif %}">{{ match.host_score }}</span>
-                <span class="room-score-separator">-</span>
-                <span class="room-score-value{% if match.guest_score|int > match.host_score|int %} is-winner{% endif %}">{{ match.guest_score }}</span>
-            </div>
-            {% endfor %}
-        </div>
-    </div>
-    {% else %}
-    <p class="room-session-empty">Chưa có tỷ số nào trong phòng này.</p>
-    {% endif %}
-</section>
-{% endif %}
+
+
 
     <div class="panel room-extra-controls">
     <h2 class="room-control-title">Điều khiển phòng</h2>
