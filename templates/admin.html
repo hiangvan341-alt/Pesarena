@@ -479,6 +479,52 @@
             </div>
             <div class="admin-rank-mode-save"><button class="btn gold" type="submit">💾 Lưu cấu hình 6 chế độ</button></div>
         </form>
+
+        <div class="admin-mode-user-unlocks" id="rank-modes-user-unlocks">
+            <div class="admin-section-heading">
+                <div>
+                    <h3>🔓 Mở khóa chế độ theo tài khoản</h3>
+                    <p class="small">Tài khoản Admin tự động mở đủ 6 chế độ. Với người chơi thường, quyền mở riêng sẽ bỏ qua yêu cầu RP và số trận; giới hạn chênh RP và công tắc tắt toàn hệ thống vẫn được áp dụng.</p>
+                </div>
+                <span class="admin-count">{{ admin_users|length }} tài khoản</span>
+            </div>
+            <div class="admin-mode-user-list">
+            {% for account in admin_users %}
+                {% set account_id = account.id|string %}
+                {% set unlocked = rank_mode_user_unlocks.get(account_id, []) %}
+                <details class="admin-mode-user-row" {% if loop.first %}open{% endif %}>
+                    <summary>
+                        <span><strong>{{ account.display_name or account.username }}</strong><small>@{{ account.username }} · {{ account.rank_points or 0 }} RP</small></span>
+                        {% if account.role == 'admin' or account.admin_level %}
+                            <span class="badge success">Admin · Mở đủ 6</span>
+                        {% else %}
+                            <span class="badge pending">Đã mở riêng {{ unlocked|length }}/6</span>
+                        {% endif %}
+                    </summary>
+                    {% if account.role == 'admin' or account.admin_level %}
+                        <p class="small admin-mode-auto-note">Tài khoản Admin không cần cấu hình riêng và luôn vượt qua điều kiện RP/số trận của cả 6 chế độ.</p>
+                    {% else %}
+                    <form method="post" action="{{ url_for('admin_save_user_rank_mode_unlocks', user_id=account.id) }}" class="admin-mode-user-form">
+                        <div class="admin-mode-user-checks">
+                        {% for code in rank_mode_order %}
+                            {% set mode = rank_mode_configs.get(code, {}) %}
+                            <label>
+                                <input type="checkbox" name="mode__{{ code }}" value="1" {% if code in unlocked %}checked{% endif %}>
+                                <span><strong>{{ mode.short_label or mode.label }}</strong><small>{{ code }}</small></span>
+                            </label>
+                        {% endfor %}
+                        </div>
+                        <div class="admin-mode-user-actions">
+                            <button class="btn gold" type="submit">Lưu quyền mở khóa</button>
+                        </div>
+                    </form>
+                    {% endif %}
+                </details>
+            {% else %}
+                <p class="small">Chưa có tài khoản để cấu hình.</p>
+            {% endfor %}
+            </div>
+        </div>
     </div>
 </section>
 

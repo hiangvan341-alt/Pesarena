@@ -33,6 +33,21 @@ def register_routes(context):
         flash("Đã lưu cấu hình 6 chế độ Rank.", "success")
         return redirect(url_for("admin") + "#rank-modes")
 
+    @app.route("/admin/rank-modes/user-unlocks/<user_id>", methods=["POST"])
+    @login_required
+    @admin_required
+    def admin_save_user_rank_mode_unlocks(user_id):
+        user = get_user_by_id(user_id)
+        if not user:
+            flash("Không tìm thấy tài khoản.", "error")
+            return redirect(url_for("admin") + "#rank-modes")
+        selected = [code for code in MODE_ORDER if request.form.get(f"mode__{code}") == "1"]
+        actor = current_user() or {}
+        save_user_rank_mode_unlocks(user_id, selected, actor.get("id"))
+        display_name = user.get("display_name") or user.get("username") or user_id
+        flash(f"Đã cập nhật quyền chế độ Rank cho {display_name}.", "success")
+        return redirect(url_for("admin") + "#rank-modes-user-unlocks")
+
     @app.route("/admin")
     @login_required
     @admin_required
@@ -371,5 +386,6 @@ def register_routes(context):
             match_report_daily=match_report_daily,
             rank_mode_configs=admin_safe_load("rank_mode_configs", get_rank_mode_configs, {}),
             rank_mode_order=MODE_ORDER,
+            rank_mode_user_unlocks=admin_safe_load("rank_mode_user_unlocks", list_rank_mode_user_unlocks, {}),
         )
 
