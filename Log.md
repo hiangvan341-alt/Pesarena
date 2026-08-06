@@ -1,16 +1,24 @@
-## V1.3.27 — Bỏ hai vùng khung ở đáy cột giữa
+## V1.3.28 — Tinh gọn luồng phòng đấu và làm nhẹ viền nút
 
-- Bỏ nền và viền của vùng trạng thái `Đợi quay random đội / Đợi khách sẵn sàng`.
-- Bỏ nền bao quanh cụm nút `Sẵn sàng / Thoát phòng`.
-- Chuyển trạng thái chờ thành chữ nổi trực tiếp trên sân, nhẹ và gọn hơn.
-- Khi đủ điều kiện quay đội, chỉ hiển thị một nút vàng `Quay quân` thực sự.
-- Giữ thanh nút hành động nổi trực tiếp bên dưới, cân kích thước theo 1 hoặc 2 nút.
-- Không thay đổi logic phòng đấu.
-- Cập nhật `APP_VERSION` thành `1.3.27`.
+- Gỡ khu chọn chế độ lặp ở cột giữa; chỉ giữ **1 nơi chọn chế độ chính** là hàng 6 chế độ bên dưới, giảm thao tác rườm rà.
+- Giữ **Lịch sử đấu trong phòng** ở cột phải bên dưới khối Parsec.
+- Đơn giản hóa trạng thái giữa sân:
+  - Chưa có khách: hiển thị chờ đối thủ.
+  - Có khách nhưng chưa sẵn sàng: hiển thị chờ đối thủ sẵn sàng.
+  - Đã sẵn sàng: mới hiện đồng hồ chờ chủ phòng quay quân.
+- Trước khi quay quân / bắt đầu trận, cả chủ phòng và khách đều có thể **thoát an toàn** bằng `room_leave`, không còn bị coi là bỏ cuộc ở trạng thái `waiting_ready`.
+- Bỏ dòng **Loại trận** bị trùng thông tin với **Chế độ** trong cột thông tin phòng đấu.
+- Ở trạng thái sau trận `confirmed`, đổi nút `Thoát Phòng` thành **Về sảnh** để đúng ngữ cảnh hơn.
+- Ẩn nút `Sẵn sàng` giả khi phòng chưa có đối thủ; nếu tắt Tìm nhanh thì chỉ còn các thao tác thực sự cần thiết.
+- Làm viền nút nhẹ hơn: giảm độ đậm viền, giảm glow và làm cụm nút nhìn mềm hơn so với bản trước.
+- Thu nhỏ độ nổi của nút `Đưa khỏi phòng` để nó bớt lấn át các thao tác chính.
+- Cập nhật `APP_VERSION` thành `1.3.28`.
 
 ### File đã sửa
 - `app.py`
 - `static/css/arena_room_v2.css`
+- `templates/room_detail.html`
+- `templates/_room_live_content.html`
 
 
 ## V1.3.26 — Tinh chỉnh nút và trạng thái theo style mềm hơn
