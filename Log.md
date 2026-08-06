@@ -1,3 +1,27 @@
+# PES Arena V1.3.5 — Arena Room V2
+
+- Ngày: 2026-08-06 (Asia/Bangkok)
+- Dựng lại riêng khu vực phòng đấu theo UI MASTER, không tiếp tục vá layout cũ.
+- Root namespace mới: `.arena-room-v2`.
+- Viết lại bố cục chính bằng CSS Grid 4 cột: 31% / 24% / 31% / 14%.
+- Giữ nguyên Sidebar, Header chung, API, form action, dữ liệu Jinja và JavaScript phòng đấu hiện có.
+- Ba nút hành động được trình bày ngang trong khu trung tâm ở trạng thái chờ đối thủ.
+- Sáu card chế độ nằm cùng một hàng desktop; giữ đúng tên “Cấm chọn CLB”.
+- Thay emoji chế độ chính bằng 6 SVG riêng trong `static/icons/rank_modes/`.
+- Không dùng OVR, inline style, selector chung hoặc `!important`.
+- File CSS mới: `static/css/arena_room_v2.css`.
+- Không có SQL mới. SQL mới nhất vẫn nằm tại `docs/PES_ARENA_UPDATE_LATEST.sql`.
+
+## File sửa
+
+- `app.py`
+- `templates/room_detail.html`
+- `static/css/arena_room_v2.css`
+- `static/icons/rank_modes/*.svg`
+- `test_arena_room_v2_v135.py`
+
+---
+
 # PES Arena V1.3.4 — Fix UI MASTER 100%
 
 - Sửa `room-arena-frame` còn kế thừa `min-height: 720px` từ CSS cũ.

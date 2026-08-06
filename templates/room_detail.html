@@ -1,12 +1,13 @@
 {% extends "base.html" %}
 {% from "_avatar_macros.html" import player_avatar %}
 {% block head_extra %}
-<link rel="stylesheet" href="{{ static_asset('css/room_master.css') }}">
+<link rel="stylesheet" href="{{ static_asset('css/arena_room_v2.css') }}">
 {% endblock %}
 {% block content %}
 {% set room_room_viewer_is_host = (current_user.id|string == room.host_user_id|string) %}
 {% set room_viewer_is_guest = (room.guest_user_id and current_user.id|string == room.guest_user_id|string) %}
-<div id="roomLiveShell" class="room-view-shell room-layout-v137" data-room-state-key="{{ initial_room_state_key|e }}" data-room-status="{{ room.status|e }}">
+{# Rank toggle compatibility: system_features.rank_standard_enabled #}
+<div id="roomLiveShell" class="room-view-shell arena-room-v2" data-room-state-key="{{ initial_room_state_key|e }}" data-room-status="{{ room.status|e }}">
 
 {% include "_streak_animation.html" %}
 
@@ -75,7 +76,7 @@
                     <strong>{{ active_rank_mode.label if active_rank_mode else 'Rank thường Random' }}</strong>
                     <small>{% if selected_rank_mode == 'rank_random' %}Mỗi bên được random 1 CLB phù hợp để thi đấu.{% elif selected_rank_mode == 'random3_pick1' %}Mỗi người nhận 3 CLB và bí mật chọn 1 CLB.{% elif selected_rank_mode == 'tactical_bo3' %}Dùng 3 CLB khác nhau, ai thắng 2 trận trước sẽ thắng Series.{% elif selected_rank_mode == 'bo3' %}Thi đấu tối đa 3 trận, ai thắng 2 trận trước sẽ thắng Series.{% elif selected_rank_mode == 'ban_pick_bo3' %}Cấm và chọn CLB trong Pool chung trước khi đấu BO3.{% else %}Thi đấu đúng 2 lượt và xét tổng tỷ số chung cuộc.{% endif %}</small>
                 </div>
-                <div class="room-master-mode-emblem" aria-hidden="true">{% if selected_rank_mode == 'rank_random' %}🏅{% elif selected_rank_mode == 'random3_pick1' %}🛡️{% elif selected_rank_mode == 'tactical_bo3' %}⚔️{% elif selected_rank_mode == 'bo3' %}🏆{% elif selected_rank_mode == 'ban_pick_bo3' %}🛡️{% else %}🏟️{% endif %}</div>
+                <div class="room-master-mode-emblem" aria-hidden="true"><img src="{{ static_asset('icons/rank_modes/' ~ selected_rank_mode ~ '.svg') }}" alt=""></div>
                 <div class="room-master-unlock-pill">{% if active_rank_mode and active_rank_mode.eligible %}✓ Đã mở khóa{% else %}🔒 Chưa mở khóa{% endif %}</div>
                 <div class="room-master-room-ready">
                     <span>{% if room.has_guest %}✓ Phòng đã sẵn sàng{% else %}Đang chờ đối thủ{% endif %}</span>
@@ -469,8 +470,8 @@
                 <input type="hidden" name="rank_mode" value="{{ mode.code }}">
                 <button class="room-master-mode-card {% if selected_rank_mode == mode.code %}is-selected{% endif %} {% if not mode.eligible %}is-locked{% endif %}" type="submit" {% if not mode.eligible or not (room_room_viewer_is_host or current_user.role == 'admin') %}disabled{% endif %} title="{{ mode.lock_reasons|join(' • ') if not mode.eligible else mode.label }}">
                     <span class="room-master-card-number">{{ loop.index }}</span>
-                    <span class="room-master-card-icon" aria-hidden="true">{% if mode.code == 'rank_random' %}🏅{% elif mode.code == 'random3_pick1' %}👥{% elif mode.code == 'tactical_bo3' %}⚔️{% elif mode.code == 'bo3' %}🏆{% elif mode.code == 'ban_pick_bo3' %}🛡️{% else %}🏟️{% endif %}</span>
-                    <strong>{{ mode.short_label }}</strong>
+                    <span class="room-master-card-icon" aria-hidden="true"><img src="{{ static_asset('icons/rank_modes/' ~ mode.code ~ '.svg') }}" alt=""></span>
+                    <strong>{% if mode.code == 'ban_pick_bo3' %}Cấm chọn CLB{% else %}{{ mode.short_label }}{% endif %}</strong>
                     <small>{% if mode.eligible %}✓ Đã mở khóa{% else %}🔒 {{ mode.lock_reasons[0] }}{% endif %}</small>
                 </button>
             </form>
