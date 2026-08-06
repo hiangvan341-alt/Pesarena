@@ -350,3 +350,10 @@
 - Sửa xung đột với rule `.btn` toàn cục có `!important` trong `static/style.css`.
 - Ba nút dùng Grid 3 cột, không chồng, không chung nền.
 - Không đổi route/API hoặc logic sẵn sàng, tìm nhanh, thoát phòng.
+
+## V1.3.11 - Ghép trực tiếp Supabase pes-assets
+- Chuyển gói upload sang bucket thật `pes-assets`.
+- Folder đích: `room-assets/v1.3.11`.
+- Ghép sẵn public URL `https://wlnvdfghatgeygecwrqb.supabase.co/storage/v1/object/public/pes-assets/room-assets/v1.3.11` vào helper asset phòng đấu.
+- Không bắt buộc cấu hình biến Vercel; `ROOM_ASSET_BASE_URL` vẫn có thể dùng để ghi đè.
+- Làm lại `UPLOAD_SUPABASE` và manifest chi tiết đúng bucket của dự án.

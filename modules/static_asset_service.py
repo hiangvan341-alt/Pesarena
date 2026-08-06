@@ -35,8 +35,15 @@ def luckybox_asset_base_url() -> str:
 
 
 
+DEFAULT_ROOM_ASSET_BASE_URL = (
+    "https://wlnvdfghatgeygecwrqb.supabase.co/storage/v1/object/public/"
+    "pes-assets/room-assets/v1.3.11"
+)
+
+
 def room_asset_base_url() -> str:
-    return _clean_base(os.getenv("ROOM_ASSET_BASE_URL"))
+    """Return configured room asset URL, defaulting to the project's public bucket."""
+    return _clean_base(os.getenv("ROOM_ASSET_BASE_URL") or DEFAULT_ROOM_ASSET_BASE_URL)
 
 
 def room_asset_url(filename: str) -> str:

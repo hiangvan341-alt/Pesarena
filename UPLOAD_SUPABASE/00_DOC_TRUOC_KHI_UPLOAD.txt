@@ -1,28 +1,26 @@
-PES ARENA V1.3.9 - HUONG DAN UPLOAD SUPABASE
+PES ARENA V1.3.11 - UPLOAD ASSET PHONG DAU LEN SUPABASE
 
-BAN CHI CAN UPLOAD THU MUC NAY:
-UPLOAD_SUPABASE/UPLOAD_VAO_BUCKET_public-assets/room-assets
+BUCKET CUA BAN DA CO SAN:
+pes-assets
 
-UPLOAD VAO DAU?
-1. Mo Supabase Dashboard.
-2. Chon Storage.
-3. Mo bucket: public-assets
-4. Tai len NGUYEN THU MUC: room-assets
-5. Sau khi upload phai co duong dan:
-   public-assets/room-assets/v1.3.9/...
+BAN KHONG CAN TAO BUCKET MOI neu bucket pes-assets da ton tai va dang Public.
 
-KHONG upload thu muc UPLOAD_VAO_BUCKET_public-assets vao Supabase.
-Thu muc nay chi de nhac ten bucket.
-Ben trong bucket public-assets, thu muc cap dau phai la room-assets.
+THU MUC CAN UPLOAD:
+UPLOAD_SUPABASE/UPLOAD_VAO_BUCKET_pes-assets/room-assets
 
-URL GOC SAU KHI UPLOAD:
-https://<PROJECT_REF>.supabase.co/storage/v1/object/public/public-assets/room-assets/v1.3.9
+CAC BUOC:
+1. Mo Supabase Dashboard -> Storage.
+2. Mo bucket: pes-assets
+3. Upload NGUYEN THU MUC: room-assets
+4. Neu Supabase hoi ghi de, chon ghi de folder/file trung ten.
+5. Sau khi upload, duong dan phai la:
+   pes-assets/room-assets/v1.3.11/...
 
-CAU HINH VERCEL:
-Ten bien: ROOM_ASSET_BASE_URL
-Gia tri: https://<PROJECT_REF>.supabase.co/storage/v1/object/public/public-assets/room-assets/v1.3.9
+KHONG upload folder UPLOAD_VAO_BUCKET_pes-assets.
+Folder nay chi la nhan de cho biet bucket dich.
 
-Sau khi them bien, Redeploy Vercel.
-Neu chua them bien, web van dung asset local trong static/assets/room_v2.
+URL DA GHÉP SAN TRONG DU AN:
+https://wlnvdfghatgeygecwrqb.supabase.co/storage/v1/object/public/pes-assets/room-assets/v1.3.11
 
-Tong file WebP can upload: 20
+Ban V1.3.11 da dung URL nay mac dinh, khong bat buoc tao bien Vercel.
+Neu muon doi duong dan ve sau, co the tao bien ROOM_ASSET_BASE_URL de ghi de.

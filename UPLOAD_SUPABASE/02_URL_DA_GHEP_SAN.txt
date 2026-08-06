@@ -1,0 +1,9 @@
+URL GOC DA DUOC GHEP SAN TRONG modules/static_asset_service.py:
+
+https://wlnvdfghatgeygecwrqb.supabase.co/storage/v1/object/public/pes-assets/room-assets/v1.3.11
+
+Khong can them ROOM_ASSET_BASE_URL tren Vercel.
+Chi can upload dung folder room-assets vao bucket pes-assets, sau do deploy ban V1.3.11.
+
+Tuy chon ghi de bang bien moi truong:
+ROOM_ASSET_BASE_URL=https://domain-khac/.../room-assets/phien-ban-khac

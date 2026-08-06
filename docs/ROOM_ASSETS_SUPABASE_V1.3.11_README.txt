@@ -1,0 +1,7 @@
+Bucket: pes-assets
+Upload folder: UPLOAD_SUPABASE/UPLOAD_VAO_BUCKET_pes-assets/room-assets
+Object root: room-assets/v1.3.11
+Public base URL:
+https://wlnvdfghatgeygecwrqb.supabase.co/storage/v1/object/public/pes-assets/room-assets/v1.3.11
+
+URL nay da duoc gan mac dinh trong du an. Khong can cau hinh Vercel neu dung dung bucket/folder tren.
