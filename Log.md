@@ -1,3 +1,12 @@
+
+## V1.3.23 — Làm sáng và đồng bộ nút phòng đấu
+- Kiểm tra xung đột giữa `static/style.css` và `static/css/arena_room_v2.css`.
+- Tăng độ sáng nền cho 4 nhóm nút: gold, success, secondary và danger.
+- Ép chữ nút màu trắng, tăng độ đậm và thêm text-shadow nhẹ.
+- Giảm mức làm tối của nút disabled để nội dung vẫn đọc được.
+- Loại bỏ lớp nền phụ bên trong nút Quay quân để tránh nút hai lớp.
+- Không thay đổi nút thuộc khu Parsec.
+- Không thay đổi API, route hoặc logic phòng đấu.
 # PES Arena V1.3.21 — Unified Room Buttons
 
 - Đồng bộ nút phòng đấu theo một hệ thiết kế bo góc navy/neon.
