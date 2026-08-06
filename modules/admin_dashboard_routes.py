@@ -8,6 +8,31 @@ def register_routes(context):
     """Đăng ký nhóm route vào Flask app hiện tại."""
     globals().update(context)
 
+    @app.route("/admin/rank-modes", methods=["POST"])
+    @login_required
+    @admin_required
+    def admin_save_rank_modes():
+        configs = get_rank_mode_configs()
+        int_fields = ("min_rp", "min_matches", "max_rp_gap", "pool_size", "bans_per_player", "ban_seconds", "pick_seconds")
+        rp_fields = ("win_2_0", "lose_0_2", "win_2_1", "lose_1_2", "forfeit_win", "forfeit_loss", "draw_1_1", "draw_all", "one_win_one_draw_win", "one_win_one_draw_loss", "win_both", "lose_both", "draw")
+        for code, mode in configs.items():
+            mode["enabled"] = request.form.get(f"{code}__enabled") == "1"
+            for field in int_fields:
+                key = f"{code}__{field}"
+                if key in request.form:
+                    try: mode[field] = max(0, int(request.form.get(key) or 0))
+                    except (TypeError, ValueError): pass
+            rp = dict(mode.get("rp") or {})
+            for field in rp_fields:
+                key = f"{code}__rp__{field}"
+                if key in request.form:
+                    try: rp[field] = int(request.form.get(key) or 0)
+                    except (TypeError, ValueError): pass
+            mode["rp"] = rp
+        save_rank_mode_configs(configs)
+        flash("Đã lưu cấu hình 6 chế độ Rank.", "success")
+        return redirect(url_for("admin") + "#rank-modes")
+
     @app.route("/admin")
     @login_required
     @admin_required
@@ -108,7 +133,7 @@ def register_routes(context):
         report_unique_players = set()
         report_confirmed_goals = 0
         report_positive_rp = 0
-        report_mode_counts = {"rank_random": 0, "random3_pick1": 0}
+        report_mode_counts = {code: 0 for code in ("rank_random", "random3_pick1", "tactical_bo3", "bo3", "ban_pick_bo3", "home_away")}
 
         # Khi kết quả được xác nhận, các phiên bản cũ ghi đè note của trận thành
         # "Đã xác nhận.", làm mất dấu Random 3 chọn 1. Ưu tiên đọc team_tier
@@ -128,14 +153,23 @@ def register_routes(context):
                 return "random3_pick1"
 
             details = match.get("rp_details")
+            if isinstance(details, str):
+                try:
+                    import json as _json
+                    details = _json.loads(details)
+                except Exception:
+                    details = {}
             if isinstance(details, dict):
-                stored_mode = str(details.get("match_mode") or "").strip().lower()
-                if stored_mode == "random3_pick1":
-                    return "random3_pick1"
-
+                stored_mode = normalize_rank_mode_code(details.get("match_mode") or details.get("mode_code"))
+                if stored_mode in report_mode_counts:
+                    return stored_mode
+            room_mode = normalize_rank_mode_code(room_mode_by_match_id.get(match_id))
+            if room_mode in report_mode_counts and room_mode != "rank_random":
+                return room_mode
             note = str(match.get("note") or "").casefold()
-            if "random 3 chọn 1" in note or "random3_pick1" in note:
-                return "random3_pick1"
+            aliases = {"random3_pick1": ("random 3 chọn 1", "random3_pick1"), "tactical_bo3": ("đấu chiến thuật bo3", "tactical_bo3"), "ban_pick_bo3": ("cấm chọn clb bo3", "ban_pick_bo3"), "home_away": ("lượt đi", "home_away"), "bo3": (" bo3", "bo3")}
+            for code, tokens in aliases.items():
+                if any(token in note for token in tokens): return code
             return "rank_random"
 
         for match in report_matches:
@@ -165,6 +199,10 @@ def register_routes(context):
                 "cancelled": 0,
                 "rank_random": 0,
                 "random3_pick1": 0,
+                "tactical_bo3": 0,
+                "bo3": 0,
+                "ban_pick_bo3": 0,
+                "home_away": 0,
                 "players": set(),
             })
             bucket["total"] += 1
@@ -191,6 +229,35 @@ def register_routes(context):
             bucket["date_label"] = day.strftime("%d/%m/%Y")
             match_report_daily.append(bucket)
 
+        series_rows = admin_safe_load("rank_series", lambda: execute_query(db.table("match_series").select("*"), "admin_rank_series", attempts=1).data or [], [])
+        series_games = admin_safe_load("rank_series_games", lambda: execute_query(db.table("match_series_games").select("*"), "admin_rank_series_games", attempts=1).data or [], [])
+        games_by_series = {}
+        for game in series_games:
+            games_by_series.setdefault(str(game.get("series_id") or ""), []).append(game)
+        series_stats = {code: {"series": 0, "completed": 0, "score_2_0": 0, "score_2_1": 0, "draw": 0, "forfeit": 0, "disputed": 0, "rp_added": 0, "rp_removed": 0, "games": 0, "comebacks": 0} for code in report_mode_counts}
+        for row in series_rows:
+            code = normalize_rank_mode_code(row.get("mode_code"))
+            stat = series_stats.setdefault(code, {})
+            stat["series"] = stat.get("series", 0) + 1
+            status = str(row.get("status") or "").lower()
+            if status == "completed": stat["completed"] += 1
+            if status == "disputed": stat["disputed"] += 1
+            score = str(row.get("result_code") or row.get("series_score") or row.get("score") or "")
+            if score in {"2-0", "0-2"}: stat["score_2_0"] += 1
+            elif score in {"2-1", "1-2"}: stat["score_2_1"] += 1
+            if str(row.get("result_code") or "").lower() == "draw": stat["draw"] += 1
+            if row.get("forfeit_user_id") or str(row.get("result_code") or "").lower() == "forfeit": stat["forfeit"] += 1
+            deltas = [int(row.get("rp_player1") or 0), int(row.get("rp_player2") or 0)]
+            stat["rp_added"] += sum(max(0, x) for x in deltas)
+            stat["rp_removed"] += abs(sum(min(0, x) for x in deltas))
+            sgames = games_by_series.get(str(row.get("id") or ""), [])
+            stat["games"] += len(sgames)
+            winners = [g.get("winner_side") for g in sorted(sgames, key=lambda x: int(x.get("game_no") or 0))]
+            if len(winners) >= 3 and winners[0] in {"player1", "player2"} and winners[-2:] == (["player2", "player2"] if winners[0] == "player1" else ["player1", "player1"]): stat["comebacks"] += 1
+        for code, stat in series_stats.items():
+            stat["completion_rate"] = round(stat["completed"] * 100 / stat["series"], 1) if stat["series"] else 0
+            stat["avg_rp"] = round(stat["rp_added"] / stat["completed"], 1) if stat["completed"] else 0
+
         match_report = {
             "range": report_range,
             "range_label": report_range_labels[report_range],
@@ -204,18 +271,20 @@ def register_routes(context):
             "unique_players": len(report_unique_players),
             "confirmed_goals": report_confirmed_goals,
             "positive_rp": report_positive_rp,
-            "rank_random": report_mode_counts["rank_random"],
-            "random3_pick1": report_mode_counts["random3_pick1"],
-            "rank_random_percent": round((report_mode_counts["rank_random"] * 100 / len(report_matches)), 1) if report_matches else 0,
-            "random3_pick1_percent": round((report_mode_counts["random3_pick1"] * 100 / len(report_matches)), 1) if report_matches else 0,
-            "popular_mode": (
-                "Random 3 chọn 1" if report_mode_counts["random3_pick1"] > report_mode_counts["rank_random"]
-                else "Rank Random" if report_mode_counts["rank_random"] > report_mode_counts["random3_pick1"]
-                else "Hai chế độ ngang nhau"
-            ),
+            "mode_counts": report_mode_counts,
+            "mode_rows": [{**get_rank_mode(code), "match_count": report_mode_counts.get(code, 0), "percent": round(report_mode_counts.get(code, 0) * 100 / len(report_matches), 1) if report_matches else 0, **series_stats.get(code, {})} for code in MODE_ORDER],
+            "popular_mode": get_rank_mode(max(report_mode_counts, key=report_mode_counts.get)).get("label") if report_matches else "Chưa có dữ liệu",
         }
 
         raw_users = admin_safe_load("users", list_all_users, [])
+        for mode_row in match_report.get("mode_rows", []):
+            unlocked = 0
+            for user in raw_users:
+                if str(user.get("role") or "player") != "player":
+                    continue
+                if check_rank_mode_eligibility(mode_row.get("code"), user).get("eligible"):
+                    unlocked += 1
+            mode_row["unlocked_players"] = unlocked
         admin_users = admin_safe_load(
             "decorate_users", lambda: decorate_admin_users(raw_users), []
         )
@@ -300,5 +369,7 @@ def register_routes(context):
             maintenance_status=admin_safe_load("maintenance_status", get_maintenance_status, {"closed": False, "countdown": None}),
             match_report=match_report,
             match_report_daily=match_report_daily,
+            rank_mode_configs=admin_safe_load("rank_mode_configs", get_rank_mode_configs, {}),
+            rank_mode_order=MODE_ORDER,
         )
 

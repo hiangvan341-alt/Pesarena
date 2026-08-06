@@ -39,6 +39,7 @@
     <button class="admin-tab-button" type="button" data-admin-tab="passwords">🔑 Quên mật khẩu{% if password_reset_requests %} ({{ password_reset_requests|length }}){% endif %}</button>
     <button class="admin-tab-button" type="button" data-admin-tab="rooms">🚪 Phòng & lời mời</button>
     {% if can_admin('matches_view') %}<button class="admin-tab-button" type="button" data-admin-tab="matches">🎮 Trận đấu</button><button class="admin-tab-button" type="button" data-admin-tab="match-report">📊 Báo cáo trận đấu</button>{% endif %}
+    <button class="admin-tab-button" type="button" data-admin-tab="rank-modes">🏆 Quản lý chế độ Rank</button>
 {% if can_create_test_account or can_import_accounts_csv %}<button class="admin-tab-button" type="button" data-admin-tab="test-data">🧪 Tài khoản test & Import</button>{% endif %}
     {% if can_admin('system_features_manage') or can_admin('announcements_manage') or can_admin('daily_rank_limits_manage') %}<button class="admin-tab-button" type="button" data-admin-tab="system">⚙️ Hệ thống</button>{% endif %}
     {% if can_admin('rp_view') %}<button class="admin-tab-button" type="button" data-admin-tab="rp-tools">📈 Công cụ RP</button>{% endif %}
@@ -424,6 +425,63 @@
     </div>
 </section>
 
+<section class="admin-tab-panel" data-admin-panel="rank-modes">
+    <div class="panel">
+        <div class="admin-section-heading">
+            <div><h2>🏆 Quản lý chế độ Rank</h2><p class="small">Bật/tắt, điều kiện mở khóa và RP được lưu chung trong hệ thống. RP là điểm xếp hạng do hệ thống tự cộng/trừ, không phải đặt cược.</p></div>
+            <span class="admin-count">6 chế độ</span>
+        </div>
+        <form method="post" action="{{ url_for('admin_save_rank_modes') }}">
+            <div class="admin-rank-mode-grid">
+            {% for code in rank_mode_order %}
+                {% set mode = rank_mode_configs.get(code, {}) %}
+                <article class="admin-rank-mode-card">
+                    <div class="admin-rank-mode-head">
+                        <div><h3>{{ mode.label }}</h3><small>{{ code }}</small></div>
+                        <label class="admin-mode-switch"><input type="checkbox" name="{{ code }}__enabled" value="1" {% if mode.enabled %}checked{% endif %}> <span>Bật chế độ</span></label>
+                    </div>
+                    <div class="admin-rank-mode-fields">
+                        <label>RP mở khóa<input type="number" min="0" name="{{ code }}__min_rp" value="{{ mode.min_rp or 0 }}"></label>
+                        <label>Số trận tối thiểu<input type="number" min="0" name="{{ code }}__min_matches" value="{{ mode.min_matches or 0 }}"></label>
+                        <label>Chênh RP tối đa<input type="number" min="0" name="{{ code }}__max_rp_gap" value="{{ mode.max_rp_gap or 0 }}"></label>
+                        {% if code == 'ban_pick_bo3' %}
+                        <label>Kích thước Pool<input type="number" min="6" name="{{ code }}__pool_size" value="{{ mode.pool_size or 20 }}"></label>
+                        <label>Lượt cấm mỗi bên<input type="number" min="0" name="{{ code }}__bans_per_player" value="{{ mode.bans_per_player or 3 }}"></label>
+                        <label>Thời gian cấm (giây)<input type="number" min="5" name="{{ code }}__ban_seconds" value="{{ mode.ban_seconds or 30 }}"></label>
+                        <label>Thời gian chọn (giây)<input type="number" min="5" name="{{ code }}__pick_seconds" value="{{ mode.pick_seconds or 30 }}"></label>
+                        {% endif %}
+                    </div>
+                    {% if mode.series_type != 'single' %}
+                    <details class="admin-rp-details" open>
+                        <summary>Công thức RP Series</summary>
+                        <div class="admin-rank-mode-fields">
+                        {% if code == 'home_away' %}
+                            <label>Thắng 1 + hòa 1<input type="number" name="{{ code }}__rp__one_win_one_draw_win" value="{{ mode.rp.one_win_one_draw_win or 0 }}"></label>
+                            <label>Thua 1 + hòa 1<input type="number" name="{{ code }}__rp__one_win_one_draw_loss" value="{{ mode.rp.one_win_one_draw_loss or 0 }}"></label>
+                            <label>Thắng cả 2 lượt<input type="number" name="{{ code }}__rp__win_both" value="{{ mode.rp.win_both or 0 }}"></label>
+                            <label>Thua cả 2 lượt<input type="number" name="{{ code }}__rp__lose_both" value="{{ mode.rp.lose_both or 0 }}"></label>
+                            <label>Hòa chung cuộc<input type="number" name="{{ code }}__rp__draw" value="{{ mode.rp.draw or 0 }}"></label>
+                        {% else %}
+                            <label>Thắng 2–0<input type="number" name="{{ code }}__rp__win_2_0" value="{{ mode.rp.win_2_0 or 0 }}"></label>
+                            <label>Thua 0–2<input type="number" name="{{ code }}__rp__lose_0_2" value="{{ mode.rp.lose_0_2 or 0 }}"></label>
+                            <label>Thắng 2–1<input type="number" name="{{ code }}__rp__win_2_1" value="{{ mode.rp.win_2_1 or 0 }}"></label>
+                            <label>Thua 1–2<input type="number" name="{{ code }}__rp__lose_1_2" value="{{ mode.rp.lose_1_2 or 0 }}"></label>
+                            <label>Hòa Series<input type="number" name="{{ code }}__rp__draw_1_1" value="{{ mode.rp.draw_1_1 or 0 }}"></label>
+                            <label>Ba trận hòa<input type="number" name="{{ code }}__rp__draw_all" value="{{ mode.rp.draw_all or 0 }}"></label>
+                        {% endif %}
+                            <label>RP người được xử thắng<input type="number" name="{{ code }}__rp__forfeit_win" value="{{ mode.rp.forfeit_win or 0 }}"></label>
+                            <label>RP người bỏ cuộc<input type="number" name="{{ code }}__rp__forfeit_loss" value="{{ mode.rp.forfeit_loss or 0 }}"></label>
+                        </div>
+                    </details>
+                    {% else %}<p class="small">Chế độ trận đơn dùng công thức RP Rank hiện tại.</p>{% endif %}
+                </article>
+            {% endfor %}
+            </div>
+            <div class="admin-rank-mode-save"><button class="btn gold" type="submit">💾 Lưu cấu hình 6 chế độ</button></div>
+        </form>
+    </div>
+</section>
+
 {% if can_admin('matches_view') %}
 <section class="admin-tab-panel" data-admin-panel="match-report">
     <div class="panel">
@@ -460,26 +518,29 @@
             <span class="admin-count">Nhiều hơn: {{ match_report.popular_mode }}</span>
         </div>
         <div class="admin-mode-compare">
+            {% for mode in match_report.mode_rows %}
             <article class="admin-mode-card">
-                <h3>🎲 Rank Random</h3>
-                <span>Quay ngẫu nhiên một cặp đội</span>
-                <strong>{{ match_report.rank_random }} trận</strong>
-                <small>{{ match_report.rank_random_percent }}% tổng số trận</small>
-                <div class="admin-mode-bar"><span style="width:{{ match_report.rank_random_percent }}%"></span></div>
+                <h3>{{ mode.label }}</h3>
+                <span>{{ mode.series_type == 'single' and 'Trận đơn' or 'Series' }}</span>
+                <strong>{{ mode.match_count }} trận · {{ mode.series or 0 }} Series</strong>
+                <small>{{ mode.percent }}% tổng trận · hoàn thành {{ mode.completion_rate or 0 }}%</small>
+                <div class="admin-mode-bar"><span style="width:{{ mode.percent }}%"></span></div>
+                {% if mode.series_type != 'single' %}<small>2–0: {{ mode.score_2_0 or 0 }} · 2–1: {{ mode.score_2_1 or 0 }} · Hòa: {{ mode.draw or 0 }} · Bỏ cuộc: {{ mode.forfeit or 0 }}</small>{% endif %}
             </article>
-            <article class="admin-mode-card">
-                <h3>🃏 Random 3 chọn 1</h3>
-                <span>Mỗi người chọn một đội trong ba lựa chọn</span>
-                <strong>{{ match_report.random3_pick1 }} trận</strong>
-                <small>{{ match_report.random3_pick1_percent }}% tổng số trận</small>
-                <div class="admin-mode-bar"><span style="width:{{ match_report.random3_pick1_percent }}%"></span></div>
-            </article>
+            {% endfor %}
+        </div>
+
+        <div class="table-wrap admin-table-wrap">
+            <table>
+                <thead><tr><th>Chế độ</th><th>Đã mở khóa</th><th>Trận</th><th>Series</th><th>Hoàn thành</th><th>2–0</th><th>2–1</th><th>Hòa</th><th>Bỏ cuộc</th><th>Tranh chấp</th><th>RP cộng</th><th>RP trừ</th><th>RP TB</th><th>Lội ngược dòng</th></tr></thead>
+                <tbody>{% for mode in match_report.mode_rows %}<tr><td><strong>{{ mode.label }}</strong></td><td>{{ mode.unlocked_players or 0 }}</td><td>{{ mode.match_count }}</td><td>{{ mode.series or 0 }}</td><td>{{ mode.completed or 0 }} ({{ mode.completion_rate or 0 }}%)</td><td>{{ mode.score_2_0 or 0 }}</td><td>{{ mode.score_2_1 or 0 }}</td><td>{{ mode.draw or 0 }}</td><td>{{ mode.forfeit or 0 }}</td><td>{{ mode.disputed or 0 }}</td><td>+{{ mode.rp_added or 0 }}</td><td>-{{ mode.rp_removed or 0 }}</td><td>{{ mode.avg_rp or 0 }}</td><td>{{ mode.comebacks or 0 }}</td></tr>{% endfor %}</tbody>
+            </table>
         </div>
 
         <div class="table-wrap admin-table-wrap">
             <table>
                 <thead>
-                    <tr><th>Ngày</th><th>Tổng trận</th><th>Rank Random</th><th>3 chọn 1</th><th>Đã xác nhận</th><th>Đang đá</th><th>Chờ xác nhận</th><th>Tranh chấp</th><th>Đã hủy</th><th>Người tham gia</th></tr>
+                    <tr><th>Ngày</th><th>Tổng</th><th>Random</th><th>3 chọn 1</th><th>Chiến thuật BO3</th><th>BO3</th><th>Cấm chọn BO3</th><th>Lượt đi/về</th><th>Xác nhận</th><th>Đang đá</th><th>Chờ</th><th>Tranh chấp</th><th>Đã hủy</th><th>Người chơi</th></tr>
                 </thead>
                 <tbody>
                 {% for row in match_report_daily %}
@@ -488,6 +549,7 @@
                         <td>{{ row.total }}</td>
                         <td>{{ row.rank_random }}</td>
                         <td>{{ row.random3_pick1 }}</td>
+                        <td>{{ row.tactical_bo3 }}</td><td>{{ row.bo3 }}</td><td>{{ row.ban_pick_bo3 }}</td><td>{{ row.home_away }}</td>
                         <td>{{ row.confirmed }}</td>
                         <td>{{ row.playing }}</td>
                         <td>{{ row.waiting }}</td>
@@ -496,7 +558,7 @@
                         <td>{{ row.player_count }}</td>
                     </tr>
                 {% else %}
-                    <tr><td colspan="10">Chưa có trận đấu trong khoảng thời gian này.</td></tr>
+                    <tr><td colspan="14">Chưa có trận đấu trong khoảng thời gian này.</td></tr>
                 {% endfor %}
                 </tbody>
             </table>

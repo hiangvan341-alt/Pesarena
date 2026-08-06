@@ -1,3 +1,11 @@
+## V1.3.1 — 06/08/2026 21:47 (GMT+7)
+- Thêm tab `Quản lý chế độ Rank` trong Dashboard Admin cho đủ 6 chế độ.
+- Cho phép lưu bật/tắt, RP mở khóa, số trận tối thiểu, chênh RP tối đa và bảng RP Series vào `system_settings`.
+- Bổ sung cấu hình Pool CLB, lượt cấm, thời gian cấm và thời gian chọn cho Cấm chọn CLB BO3.
+- Mở rộng báo cáo đủ 6 chế độ: trận, Series, hoàn thành, 2-0, 2-1, hòa, bỏ cuộc, tranh chấp, RP cộng/trừ, RP trung bình, lội ngược dòng và số người đã mở khóa.
+- Tương thích dữ liệu trận cũ; nếu bảng Series chưa được tạo, trang Admin vẫn hoạt động và hiển thị số liệu Series bằng 0.
+- File sửa: `app.py`, `modules/rank_modes/service.py`, `modules/admin_dashboard_routes.py`, `templates/admin.html`, `static/css/admin_dashboard.css`, `Log.md`.
+
 ## V1.2.6 — 05/08/2026 00:47 (GMT+7)
 - Sửa lỗi tài khoản vẫn bị báo còn trận chưa hoàn tất dù phòng đã bị đóng hoặc không còn tồn tại.
 - Chỉ khóa tạo phòng khi bản ghi trận còn liên kết với một phòng đang hoạt động.

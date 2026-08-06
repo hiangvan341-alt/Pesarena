@@ -2,7 +2,7 @@ import json
 from copy import deepcopy
 from .catalog import DEFAULT_MODE_CONFIGS, MODE_ORDER, RANK_RANDOM, RANDOM3_PICK1
 _CONTEXT={}; SETTING_KEY='rank_mode_configs_v1'
-EXPORTED_NAMES=('get_rank_mode_configs','get_rank_mode','rank_mode_catalog_for_players','check_rank_mode_eligibility','rank_mode_eligibility_for_room','resolve_series_result','calculate_mode_rp','is_series_mode','legacy_team_tier_for_mode','normalize_rank_mode_code','RANK_RANDOM','RANDOM3_PICK1')
+EXPORTED_NAMES=('save_rank_mode_configs','get_rank_mode_configs','get_rank_mode','rank_mode_catalog_for_players','check_rank_mode_eligibility','rank_mode_eligibility_for_room','resolve_series_result','calculate_mode_rp','is_series_mode','legacy_team_tier_for_mode','normalize_rank_mode_code','MODE_ORDER','RANK_RANDOM','RANDOM3_PICK1')
 def configure(context):
  global _CONTEXT; _CONTEXT=context
 def _deep_merge(base, override):
@@ -11,6 +11,18 @@ def _deep_merge(base, override):
  return r
 def normalize_rank_mode_code(value):
  value=str(value or '').strip().lower(); return {'smart_random':RANK_RANDOM,'random':RANK_RANDOM}.get(value,value if value in DEFAULT_MODE_CONFIGS else RANK_RANDOM)
+
+def save_rank_mode_configs(configs):
+ clean={}
+ for code in MODE_ORDER:
+  incoming=(configs or {}).get(code) or {}
+  clean[code]=_deep_merge(DEFAULT_MODE_CONFIGS[code],incoming)
+ execute_query=_CONTEXT.get('execute_query'); db=_CONTEXT.get('db')
+ if not execute_query or db is None: raise RuntimeError('Database chưa sẵn sàng')
+ payload={'setting_key':SETTING_KEY,'setting_value':json.dumps(clean,ensure_ascii=False)}
+ execute_query(db.table('system_settings').upsert(payload,on_conflict='setting_key'),'save_rank_mode_configs',attempts=2)
+ return clean
+
 def get_rank_mode_configs():
  configs=deepcopy(DEFAULT_MODE_CONFIGS); execute_query=_CONTEXT.get('execute_query'); db=_CONTEXT.get('db')
  if not execute_query or db is None: return configs
