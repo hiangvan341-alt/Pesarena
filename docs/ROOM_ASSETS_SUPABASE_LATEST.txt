@@ -1,6 +1,4 @@
 Bucket: pes-assets
-Upload folder: room-assets/v1.3.17
+Upload folder: room-assets/v1.3.18
 Base URL:
-https://wlnvdfghatgeygecwrqb.supabase.co/storage/v1/object/public/pes-assets/room-assets/v1.3.17
-
-Không còn upload light-effect-blue.webp và light-effect-red.webp.
+https://wlnvdfghatgeygecwrqb.supabase.co/storage/v1/object/public/pes-assets/room-assets/v1.3.18

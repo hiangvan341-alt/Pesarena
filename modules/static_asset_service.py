@@ -37,7 +37,7 @@ def luckybox_asset_base_url() -> str:
 
 DEFAULT_ROOM_ASSET_BASE_URL = (
     "https://wlnvdfghatgeygecwrqb.supabase.co/storage/v1/object/public/"
-    "pes-assets/room-assets/v1.3.17"
+    "pes-assets/room-assets/v1.3.18"
 )
 
 

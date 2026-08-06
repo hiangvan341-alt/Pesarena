@@ -1,11 +1,9 @@
-BƯỚC 1: Vào Supabase > Storage > mở bucket pes-assets.
-BƯỚC 2: Upload thư mục room-assets nằm bên trong UPLOAD_VAO_BUCKET_pes-assets.
-KHÔNG upload thư mục UPLOAD_VAO_BUCKET_pes-assets.
+BUCKET: pes-assets
 
-Sau khi upload, đường dẫn phải là:
-pes-assets/room-assets/v1.3.17/...
+UPLOAD THU MUC:
+room-assets
 
-Bản V1.3.17 KHÔNG còn dùng hai file:
-- light-effect-blue.webp
-- light-effect-red.webp
-Bạn có thể xóa hai file này trong folder v1.3.16. Các folder phiên bản cũ không còn được web gọi tới; có thể giữ làm backup hoặc xóa cả folder cũ.
+Sau khi upload, file nền toàn phòng phải nằm tại:
+pes-assets/room-assets/v1.3.18/room-texture-dark.webp
+
+Không upload thư mục UPLOAD_VAO_BUCKET_pes-assets; chỉ upload folder room-assets bên trong.

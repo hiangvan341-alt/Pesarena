@@ -1,3 +1,11 @@
+## V1.3.18 - 2026-08-07
+
+- Dùng `room-texture-dark.webp` làm nền toàn bộ khu phòng đấu.
+- Bỏ nền mờ/đục ở card chế độ; thay bằng viền Neon tím, xanh và gold.
+- Tăng kích thước emblem chế độ trung tâm và icon của 6 chế độ.
+- Chuyển URL Supabase mặc định sang `pes-assets/room-assets/v1.3.18`.
+- Không thay đổi API, polling hoặc luồng phòng đấu.
+
 ## V1.3.17 - 2026-08-07
 
 - Bỏ hoàn toàn `light-effect-blue.webp` và `light-effect-red.webp` khỏi CSS, template, asset local và gói upload Supabase.
