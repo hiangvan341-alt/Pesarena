@@ -1,3 +1,12 @@
+# PES Arena V1.3.4 — Fix UI MASTER 100%
+
+- Sửa `room-arena-frame` còn kế thừa `min-height: 720px` từ CSS cũ.
+- Khung thi đấu desktop còn 405px và dải 6 chế độ luôn nằm ngay phía dưới ở zoom 100%.
+- Thu gọn topbar riêng trang `room_detail`, không ảnh hưởng trang khác.
+- Không dùng CSS zoom/transform scale, không thêm polling hoặc JavaScript.
+- CSS mới chỉ nằm trong `body[data-page="room_detail"]` và `.room-layout-v137`.
+- Không cần chạy SQL mới.
+
 ## V1.3.1 — 06/08/2026 21:47 (GMT+7)
 - Thêm tab `Quản lý chế độ Rank` trong Dashboard Admin cho đủ 6 chế độ.
 - Cho phép lưu bật/tắt, RP mở khóa, số trận tối thiểu, chênh RP tối đa và bảng RP Series vào `system_settings`.
