@@ -1,0 +1,7 @@
+PES Arena V1.3.6 - Upload asset phòng đấu
+
+1. Tạo/ dùng bucket public hiện tại trên Supabase Storage.
+2. Upload toàn bộ file trong static/assets/room_v2/ vào room-assets/v1.3.6/.
+3. Danh sách đích nằm trong ROOM_V2_SUPABASE_ASSETS.csv.
+4. Bản này dùng local static làm fallback nên chạy ngay cả khi chưa upload.
+5. Không có SQL mới.

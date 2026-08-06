@@ -1,0 +1,15 @@
+local_path,remote_path,content_type
+static/assets/room_v2/light-effect-blue.webp,room-assets/v1.3.6/light-effect-blue.webp,image/webp
+static/assets/room_v2/light-effect-red.webp,room-assets/v1.3.6/light-effect-red.webp,image/webp
+static/assets/room_v2/modes/ban_pick_bo3.webp,room-assets/v1.3.6/modes/ban_pick_bo3.webp,image/webp
+static/assets/room_v2/modes/bo3.webp,room-assets/v1.3.6/modes/bo3.webp,image/webp
+static/assets/room_v2/modes/home_away.webp,room-assets/v1.3.6/modes/home_away.webp,image/webp
+static/assets/room_v2/modes/random3_pick1.webp,room-assets/v1.3.6/modes/random3_pick1.webp,image/webp
+static/assets/room_v2/modes/rank_random.webp,room-assets/v1.3.6/modes/rank_random.webp,image/webp
+static/assets/room_v2/modes/tactical_bo3.webp,room-assets/v1.3.6/modes/tactical_bo3.webp,image/webp
+static/assets/room_v2/parsec-logo.webp,room-assets/v1.3.6/parsec-logo.webp,image/webp
+static/assets/room_v2/pes-arena-room-logo.webp,room-assets/v1.3.6/pes-arena-room-logo.webp,image/webp
+static/assets/room_v2/share-link.webp,room-assets/v1.3.6/share-link.webp,image/webp
+static/assets/room_v2/stadium-blue.webp,room-assets/v1.3.6/stadium-blue.webp,image/webp
+static/assets/room_v2/stadium-red.webp,room-assets/v1.3.6/stadium-red.webp,image/webp
+static/assets/room_v2/vs-gold-emblem.webp,room-assets/v1.3.6/vs-gold-emblem.webp,image/webp

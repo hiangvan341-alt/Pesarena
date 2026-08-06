@@ -1,0 +1,24 @@
+PES Arena V1.3.7 - Mapping bộ logo WebP do người dùng cung cấp
+
+Thanh tiêu đề:
+- Screenshot_781-removebg-preview.webp -> pes-arena-room-logo.webp
+- Screenshot_782-removebg-preview.webp -> vs-gold-emblem.webp
+
+Card 6 chế độ:
+- Screenshot_785-removebg-preview.webp -> rank_random.webp
+- Screenshot_786-removebg-preview.webp -> random3_pick1.webp
+- Screenshot_805-removebg-preview.webp -> tactical_bo3.webp
+- Screenshot_788-removebg-preview.webp -> bo3.webp
+- Screenshot_789-removebg-preview.webp -> ban_pick_bo3.webp
+- Screenshot_790-removebg-preview.webp -> home_away.webp
+
+Emblem card chế độ trung tâm:
+- rank_random: Screenshot_785
+- random3_pick1: Screenshot_795
+- tactical_bo3: Screenshot_805
+- bo3: Screenshot_788
+- ban_pick_bo3: Screenshot_789
+- home_away: Screenshot_790
+
+Các file gốc còn lại được giữ trong source_user_logo để có thể thay đổi mapping sau này.
+Các ảnh nút có sẵn trong bộ logo không được dùng làm nền nút vì nút của hệ thống có nội dung/trạng thái động; phần nút tiếp tục dùng CSS và API hiện tại.

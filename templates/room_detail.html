@@ -19,7 +19,7 @@
             </div>
         </div>
         <div class="room-master-brand" aria-label="PES Arena">
-            <span aria-hidden="true"></span><strong>PES ARENA</strong><span aria-hidden="true"></span>
+            <img src="{{ static_asset('assets/room_v2/pes-arena-room-logo.webp') }}" alt="PES ARENA">
         </div>
         {% if room.status == 'waiting_ready' and not room.has_guest and (room_room_viewer_is_host or current_user.role == 'admin') %}
         <div class="room-stage-share-wrap">
@@ -28,7 +28,7 @@
                     type="button"
                     data-share-path="{{ url_for('room_join_shared', room_id=room.id) }}"
                     aria-label="Copy link chia sẻ phòng đấu">
-                <span class="room-share-icon" aria-hidden="true">🔗</span>
+                <span class="room-share-icon" aria-hidden="true"><img src="{{ static_asset('assets/room_v2/share-link.webp') }}" alt=""></span>
                 <span class="room-share-copy">
                     <strong>Chia sẻ phòng</strong>
                     <small>Copy link tham gia</small>
@@ -76,7 +76,7 @@
                     <strong>{{ active_rank_mode.label if active_rank_mode else 'Rank thường Random' }}</strong>
                     <small>{% if selected_rank_mode == 'rank_random' %}Mỗi bên được random 1 CLB phù hợp để thi đấu.{% elif selected_rank_mode == 'random3_pick1' %}Mỗi người nhận 3 CLB và bí mật chọn 1 CLB.{% elif selected_rank_mode == 'tactical_bo3' %}Dùng 3 CLB khác nhau, ai thắng 2 trận trước sẽ thắng Series.{% elif selected_rank_mode == 'bo3' %}Thi đấu tối đa 3 trận, ai thắng 2 trận trước sẽ thắng Series.{% elif selected_rank_mode == 'ban_pick_bo3' %}Cấm và chọn CLB trong Pool chung trước khi đấu BO3.{% else %}Thi đấu đúng 2 lượt và xét tổng tỷ số chung cuộc.{% endif %}</small>
                 </div>
-                <div class="room-master-mode-emblem" aria-hidden="true"><img src="{{ static_asset('icons/rank_modes/' ~ selected_rank_mode ~ '.svg') }}" alt=""></div>
+                <div class="room-master-mode-emblem" aria-hidden="true"><img src="{{ static_asset('assets/room_v2/emblems/' ~ selected_rank_mode ~ '.webp') }}" alt=""></div>
                 <div class="room-master-unlock-pill">{% if active_rank_mode and active_rank_mode.eligible %}✓ Đã mở khóa{% else %}🔒 Chưa mở khóa{% endif %}</div>
                 <div class="room-master-room-ready">
                     <span>{% if room.has_guest %}✓ Phòng đã sẵn sàng{% else %}Đang chờ đối thủ{% endif %}</span>
@@ -189,7 +189,7 @@
                     </div>
                     {% endif %}
                 {% else %}
-                    <img class="room-center-vs-image" src="{{ asset_url('vs.webp') }}" alt="VS" loading="eager">
+                    <img class="room-center-vs-image" src="{{ static_asset('assets/room_v2/vs-gold-emblem.webp') }}" alt="VS" loading="eager">
                     {% if room.status == 'playing' and room.match_mode != 'friendly' and (room_room_viewer_is_host or current_user.role == 'admin') %}
                         <div class="room-center-score-panel">
                             <h3 class="room-score-title">Kết quả trận đấu</h3>
@@ -333,7 +333,7 @@
                     {% endif %}
                 {% endif %}
             {% else %}
-                <img class="room-center-vs-image" src="{{ asset_url('vs.webp') }}" alt="VS" loading="eager">
+                <img class="room-center-vs-image" src="{{ static_asset('assets/room_v2/vs-gold-emblem.webp') }}" alt="VS" loading="eager">
                 {% if room_room_viewer_is_host or current_user.role == 'admin' %}
                 <div class="room-quick-match-row room-action-zone">
                     {% if system_features.get('quick_match_enabled', true) %}
@@ -468,9 +468,9 @@
             {% for mode in rank_mode_catalog %}
             <form method="post" action="{{ url_for('room_select_ranked_mode', room_id=room.id) }}" data-room-async="1" class="room-master-mode-form">
                 <input type="hidden" name="rank_mode" value="{{ mode.code }}">
-                <button class="room-master-mode-card {% if selected_rank_mode == mode.code %}is-selected{% endif %} {% if not mode.eligible %}is-locked{% endif %}" type="submit" {% if not mode.eligible or not (room_room_viewer_is_host or current_user.role == 'admin') %}disabled{% endif %} title="{{ mode.lock_reasons|join(' • ') if not mode.eligible else mode.label }}">
+                <button class="room-master-mode-card {% if selected_rank_mode == mode.code %}is-selected{% endif %} {% if not mode.eligible %}is-locked{% endif %}" data-mode="{{ mode.code }}" type="submit" {% if not mode.eligible or not (room_room_viewer_is_host or current_user.role == 'admin') %}disabled{% endif %} title="{{ mode.lock_reasons|join(' • ') if not mode.eligible else mode.label }}">
                     <span class="room-master-card-number">{{ loop.index }}</span>
-                    <span class="room-master-card-icon" aria-hidden="true"><img src="{{ static_asset('icons/rank_modes/' ~ mode.code ~ '.svg') }}" alt=""></span>
+                    <span class="room-master-card-icon" aria-hidden="true"><img src="{{ static_asset('assets/room_v2/modes/' ~ mode.code ~ '.webp') }}" alt=""></span>
                     <strong>{% if mode.code == 'ban_pick_bo3' %}Cấm chọn CLB{% else %}{{ mode.short_label }}{% endif %}</strong>
                     <small>{% if mode.eligible %}✓ Đã mở khóa{% else %}🔒 {{ mode.lock_reasons[0] }}{% endif %}</small>
                 </button>

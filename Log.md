@@ -1,3 +1,12 @@
+# PES Arena V1.3.6 — Room UI Asset Pack
+
+- Ngày: 2026-08-06 22:45 (Asia/Bangkok)
+- Dựa trên: V1.3.5 Arena Room V2 UI MASTER.
+- Tạo đủ asset WebP: logo phòng đấu, nền sân xanh/đỏ, light effect xanh/đỏ, VS emblem, Parsec, chia sẻ phòng, 6 icon chế độ.
+- Viết lại CSS phòng đấu dưới namespace `.arena-room-v2`: layout, card, nút, typography, grid, spacing, badge, Tổng điểm và hệ thống khung neon.
+- Giữ nguyên API, form, polling, sidebar, header và các module ngoài phòng đấu.
+- Asset có thể dùng local ngay; chuẩn bị sẵn cấu trúc để tải lên Supabase Storage.
+
 # PES Arena V1.3.5 — Arena Room V2
 
 - Ngày: 2026-08-06 (Asia/Bangkok)
@@ -294,3 +303,28 @@
 - Loại bỏ khối CSS UI MASTER bị lặp hai lần.
 - Thêm breakpoint theo chiều cao màn hình để desktop zoom 100% nhìn được khu thi đấu và 6 chế độ.
 - Không thay đổi API, polling, luồng tạo phòng/mời đấu/sẵn sàng/thoát phòng.
+
+## V1.3.7 - 2026-08-06 23:08 (Asia/Bangkok)
+
+### Nội dung
+- Ghép bộ logo WebP do người dùng cung cấp vào UI phòng đấu V2.
+- Thay logo PES ARENA ở thanh tiêu đề.
+- Thay VS emblem.
+- Thay icon đủ 6 chế độ Rank.
+- Tách icon card và emblem lớn ở card chế độ trung tâm để đúng tỷ lệ từng logo.
+- Giữ nguyên nút hành động bằng CSS vì nội dung và trạng thái nút là dữ liệu động.
+- Giữ toàn bộ file WebP gốc trong `static/assets/room_v2/source_user_logo/`.
+
+### File sửa
+- `app.py`
+- `templates/room_detail.html`
+- `static/css/arena_room_v2.css`
+- `static/assets/room_v2/pes-arena-room-logo.webp`
+- `static/assets/room_v2/vs-gold-emblem.webp`
+- `static/assets/room_v2/modes/*.webp`
+- `static/assets/room_v2/emblems/*.webp`
+- `static/assets/room_v2/USER_LOGO_MAPPING.txt`
+
+### So với V1.3.6
+- V1.3.6 dùng bộ asset minh họa tự tạo.
+- V1.3.7 dùng đúng bộ logo WebP người dùng đã chuẩn bị và căn chỉnh riêng theo từng vị trí UI.
