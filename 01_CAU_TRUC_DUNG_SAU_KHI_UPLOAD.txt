@@ -1,0 +1,15 @@
+pes-assets/
+└── room-assets/
+    └── v1.3.13/
+        ├── stadium-blue.webp
+        ├── stadium-red.webp
+        ├── center-stadium.webp
+        ├── room-texture-blue.webp
+        ├── light-effect-blue.webp
+        ├── light-effect-red.webp
+        ├── pes-arena-room-logo.webp
+        ├── vs-gold-emblem.webp
+        ├── parsec-logo.webp
+        ├── share-link.webp
+        ├── modes/
+        └── emblems/

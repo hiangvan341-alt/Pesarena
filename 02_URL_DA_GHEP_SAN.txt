@@ -1,0 +1,11 @@
+URL goc da ghep trong code:
+https://wlnvdfghatgeygecwrqb.supabase.co/storage/v1/object/public/pes-assets/room-assets/v1.3.13
+
+Vi du:
+https://wlnvdfghatgeygecwrqb.supabase.co/storage/v1/object/public/pes-assets/room-assets/v1.3.13/stadium-blue.webp
+https://wlnvdfghatgeygecwrqb.supabase.co/storage/v1/object/public/pes-assets/room-assets/v1.3.13/stadium-red.webp
+https://wlnvdfghatgeygecwrqb.supabase.co/storage/v1/object/public/pes-assets/room-assets/v1.3.13/center-stadium.webp
+https://wlnvdfghatgeygecwrqb.supabase.co/storage/v1/object/public/pes-assets/room-assets/v1.3.13/room-texture-blue.webp
+
+Khong can tao bien Vercel neu su dung dung folder v1.3.13.
+ROOM_ASSET_BASE_URL chi dung khi muon ghi de URL nay.
