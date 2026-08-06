@@ -242,3 +242,13 @@
 - `static/style.css`
 - `docs/update_rank_modes_core_v1_3_0.sql`
 - `test_rank_modes_core_v130.py`
+
+## V1.3.2 - UI MASTER phòng đấu + sắp xếp SQL
+- Áp dụng bố cục phòng đấu theo ảnh UI MASTER đã chốt.
+- Thêm PES ARENA nhỏ gọn ở giữa thanh đầu.
+- Giữ khu chủ phòng xanh, đối thủ đỏ, chế độ đang chọn tím, trạng thái hợp lệ xanh lá.
+- Thêm thẻ thông tin chế độ ở giữa và 6 thẻ chế độ nhỏ phía dưới.
+- Chỉ hiển thị Tổng điểm, không dùng OVR.
+- Giữ nguyên API chọn chế độ `room_select_ranked_mode` và cơ chế AJAX hiện có.
+- CSS mới giới hạn trong `.room-layout-v137`, không dùng selector toàn cục.
+- Gom toàn bộ SQL cũ vào `docs/sql_archive/`; chỉ để `docs/PES_ARENA_UPDATE_LATEST.sql` ở ngoài.
