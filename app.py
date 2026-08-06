@@ -559,6 +559,10 @@ SYSTEM_FEATURE_DEFAULTS = {
     "friendly_enabled": True, "rank_standard_enabled": True, "friendly_random3_enabled": True, "lobby_chat_enabled": True, "room_chat_enabled": True,
     "registration_codes_enabled": True, "announcements_enabled": True, "quick_match_enabled": True,
     "repeat_opponent_rp_enabled": True,
+    "rank_tactical_bo3_enabled": True,
+    "rank_bo3_enabled": True,
+    "rank_ban_pick_bo3_enabled": True,
+    "rank_home_away_enabled": True,
 }
 
 def _admin_permissions(user):
@@ -6236,6 +6240,7 @@ from modules import zcoin as _zcoin_module
 from modules import daily_checkin as _daily_checkin_module
 from modules.parsec_room import service as _parsec_room_service
 from modules import gift_codes as _gift_codes_module
+from modules import rank_modes as _rank_modes_module
 
 for _service_module in (
     _notification_service,
@@ -6247,6 +6252,7 @@ for _service_module in (
     _zcoin_module,
     _daily_checkin_module,
     _gift_codes_module,
+    _rank_modes_module,
     _parsec_room_service,
     _match_result_service,
     _ranking_rebuild_service,

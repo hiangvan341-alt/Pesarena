@@ -150,8 +150,13 @@ def register_routes(context):
             daily_limit_message = daily_rank_block_message(
                 room.get("host_user_id"), room.get("guest_user_id")
             )
+        host_player = get_user(room.get("host_user_id")) or {}
+        guest_player = get_user(room.get("guest_user_id")) if room.get("guest_user_id") else None
+        selected_rank_mode = normalize_rank_mode_code(room.get("team_tier"))
         return {
             "room": room,
+            "rank_mode_catalog": rank_mode_catalog_for_players(host_player, guest_player),
+            "selected_rank_mode": selected_rank_mode,
             "initial_room_state_key": build_room_state_key(room),
             "friendly_tiers": get_available_team_tiers(),
             "room_head_to_head": build_room_head_to_head(room),

@@ -165,21 +165,20 @@ def register_routes(context):
         if "__RANK_MODE_LOCKED__" in (room.get("note") or ""):
             flash("Lượt đá tiếp giữ nguyên chế độ của trận trước, không cần chọn lại.", "warning")
             return redirect(url_for("room_detail", room_id=room_id))
-        selected_mode = (request.form.get("rank_mode") or SMART_RANDOM_MODE).strip()
-        if not system_feature_enabled("rank_standard_enabled"):
-            selected_mode = FRIENDLY_RANDOM3_MODE
-        if selected_mode == FRIENDLY_RANDOM3_MODE:
-            if not system_feature_enabled("friendly_random3_enabled"):
-                flash("Chế độ Random 3 chọn 1 đang tạm tắt.", "warning")
-                return redirect(url_for("room_detail", room_id=room_id))
-            label = "Random 3 chọn 1"
-        else:
-            selected_mode = SMART_RANDOM_MODE
-            label = "Rank thường"
+        selected_mode = normalize_rank_mode_code(request.form.get("rank_mode") or RANK_RANDOM)
+        host = get_user(room.get("host_user_id")) or {}
+        guest = get_user(room.get("guest_user_id")) if room.get("guest_user_id") else None
+        eligibility = rank_mode_eligibility_for_room(selected_mode, host, guest)
+        if not eligibility.get("eligible"):
+            flash("Không thể chọn chế độ: " + "; ".join(eligibility.get("reasons") or []), "warning")
+            return redirect(url_for("room_detail", room_id=room_id))
+        mode_config = get_rank_mode(selected_mode)
+        label = mode_config.get("label") or selected_mode
+        selected_legacy_tier = legacy_team_tier_for_mode(selected_mode)
         execute_query(
             db.table("match_rooms").update({
                 "match_mode": MATCH_MODE_RANKED,
-                "team_tier": selected_mode,
+                "team_tier": selected_legacy_tier,
                 "friendly_tier": None,
                 "note": f"Chủ phòng đã chọn chế độ {label}. Chờ khách Sẵn sàng.",
                 "updated_at": now_iso(),

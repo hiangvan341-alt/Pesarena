@@ -67,29 +67,22 @@
                 <div class="room-center-mode-title">CHẾ ĐỘ THI ĐẤU</div>
                 {% set rematch_mode_locked = '__RANK_MODE_LOCKED__' in (room.note or '') %}
                 {% if rematch_mode_locked %}
-                <div class="room-center-mode-note">Đã chọn: <strong>{% if room.team_tier == 'random3_pick1' or not system_features.rank_standard_enabled %}Random 3 chọn 1{% else %}Rank thường{% endif %}</strong>{% if room.has_guest %} • Chờ khách Sẵn sàng{% else %} • Mời đối thủ vào phòng{% endif %}</div>
+                <div class="room-center-mode-note">Đã chọn: <strong>{{ (rank_mode_catalog | selectattr('code', 'equalto', selected_rank_mode) | map(attribute='label') | first) or 'Rank thường Random' }}</strong>{% if room.has_guest %} • Chờ khách Sẵn sàng{% else %} • Mời đối thủ vào phòng{% endif %}</div>
                 {% elif room_room_viewer_is_host or current_user.role == "admin" %}
-                <div class="room-center-mode-actions{% if not system_features.rank_standard_enabled or not system_features.friendly_random3_enabled %} room-center-mode-actions--single{% endif %}">
-                    {% if system_features.rank_standard_enabled %}
-                    <form method="post" action="{{ url_for('room_select_ranked_mode', room_id=room.id) }}" data-room-async="1">
-                        <input type="hidden" name="rank_mode" value="smart_random">
-                        <button class="room-mode-select-btn mode-ranked {% if room.team_tier != 'random3_pick1' %}selected{% endif %}" type="submit">
-                            <strong>RANK THƯỜNG</strong><small>Random trực tiếp 1 CLB</small>
+                <div class="rank-mode-compact-grid">
+                    {% for mode in rank_mode_catalog %}
+                    <form method="post" action="{{ url_for('room_select_ranked_mode', room_id=room.id) }}" data-room-async="1" class="rank-mode-compact-form">
+                        <input type="hidden" name="rank_mode" value="{{ mode.code }}">
+                        <button class="rank-mode-compact-btn {% if selected_rank_mode == mode.code %}selected{% endif %} {% if not mode.eligible %}locked{% endif %}" type="submit" {% if not mode.eligible %}disabled{% endif %} title="{{ mode.lock_reasons|join(' • ') if not mode.eligible else mode.label }}">
+                            <span>{{ mode.short_label }}</span>
+                            {% if not mode.eligible %}<small>🔒 {{ mode.lock_reasons[0] }}</small>{% else %}<small>{% if mode.series_type == 'single' %}1 trận{% elif mode.max_games == 2 %}2 lượt{% else %}Tối đa {{ mode.max_games }} trận{% endif %}</small>{% endif %}
                         </button>
                     </form>
-                    {% endif %}
-                    {% if system_features.friendly_random3_enabled %}
-                    <form method="post" action="{{ url_for('room_select_ranked_mode', room_id=room.id) }}" data-room-async="1">
-                        <input type="hidden" name="rank_mode" value="random3_pick1">
-                        <button class="room-mode-select-btn mode-random3 {% if room.team_tier == 'random3_pick1' %}selected{% endif %}" type="submit">
-                            <strong>RANDOM 3 CHỌN 1</strong><small>Nhận 3 CLB theo Rank</small>
-                        </button>
-                    </form>
-                    {% endif %}
+                    {% endfor %}
                 </div>
-                <div class="room-center-mode-note">Đã chọn: <strong>{% if room.team_tier == 'random3_pick1' or not system_features.rank_standard_enabled %}Random 3 chọn 1{% else %}Rank thường{% endif %}</strong>{% if room.has_guest %} • Chờ khách Sẵn sàng{% else %} • Mời đối thủ vào phòng{% endif %}</div>
+                <div class="room-center-mode-note">Đã chọn: <strong>{{ (rank_mode_catalog | selectattr('code', 'equalto', selected_rank_mode) | map(attribute='label') | first) or 'Rank thường Random' }}</strong>{% if room.has_guest %} • Chờ khách Sẵn sàng{% else %} • Mời đối thủ vào phòng{% endif %}</div>
                 {% else %}
-                <div class="room-center-mode-note">Chủ phòng đã chọn <strong>{% if room.team_tier == 'random3_pick1' or not system_features.rank_standard_enabled %}Random 3 chọn 1{% else %}Rank thường{% endif %}</strong></div>
+                <div class="room-center-mode-note">Chủ phòng đã chọn <strong>{{ (rank_mode_catalog | selectattr('code', 'equalto', selected_rank_mode) | map(attribute='label') | first) or 'Rank thường Random' }}</strong></div>
                 {% endif %}
             </div>
             {% elif room.status == "waiting_ready" and room.friendly_random3_active %}
@@ -213,11 +206,11 @@
                         </div>
                         {% endif %}
                         {% if (room_room_viewer_is_host or current_user.role == 'admin') and room.guest_ready and not daily_rank_limit_blocked %}
-                        <form class="room-center-random-form" method="post" action="{% if room.team_tier == 'random3_pick1' %}{{ url_for('room_start_random3_friendly', room_id=room.id) }}{% else %}{{ url_for('room_random_teams', room_id=room.id) }}{% endif %}" onsubmit="const b=this.querySelector('button'); b.disabled=true; b.classList.add('loading');">
-                            {% if room.team_tier != 'random3_pick1' %}<input type="hidden" name="match_mode" value="ranked">{% endif %}
-                            <button class="room-center-random-trigger {% if room.team_tier == 'random3_pick1' %}random3-trigger{% endif %}" type="submit">
+                        <form class="room-center-random-form" method="post" action="{% if selected_rank_mode == 'random3_pick1' %}{{ url_for('room_start_random3_friendly', room_id=room.id) }}{% else %}{{ url_for('room_random_teams', room_id=room.id) }}{% endif %}" onsubmit="const b=this.querySelector('button'); b.disabled=true; b.classList.add('loading');">
+                            {% if selected_rank_mode != 'random3_pick1' %}<input type="hidden" name="match_mode" value="ranked">{% endif %}
+                            <button class="room-center-random-trigger {% if selected_rank_mode == 'random3_pick1' %}random3-trigger{% endif %}" type="submit" {% if selected_rank_mode not in ['rank_random', 'random3_pick1'] %}disabled title="Cần chạy SQL Series và nối luồng trận con trước khi mở thi đấu"{% endif %}>
                                 <span class="room-center-random-title room-random-button-label">QUAY QUÂN</span>
-                                <span class="room-center-random-sub">{% if room.team_tier == 'random3_pick1' %}Random 3 CLB cho mỗi người{% else %}Random trực tiếp 1 CLB cho mỗi bên{% endif %}</span>
+                                <span class="room-center-random-sub">{% if selected_rank_mode == 'random3_pick1' %}Random 3 CLB cho mỗi người{% elif selected_rank_mode == 'rank_random' %}Random trực tiếp 1 CLB cho mỗi bên{% else %}Lõi Series đã được cài đặt{% endif %}</span>
                             </button>
                         </form>
                         {% else %}

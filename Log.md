@@ -211,3 +211,26 @@
 - Polling và watchdog lời mời tiếp tục chạy trên trang `/room/...`.
 - Không thay đổi điều kiện backend: phòng đủ hai người hoặc đã thi đấu vẫn không nhận lời mời mới.
 - Kiểm tra hồi quy toàn bộ: 166/166 test đạt.
+
+## V1.3.0 — 06/08/2026 21:37 (GMT+7)
+
+### Nội dung
+- Thêm lõi cấu hình chung cho 6 chế độ Rank: Rank thường Random, Random 3 chọn 1, Đấu chiến thuật BO3, BO3, Cấm chọn CLB BO3, Lượt đi – lượt về.
+- Chuẩn hóa điều kiện mở khóa: RP tối thiểu, số trận Rank, chênh lệch RP.
+- Chuẩn hóa bảng RP Series 2–0, 2–1, hòa và bỏ cuộc; RP chỉ trả về để áp dụng một lần khi Series kết thúc.
+- Thêm hàm xác định kết quả BO3 và tổng tỷ số hai lượt; không áp dụng bàn thắng sân khách.
+- Thêm giao diện chọn 6 chế độ dạng lưới gọn, có khóa và lý do khóa.
+- Thêm SQL nền cho Series, trận con và lịch sử cấm/chọn CLB.
+- Giữ nguyên luồng đang hoạt động của Rank thường và Random 3 chọn 1.
+- Bốn chế độ Series được khóa nút bắt đầu cho đến khi chạy SQL và nối hoàn chỉnh luồng trận con, tránh tạo nhầm trận Rank thường.
+
+### File chính
+- `modules/rank_modes/catalog.py`
+- `modules/rank_modes/service.py`
+- `modules/rank_modes/__init__.py`
+- `modules/room_team_routes.py`
+- `modules/room_access_routes.py`
+- `templates/room_detail.html`
+- `static/style.css`
+- `docs/update_rank_modes_core_v1_3_0.sql`
+- `test_rank_modes_core_v130.py`
