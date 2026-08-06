@@ -1,10 +1,9 @@
-# PES Arena V1.3.15
-
-- Admin tự động vượt qua điều kiện RP và số trận của cả 6 chế độ Rank.
-- Thêm quyền mở khóa từng chế độ theo từng tài khoản trong tab Quản lý chế độ Rank.
-- Quyền mở riêng chỉ bỏ qua RP/số trận; công tắc tắt toàn hệ thống và giới hạn chênh RP vẫn áp dụng.
-- Thêm bảng `rank_mode_user_unlocks` trong `docs/PES_ARENA_UPDATE_LATEST.sql`.
-- Không thay đổi API phòng đấu, RP, Sẵn sàng, Thoát phòng hoặc polling.
+## V1.3.16 - 2026-08-07
+- Bỏ đường kẻ ngang legacy trong card Chủ phòng/Đối thủ (`border-bottom` của `.room-player-heading-plain`).
+- Thay nền khu VS bằng WebP sân ngang mới và giảm lớp phủ tối để ảnh hiện rõ.
+- Thay texture nền khu chế độ bằng WebP người dùng cung cấp.
+- Đổi đường dẫn Supabase sang `pes-assets/room-assets/v1.3.16` để tránh cache bản cũ.
+- Không đổi API, route, polling hoặc luồng sẵn sàng/thoát phòng.
 
 # PES Arena V1.3.14
 
