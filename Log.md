@@ -1,3 +1,18 @@
+## V1.3.24 — Nút kính tối viền neon, đồng bộ hai phía và ổn định lịch sử phòng
+
+- Thay hai lớp CSS nút V1.3.21/V1.3.23 bị ghi đè lẫn nhau bằng một lớp duy nhất, giới hạn trong `.arena-room-v2 .arena-btn`; khu Parsec không bị ảnh hưởng.
+- Chuyển nút hành động sang nền kính tối, viền neon theo trạng thái, chữ trắng rõ như mẫu; cân bằng kích thước cặp `Xác Nhận / Không Đồng Ý`.
+- Đồng bộ chiều cao và bố cục nút của chủ phòng, đối thủ, nút gửi kết quả, sẵn sàng và thoát phòng.
+- Đồng bộ fragment cập nhật realtime `_room_live_content.html` với giao diện ban đầu: giữ đủ 6 chế độ sau polling, không quay về giao diện 2 chế độ cũ.
+- Lịch sử đấu luôn hiện khi phòng đã đủ 2 người; khi chưa có trận hiển thị trạng thái trống thay vì biến mất.
+- Cập nhật `APP_VERSION` thành `1.3.24`.
+
+### File đã sửa
+- `app.py`
+- `static/css/arena_room_v2.css`
+- `templates/room_detail.html`
+- `templates/_room_live_content.html`
+
 
 ## V1.3.23 — Làm sáng và đồng bộ nút phòng đấu
 - Kiểm tra xung đột giữa `static/style.css` và `static/css/arena_room_v2.css`.

@@ -654,90 +654,6 @@
   box-shadow: none !important;
 }
 
-/* V1.3.21 — unified room button system. Parsec controls are intentionally excluded
-   because the Parsec panel template does not receive the .arena-btn class. */
-.arena-room-v2 .arena-btn {
-    display:inline-flex;
-    align-items:center;
-    justify-content:center;
-    gap:7px;
-    min-height:44px;
-    padding:0 18px;
-    border:1px solid rgba(101,129,188,.48) !important;
-    border-radius:13px;
-    background:linear-gradient(180deg,rgba(17,29,55,.98),rgba(8,16,34,.99)) !important;
-    color:#f5f8ff !important;
-    font-family:inherit;
-    font-size:13px;
-    font-weight:850;
-    line-height:1.15;
-    text-align:center;
-    text-decoration:none;
-    white-space:normal;
-    box-shadow:inset 0 1px 0 rgba(255,255,255,.075),0 0 0 1px rgba(255,255,255,.025),0 7px 17px rgba(0,0,0,.24) !important;
-    transition:transform .16s ease,border-color .16s ease,box-shadow .16s ease,filter .16s ease;
-    cursor:pointer;
-}
-.arena-room-v2 .arena-btn:hover:not(:disabled) {
-    transform:translateY(-1px);
-    filter:brightness(1.07);
-}
-.arena-room-v2 .arena-btn:active:not(:disabled) {transform:translateY(0)}
-.arena-room-v2 .arena-btn:focus-visible {outline:2px solid rgba(255,255,255,.8);outline-offset:2px}
-.arena-room-v2 .arena-btn:disabled {opacity:.52;cursor:not-allowed;transform:none;filter:saturate(.65)}
-
-.arena-room-v2 .arena-btn.green,
-.arena-room-v2 .arena-btn.is-success,
-.arena-room-v2 .arena-action-quick,
-.arena-room-v2 .room-submit-result-btn,
-.arena-room-v2 .room-result-btn.confirm {
-    border-color:rgba(43,229,141,.72) !important;
-    background:linear-gradient(180deg,rgba(8,65,42,.99),rgba(4,37,26,.99)) !important;
-    box-shadow:inset 0 1px 0 rgba(255,255,255,.07),0 0 15px rgba(43,229,141,.15),0 7px 17px rgba(0,0,0,.24) !important;
-}
-.arena-room-v2 .arena-btn.gray,
-.arena-room-v2 .arena-btn.is-secondary,
-.arena-room-v2 .room-result-btn.disagree {
-    border-color:rgba(101,129,188,.52) !important;
-    background:linear-gradient(180deg,rgba(21,34,64,.99),rgba(10,19,40,.99)) !important;
-    box-shadow:inset 0 1px 0 rgba(255,255,255,.07),0 0 13px rgba(71,103,185,.11),0 7px 17px rgba(0,0,0,.24) !important;
-}
-.arena-room-v2 .arena-btn.red,
-.arena-room-v2 .arena-btn.is-danger,
-.arena-room-v2 .arena-action-exit,
-.arena-room-v2 .room-guest-card-kick-btn {
-    border-color:rgba(255,91,119,.68) !important;
-    background:linear-gradient(180deg,rgba(76,18,33,.99),rgba(43,10,21,.99)) !important;
-    box-shadow:inset 0 1px 0 rgba(255,255,255,.065),0 0 15px rgba(255,74,105,.14),0 7px 17px rgba(0,0,0,.24) !important;
-}
-.arena-room-v2 .arena-btn.gold,
-.arena-room-v2 .arena-btn.yellow,
-.arena-room-v2 .arena-btn.is-gold,
-.arena-room-v2 .arena-action-invite,
-.arena-room-v2 .room-center-random-trigger {
-    border-color:rgba(246,188,66,.72) !important;
-    background:linear-gradient(180deg,rgba(82,55,9,.99),rgba(46,30,5,.99)) !important;
-    box-shadow:inset 0 1px 0 rgba(255,255,255,.07),0 0 16px rgba(246,183,43,.16),0 7px 17px rgba(0,0,0,.24) !important;
-}
-
-.arena-room-v2 .room-center-primary-actions .arena-btn,
-.arena-room-v2 .room-action-zone .arena-btn {
-    width:100%;
-    min-height:45px;
-    padding:0 10px;
-    border-radius:12px;
-    font-size:12px;
-}
-.arena-room-v2 .room-result-btn.arena-btn {min-width:116px;padding:0 15px}
-.arena-room-v2 .room-action-modal-button.arena-btn {min-width:130px}
-.arena-room-v2 .room-center-random-trigger.arena-btn {min-height:48px;border-radius:13px}
-
-@media (max-width:1450px){
-  .arena-room-v2 .arena-btn{min-height:40px;padding:0 13px;font-size:11px;border-radius:11px}
-  .arena-room-v2 .room-center-primary-actions .arena-btn,.arena-room-v2 .room-action-zone .arena-btn{min-height:41px;font-size:10px}
-}
-
-
 /* V1.3.22 — Khôi phục Lịch sử đấu ở khu toàn chiều rộng. */
 .arena-room-v2 .room-history-full{display:block;margin:12px 0 0;padding:14px 16px;border:1px solid rgba(216,165,60,.48);border-radius:16px;background:linear-gradient(180deg,rgba(5,15,28,.96),rgba(2,9,18,.98));box-shadow:inset 0 0 22px rgba(0,0,0,.22),0 0 18px rgba(216,165,60,.07)}
 .arena-room-v2 .room-history-full .room-score-history-title{padding-bottom:10px;border-bottom:1px solid rgba(216,165,60,.24)}
@@ -749,103 +665,112 @@
 @media(max-width:1100px){.arena-room-v2 .room-history-full .room-score-history-list{grid-template-columns:repeat(2,minmax(120px,1fr))}}
 @media(max-width:640px){.arena-room-v2 .room-history-full .room-score-history-list{grid-template-columns:1fr}}
 
-/* V1.3.23 — tăng độ sáng hệ nút phòng đấu, giữ chữ trắng rõ.
-   Chỉ áp dụng cho nút có .arena-btn; nút khu Parsec không dùng class này. */
+/* V1.3.24 — một lớp CSS duy nhất cho nút hành động phòng đấu.
+   Phong cách kính tối, viền neon rõ, chữ trắng; khu Parsec không bị tác động. */
 .arena-room-v2 .arena-btn {
-    color:#ffffff !important;
-    text-shadow:0 1px 2px rgba(0,0,0,.72);
-    letter-spacing:.01em;
-    opacity:1;
-    filter:none;
+  --room-btn-border:#6075aa;
+  --room-btn-glow:rgba(74,104,180,.18);
+  --room-btn-top:rgba(21,32,58,.96);
+  --room-btn-bottom:rgba(10,18,37,.98);
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  gap:7px;
+  min-height:44px;
+  padding:9px 17px;
+  border:1px solid var(--room-btn-border) !important;
+  border-radius:13px;
+  background:linear-gradient(180deg,var(--room-btn-top),var(--room-btn-bottom)) !important;
+  color:#fff !important;
+  font:850 13px/1.15 inherit;
+  letter-spacing:.005em;
+  text-align:center;
+  text-decoration:none;
+  white-space:normal;
+  text-shadow:0 1px 2px rgba(0,0,0,.82);
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.08),0 0 14px var(--room-btn-glow),0 7px 16px rgba(0,0,0,.28) !important;
+  opacity:1;
+  filter:none;
+  cursor:pointer;
+  transition:transform .15s ease,filter .15s ease,border-color .15s ease,box-shadow .15s ease;
 }
-
 .arena-room-v2 .arena-btn.green,
 .arena-room-v2 .arena-btn.is-success,
 .arena-room-v2 .arena-action-quick,
 .arena-room-v2 .room-submit-result-btn,
 .arena-room-v2 .room-result-btn.confirm {
-    color:#ffffff !important;
-    border-color:#35e696 !important;
-    background:linear-gradient(180deg,#1dbf78 0%,#0b8b54 100%) !important;
-    box-shadow:
-        inset 0 1px 0 rgba(255,255,255,.24),
-        inset 0 -1px 0 rgba(0,0,0,.22),
-        0 0 14px rgba(32,220,133,.30),
-        0 7px 16px rgba(0,0,0,.26) !important;
+  --room-btn-border:#20d889;
+  --room-btn-glow:rgba(31,216,137,.18);
+  --room-btn-top:rgba(5,55,38,.96);
+  --room-btn-bottom:rgba(3,30,23,.98);
 }
-
 .arena-room-v2 .arena-btn.gray,
 .arena-room-v2 .arena-btn.is-secondary,
 .arena-room-v2 .room-result-btn.disagree {
-    color:#ffffff !important;
-    border-color:#647fc5 !important;
-    background:linear-gradient(180deg,#31466f 0%,#1b2a4a 100%) !important;
-    box-shadow:
-        inset 0 1px 0 rgba(255,255,255,.18),
-        inset 0 -1px 0 rgba(0,0,0,.20),
-        0 0 12px rgba(84,119,205,.22),
-        0 7px 16px rgba(0,0,0,.25) !important;
+  --room-btn-border:#6276a9;
+  --room-btn-glow:rgba(91,116,180,.16);
+  --room-btn-top:rgba(23,34,61,.96);
+  --room-btn-bottom:rgba(10,18,38,.98);
 }
-
 .arena-room-v2 .arena-btn.red,
 .arena-room-v2 .arena-btn.is-danger,
 .arena-room-v2 .arena-action-exit,
 .arena-room-v2 .room-guest-card-kick-btn {
-    color:#ffffff !important;
-    border-color:#ff637c !important;
-    background:linear-gradient(180deg,#d94760 0%,#a8203a 100%) !important;
-    box-shadow:
-        inset 0 1px 0 rgba(255,255,255,.22),
-        inset 0 -1px 0 rgba(0,0,0,.20),
-        0 0 14px rgba(255,74,105,.28),
-        0 7px 16px rgba(0,0,0,.26) !important;
+  --room-btn-border:#ef5572;
+  --room-btn-glow:rgba(239,85,114,.17);
+  --room-btn-top:rgba(67,18,33,.96);
+  --room-btn-bottom:rgba(36,9,20,.98);
 }
-
 .arena-room-v2 .arena-btn.gold,
 .arena-room-v2 .arena-btn.yellow,
 .arena-room-v2 .arena-btn.is-gold,
 .arena-room-v2 .arena-action-invite,
 .arena-room-v2 .room-center-random-trigger {
-    color:#ffffff !important;
-    border-color:#ffd56b !important;
-    background:linear-gradient(180deg,#d89c24 0%,#9a650c 100%) !important;
-    box-shadow:
-        inset 0 1px 0 rgba(255,255,255,.30),
-        inset 0 -1px 0 rgba(0,0,0,.22),
-        0 0 15px rgba(246,183,43,.30),
-        0 7px 16px rgba(0,0,0,.26) !important;
+  --room-btn-border:#e6b842;
+  --room-btn-glow:rgba(230,184,66,.18);
+  --room-btn-top:rgba(69,49,11,.96);
+  --room-btn-bottom:rgba(37,27,7,.98);
 }
-
-.arena-room-v2 .arena-btn:hover:not(:disabled) {
-    filter:brightness(1.10) saturate(1.05);
-    box-shadow:
-        inset 0 1px 0 rgba(255,255,255,.32),
-        0 0 18px currentColor,
-        0 8px 18px rgba(0,0,0,.28) !important;
+.arena-room-v2 .arena-btn:hover:not(:disabled):not(.disabled) {
+  transform:translateY(-1px);
+  filter:brightness(1.14);
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.14),0 0 19px var(--room-btn-glow),0 9px 19px rgba(0,0,0,.31) !important;
 }
-
+.arena-room-v2 .arena-btn:active:not(:disabled):not(.disabled){transform:translateY(0);filter:brightness(1.04)}
+.arena-room-v2 .arena-btn:focus-visible{outline:2px solid rgba(255,255,255,.88);outline-offset:2px}
 .arena-room-v2 .arena-btn:disabled,
-.arena-room-v2 .arena-btn.disabled {
-    opacity:.76;
-    color:#ffffff !important;
-    text-shadow:0 1px 2px rgba(0,0,0,.78);
-    filter:saturate(.82) brightness(.94);
-}
+.arena-room-v2 .arena-btn.disabled{opacity:.58;filter:saturate(.65);cursor:not-allowed;transform:none}
 
-/* Nút Quay quân có span lồng bên trong: bỏ nền vàng phụ cũ để không thành hai lớp. */
-.arena-room-v2 .room-center-random-trigger .room-random-button-label {
-    width:auto;
-    min-height:0;
-    padding:0;
-    border:0;
-    border-radius:0;
-    background:transparent !important;
-    color:#ffffff !important;
-    box-shadow:none !important;
-    text-shadow:0 1px 2px rgba(0,0,0,.76);
-}
+/* Hai nút xác nhận kết quả luôn cân bằng như mẫu, kể cả khi chữ xuống 2 dòng. */
+.arena-room-v2 .room-result-actions{display:grid;grid-template-columns:1fr 1fr;gap:10px;width:min(100%,276px);margin-inline:auto}
+.arena-room-v2 .room-result-actions > form,
+.arena-room-v2 .room-result-actions > details{min-width:0;margin:0}
+.arena-room-v2 .room-result-btn.arena-btn{width:100%;min-width:0;min-height:50px;padding:8px 12px;font-size:13px}
+.arena-room-v2 .room-result-dispute > summary{list-style:none}
+.arena-room-v2 .room-result-dispute > summary::-webkit-details-marker{display:none}
 
-.arena-room-v2 .room-center-random-trigger .room-center-random-sub {
-    color:rgba(255,255,255,.86) !important;
-    text-shadow:0 1px 2px rgba(0,0,0,.72);
+/* Các cụm hành động của chủ phòng và đối thủ có cùng chiều cao, không bị lệch cột. */
+.arena-room-v2 .room-center-primary-actions .arena-btn,
+.arena-room-v2 .room-action-zone .arena-btn{width:100%;min-height:45px;padding-inline:11px}
+.arena-room-v2 .room-action-modal-button.arena-btn{min-width:130px}
+
+/* Nút quay quân chỉ có một lớp nền; loại bỏ nền của span con từ CSS cũ. */
+.arena-room-v2 .room-center-random-trigger .room-random-button-label{
+  width:auto;min-height:0;margin:0;padding:0;border:0;border-radius:0;
+  background:transparent !important;color:#fff !important;box-shadow:none !important;
+}
+.arena-room-v2 .room-center-random-trigger .room-center-random-sub{color:rgba(255,255,255,.84) !important;background:transparent !important;box-shadow:none !important}
+
+/* Lịch sử phòng luôn chiếm một hàng đầy đủ, tiêu đề và tỷ số không bị co lệch. */
+.arena-room-v2 .room-history-full .room-score-history-head{grid-template-columns:minmax(0,1fr) 72px minmax(0,1fr)}
+.arena-room-v2 .room-history-full .room-score-history-row{grid-template-columns:1fr 22px 1fr}
+.arena-room-v2 .room-history-full .room-score-history-head span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+
+@media(max-width:1450px){
+  .arena-room-v2 .arena-btn{min-height:41px;padding:8px 13px;font-size:11px;border-radius:11px}
+  .arena-room-v2 .room-result-btn.arena-btn{min-height:47px;font-size:12px}
+}
+@media(max-width:520px){
+  .arena-room-v2 .room-result-actions{width:100%;grid-template-columns:1fr 1fr;gap:8px}
+  .arena-room-v2 .room-result-btn.arena-btn{padding-inline:8px;font-size:11px}
 }

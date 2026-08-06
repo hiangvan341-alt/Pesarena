@@ -473,13 +473,13 @@
     </section>
     {% endif %}
 
-{% if room_head_to_head and room_head_to_head.available %}
+{% if room.has_guest %}
 <section class="panel room-session-h2h room-score-history-panel room-history-full" aria-label="Lịch sử tỷ số trong phòng">
     <div class="room-score-history-title">
         <h3>LỊCH SỬ ĐẤU</h3>
     </div>
 
-    {% if room_head_to_head.matches %}
+    {% if room_head_to_head and room_head_to_head.matches %}
     <div class="room-score-history-board">
         <div class="room-score-history-head">
             <span class="{{ room.host_name_style_class or '' }}" title="{{ room.host_name }}">{{ room.host_name }}</span>

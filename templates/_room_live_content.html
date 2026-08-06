@@ -38,34 +38,38 @@
         </section>
 
         <section class="room-center-stage-plain">
+        {% set active_rank_mode = (rank_mode_catalog | selectattr('code', 'equalto', selected_rank_mode) | first) %}
+        <div class="room-master-active-mode" data-active-mode="{{ selected_rank_mode }}">
+            <span class="room-master-mode-number">{{ {'rank_random':1,'random3_pick1':2,'tactical_bo3':3,'bo3':4,'ban_pick_bo3':5,'home_away':6}.get(selected_rank_mode,1) }}</span>
+            <div class="room-master-mode-heading">
+                <strong>{{ active_rank_mode.label if active_rank_mode else 'Rank thường Random' }}</strong>
+                <small>{% if selected_rank_mode == 'rank_random' %}Mỗi bên được random 1 CLB phù hợp để thi đấu.{% elif selected_rank_mode == 'random3_pick1' %}Mỗi người nhận 3 CLB và bí mật chọn 1 CLB.{% elif selected_rank_mode == 'tactical_bo3' %}Dùng 3 CLB khác nhau, ai thắng 2 trận trước sẽ thắng Series.{% elif selected_rank_mode == 'bo3' %}Thi đấu tối đa 3 trận, ai thắng 2 trận trước sẽ thắng Series.{% elif selected_rank_mode == 'ban_pick_bo3' %}Cấm và chọn CLB trong Pool chung trước khi đấu BO3.{% else %}Thi đấu đúng 2 lượt và xét tổng tỷ số chung cuộc.{% endif %}</small>
+            </div>
+            <div class="room-master-mode-emblem" aria-hidden="true"><img src="{{ room_asset('emblems/' ~ selected_rank_mode ~ '.webp') }}" alt=""></div>
+            <div class="room-master-unlock-pill">{% if active_rank_mode and active_rank_mode.eligible %}✓ Đã mở khóa{% else %}🔒 Chưa mở khóa{% endif %}</div>
+            <div class="room-master-room-ready"><span>{% if room.has_guest %}✓ Phòng đã sẵn sàng{% else %}Đang chờ đối thủ{% endif %}</span><strong>{{ 2 if room.has_guest else 1 }} / 2</strong></div>
+        </div>
         {% if room.status == "waiting_ready" and not room.friendly_random3_active %}
             <div class="room-center-mode-zone">
                 <div class="room-center-mode-title">CHẾ ĐỘ THI ĐẤU</div>
                 {% set rematch_mode_locked = '__RANK_MODE_LOCKED__' in (room.note or '') %}
                 {% if rematch_mode_locked %}
-                <div class="room-center-mode-note">Đã chọn: <strong>{% if room.team_tier == 'random3_pick1' or not system_features.rank_standard_enabled %}Random 3 chọn 1{% else %}Rank thường{% endif %}</strong>{% if room.has_guest %} • Chờ khách Sẵn sàng{% else %} • Mời đối thủ vào phòng{% endif %}</div>
+                <div class="room-center-mode-note">Đã chọn: <strong>{{ (rank_mode_catalog | selectattr('code', 'equalto', selected_rank_mode) | map(attribute='label') | first) or 'Rank thường Random' }}</strong>{% if room.has_guest %} • Chờ khách Sẵn sàng{% else %} • Mời đối thủ vào phòng{% endif %}</div>
                 {% elif room_room_viewer_is_host or current_user.role == "admin" %}
-                <div class="room-center-mode-actions{% if not system_features.rank_standard_enabled or not system_features.friendly_random3_enabled %} room-center-mode-actions--single{% endif %}">
-                    {% if system_features.rank_standard_enabled %}
-                    <form method="post" action="{{ url_for('room_select_ranked_mode', room_id=room.id) }}" data-room-async="1">
-                        <input type="hidden" name="rank_mode" value="smart_random">
-                        <button class="room-mode-select-btn mode-ranked {% if room.team_tier != 'random3_pick1' %}selected{% endif %}" type="submit">
-                            <strong>RANK THƯỜNG</strong><small>Random trực tiếp 1 CLB</small>
+                <div class="rank-mode-compact-grid">
+                    {% for mode in rank_mode_catalog %}
+                    <form method="post" action="{{ url_for('room_select_ranked_mode', room_id=room.id) }}" data-room-async="1" class="rank-mode-compact-form">
+                        <input type="hidden" name="rank_mode" value="{{ mode.code }}">
+                        <button class="rank-mode-compact-btn {% if selected_rank_mode == mode.code %}selected{% endif %} {% if not mode.eligible %}locked{% endif %}" type="submit" {% if not mode.eligible %}disabled{% endif %} title="{{ mode.lock_reasons|join(' • ') if not mode.eligible else mode.label }}">
+                            <span>{{ mode.short_label }}</span>
+                            {% if not mode.eligible %}<small>🔒 {{ mode.lock_reasons[0] }}</small>{% else %}<small>{% if mode.series_type == 'single' %}1 trận{% elif mode.max_games == 2 %}2 lượt{% else %}Tối đa {{ mode.max_games }} trận{% endif %}</small>{% endif %}
                         </button>
                     </form>
-                    {% endif %}
-                    {% if system_features.friendly_random3_enabled %}
-                    <form method="post" action="{{ url_for('room_select_ranked_mode', room_id=room.id) }}" data-room-async="1">
-                        <input type="hidden" name="rank_mode" value="random3_pick1">
-                        <button class="room-mode-select-btn mode-random3 {% if room.team_tier == 'random3_pick1' %}selected{% endif %}" type="submit">
-                            <strong>RANDOM 3 CHỌN 1</strong><small>Nhận 3 CLB theo Rank</small>
-                        </button>
-                    </form>
-                    {% endif %}
+                    {% endfor %}
                 </div>
-                <div class="room-center-mode-note">Đã chọn: <strong>{% if room.team_tier == 'random3_pick1' or not system_features.rank_standard_enabled %}Random 3 chọn 1{% else %}Rank thường{% endif %}</strong>{% if room.has_guest %} • Chờ khách Sẵn sàng{% else %} • Mời đối thủ vào phòng{% endif %}</div>
+                <div class="room-center-mode-note">Đã chọn: <strong>{{ (rank_mode_catalog | selectattr('code', 'equalto', selected_rank_mode) | map(attribute='label') | first) or 'Rank thường Random' }}</strong>{% if room.has_guest %} • Chờ khách Sẵn sàng{% else %} • Mời đối thủ vào phòng{% endif %}</div>
                 {% else %}
-                <div class="room-center-mode-note">Chủ phòng đã chọn <strong>{% if room.team_tier == 'random3_pick1' or not system_features.rank_standard_enabled %}Random 3 chọn 1{% else %}Rank thường{% endif %}</strong></div>
+                <div class="room-center-mode-note">Chủ phòng đã chọn <strong>{{ (rank_mode_catalog | selectattr('code', 'equalto', selected_rank_mode) | map(attribute='label') | first) or 'Rank thường Random' }}</strong></div>
                 {% endif %}
             </div>
             {% elif room.status == "waiting_ready" and room.friendly_random3_active %}
@@ -391,13 +395,13 @@
         </aside>
     </div>
 
-{% if room_head_to_head and room_head_to_head.available %}
+{% if room.has_guest %}
 <section class="panel room-session-h2h room-score-history-panel room-history-full" aria-label="Lịch sử tỷ số trong phòng">
     <div class="room-score-history-title">
         <h3>LỊCH SỬ ĐẤU</h3>
     </div>
 
-    {% if room_head_to_head.matches %}
+    {% if room_head_to_head and room_head_to_head.matches %}
     <div class="room-score-history-board">
         <div class="room-score-history-head">
             <span class="{{ room.host_name_style_class or '' }}" title="{{ room.host_name }}">{{ room.host_name }}</span>
