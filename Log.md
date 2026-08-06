@@ -328,3 +328,11 @@
 ### So với V1.3.6
 - V1.3.6 dùng bộ asset minh họa tự tạo.
 - V1.3.7 dùng đúng bộ logo WebP người dùng đã chuẩn bị và căn chỉnh riêng theo từng vị trí UI.
+
+
+## V1.3.8 — Room UI CSS/Neon cleanup
+- Fixed overlapping center action controls by using one 3-column grid.
+- Consolidated logo sizing into one CSS flow.
+- Standardized neon hierarchy.
+- Removed unused room_master.css, legacy SVG mode icons, source logo dump, stale UI tests and caches.
+- Added exact Supabase upload manifest and audit report.

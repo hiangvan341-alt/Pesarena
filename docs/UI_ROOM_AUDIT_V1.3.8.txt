@@ -1,0 +1,27 @@
+RÀ SOÁT UI PHÒNG ĐẤU V1.3.8
+
+CSS đang dùng:
+- static/css/arena_room_v2.css: CSS duy nhất của UI phòng đấu V2.
+- static/css/parsec_room.css: logic/khung Parsec dùng chung.
+- static/css/quick_match.css: trạng thái Tìm nhanh dùng chung.
+
+Khung neon:
+- Host: blue.
+- Opponent: red.
+- Center mode / selected mode: purple.
+- Info + Parsec: subtle gold border, không glow mạnh.
+- Unlock: green.
+- Action buttons: gold / green / red.
+
+Đã bỏ:
+- static/css/room_master.css (không còn được nạp).
+- static/icons/rank_modes/*.svg (đã thay bằng WebP).
+- static/assets/room_v2/source_user_logo/ (bản nguồn trùng, không chạy runtime).
+- các test UI cũ V1.3.2–V1.3.7 đã bị thay thế.
+- toàn bộ __pycache__.
+
+Sửa logic giao diện:
+- Mời đấu, Tìm nhanh, Thoát phòng nằm trong một grid 3 cột thật.
+- Không còn hai lớp absolute chồng nút.
+- Tên sáu chế độ hiển thị đầy đủ.
+- Kích thước logo được quản lý tại một vị trí CSS.

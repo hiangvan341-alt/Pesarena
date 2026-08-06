@@ -1,0 +1,13 @@
+PES ARENA V1.3.8 — ASSET PHÒNG ĐẤU CẦN UPLOAD SUPABASE
+
+Bucket đề xuất: public-assets
+Thư mục đích: room-assets/v1.3.8/
+
+Chỉ upload các file có trong ROOM_V2_SUPABASE_ASSETS_V1.3.8.csv.
+Giữ nguyên cấu trúc thư mục modes/ và emblems/.
+Content-Type của tất cả file: image/webp.
+
+LƯU Ý QUAN TRỌNG
+- Bản hiện tại vẫn dùng asset local trong static/assets/room_v2 để chạy ổn định.
+- Upload Supabase có thể dùng làm CDN/backup. Không xóa file local cho đến khi dự án có ROOM_ASSET_BASE_URL hoặc helper remote tương ứng.
+- Không cần upload CSS, HTML, Python, SQL hoặc file logo nguồn.

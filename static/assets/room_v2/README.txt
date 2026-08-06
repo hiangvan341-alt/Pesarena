@@ -1,5 +1,8 @@
-PES Arena Room V2 assets (WebP)
+PES Arena Room V2 assets — V1.3.8
 
-All images are local fallbacks and Supabase-upload ready.
-Recommended bucket path: room-assets/v1.3.6/
-The application uses static_asset() by default so deployment works before remote upload.
+Runtime assets only.
+- Root: logo, stadium backgrounds, light effects, VS, Parsec, share icon.
+- modes/: six small mode-card icons.
+- emblems/: six center-mode emblems.
+
+The original user-logo dump and legacy SVG icon set were removed because they were not referenced at runtime.

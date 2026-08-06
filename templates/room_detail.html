@@ -335,16 +335,16 @@
             {% else %}
                 <img class="room-center-vs-image" src="{{ static_asset('assets/room_v2/vs-gold-emblem.webp') }}" alt="VS" loading="eager">
                 {% if room_room_viewer_is_host or current_user.role == 'admin' %}
-                <div class="room-quick-match-row room-action-zone">
+                <div class="room-center-primary-actions room-action-zone room-center-primary-actions-three">
+                    <a class="btn gold room-center-action-btn" href="{{ url_for('players') }}">Mời đấu</a>
                     {% if system_features.get('quick_match_enabled', true) %}
                     <button class="btn room-center-action-btn room-quick-match-btn room-quick-match-{{ quick_match_config.get('color', 'blue') }}" type="button"
                             data-quick-match-url="{{ url_for('quick_match_invite') }}">
-                        <span class="quick-match-icon">⚡</span><span class="quick-match-label">TÌM NHANH</span>
+                        <span class="quick-match-icon" aria-hidden="true">⚡</span><span class="quick-match-label">Tìm nhanh</span>
                     </button>
+                    {% else %}
+                    <button class="btn green room-center-action-btn" type="button" disabled>Sẵn sàng</button>
                     {% endif %}
-                </div>
-                <div class="room-center-primary-actions room-action-zone">
-                    <a class="btn gold room-center-action-btn" href="{{ url_for('players') }}">Mời Đấu</a>
                     <form class="room-exit-confirm-form" method="post" action="{{ url_for('room_leave', room_id=room.id) }}"
                           data-modal-tone="warning"
                           data-modal-icon="🚪"
@@ -352,7 +352,7 @@
                           data-modal-message="Phòng hiện chưa có đối thủ. Khi bạn thoát, phòng này sẽ được đóng."
                           data-modal-note="ĐÓNG PHÒNG"
                           data-modal-confirm-label="Thoát và đóng phòng">
-                        <button class="btn red room-center-action-btn" type="submit">Thoát Phòng</button>
+                        <button class="btn red room-center-action-btn" type="submit">Thoát phòng</button>
                     </form>
                 </div>
                 {% endif %}
@@ -471,7 +471,7 @@
                 <button class="room-master-mode-card {% if selected_rank_mode == mode.code %}is-selected{% endif %} {% if not mode.eligible %}is-locked{% endif %}" data-mode="{{ mode.code }}" type="submit" {% if not mode.eligible or not (room_room_viewer_is_host or current_user.role == 'admin') %}disabled{% endif %} title="{{ mode.lock_reasons|join(' • ') if not mode.eligible else mode.label }}">
                     <span class="room-master-card-number">{{ loop.index }}</span>
                     <span class="room-master-card-icon" aria-hidden="true"><img src="{{ static_asset('assets/room_v2/modes/' ~ mode.code ~ '.webp') }}" alt=""></span>
-                    <strong>{% if mode.code == 'ban_pick_bo3' %}Cấm chọn CLB{% else %}{{ mode.short_label }}{% endif %}</strong>
+                    <strong>{% if mode.code == 'ban_pick_bo3' %}Cấm chọn CLB{% else %}{{ mode.label }}{% endif %}</strong>
                     <small>{% if mode.eligible %}✓ Đã mở khóa{% else %}🔒 {{ mode.lock_reasons[0] }}{% endif %}</small>
                 </button>
             </form>
