@@ -357,3 +357,11 @@
 - Ghép sẵn public URL `https://wlnvdfghatgeygecwrqb.supabase.co/storage/v1/object/public/pes-assets/room-assets/v1.3.11` vào helper asset phòng đấu.
 - Không bắt buộc cấu hình biến Vercel; `ROOM_ASSET_BASE_URL` vẫn có thể dùng để ghi đè.
 - Làm lại `UPLOAD_SUPABASE` và manifest chi tiết đúng bucket của dự án.
+
+
+## V1.3.12 - Chuẩn hóa tỷ lệ UI MASTER phòng đấu
+- Chỉnh Grid desktop theo tỷ lệ 31% / 24% / 31% / 14%, gap 12px.
+- Dựng lại tỷ lệ card Host/Opponent, nền sân, light effect, avatar, rank, vùng CLB và Tổng điểm.
+- Tăng tỷ lệ card chế độ trung tâm, emblem và VS; căn lại hàng 3 nút Neon.
+- Tăng chiều cao 6 card chế độ, thu gọn sidebar Info/Parsec và chuẩn hóa typography/neon.
+- Không đổi API, route, polling hoặc logic phòng đấu. Không có SQL mới.

@@ -110,3 +110,207 @@
   filter: brightness(1.1);
   transform: translateY(-1px);
 }
+
+/* V1.3.12 — UI MASTER proportion pass.
+   This block owns only the room-detail namespace and refines scale, rhythm,
+   neon hierarchy and desktop proportions without changing room logic. */
+@media (min-width: 1181px) {
+  .arena-room-v2 {
+    --arena-gap: 12px;
+    --arena-main-height: 548px;
+    --arena-blue: 11, 125, 244;
+    --arena-red: 239, 48, 71;
+    --arena-purple: 155, 79, 224;
+    --arena-gold: 216, 165, 60;
+  }
+
+  .arena-room-v2 .room-stage-topbar {
+    min-height: 92px;
+    padding: 12px 18px;
+    grid-template-columns: minmax(250px, 1fr) minmax(260px, auto) minmax(250px, 1fr);
+    border-radius: 17px;
+  }
+  .arena-room-v2 .room-stage-title { font-size: 24px; letter-spacing: .01em; }
+  .arena-room-v2 .room-stage-subtitle { margin-top: 5px; font-size: 12px; }
+  .arena-room-v2 .room-master-brand img { max-width: 245px; max-height: 48px; }
+  .arena-room-v2 .room-share-button { min-height: 58px; padding: 8px 14px; border-radius: 12px; }
+
+  .arena-room-v2 .room-arena-frame {
+    grid-template-columns: minmax(0, 31fr) minmax(250px, 24fr) minmax(0, 31fr) minmax(188px, 14fr);
+    gap: var(--arena-gap);
+    height: var(--arena-main-height);
+  }
+
+  .arena-room-v2 .room-side-card,
+  .arena-room-v2 .room-center-stage-plain,
+  .arena-room-v2 .room-arena-right-rail {
+    height: var(--arena-main-height);
+  }
+
+  .arena-room-v2 .room-side-card {
+    padding: 10px 12px 12px;
+    border-width: 1px;
+    border-radius: 19px;
+    background-size: cover;
+    background-position: center top;
+  }
+  .arena-room-v2 .room-side-card::before {
+    background:
+      linear-gradient(180deg, rgba(1, 6, 15, .02), rgba(1, 6, 15, .15) 36%, rgba(1, 6, 15, .52) 76%, rgba(1, 6, 15, .82));
+  }
+  .arena-room-v2 .room-side-card::after {
+    background-size: 112% auto;
+    background-position: center 12px;
+    opacity: .95;
+  }
+  .arena-room-v2 .room-team-card.home {
+    box-shadow: inset 0 0 26px rgba(var(--arena-blue), .14), 0 0 12px rgba(var(--arena-blue), .16);
+  }
+  .arena-room-v2 .room-team-card.away {
+    box-shadow: inset 0 0 26px rgba(var(--arena-red), .14), 0 0 12px rgba(var(--arena-red), .16);
+  }
+
+  .arena-room-v2 .room-player-heading-plain {
+    min-height: 204px;
+    padding: 0 8px 10px;
+  }
+  .arena-room-v2 .room-player-heading-plain::before {
+    margin-top: -5px;
+    margin-bottom: 8px;
+    min-width: 140px;
+    padding: 3px 20px 5px;
+    font-size: 10px;
+  }
+  .arena-room-v2 .room-player-heading-plain .player-avatar { width: 82px; height: 82px; }
+  .arena-room-v2 .room-player-name { margin-top: 4px; font-size: 26px; }
+  .arena-room-v2 .room-player-rankline { margin-top: 7px; font-size: 13px; }
+  .arena-room-v2 .win-streak-badge {
+    margin-top: 8px;
+    padding: 7px 14px;
+    font-size: 11px;
+    background: rgba(1, 8, 16, .78);
+  }
+
+  .arena-room-v2 .room-card-club-area {
+    justify-content: center;
+    padding: 12px 6px 6px;
+  }
+  .arena-room-v2 .room-club-logo-large { width: 138px; height: 138px; }
+  .arena-room-v2 .room-team-placeholder-shield {
+    width: 82px;
+    height: 82px;
+    border-radius: 22px;
+    font-size: 42px;
+    background: rgba(0, 0, 0, .18);
+  }
+  .arena-room-v2 .room-team-name-lg { margin-top: 12px; font-size: 18px; }
+  .arena-room-v2 .room-team-points-block {
+    margin-top: 11px;
+    padding: 7px 16px;
+    border-color: rgba(255, 255, 255, .18);
+    background: rgba(1, 8, 17, .84);
+  }
+  .arena-room-v2 .room-team-points-value { font-size: 19px; }
+
+  .arena-room-v2 .room-center-stage-plain {
+    padding-bottom: 66px;
+    border-radius: 19px;
+    background:
+      radial-gradient(circle at 50% 54%, rgba(var(--arena-gold), .08), transparent 31%),
+      linear-gradient(180deg, #030b16, #020812);
+  }
+  .arena-room-v2 .room-master-active-mode {
+    width: calc(100% - 14px);
+    min-height: 257px;
+    margin-top: 7px;
+    padding: 20px 14px 11px;
+    border-radius: 15px;
+    box-shadow: inset 0 0 22px rgba(var(--arena-purple), .10), 0 0 10px rgba(var(--arena-purple), .13);
+  }
+  .arena-room-v2 .room-master-mode-number { width: 50px; height: 50px; font-size: 21px; }
+  .arena-room-v2 .room-master-mode-heading strong { margin-bottom: 7px; font-size: 17px; }
+  .arena-room-v2 .room-master-mode-heading small { min-height: 31px; font-size: 10px; }
+  .arena-room-v2 .room-master-mode-emblem { width: 112px; height: 98px; margin: 8px auto 7px; }
+  .arena-room-v2 .room-master-unlock-pill { min-width: 172px; padding: 7px 13px; font-size: 11px; }
+  .arena-room-v2 .room-master-room-ready { margin-top: 9px; padding: 8px 10px; }
+  .arena-room-v2 .room-center-vs-image {
+    width: 158px;
+    height: 158px;
+    margin: auto 0 2px;
+    filter: drop-shadow(0 0 16px rgba(var(--arena-gold), .22));
+  }
+
+  .arena-room-v2 .room-center-primary-actions-three {
+    gap: 10px;
+    width: calc(100% - 16px);
+    padding-bottom: 12px;
+  }
+  .arena-room-v2 .room-center-primary-actions-three .room-center-action-btn {
+    height: 46px;
+    min-height: 46px;
+    padding: 8px 7px;
+    border-radius: 10px;
+    font-size: 11px;
+    font-weight: 850;
+  }
+
+  .arena-room-v2 .room-arena-right-rail { gap: 10px; }
+  .arena-room-v2 .room-arena-right-rail > .panel {
+    padding: 12px;
+    border-radius: 14px;
+    border-color: rgba(var(--arena-gold), .44);
+    box-shadow: inset 0 0 14px rgba(var(--arena-gold), .025);
+  }
+  .arena-room-v2 .room-side-info-panel h3,
+  .arena-room-v2 .parsec-room-panel h3 { margin-bottom: 10px; font-size: 13px; }
+  .arena-room-v2 .room-side-info-list { gap: 6px; }
+  .arena-room-v2 .room-side-info-list > div { padding: 8px 9px; border-radius: 8px; }
+  .arena-room-v2 .room-side-info-list span { margin-bottom: 2px; font-size: 8px; }
+  .arena-room-v2 .room-side-info-list strong { font-size: 10.5px; }
+  .arena-room-v2 .parsec-room-panel { font-size: 9.5px; }
+  .arena-room-v2 .parsec-room-panel label { font-size: 9.5px; }
+  .arena-room-v2 .parsec-room-panel input { min-height: 33px; padding: 6px 8px; }
+  .arena-room-v2 .parsec-room-panel .btn { min-height: 33px; padding: 6px 10px; }
+
+  .arena-room-v2 .room-master-mode-switcher {
+    padding: 0 12px 12px;
+    border-radius: 16px;
+  }
+  .arena-room-v2 .room-master-mode-switcher h2 {
+    margin-bottom: 11px;
+    font-size: 14px;
+  }
+  .arena-room-v2 .room-master-mode-grid { gap: 10px; }
+  .arena-room-v2 .room-master-mode-card {
+    grid-template-columns: 68px minmax(0, 1fr);
+    min-height: 154px;
+    padding: 17px 11px 10px;
+    border-radius: 11px;
+  }
+  .arena-room-v2 .room-master-card-number { width: 34px; height: 32px; font-size: 14px; }
+  .arena-room-v2 .room-master-card-icon { width: 70px; height: 80px; }
+  .arena-room-v2 .room-master-card-icon img { width: 68px; height: 68px; }
+  .arena-room-v2 .room-master-mode-card strong { font-size: 11.5px; line-height: 1.28; }
+  .arena-room-v2 .room-master-mode-card small { margin-top: 6px; padding: 6px; font-size: 9px; }
+}
+
+@media (min-width: 1181px) and (max-width: 1450px) {
+  .arena-room-v2 { --arena-gap: 9px; --arena-main-height: 526px; }
+  .arena-room-v2 .room-arena-frame {
+    grid-template-columns: minmax(250px, 31fr) minmax(235px, 24fr) minmax(250px, 31fr) minmax(190px, 14fr);
+  }
+  .arena-room-v2 .room-player-heading-plain { min-height: 194px; }
+  .arena-room-v2 .room-player-heading-plain .player-avatar { width: 74px; height: 74px; }
+  .arena-room-v2 .room-player-name { font-size: 23px; }
+  .arena-room-v2 .room-master-active-mode { min-height: 244px; }
+  .arena-room-v2 .room-master-mode-emblem { width: 100px; height: 88px; }
+  .arena-room-v2 .room-center-vs-image { width: 142px; height: 142px; }
+  .arena-room-v2 .room-master-mode-card {
+    grid-template-columns: 56px minmax(0,1fr);
+    min-height: 146px;
+    padding-inline: 8px;
+  }
+  .arena-room-v2 .room-master-card-icon { width: 56px; height: 70px; }
+  .arena-room-v2 .room-master-card-icon img { width: 54px; height: 54px; }
+  .arena-room-v2 .room-master-mode-card strong { font-size: 10px; }
+}
