@@ -1,3 +1,27 @@
+# V1.3.69 — Project Docs / SQL Cleanup
+
+**Ngày:** 2026-08-08 (Asia/Bangkok)
+
+## Chế độ
+- AUDIT TOÀN HỆ THỐNG — dọn cấu trúc tài liệu/SQL/asset, không thay gameplay.
+
+## Thay đổi
+- Giữ `AGENTS.md`, `PROJECT_MAP.md`, `Log.md` ở root vì đây là entrypoint bắt buộc của dự án/chat mới.
+- Gom tài liệu vận hành còn cần vào `project_docs/`: `README.md`, `FIX_NHANH_PES_ARENA.md`, `LOGGING_GUIDE.md`, `BLACKBOX_SAFETY_LAB.md`.
+- Gom toàn bộ SQL duy nhất còn cần vào `project_docs/sql/`.
+- Xóa 3 SQL root trùng 100% với bản trong docs: V1.3.34, V1.3.35, V1.3.48.
+- Xóa các audit/version-note `.md` lịch sử không còn là source of truth.
+- Xóa `.pytest_cache` và `logs/README.md`; hướng dẫn log đã được hợp nhất vào `project_docs/LOGGING_GUIDE.md`.
+- Cập nhật toàn bộ path đang được source/template/test tham chiếu sang `project_docs/`.
+- Asset scan: 0 file ảnh local; không cần upload thêm. Supabase chỉ được kiểm tra read-only, không thay đổi production.
+- `APP_VERSION`: 1.3.68 → 1.3.69.
+
+## An toàn
+- Không thay RP, Room gameplay, Invite, Match, Admin permission hay schema production.
+- Không chạy SQL/migration trên Supabase production.
+
+---
+
 # V1.3.68 — Black Box Storage + Admin Sticky Safety
 
 **Ngày:** 2026-08-08 (Asia/Bangkok)
@@ -6,7 +30,7 @@
 - Xử lý các tồn tại từ Black Box Safety V1.3.67, không thay đổi gameplay/RP.
 
 ## Đã sửa
-- `migrations/20260808_blackbox.sql`: bổ sung quyền server-only cho `service_role`, khóa `anon/authenticated`, giữ RLS.
+- `project_docs/sql/20260808_blackbox.sql`: bổ sung quyền server-only cho `service_role`, khóa `anon/authenticated`, giữ RLS.
 - `modules/blackbox/safety.py`: nếu thiếu bảng Black Box thì báo rõ cần chạy migration thay vì chỉ hiện `APIError`.
 - `static/css/admin_dashboard.css`: đẩy sticky Admin tabs xuống dưới sticky topbar (`102px`, mobile `84px`) để tránh chồng vùng thao tác khi cuộn.
 - `static/js/blackbox_safety_lab.js`: bỏ qua control nằm hoàn toàn ngoài viewport để giảm false-positive overlap.
@@ -53,7 +77,7 @@
 ## Thay đổi
 - Tạo `AGENTS.md` ở root: quy tắc khởi động, điều kiện chọn 3 chế độ, luồng xử lý, quy tắc tự chuyển chế độ và safety guard.
 - `PROJECT_MAP.md`: thêm chỉ dẫn bắt buộc đọc `AGENTS.md` trước khi định tuyến file/module; cập nhật mốc V1.3.64.
-- `docs/FIX_NHANH_PES_ARENA.md`: liên kết về workflow 3 chế độ trong `AGENTS.md`.
+- `project_docs/FIX_NHANH_PES_ARENA.md`: liên kết về workflow 3 chế độ trong `AGENTS.md`.
 - `app.py`: tăng phiên bản 1.3.63 → 1.3.64.
 
 ## Không thay đổi
@@ -62,7 +86,7 @@
 
 ## Kiểm tra
 - Python compile `app.py`: PASS.
-- Xác minh `AGENTS.md`, `PROJECT_MAP.md`, `docs/FIX_NHANH_PES_ARENA.md` có liên kết chéo: PASS.
+- Xác minh `AGENTS.md`, `PROJECT_MAP.md`, `project_docs/FIX_NHANH_PES_ARENA.md` có liên kết chéo: PASS.
 
 ---
 
@@ -132,8 +156,8 @@
 - Giữ public function/constant được bind ngược vào `app.py` để các route module cũ tiếp tục dùng cùng tên, giảm nguy cơ circular import/startup crash.
 - Thay các `print(... warning)` ở hai nhóm helper vừa tách bằng structured runtime event qua `log_system_event`.
 - Tạo `PROJECT_MAP.md`: lỗi/luồng → frontend → backend → database → test cần đọc.
-- Lưu prompt chuẩn tại `docs/FIX_NHANH_PES_ARENA.md`.
-- Chuẩn hóa changelog/runtime log bằng `docs/LOGGING_GUIDE_V1.3.61.md` và `logs/README.md`.
+- Lưu prompt chuẩn tại `project_docs/FIX_NHANH_PES_ARENA.md`.
+- Chuẩn hóa changelog/runtime log bằng `project_docs/LOGGING_GUIDE.md` và `logs/README.md`.
 
 ## File thay đổi
 | File | Chức năng | Thay đổi |
@@ -142,8 +166,8 @@
 | `modules/core/dispute_evidence.py` | Dispute evidence | validate/resize/upload/remove/signed URL |
 | `modules/core/system_settings_runtime.py` | System runtime config | permissions/features/Quick Match/repeat-opponent/maintenance |
 | `PROJECT_MAP.md` | Project routing map | xác định file cần đọc theo từng luồng |
-| `docs/FIX_NHANH_PES_ARENA.md` | Prompt workflow | lưu prompt FIX NHANH chuẩn |
-| `docs/LOGGING_GUIDE_V1.3.61.md` | Logging standard | chuẩn hóa changelog + JSONL runtime log |
+| `project_docs/FIX_NHANH_PES_ARENA.md` | Prompt workflow | lưu prompt FIX NHANH chuẩn |
+| `project_docs/LOGGING_GUIDE.md` | Logging standard | chuẩn hóa changelog + JSONL runtime log |
 | `logs/README.md` | Runtime log quick guide | schema/search/rotate |
 | `test_app_structure_v1361.py` | Regression | kiểm tra cấu trúc và compatibility binding |
 
@@ -247,7 +271,7 @@
 - Luồng fail-open: lỗi bảng Black Box hoặc lỗi lưu telemetry không làm hỏng request/gameplay; endpoint ingest vẫn trả accepted để tránh block giao diện.
 - Tự che các trường nhạy cảm: password, secret, token, Authorization, cookie, session, API key và Parsec.
 - Thêm tab Admin `🛡 Black Box` và trang Timeline theo incident/session.
-- Thêm migration riêng `migrations/20260808_blackbox.sql`; không sửa schema Room/Match/RP.
+- Thêm migration riêng `project_docs/sql/20260808_blackbox.sql`; không sửa schema Room/Match/RP.
 
 ## Chrome Extension bổ trợ
 - `chrome_extension/pes_arena_blackbox/`: Manifest V3, giữ 60 giây event gần nhất trên tab test.
@@ -284,7 +308,7 @@
 
 ## Tài liệu / Test
 - `docs/MODULE_ARCHITECTURE_V1.3.52.md`
-- `docs/LOGGING_GUIDE_V1.3.52.md`
+- `project_docs/LOGGING_GUIDE.md`
 - `test_modular_refactor_v1352.py`
 - Python compile: PASS.
 - Jinja parse toàn bộ module Room mới: PASS.
@@ -451,7 +475,7 @@
 - `templates/admin/tabs/match-report.html`
 - `static/css/admin_dashboard.css`
 - `SUPABASE_UPDATE_V1.3.34.sql`
-- `docs/PES_ARENA_READ_MODEL_V1.3.34.sql`
+- `project_docs/sql/PES_ARENA_READ_MODEL_V1.3.34.sql`
 - `docs/READ_MODEL_AUDIT_V1.3.34.md`
 
 
@@ -724,7 +748,7 @@
 - Thay emoji chế độ chính bằng 6 SVG riêng trong `static/icons/rank_modes/`.
 - Không dùng OVR, inline style, selector chung hoặc `!important`.
 - File CSS mới: `static/css/arena_room_v2.css`.
-- Không có SQL mới. SQL mới nhất vẫn nằm tại `docs/PES_ARENA_UPDATE_LATEST.sql`.
+- Không có SQL mới. SQL mới nhất vẫn nằm tại `project_docs/sql/PES_ARENA_UPDATE_LATEST.sql`.
 
 ## File sửa
 
@@ -998,7 +1022,7 @@
 - Chỉ hiển thị Tổng điểm, không dùng OVR.
 - Giữ nguyên API chọn chế độ `room_select_ranked_mode` và cơ chế AJAX hiện có.
 - CSS mới giới hạn trong `.room-layout-v137`, không dùng selector toàn cục.
-- Gom toàn bộ SQL cũ vào `docs/sql_archive/`; chỉ để `docs/PES_ARENA_UPDATE_LATEST.sql` ở ngoài.
+- Gom toàn bộ SQL cũ vào `project_docs/sql/`; chỉ để `project_docs/sql/PES_ARENA_UPDATE_LATEST.sql` ở ngoài.
 
 
 ## V1.3.3 - Sửa mở khóa chế độ + hiển thị desktop 100%

@@ -40,7 +40,7 @@ def test_extension_files_exist():
 
 
 def test_blackbox_migration_is_isolated():
-    sql = (ROOT / 'migrations/20260808_blackbox.sql').read_text(encoding='utf-8')
+    sql = (ROOT / 'project_docs/sql/20260808_blackbox.sql').read_text(encoding='utf-8')
     assert 'blackbox_events' in sql
     assert 'blackbox_incidents' in sql
     assert 'match_rooms' not in sql

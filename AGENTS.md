@@ -146,7 +146,9 @@ Không giữ cứng chế độ của lượt trước nếu yêu cầu mới đ
 
 - `AGENTS.md` — quy tắc chọn chế độ làm việc (file này).
 - `PROJECT_MAP.md` — lỗi/module → file cần đọc.
-- `docs/FIX_NHANH_PES_ARENA.md` — prompt chi tiết cho FIX NHANH.
+- `project_docs/README.md` — danh mục tài liệu/SQL bắt buộc giữ lại.
+- `project_docs/FIX_NHANH_PES_ARENA.md` — prompt chi tiết cho FIX NHANH.
+- `project_docs/LOGGING_GUIDE.md` — chuẩn log/runtime.
 - `Log.md` — lịch sử thay đổi phiên bản.
 
 ## Quy tắc ưu tiên

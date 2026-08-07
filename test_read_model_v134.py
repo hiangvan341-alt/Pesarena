@@ -5,7 +5,7 @@ APP = (ROOT / 'app.py').read_text(encoding='utf-8')
 ADMIN = (ROOT / 'modules/admin_dashboard_routes.py').read_text(encoding='utf-8')
 READ = (ROOT / 'modules/read_model_service.py').read_text(encoding='utf-8')
 PROFILE = (ROOT / 'modules/profile/service.py').read_text(encoding='utf-8')
-SQL = (ROOT / 'docs/PES_ARENA_READ_MODEL_V1.3.34.sql').read_text(encoding='utf-8')
+SQL = (ROOT / 'project_docs/sql/PES_ARENA_READ_MODEL_V1.3.34.sql').read_text(encoding='utf-8')
 
 
 def test_version_and_read_model_wired():

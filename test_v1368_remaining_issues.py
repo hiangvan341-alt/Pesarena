@@ -5,7 +5,7 @@ ROOT = Path(__file__).resolve().parent
 
 
 def test_blackbox_migration_is_server_only_and_grants_service_role():
-    sql = (ROOT / 'migrations/20260808_blackbox.sql').read_text(encoding='utf-8').lower()
+    sql = (ROOT / 'project_docs/sql/20260808_blackbox.sql').read_text(encoding='utf-8').lower()
     assert 'create table if not exists public.blackbox_events' in sql
     assert 'create table if not exists public.blackbox_incidents' in sql
     assert 'enable row level security' in sql
@@ -18,7 +18,7 @@ def test_blackbox_migration_is_server_only_and_grants_service_role():
 def test_blackbox_safety_reports_missing_schema_helpfully():
     src = (ROOT / 'modules/blackbox/safety.py').read_text(encoding='utf-8')
     ast.parse(src)
-    assert 'migrations/20260808_blackbox.sql' in src
+    assert 'project_docs/sql/20260808_blackbox.sql' in src
     assert 'blackbox_incidents' in src
 
 

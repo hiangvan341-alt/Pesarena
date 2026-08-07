@@ -45,4 +45,4 @@ def test_logging_module_and_docs_exist():
     assert "slow_request" in text
     assert "uncaught_exception" in text
     assert "RotatingFileHandler" in text
-    assert (ROOT / "docs/LOGGING_GUIDE_V1.3.52.md").exists()
+    assert (ROOT / "project_docs/LOGGING_GUIDE.md").exists()

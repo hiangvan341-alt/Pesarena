@@ -2,7 +2,7 @@
 
 > **BẮT BUỘC:** trước khi dùng file map này, đọc `AGENTS.md` ở thư mục gốc để tự chọn chế độ **FIX NHANH / NÂNG CẤP MODULE / AUDIT TOÀN HỆ THỐNG**.
 > Mục đích: tra nhanh **lỗi nào → đọc file nào**, tránh phải quét toàn bộ dự án mỗi lần sửa.
-> Cập nhật: V1.3.64 — 08/08/2026 (Asia/Bangkok)
+> Cập nhật: V1.3.69 — 08/08/2026 (Asia/Bangkok)
 
 ## 1. Quy tắc FIX NHANH
 
@@ -220,8 +220,7 @@ Không chạy SQL thay đổi dữ liệu thật trong test nếu chưa có guar
 |---|---|
 | `Log.md` | changelog phiên bản, không phải runtime log |
 | `logs/pes_arena.log` | runtime JSONL local khi bật |
-| `logs/README.md` | schema và cách đọc runtime log |
-| `docs/LOGGING_GUIDE_V1.3.61.md` | quy trình debug chuẩn |
+| `project_docs/LOGGING_GUIDE.md` | quy trình debug chuẩn |
 | `modules/observability/app_logging.py` | logger implementation |
 
 ### Chuỗi debug chuẩn
@@ -238,17 +237,20 @@ Không chạy SQL thay đổi dữ liệu thật trong test nếu chưa có guar
 4. Test source/boundary nếu có move module.
 5. Full `pytest` cuối cùng; nếu baseline đã lỗi thì ghi rõ **baseline lỗi nào / lỗi mới nào**.
 
-### Baseline V1.3.60 đã có trước V1.3.61
+### Ghi chú test lịch sử
 
-- `test_arena_room_cleanup_v138.py`: source test cũ đọc `room_detail.html` monolith.
-- `test_room_action_visibility_v1319.py`: source test cũ đọc route name trực tiếp trong `room_detail.html`.
-- `test_luckybox_core_source.py`: thiếu SQL lịch sử.
-- `test_luckybox_admin_source.py`: thiếu SQL lịch sử.
+- Một số source-test cũ vẫn đọc cấu trúc `room_detail.html` monolith; không phá kiến trúc module hiện tại chỉ để làm test lịch sử pass.
+- SQL lịch sử còn cần để test/khôi phục đã được gom tại `project_docs/sql/` từ V1.3.69.
+## 14. Tài liệu / SQL giữ lại
 
-Các lỗi baseline này không được tính là regression của V1.3.61.
+- `AGENTS.md`, `PROJECT_MAP.md`, `Log.md`: giữ ở root vì là entrypoint vận hành.
+- `project_docs/`: toàn bộ tài liệu vận hành còn cần.
+- `project_docs/sql/`: toàn bộ SQL duy nhất còn cần cho khôi phục/schema/test; không giữ bản trùng ở root hoặc `docs/`.
+- Các audit/version-note `.md` cũ đã loại khỏi bản phát hành từ V1.3.69.
+
 ## Black Box V1.3.68
 - Runtime/service: `modules/blackbox/`
 - Browser Safety Lab: `static/js/blackbox_safety_lab.js`
-- Storage schema: `migrations/20260808_blackbox.sql`
+- Storage schema: `project_docs/sql/20260808_blackbox.sql`
 - Hai bảng `blackbox_events` và `blackbox_incidents` là server-only; production phải chạy migration trước khi Storage check có thể PASS.
 
