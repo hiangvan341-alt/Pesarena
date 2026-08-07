@@ -23,10 +23,17 @@ def test_safety_route_does_not_close_over_except_variable():
 def test_safety_runner_is_lazy_and_fail_safe():
     source = ROUTES.read_text(encoding="utf-8")
     assert "def _load_safety_runner()" in source
-    assert "from .safety import run_server_safety_audit" in source
+    assert "from modules.blackbox.safety import run_server_safety_audit" in source
+    assert "from .safety import run_server_safety_audit" not in source
     assert '"degraded": True' in source
     assert '"safety_lab_import_failed"' in source
 
 def test_safety_api_still_returns_json_on_runtime_failure():
     source = ROUTES.read_text(encoding="utf-8")
     assert 'jsonify({"ok": False, "error": "safety_audit_failed", "report": report})' in source
+
+
+def test_safety_import_is_absolute_because_route_context_overwrites_package_metadata():
+    source = ROUTES.read_text(encoding="utf-8")
+    assert "globals().update(context)" in source
+    assert "from modules.blackbox.safety import run_server_safety_audit" in source

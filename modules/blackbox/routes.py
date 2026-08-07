@@ -12,7 +12,7 @@ def register_routes(context):
         avoids Python's exception-variable cleanup semantics after an except block.
         """
         try:
-            from .safety import run_server_safety_audit
+            from modules.blackbox.safety import run_server_safety_audit
             return run_server_safety_audit, None
         except Exception as import_exc:
             error_text = f"{type(import_exc).__name__}: {str(import_exc)[:500]}"

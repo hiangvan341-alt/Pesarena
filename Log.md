@@ -1,3 +1,15 @@
+# V1.3.66 - Black Box Safety Lab Import Hotfix
+
+**Ngày:** 2026-08-08 (Asia/Bangkok)
+
+- Chế độ: FIX NHANH.
+- Lỗi: Safety Lab báo `ImportError: attempted relative import with no known parent package` dù `/api/admin/blackbox/safety` vẫn trả HTTP 200 degraded.
+- Nguyên nhân gốc: `modules/blackbox/routes.py::register_routes()` gọi `globals().update(context)`. Context lấy từ `app.py` có thể ghi đè metadata module như `__package__`, nên lazy relative import `from .safety ...` mất package cha.
+- Sửa: đổi lazy import Safety Lab sang absolute import `from modules.blackbox.safety import run_server_safety_audit`.
+- Phạm vi: chỉ Black Box Safety Lab import; không đổi gameplay, Admin permission, database, Supabase, CSS hoặc UI.
+- Regression guard: cập nhật `test_blackbox_safety_import_guard.py` để cấm quay lại relative import trong route có context binding.
+- Kiểm tra: Python compile + Black Box Safety import regression + Safety Lab server smoke test.
+
 # V1.3.65 - Admin Permission Binding Hotfix
 
 - Chế độ: FIX NHANH.
