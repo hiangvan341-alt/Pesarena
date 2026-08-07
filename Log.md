@@ -1,3 +1,11 @@
+# V1.3.58 — Modular Startup Binding Audit Fix
+
+- Sửa `AttributeError: module 'modules.blackbox' has no attribute 'blackbox_config'`.
+- `modules/blackbox/__init__.py` giờ re-export toàn bộ `EXPORTED_NAMES` từ service giống các package module khác.
+- Thêm test tổng quát `test_service_binding_exports.py` để mọi module trong vòng service binding phải có đủ export trước deploy.
+- Giữ các guard V1.3.56/V1.3.57 cho core symbol và import-time dependencies.
+- Không thay logic Room / RP / Match / Invite / Presence.
+
 # V1.3.57 — Modular Import-Time Dependency Fix
 
 - Sửa startup crash `RECENT_TEAM_EXCLUSION_COUNT is not defined` trong `rank_team_service.py`.
