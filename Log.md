@@ -776,3 +776,14 @@
 - 7/7 module cân bằng ngoặc và toàn bộ selector được scope `.arena-room-v2`: PASS.
 - Nhóm Room/Presence/Invite/Quick Match/Rank Mode: 22/22 PASS.
 - Full pytest không chạy hết do source đầu vào thiếu 2 SQL Lucky Box lịch sử; không phải regression của V1.3.38.
+
+
+## V1.3.39 - 2026-08-07 16:24 (Asia/Bangkok)
+
+- Thay toàn bộ 6 logo chế độ Rank bằng bộ `1.webp` -> `6.webp` người dùng cung cấp.
+- Map theo ý nghĩa biểu tượng: 1 Tactical BO3, 2 Ban Pick BO3, 3 Rank Random, 4 Random 3 chọn 1, 5 Lượt đi/về, 6 BO3.
+- Đồng bộ logo ở cả thẻ chọn chế độ (`modes/`) và logo chế độ đang chọn (`emblems/`).
+- Chuẩn hóa viewport logo bằng `object-fit: contain`; ảnh nguồn to/nhỏ hoặc khác tỉ lệ vẫn hiển thị cùng kích thước.
+- Xóa các rule CSS riêng từng mode từng làm Random 3 chọn 1 / Lượt đi-về có kích thước khác.
+- Thêm `?v=1.3.39` cho URL mode/emblem để phá cache ảnh cũ trên trình duyệt/CDN.
+- Tạo `UPLOAD_SUPABASE_MODE_LOGOS_V1.3.39/` và manifest SHA-256 cho đúng 12 object cần overwrite trong bucket `pes-assets`.
