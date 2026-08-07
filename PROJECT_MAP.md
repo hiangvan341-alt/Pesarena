@@ -198,6 +198,7 @@ Khi sửa Invite/Quick Match: **không chuyển route sang file khác trong cùn
 - Logo CLB/giải: bucket `team-logos`.
 - `modules/static_asset_service.py` là nguồn duy nhất tạo URL ảnh giao diện.
 - Không tạo lại `UPLOAD_SUPABASE/` trong ZIP Production sau khi asset đã được xác minh trên Storage.
+- Không xóa template/partial/module trong quá trình dọn asset chỉ vì không thấy tham chiếu trực tiếp; phải coi regression test và include động là dependency.
 
 ## 11. Database / Supabase
 

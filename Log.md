@@ -1,3 +1,26 @@
+# V1.3.63 — Admin 500 Safety Hotfix
+
+**Ngày:** 2026-08-08 (Asia/Bangkok)
+
+## Lỗi
+- Sau V1.3.62, người dùng báo `/admin` trả `Internal Server Error`.
+- Diff xác nhận route/template Admin không bị sửa trực tiếp trong V1.3.62; thay đổi rủi ro nhất là đã xóa `templates/partials/room_dynamic_state.html` trong quá trình dọn asset.
+
+## Sửa
+- Khôi phục `templates/partials/room_dynamic_state.html` từ V1.3.61 để không xóa thành phần template/runtime chỉ vì không thấy tham chiếu tĩnh.
+- Thay 3 đường dẫn `static/rank_frames/*.png` trong partial bằng `asset_url('ranks/*-card.webp')` trên Supabase.
+- Giữ kiến trúc remote-only: không khôi phục bất kỳ ảnh local nào.
+- `app.py`: tăng phiên bản 1.3.62 → 1.3.63.
+
+## Kiểm tra
+- `admin.html` Jinja parse: PASS.
+- `partials/room_dynamic_state.html` Jinja parse: PASS.
+- Python compile: PASS.
+- Nhóm test Admin chính: PASS (admin performance, admin room cleanup, rank modes, blackbox, read model, system inspection).
+- Một số test lịch sử khác vẫn stale/missing fixture từ trước và không liên quan hotfix này.
+
+---
+
 # V1.3.62 — Remote Asset Cleanup
 
 **Ngày:** 2026-08-08 (Asia/Bangkok)
