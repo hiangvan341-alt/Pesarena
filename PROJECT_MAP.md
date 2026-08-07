@@ -246,3 +246,9 @@ Không chạy SQL thay đổi dữ liệu thật trong test nếu chưa có guar
 - `test_luckybox_admin_source.py`: thiếu SQL lịch sử.
 
 Các lỗi baseline này không được tính là regression của V1.3.61.
+## Black Box V1.3.68
+- Runtime/service: `modules/blackbox/`
+- Browser Safety Lab: `static/js/blackbox_safety_lab.js`
+- Storage schema: `migrations/20260808_blackbox.sql`
+- Hai bảng `blackbox_events` và `blackbox_incidents` là server-only; production phải chạy migration trước khi Storage check có thể PASS.
+

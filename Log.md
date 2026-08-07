@@ -1,3 +1,27 @@
+# V1.3.68 — Black Box Storage + Admin Sticky Safety
+
+**Ngày:** 2026-08-08 (Asia/Bangkok)
+
+## Phạm vi
+- Xử lý các tồn tại từ Black Box Safety V1.3.67, không thay đổi gameplay/RP.
+
+## Đã sửa
+- `migrations/20260808_blackbox.sql`: bổ sung quyền server-only cho `service_role`, khóa `anon/authenticated`, giữ RLS.
+- `modules/blackbox/safety.py`: nếu thiếu bảng Black Box thì báo rõ cần chạy migration thay vì chỉ hiện `APIError`.
+- `static/css/admin_dashboard.css`: đẩy sticky Admin tabs xuống dưới sticky topbar (`102px`, mobile `84px`) để tránh chồng vùng thao tác khi cuộn.
+- `static/js/blackbox_safety_lab.js`: bỏ qua control nằm hoàn toàn ngoài viewport để giảm false-positive overlap.
+- `app.py`: tăng `APP_VERSION` lên `1.3.68`.
+- Thêm `test_v1368_remaining_issues.py` bảo vệ migration/overlap/binding series.
+
+## Supabase production
+- Kiểm tra trực tiếp xác nhận `public.blackbox_events` và `public.blackbox_incidents` hiện chưa tồn tại.
+- Việc áp dụng migration production qua connector bị chặn vì chưa được phê duyệt; source đã kèm migration hoàn chỉnh để chạy trên Supabase.
+
+## Regression review Room
+- Xác nhận `rank_series` export `is_series_child_match` trước khi `room_result_routes` được đăng ký. Không sửa luồng kết quả vì không tái hiện lỗi binding.
+
+---
+
 # V1.3.66 - Black Box Safety Lab Import Hotfix
 
 **Ngày:** 2026-08-08 (Asia/Bangkok)

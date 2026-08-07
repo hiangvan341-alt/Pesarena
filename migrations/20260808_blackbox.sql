@@ -40,3 +40,11 @@ create index if not exists idx_blackbox_incidents_fingerprint on public.blackbox
 -- These tables are server-only through the Flask/Supabase service connection.
 alter table public.blackbox_events enable row level security;
 alter table public.blackbox_incidents enable row level security;
+
+
+-- V1.3.68: Black Box is server-only. Keep Data API roles locked out while
+-- granting the Flask backend service role only the operations it actually uses.
+revoke all on table public.blackbox_events from anon, authenticated;
+revoke all on table public.blackbox_incidents from anon, authenticated;
+grant select, insert on table public.blackbox_events to service_role;
+grant select, insert on table public.blackbox_incidents to service_role;

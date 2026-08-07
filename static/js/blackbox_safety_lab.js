@@ -24,7 +24,11 @@
     const els = Array.from(document.querySelectorAll(selectors)).filter(el => {
       const r = el.getBoundingClientRect();
       const st = getComputedStyle(el);
-      return r.width > 4 && r.height > 4 && st.display !== 'none' && st.visibility !== 'hidden' && Number(st.opacity || 1) > 0;
+      if (!(r.width > 4 && r.height > 4 && st.display !== 'none' && st.visibility !== 'hidden' && Number(st.opacity || 1) > 0)) return false;
+      // Ignore controls fully outside the visible viewport. Hidden/off-screen tab content
+      // can otherwise create false overlap warnings after content-visibility/layout containment.
+      if (r.bottom <= 0 || r.top >= innerHeight || r.right <= 0 || r.left >= innerWidth) return false;
+      return true;
     });
     const collisions = [];
     const maxPairs = 12000;

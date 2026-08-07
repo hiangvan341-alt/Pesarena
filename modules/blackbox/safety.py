@@ -103,7 +103,13 @@ def storage_probe(context):
         _ = getattr(res, "data", None)
         return _result("Black Box storage", "PASS", "Bảng blackbox_incidents truy cập được (read-only).")
     except Exception as exc:
-        return _result("Black Box storage", "WARNING", f"Không truy cập được bảng Black Box: {type(exc).__name__}")
+        message = str(exc or "")
+        lowered = message.lower()
+        if "blackbox_incidents" in lowered and ("does not exist" in lowered or "schema cache" in lowered or "pgrst205" in lowered):
+            detail = "Thiếu bảng blackbox_incidents; hãy chạy migrations/20260808_blackbox.sql trên Supabase."
+        else:
+            detail = f"Không truy cập được bảng Black Box: {type(exc).__name__}"
+        return _result("Black Box storage", "WARNING", detail)
 
 
 def fail_open_probe(store_batch):
