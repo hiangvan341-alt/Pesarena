@@ -1,3 +1,31 @@
+## V1.3.36 — Fix Presence Online + Invite Reliability
+**Thời gian:** 2026-08-07 13:20 (Asia/Bangkok)
+
+### Nội dung
+- Nâng `APP_VERSION` từ `1.3.35` lên `1.3.36`.
+- Tăng `ONLINE_TIMEOUT_SECONDS` từ 60 lên 120 giây để tránh heartbeat sát ngưỡng timeout.
+- Heartbeat Frontend: 30 giây khi tab hiển thị, 60 giây khi tab nền, `runWhenHidden: true`, `immediate: true`, jitter 3 giây.
+- Khi quay lại trình duyệt từ PES2021/Parsec (`focus`/`visibilitychange`) gửi heartbeat ngay, có throttle 5 giây.
+- Bỏ `pagehide -> /presence/offline` ở Frontend để tránh Refresh/Back/Forward ghi Offline giả.
+- Giữ `/presence/offline` dạng no-op tương thích với tab/client cũ đang mở khi deploy.
+- Logout thật vẫn cập nhật `is_online=false` như cũ.
+- Loại bỏ việc heartbeat bị UPDATE presence hai lần trong cùng request (`before_request` + route `/heartbeat`).
+- Request thường vẫn cập nhật presence dự phòng tối đa mỗi 60 giây.
+- Đồng bộ Tìm Nhanh với cùng `ONLINE_TIMEOUT_SECONDS=120`, không còn ngưỡng riêng 90 giây.
+- Không thay đổi schema Supabase, không cần chạy SQL mới.
+
+### Kiểm thử
+- `python -m py_compile app.py`: PASS.
+- 15/15 test hiện hành liên quan Presence / Quick Match / Room action / Rank unlock: PASS.
+- Thêm `test_presence_invite_v136.py` để khóa các quy tắc Presence mới.
+- Một số test legacy V1.2.x trong source vẫn hard-code version/HTML cũ và đã stale từ trước; không dùng làm tiêu chí release V1.3.36.
+
+### File sửa
+- `app.py`
+- `templates/base.html`
+- `Log.md`
+- `test_presence_invite_v136.py`
+
 ## V1.3.35 — Chốt công thức RP Series + hòa random
 
 - Random thường và Random 3 chọn 1 tiếp tục dùng cùng cơ chế RP thắng/thua hiện tại.

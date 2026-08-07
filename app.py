@@ -68,11 +68,11 @@ from modules.win_streaks import (
 load_dotenv()
 
 APP_NAME = "PES Arena – Bản Lĩnh Sân Cỏ"
-APP_VERSION = "1.3.35"
+APP_VERSION = "1.3.36"
 DEFAULT_POINTS = 1000
 DEVICE_COOKIE_NAME = "rankzone_device_id"
 COOLDOWN_MINUTES = 3
-ONLINE_TIMEOUT_SECONDS = 60
+ONLINE_TIMEOUT_SECONDS = 120
 CHAT_COOLDOWN_SECONDS = 5
 CHAT_MAX_LENGTH = 200
 DISPUTE_EVIDENCE_BUCKET = "dispute-evidence"
@@ -4325,11 +4325,12 @@ def before_request():
         # lại đọc + cập nhật bảng users trước khi tải /bxh, tạo thêm kết nối Supabase
         # và có thể gây [Errno 16] Device or resource busy.
         if db is not None and session.get("user_id"):
-            # Chỉ cập nhật online tối đa 1 lần/45 giây thay vì ở mọi request
-            # (HTML, API, ảnh, heartbeat đều từng tạo một lệnh UPDATE riêng).
+            # Presence V1.3.36: route /heartbeat tự cập nhật presence, không UPDATE
+            # thêm một lần trong before_request. Các request thường chỉ là lớp
+            # dự phòng nếu heartbeat phía trình duyệt bị trì hoãn.
             now_ts = int(time.time())
             last_touch = int(session.get("last_activity_touch", 0) or 0)
-            if request.endpoint == "heartbeat" or now_ts - last_touch >= 90:
+            if request.endpoint != "heartbeat" and now_ts - last_touch >= 60:
                 mark_current_user_active()
                 session["last_activity_touch"] = now_ts
 
@@ -4504,15 +4505,18 @@ def api_session_timeout_check():
 @login_required
 def heartbeat():
     mark_current_user_active()
+    session["last_activity_touch"] = int(time.time())
     return jsonify({"ok": True})
 
 
 @app.route("/presence/offline", methods=["POST"])
 @login_required
 def presence_offline():
-    # sendBeacon không cần phản hồi JSON lớn. Khi chỉ chuyển trang nội bộ,
-    # before_request/heartbeat của trang mới sẽ đánh dấu online lại ngay.
-    mark_current_user_offline()
+    # V1.3.36: endpoint tương thích cho tab/client cũ. Không đánh dấu offline từ
+    # pagehide/sendBeacon vì refresh, back-forward cache và điều hướng có thể đến
+    # muộn hơn request của trang mới, làm user đang hoạt động bị Offline giả.
+    # Logout thật vẫn đánh dấu offline tại route logout; còn mất kết nối được xác
+    # định bằng ONLINE_TIMEOUT_SECONDS.
     return ("", 204)
 
 
@@ -5754,7 +5758,7 @@ def quick_match_invite():
         print(f"quick_match players ERROR user={user.get('id')}: {type(exc).__name__}: {exc}")
         return jsonify({"ok": False, "message": "Không thể đọc danh sách người chơi online lúc này."}), 503
 
-    presence_cutoff = now_dt() - timedelta(seconds=max(ONLINE_TIMEOUT_SECONDS, 90))
+    presence_cutoff = now_dt() - timedelta(seconds=ONLINE_TIMEOUT_SECONDS)
     for opponent in quick_players:
         oid = str(opponent.get("id") or "")
         if not oid or oid == str(user["id"]) or oid in excluded_user_ids:
@@ -5943,7 +5947,7 @@ def quick_match_invite_status(invite_id):
             )
             opponent = dict(opponent_result.data[0]) if opponent_result.data else None
             seen = parse_dt((opponent or {}).get("last_seen_at"))
-            presence_cutoff = now - timedelta(seconds=max(ONLINE_TIMEOUT_SECONDS, 90))
+            presence_cutoff = now - timedelta(seconds=ONLINE_TIMEOUT_SECONDS)
             opponent_online = bool(
                 opponent
                 and (opponent.get("account_status", "approved") == "approved")
