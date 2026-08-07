@@ -796,10 +796,10 @@ let roomActionRequestInFlight = false;
 
 function getRoomStateInterval() {
     if (document.hidden) return 90000;
-    if (currentRoomStatus === "playing") return currentRoomUserIsGuest ? 4500 : 10000;
+    if (currentRoomStatus === "playing") return currentRoomUserIsGuest ? 7000 : 12000;
     if (currentRoomStatus === "friendly_playing") return 15000;
-    if (currentRoomStatus === "waiting_result_confirm") return currentRoomUserIsGuest ? 3000 : 6000;
-    if (currentRoomStatus === "waiting_ready") return 6000;
+    if (currentRoomStatus === "waiting_result_confirm") return currentRoomUserIsGuest ? 5000 : 8000;
+    if (currentRoomStatus === "waiting_ready") return 8000;
     if (currentRoomStatus === "confirmed") return 8000;
     return 15000;
 }
@@ -996,7 +996,7 @@ function bindRoomAjaxForms() {
                     submitter.textContent = oldText;
                 }
                 if (roomStateImmediateTimer) window.clearTimeout(roomStateImmediateTimer);
-                roomStateImmediateTimer = window.setTimeout(requestImmediateRoomStateCheck, 750);
+                roomStateImmediateTimer = window.setTimeout(requestImmediateRoomStateCheck, 1800);
             }
         });
     });

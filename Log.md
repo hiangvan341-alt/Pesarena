@@ -1,3 +1,24 @@
+## V1.3.29 — Tối ưu độ trễ click và giảm request nền
+
+- Loại bỏ việc gọi heartbeat và kiểm tra lời mời ngay trên mỗi `pointerdown`, `touchstart`, `keydown`; đây là nguyên nhân khiến một cú click đồng thời kích hoạt nhiều request nền.
+- Giãn polling lời mời từ 2,2 giây lên 5 giây khi hoạt động và 15 giây khi không thao tác; tab ẩn không tiếp tục polling liên tục.
+- Giảm watchdog lời mời từ mỗi 5 giây xuống mỗi 30 giây và chỉ chạy khi tab đang hiển thị.
+- Không gọi lại API thông báo hệ thống mỗi lần cửa sổ được focus.
+- Tăng cache người dùng và chuông thông báo từ 8 giây lên 30 giây để giảm truy vấn Supabase lặp khi chuyển tab.
+- Giảm cập nhật trạng thái online từ tối đa 1 lần/45 giây xuống 1 lần/90 giây.
+- Giãn polling phòng đấu ở các trạng thái thường, đồng thời tránh refresh lại phòng quá sớm ngay sau khi vừa submit thao tác.
+- Tắt `backdrop-filter` trong giao diện phòng và giảm transition/box-shadow động để hạn chế GPU repaint.
+- Không thay đổi logic trận đấu, RP, lời mời hoặc lịch sử phòng.
+- Cập nhật `APP_VERSION` thành `1.3.29`.
+
+### File đã sửa
+- `app.py`
+- `modules/notification_service.py`
+- `templates/base.html`
+- `templates/room_detail.html`
+- `static/css/arena_room_v2.css`
+
+
 ## V1.3.28 — Tinh gọn luồng phòng đấu và làm nhẹ viền nút
 
 - Gỡ khu chọn chế độ lặp ở cột giữa; chỉ giữ **1 nơi chọn chế độ chính** là hàng 6 chế độ bên dưới, giảm thao tác rườm rà.

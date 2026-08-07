@@ -1020,12 +1020,11 @@ window.addEventListener("DOMContentLoaded", function () {
         jitter: 5000
     });
 
-    let lastActivityHeartbeatAt = 0;
+    // Không gọi heartbeat ngay trên mỗi click/phím. Việc này từng làm mọi thao tác
+    // đồng thời kích hoạt request nền, đặc biệt chậm trên mạng yếu hoặc Supabase cold start.
+    let lastActivityHeartbeatAt = Date.now();
     function refreshOnUserActivity() {
-        const now = Date.now();
-        if (now - lastActivityHeartbeatAt < 30000) return;
-        lastActivityHeartbeatAt = now;
-        if (heartbeatPoller && typeof heartbeatPoller.runNow === "function") heartbeatPoller.runNow();
+        lastActivityHeartbeatAt = Date.now();
     }
     ["pointerdown", "keydown", "touchstart"].forEach(function (eventName) {
         document.addEventListener(eventName, refreshOnUserActivity, {passive: true});
@@ -1035,13 +1034,8 @@ window.addEventListener("DOMContentLoaded", function () {
     let lastInviteActivityAt = Date.now();
     let lastInviteImmediateCheckAt = 0;
     function markInviteActivity() {
+        // Chỉ ghi nhận hoạt động để điều chỉnh chu kỳ; không fetch ngay khi click.
         lastInviteActivityAt = Date.now();
-        const now = Date.now();
-        if (now - lastInviteImmediateCheckAt < 1200) return;
-        lastInviteImmediateCheckAt = now;
-        if (pendingInvitePoller && typeof pendingInvitePoller.runNow === "function") {
-            pendingInvitePoller.runNow();
-        }
     }
     ["pointerdown", "keydown", "touchstart"].forEach(function (eventName) {
         document.addEventListener(eventName, markInviteActivity, {passive: true});
@@ -1049,7 +1043,7 @@ window.addEventListener("DOMContentLoaded", function () {
     function pendingInviteInterval() {
         // Không có Realtime/WebSocket nên cần lớp dự phòng ngắn khi người dùng
         // đang thực sự thao tác. Khi bỏ máy, tự giãn chu kỳ để giảm request.
-        return (Date.now() - lastInviteActivityAt <= 60000) ? 2200 : 8000;
+        return (Date.now() - lastInviteActivityAt <= 60000) ? 5000 : 15000;
     }
     // Lời mời phải xuất hiện trên mọi trang đã đăng nhập, kể cả Lịch sử và
     // Hướng dẫn. Khi tab chạy nền vẫn kiểm tra thưa để lời mời không hết hạn
@@ -1061,8 +1055,8 @@ window.addEventListener("DOMContentLoaded", function () {
             key: "pending-invites",
             task: checkPendingInvites,
             visibleInterval: pendingInviteInterval,
-            hiddenInterval: 10000,
-            runWhenHidden: true,
+            hiddenInterval: 30000,
+            runWhenHidden: false,
             immediate: true,
             jitter: 250
         });
@@ -1070,10 +1064,10 @@ window.addEventListener("DOMContentLoaded", function () {
     // Watchdog độc lập: nếu một module JS khác lỗi hoặc poller bị dừng quá lâu,
     // lời mời vẫn được kiểm tra lại. Không tạo request trùng nhờ singleFlight.
     window.setInterval(function () {
-        if (Date.now() - lastPendingInvitePollAt >= 15000) {
+        if (!document.hidden && Date.now() - lastPendingInvitePollAt >= 30000) {
             checkPendingInvites();
         }
-    }, 5000);
+    }, 30000);
 
     // Active room không cần polling định kỳ. Chỉ kiểm tra khi tải trang, quay lại
     // tab hoặc sau các sự kiện lời mời/phòng.
@@ -1093,7 +1087,7 @@ window.addEventListener("DOMContentLoaded", function () {
         refreshOnUserActivity();
         if (pendingInvitePoller && typeof pendingInvitePoller.runNow === "function") pendingInvitePoller.runNow();
         if (!isRoomPage && !isPassivePage) checkActiveRoom();
-        if (announcementPoller && typeof announcementPoller.runNow === "function") announcementPoller.runNow();
+        // Thông báo hệ thống đã có chu kỳ 5 phút; không cần fetch lại mỗi lần focus.
     }
     window.addEventListener("focus", refreshEventDrivenData);
     document.addEventListener("visibilitychange", function () {
