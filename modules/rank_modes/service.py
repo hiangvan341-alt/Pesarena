@@ -3,7 +3,7 @@ import random
 from copy import deepcopy
 from .catalog import DEFAULT_MODE_CONFIGS, MODE_ORDER, RANK_RANDOM, RANDOM3_PICK1
 _CONTEXT={}; SETTING_KEY='rank_mode_configs_v1'
-EXPORTED_NAMES=('save_rank_mode_configs','get_rank_mode_configs','get_rank_mode','rank_mode_catalog_for_players','check_rank_mode_eligibility','rank_mode_eligibility_for_room','get_user_rank_mode_unlocks','list_rank_mode_user_unlocks','save_user_rank_mode_unlocks','resolve_series_result','calculate_mode_rp','mode_rp_audit_payload','mode_series_rp_audit_payload','is_series_mode','legacy_team_tier_for_mode','normalize_rank_mode_code','MODE_ORDER','RANK_RANDOM','RANDOM3_PICK1')
+EXPORTED_NAMES=('save_rank_mode_configs','get_rank_mode_configs','get_rank_mode','rank_mode_catalog_for_players','check_rank_mode_eligibility','rank_mode_eligibility_for_room','get_user_rank_mode_unlocks','list_rank_mode_user_unlocks','save_user_rank_mode_unlocks','resolve_series_result','calculate_mode_rp','mode_rp_audit_payload','mode_series_rp_audit_payload','is_series_mode','legacy_team_tier_for_mode','normalize_rank_mode_code','required_daily_games_for_mode','rank_mode_daily_quota_status','assert_rank_mode_daily_quota','MODE_ORDER','RANK_RANDOM','RANDOM3_PICK1')
 def configure(context):
  global _CONTEXT; _CONTEXT=context
 def _deep_merge(base, override):
@@ -133,8 +133,46 @@ def rank_mode_eligibility_for_room(mode_code,host,guest=None):
  for x in g['reasons']:
   if x not in reasons: reasons.append(x)
  return {'eligible':h['eligible'] and g['eligible'],'reasons':reasons}
+def required_daily_games_for_mode(mode_code):
+ mode=get_rank_mode(normalize_rank_mode_code(mode_code))
+ try: return max(1,int(mode.get('max_games') or 1))
+ except (TypeError,ValueError): return 1
+
+def rank_mode_daily_quota_status(mode_code,*user_ids,continuation=False):
+ required=1 if continuation else required_daily_games_for_mode(mode_code)
+ status_fn=_CONTEXT.get('rank_daily_status')
+ if not callable(status_fn):
+  return {'eligible':True,'required_games':required,'continuation':bool(continuation),'players':{},'reasons':[]}
+ players={}; reasons=[]
+ for user_id in user_ids:
+  if not user_id: continue
+  status=status_fn(user_id) or {}
+  if not status.get('enabled',True):
+   players[str(user_id)]={**status,'required_games':required,'enough':True}
+   continue
+  remaining=int(status.get('games_remaining') or 0)
+  enough=remaining>=required
+  players[str(user_id)]={**status,'required_games':required,'enough':enough}
+  if not enough:
+   reasons.append(f'Cần còn ít nhất {required} lượt trận trong ngày để bắt đầu chế độ này (hiện còn {remaining})')
+ return {'eligible':not reasons,'required_games':required,'continuation':bool(continuation),'players':players,'reasons':reasons}
+
+def assert_rank_mode_daily_quota(mode_code,*user_ids,continuation=False):
+ result=rank_mode_daily_quota_status(mode_code,*user_ids,continuation=continuation)
+ if not result.get('eligible'):
+  raise ValueError('; '.join(result.get('reasons') or ['Không đủ lượt trận Rank trong ngày.']))
+ return result
+
 def rank_mode_catalog_for_players(host,guest=None):
- return [{**get_rank_mode(c),**{'eligible':rank_mode_eligibility_for_room(c,host,guest)['eligible'],'lock_reasons':rank_mode_eligibility_for_room(c,host,guest)['reasons']}} for c in MODE_ORDER]
+ output=[]
+ for c in MODE_ORDER:
+  base=rank_mode_eligibility_for_room(c,host,guest)
+  quota=rank_mode_daily_quota_status(c,(host or {}).get('id'),(guest or {}).get('id') if guest else None)
+  reasons=list(base.get('reasons') or [])
+  for reason in quota.get('reasons') or []:
+   if reason not in reasons: reasons.append(reason)
+  output.append({**get_rank_mode(c),**{'eligible':bool(base.get('eligible')) and bool(quota.get('eligible')),'lock_reasons':reasons,'required_daily_games':quota.get('required_games')}})
+ return output
 def is_series_mode(mode_code): return get_rank_mode(mode_code).get('series_type')!='single'
 def legacy_team_tier_for_mode(mode_code): return 'smart_random' if normalize_rank_mode_code(mode_code)==RANK_RANDOM else normalize_rank_mode_code(mode_code)
 def resolve_series_result(mode_code,games,forfeiting_user_id=None):

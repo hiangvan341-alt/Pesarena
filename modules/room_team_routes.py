@@ -63,7 +63,16 @@ def register_routes(context):
 
         if match_mode == MATCH_MODE_RANKED:
             try:
-                assert_can_start_ranked_match(host.get("id"), guest.get("id"))
+                selected_rank_mode = normalize_rank_mode_code(room.get("team_tier") or RANK_RANDOM)
+                continuing_series = "__RANK_MODE_LOCKED__" in (room.get("note") or "") and is_series_mode(selected_rank_mode)
+                # V1.3.46: lúc bắt đầu Series lần đầu phải còn đủ quota tối đa của mode.
+                # Khi Series đã chạy, mỗi trận con tiếp theo chỉ cần 1 lượt thực tế;
+                # điều kiện RP không được kiểm tra lại giữa Series.
+                assert_rank_mode_daily_quota(
+                    selected_rank_mode,
+                    host.get("id"), guest.get("id"),
+                    continuation=continuing_series,
+                )
             except ValueError as exc:
                 flash(str(exc), "warning")
                 return redirect(url_for("room_detail", room_id=room_id))
@@ -173,6 +182,12 @@ def register_routes(context):
         if not eligibility.get("eligible"):
             flash("Không thể chọn chế độ: " + "; ".join(eligibility.get("reasons") or []), "warning")
             return redirect(url_for("room_detail", room_id=room_id))
+        try:
+            # Quota là điều kiện cứng để mở một Series mới.
+            assert_rank_mode_daily_quota(selected_mode, host.get("id"), (guest or {}).get("id"))
+        except ValueError as exc:
+            flash("Không thể chọn chế độ: " + str(exc), "warning")
+            return redirect(url_for("room_detail", room_id=room_id))
         mode_config = get_rank_mode(selected_mode)
         label = mode_config.get("label") or selected_mode
         selected_legacy_tier = legacy_team_tier_for_mode(selected_mode)
@@ -206,7 +221,7 @@ def register_routes(context):
         host = get_user(room.get("host_user_id"))
         guest = get_user(room.get("guest_user_id"))
         try:
-            assert_can_start_ranked_match(room.get("host_user_id"), room.get("guest_user_id"))
+            assert_rank_mode_daily_quota(RANDOM3_PICK1, room.get("host_user_id"), room.get("guest_user_id"), continuation=False)
         except ValueError as exc:
             flash(str(exc), "warning")
             return redirect(url_for("room_detail", room_id=room_id))
@@ -247,7 +262,7 @@ def register_routes(context):
         match = None
         if state.get("host_choice") is not None and state.get("guest_choice") is not None:
             try:
-                assert_can_start_ranked_match(room.get("host_user_id"), room.get("guest_user_id"))
+                assert_rank_mode_daily_quota(RANDOM3_PICK1, room.get("host_user_id"), room.get("guest_user_id"), continuation=False)
             except ValueError as exc:
                 flash(str(exc), "warning")
                 return redirect(url_for("room_detail", room_id=room_id))

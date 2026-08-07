@@ -822,3 +822,17 @@
 - Đồng bộ cho bỏ cuộc thủ công, host offline giữa trận và timeout bị tính bỏ trận.
 - Lịch sử matches lưu đồng thời delta người bỏ cuộc và người được xử thắng.
 - Rank Random và Random 3 chọn 1 giữ nguyên luật hiện tại.
+
+
+## V1.3.46 - 2026-08-07 19:09 (Asia/Bangkok)
+- Bổ sung quota theo số trận PES thực tế cho từng Rank mode.
+- Rank Random / Random 3 chọn 1 cần còn tối thiểu 1 lượt.
+- Lượt đi - lượt về cần còn tối thiểu 2 lượt trước khi bắt đầu.
+- BO3 / Chiến thuật BO3 / Cấm chọn BO3 cần còn tối thiểu 3 lượt trước khi bắt đầu.
+- Nếu đã chơi 9/10: chỉ được vào mode trận đơn; Series bị khóa.
+- Nếu đã chơi 8/10: được Lượt đi/về, không được các BO3.
+- Nếu đã chơi 7/10: đủ điều kiện quota cho toàn bộ Series.
+- Khi Series đã bắt đầu và phòng đang giữ nguyên mode, RP/min-match không bị kiểm tra lại giữa chuỗi. Mỗi trận con tiếp theo chỉ cần còn 1 lượt thực tế.
+- BO3 kết thúc 2-0 chỉ phát sinh 2 match thực tế nên chỉ tốn 2 lượt; nếu cần trận 3 mới tốn lượt thứ 3.
+- Catalog chọn mode hiển thị lý do khóa khi một trong hai người không đủ lượt ngày.
+- Test mới V1.3.46: 6/6 PASS. Nhóm Rank mode lõi bổ sung: 17 PASS; 2 test legacy Admin toggle cũ không còn khớp kiến trúc partial hiện tại, không liên quan thay đổi này.
