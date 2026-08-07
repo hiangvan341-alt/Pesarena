@@ -1,13 +1,48 @@
-# V1.3.61 — Supabase Asset Cleanup
+# V1.3.61 — App Core Map + Logging Standard
 
-- Xóa toàn bộ ảnh local đã có trên Supabase.
-- Xóa `static/assets/room_v2/` và `UPLOAD_SUPABASE/`.
-- 8 Room assets dùng trực tiếp `pes-assets/room-assets/v1.3.18`.
-- CSS không còn fallback tới ảnh Room local.
-- Sửa fallback legacy `room-texture-blue.webp` (không tồn tại) sang `room-texture-dark.webp` Supabase.
-- Parsec logo dùng `room_asset()` để không phụ thuộc `STATIC_ASSET_BASE_URL`.
-- Không có ảnh mới cần upload trong V1.3.60.
-- Không sửa gameplay Room/RP/Match/Invite/Presence.
+**Ngày:** 08/08/2026 02:13 (Asia/Bangkok)  
+**Phạm vi:** `app.py`, core infrastructure, project map, logging docs  
+**Loại:** Refactor an toàn + Developer Workflow
+
+## Thay đổi
+- Giảm `app.py` từ khoảng 3.547 xuống khoảng 3.193 dòng mà không di chuyển các route Invite/Quick Match/Room nhạy cảm đang bị regression test đọc trực tiếp.
+- Tách xử lý ảnh bằng chứng tranh chấp sang `modules/core/dispute_evidence.py`.
+- Tách System Features / Quick Match config / Repeat Opponent config / Maintenance sang `modules/core/system_settings_runtime.py`.
+- Giữ public function/constant được bind ngược vào `app.py` để các route module cũ tiếp tục dùng cùng tên, giảm nguy cơ circular import/startup crash.
+- Thay các `print(... warning)` ở hai nhóm helper vừa tách bằng structured runtime event qua `log_system_event`.
+- Tạo `PROJECT_MAP.md`: lỗi/luồng → frontend → backend → database → test cần đọc.
+- Lưu prompt chuẩn tại `docs/FIX_NHANH_PES_ARENA.md`.
+- Chuẩn hóa changelog/runtime log bằng `docs/LOGGING_GUIDE_V1.3.61.md` và `logs/README.md`.
+
+## File thay đổi
+| File | Chức năng | Thay đổi |
+|---|---|---|
+| `app.py` | Flask bootstrap/legacy routes | tách helper hạ tầng, giữ compatibility binding, version 1.3.61 |
+| `modules/core/dispute_evidence.py` | Dispute evidence | validate/resize/upload/remove/signed URL |
+| `modules/core/system_settings_runtime.py` | System runtime config | permissions/features/Quick Match/repeat-opponent/maintenance |
+| `PROJECT_MAP.md` | Project routing map | xác định file cần đọc theo từng luồng |
+| `docs/FIX_NHANH_PES_ARENA.md` | Prompt workflow | lưu prompt FIX NHANH chuẩn |
+| `docs/LOGGING_GUIDE_V1.3.61.md` | Logging standard | chuẩn hóa changelog + JSONL runtime log |
+| `logs/README.md` | Runtime log quick guide | schema/search/rotate |
+| `test_app_structure_v1361.py` | Regression | kiểm tra cấu trúc và compatibility binding |
+
+## Kiểm tra
+- `python -m py_compile app.py modules/core/dispute_evidence.py modules/core/system_settings_runtime.py`: PASS.
+- Smoke test `system_settings_runtime`: PASS.
+- Smoke test ảnh PNG → WebP qua `dispute_evidence`: PASS.
+- Test kiến trúc/binding chọn lọc: **10/10 PASS**.
+- Baseline V1.3.60 full pytest đã có 4 lỗi collection trước khi sửa: 2 source-test Room cũ + thiếu 2 SQL Lucky Box lịch sử.
+- Một số regression test lịch sử còn hard-code version/HTML monolith cũ; không dùng chúng để kết luận regression V1.3.61 nếu failure giống baseline.
+- Không import được full Flask runtime trong sandbox hiện tại vì môi trường thiếu package `flask`; đây là giới hạn môi trường kiểm tra, không phải lỗi compile của source.
+
+## Không thay đổi
+- Không thay logic RP/gameplay.
+- Không thay Invite/Quick Match route flow.
+- Không thay Room route flow.
+- Không thay CSS/UI gameplay.
+- Không thay schema Supabase.
+
+---
 
 # V1.3.60 — Safety Lab Import Guard
 

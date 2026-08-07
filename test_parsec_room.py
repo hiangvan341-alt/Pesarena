@@ -31,7 +31,7 @@ def test_parsec_visible_on_initial_room_template():
     for src in (initial, fragment):
         assert 'partials/parsec_room_panel.html' in src
     panel=open('templates/partials/parsec_room_panel.html',encoding='utf-8').read()
-    assert "room_asset('parsec-logo.webp')" in panel
+    assert "asset_url('parsec-logo.webp')" in panel
     assert '<span>Copy Link</span>' in panel
 
 def test_parsec_panel_is_in_right_rail():

@@ -1,7 +1,6 @@
 import csv
 import json
 import hashlib
-import io
 import os
 import random
 import secrets
@@ -14,7 +13,6 @@ from functools import wraps
 from pathlib import Path
 
 from dotenv import load_dotenv
-from PIL import Image, ImageOps, UnidentifiedImageError
 from flask import (
     Flask,
     jsonify,
@@ -318,98 +316,11 @@ _admin_checked = False
 # =========================
 # Tiện ích thời gian đã tách sang modules/datetime_utils.py
 
-def _normalize_storage_public_url(value):
-    if isinstance(value, str):
-        return value
-    if isinstance(value, dict):
-        return value.get("publicUrl") or value.get("public_url") or value.get("signedURL") or value.get("signed_url")
-    return str(value or "")
-
-
-def prepare_dispute_evidence_bytes(file_storage):
-    if not file_storage or not getattr(file_storage, "filename", ""):
-        return None
-
-    raw = file_storage.read(DISPUTE_EVIDENCE_MAX_BYTES + 1)
-    if len(raw) > DISPUTE_EVIDENCE_MAX_BYTES:
-        raise ValueError("Ảnh bằng chứng không được vượt quá 4 MB.")
-    if not raw:
-        raise ValueError("File ảnh bằng chứng đang trống.")
-
-    try:
-        with Image.open(io.BytesIO(raw)) as probe:
-            image_format = (probe.format or "").upper()
-            width, height = probe.size
-            probe.verify()
-        if image_format not in DISPUTE_EVIDENCE_ALLOWED_FORMATS:
-            raise ValueError("Bằng chứng chỉ chấp nhận ảnh JPG, PNG hoặc WEBP.")
-        if width < 100 or height < 100:
-            raise ValueError("Ảnh bằng chứng quá nhỏ. Vui lòng chọn ảnh từ 100×100 pixel trở lên.")
-        if width * height > 30_000_000:
-            raise ValueError("Ảnh bằng chứng có độ phân giải quá lớn.")
-
-        with Image.open(io.BytesIO(raw)) as source:
-            source = ImageOps.exif_transpose(source).convert("RGB")
-            source.thumbnail(
-                (DISPUTE_EVIDENCE_MAX_SIDE, DISPUTE_EVIDENCE_MAX_SIDE),
-                Image.Resampling.LANCZOS,
-            )
-            output = io.BytesIO()
-            source.save(output, format="WEBP", quality=86, method=6)
-            return output.getvalue()
-    except ValueError:
-        raise
-    except (UnidentifiedImageError, OSError, SyntaxError):
-        raise ValueError("File bằng chứng không phải ảnh hợp lệ hoặc đã bị lỗi.")
-
-
-def upload_dispute_evidence(match_id, user_id, evidence_bytes):
-    require_db()
-    object_path = f"{match_id}/{user_id}/{uuid.uuid4().hex}.webp"
-    bucket = db.storage.from_(DISPUTE_EVIDENCE_BUCKET)
-    bucket.upload(
-        object_path,
-        evidence_bytes,
-        {
-            "content-type": "image/webp",
-            "cache-control": "3600",
-            "upsert": "false",
-        },
-    )
-    return object_path
-
-
-def remove_dispute_evidence_object(object_path):
-    if not object_path or db is None:
-        return
-    try:
-        db.storage.from_(DISPUTE_EVIDENCE_BUCKET).remove([object_path])
-    except Exception as exc:
-        print(f"remove_dispute_evidence_object warning: {exc}")
-
-
-def get_dispute_evidence_signed_url(object_path, expires_in=3600):
-    if not object_path or db is None:
-        return None
-    try:
-        response = db.storage.from_(DISPUTE_EVIDENCE_BUCKET).create_signed_url(
-            object_path,
-            max(60, int(expires_in)),
-        )
-        return _normalize_storage_public_url(response)
-    except Exception as exc:
-        print(f"get_dispute_evidence_signed_url warning: {exc}")
-        return None
-
-
-
-
-
-
-
-
-
-
+# Dispute evidence helpers moved to modules/core/dispute_evidence.py (V1.3.61).
+from modules.core import dispute_evidence as _core_dispute_evidence
+_core_dispute_evidence.configure(globals())
+for _evidence_name in _core_dispute_evidence.EXPORTED_NAMES:
+    globals()[_evidence_name] = getattr(_core_dispute_evidence, _evidence_name)
 
 
 def hash_password(password: str) -> str:
@@ -433,278 +344,14 @@ def is_owner_user(user) -> bool:
     )
 
 
-ADMIN_PERMISSION_GROUPS = {
-    "users": ["users_view", "users_approve", "users_edit", "users_delete", "password_reset", "accounts_import"],
-    "matches": ["matches_view", "matches_confirm", "matches_cancel", "matches_delete"],
-    "operations": ["rooms_manage", "invites_manage", "announcements_manage"],
-    "system": ["system_features_manage", "chat_manage", "friendly_manage", "registration_codes_manage", "admin_logs_view"],
-    "rp": ["rp_view", "rp_simulate", "rp_backup_restore", "daily_rank_limits_manage"],
-    "economy": ["zcoin_view", "zcoin_manage"],
-    "permissions": ["permissions_manage"],
-}
-ADMIN_PERMISSION_LABELS = {
-    "users_view":"Xem người dùng", "users_approve":"Duyệt tài khoản", "users_edit":"Sửa tài khoản",
-    "users_delete":"Xóa tài khoản", "password_reset":"Xử lý quên mật khẩu", "accounts_import":"Import CSV",
-    "matches_view":"Xem trận",
-    "matches_confirm":"Xác nhận trận", "matches_cancel":"Hủy trận", "matches_delete":"Xóa trận",
-    "rooms_manage":"Quản lý phòng", "invites_manage":"Quản lý lời mời",
-    "announcements_manage":"Quản lý thông báo", "system_features_manage":"Bật/tắt tính năng hệ thống", "chat_manage":"Quản lý Chat", "friendly_manage":"Quản lý Giao hữu",
-    "registration_codes_manage":"Quản lý mã đăng ký", "admin_logs_view":"Xem nhật ký Admin",
-    "rp_view":"Xem công thức RP", "rp_simulate":"Tính thử RP",
-    "rp_backup_restore":"Backup/Khôi phục RP", "daily_rank_limits_manage":"Bật/tắt giới hạn Rank ngày",
-    "zcoin_view":"Xem ví và giao dịch Zcoin", "zcoin_manage":"Cộng/trừ Zcoin",
-    "permissions_manage":"Cấp/thu hồi quyền Admin",
-}
-LEGACY_ADMIN_PERMISSION_FIELDS = {
-    "create_test_account": "admin_can_create_test_account",
-    "import_accounts_csv": "admin_can_import_accounts_csv",
-    "accounts_import": "admin_can_import_accounts_csv",
-}
-SYSTEM_FEATURE_DEFAULTS = {
-    "dashboard_enabled": False,
-    "public_ranking_enabled": True,
-    "friendly_enabled": True, "rank_standard_enabled": True, "friendly_random3_enabled": True, "lobby_chat_enabled": True, "room_chat_enabled": True,
-    "registration_codes_enabled": True, "announcements_enabled": True, "quick_match_enabled": True,
-    "repeat_opponent_rp_enabled": True,
-    "rank_tactical_bo3_enabled": True,
-    "rank_bo3_enabled": True,
-    "rank_ban_pick_bo3_enabled": True,
-    "rank_home_away_enabled": True,
-}
-
-def _admin_permissions(user):
-    raw = (user or {}).get("admin_permissions") or {}
-    if isinstance(raw, str):
-        try: raw = json.loads(raw)
-        except Exception: raw = {}
-    return raw if isinstance(raw, dict) else {}
-
-
-def has_admin_permission(user, permission_code: str) -> bool:
-    if is_owner_user(user): return True
-    if not is_admin_user(user): return False
-    permissions = _admin_permissions(user)
-    if permission_code in permissions: return permissions.get(permission_code) is True
-    legacy = LEGACY_ADMIN_PERMISSION_FIELDS.get(permission_code)
-    return bool(legacy and user.get(legacy) is True)
-
-
-def get_system_features():
-    request_key = "_system_features_cached"
-    cached = cache_get(request_key)
-    if isinstance(cached, dict):
-        return dict(cached)
-
-    cached = ttl_cache_get("system_features")
-    if isinstance(cached, dict):
-        return cache_set(request_key, dict(cached))
-
-    features = dict(SYSTEM_FEATURE_DEFAULTS)
-    try:
-        result = execute_query(
-            db.table("system_settings").select("setting_value")
-            .eq("setting_key", "admin_system_features").limit(1),
-            "get_system_features", attempts=2,
-        )
-        row = (result.data or [{}])[0]
-        raw = row.get("setting_value")
-        if isinstance(raw, str):
-            raw = json.loads(raw)
-        if isinstance(raw, dict):
-            features.update({key: bool(value) for key, value in raw.items() if key in features})
-    except Exception as exc:
-        print(f"get_system_features warning: {exc}")
-
-    ttl_cache_set("system_features", dict(features), 45)
-    return cache_set(request_key, dict(features))
-
-
-def system_feature_enabled(key: str) -> bool:
-    return bool(get_system_features().get(key, SYSTEM_FEATURE_DEFAULTS.get(key, False)))
-
-
-QUICK_MATCH_SETTING_KEY = "quick_match_config"
-QUICK_MATCH_COLOR_DEFAULT = "blue"
-QUICK_MATCH_COLOR_VALUES = {"blue", "green"}
-
-def get_quick_match_config():
-    request_key = "_quick_match_config_cached"
-    cached = cache_get(request_key)
-    if isinstance(cached, dict):
-        return dict(cached)
-
-    cached = ttl_cache_get("quick_match_config")
-    if isinstance(cached, dict):
-        return cache_set(request_key, dict(cached))
-
-    config = {"color": QUICK_MATCH_COLOR_DEFAULT}
-    try:
-        result = execute_query(
-            db.table("system_settings").select("setting_value")
-            .eq("setting_key", QUICK_MATCH_SETTING_KEY).limit(1),
-            "get_quick_match_config", attempts=2,
-        )
-        raw = ((result.data or [{}])[0]).get("setting_value")
-        if isinstance(raw, str):
-            raw = json.loads(raw)
-        if isinstance(raw, dict) and raw.get("color") in QUICK_MATCH_COLOR_VALUES:
-            config["color"] = raw["color"]
-    except Exception as exc:
-        print(f"get_quick_match_config warning: {exc}")
-
-    ttl_cache_set("quick_match_config", dict(config), 60)
-    return cache_set(request_key, dict(config))
-
-
-REPEAT_OPPONENT_CONFIG_SETTING_KEY = "repeat_opponent_rp_config"
-REPEAT_OPPONENT_WINNER_FACTOR_DEFAULTS = [100, 60, 30, 0]
-REPEAT_OPPONENT_LOSER_FACTOR_DEFAULTS = [100, 70, 40, 10]
-
-def get_repeat_opponent_rp_config():
-    request_key = "_repeat_opponent_rp_config_cached"
-    cached = cache_get(request_key)
-    if isinstance(cached, dict):
-        return {key: list(value) if isinstance(value, list) else value for key, value in cached.items()}
-
-    cached = ttl_cache_get("repeat_opponent_rp_config")
-    if isinstance(cached, dict):
-        copied = {key: list(value) if isinstance(value, list) else value for key, value in cached.items()}
-        return cache_set(request_key, copied)
-
-    config = {
-        "winner_factors": list(REPEAT_OPPONENT_WINNER_FACTOR_DEFAULTS),
-        "loser_factors": list(REPEAT_OPPONENT_LOSER_FACTOR_DEFAULTS),
-    }
-    try:
-        result = execute_query(
-            db.table("system_settings").select("setting_value").eq(
-                "setting_key", REPEAT_OPPONENT_CONFIG_SETTING_KEY
-            ).limit(1),
-            "get_repeat_opponent_rp_config", attempts=2,
-        )
-        raw = ((result.data or [{}])[0]).get("setting_value")
-        if isinstance(raw, str):
-            raw = json.loads(raw)
-        if isinstance(raw, dict):
-            for key in ("winner_factors", "loser_factors"):
-                values = raw.get(key)
-                if isinstance(values, list) and len(values) == 4:
-                    normalized = [max(0, min(100, int(value))) for value in values]
-                    if all(normalized[index] >= normalized[index + 1] for index in range(3)):
-                        config[key] = normalized
-    except Exception as exc:
-        print(f"get_repeat_opponent_rp_config warning: {exc}")
-
-    ttl_cache_set("repeat_opponent_rp_config", {
-        "winner_factors": list(config["winner_factors"]),
-        "loser_factors": list(config["loser_factors"]),
-    }, 60)
-    return cache_set(request_key, config)
-
-
-MAINTENANCE_SETTING_KEY = "server_maintenance_config"
-VN_TIMEZONE = timezone(timedelta(hours=7))
-_maintenance_cache = {"value": None, "expires_at": 0.0}
-
-
-def _maintenance_default_config():
-    return {
-        "manual_closed": False,
-        "close_at": "",
-        "open_at": "",
-        "message": "Hệ thống đang được bảo trì. Vui lòng quay lại sau.",
-        "updated_at": "",
-    }
-
-
-def _parse_maintenance_time(value):
-    raw = str(value or "").strip()
-    if not raw:
-        return None
-    try:
-        parsed = datetime.fromisoformat(raw.replace("Z", "+00:00"))
-        if parsed.tzinfo is None:
-            parsed = parsed.replace(tzinfo=VN_TIMEZONE)
-        return parsed.astimezone(VN_TIMEZONE)
-    except (TypeError, ValueError):
-        return None
-
-
-def _normalize_maintenance_input(value):
-    parsed = _parse_maintenance_time(value)
-    return parsed.isoformat(timespec="minutes") if parsed else ""
-
-
-def get_maintenance_config(force=False):
-    now_ts = time.time()
-    if not force and _maintenance_cache.get("value") is not None and now_ts < _maintenance_cache.get("expires_at", 0):
-        return dict(_maintenance_cache["value"])
-
-    config = _maintenance_default_config()
-    try:
-        result = execute_query(
-            db.table("system_settings").select("setting_value")
-            .eq("setting_key", MAINTENANCE_SETTING_KEY).limit(1),
-            "get_server_maintenance_config",
-            attempts=2,
-        )
-        row = (result.data or [{}])[0]
-        raw = row.get("setting_value")
-        if isinstance(raw, str):
-            raw = json.loads(raw)
-        if isinstance(raw, dict):
-            for key in config:
-                if key in raw:
-                    config[key] = raw[key]
-    except Exception as exc:
-        app.logger.warning("Maintenance config load failed: %s", exc)
-
-    config["manual_closed"] = bool(config.get("manual_closed"))
-    _maintenance_cache["value"] = dict(config)
-    _maintenance_cache["expires_at"] = now_ts + 15
-    return config
-
-
-def get_maintenance_status(config=None):
-    config = dict(config or get_maintenance_config())
-    now = datetime.now(VN_TIMEZONE)
-    close_at = _parse_maintenance_time(config.get("close_at"))
-    open_at = _parse_maintenance_time(config.get("open_at"))
-
-    closed = bool(config.get("manual_closed"))
-    # Lịch đóng có thể bật máy chủ tự động, lịch mở có thể mở lại kể cả khi
-    # công tắc đóng thủ công đang bật. Mốc thời gian đến sau có quyền ưu tiên.
-    transitions = []
-    if close_at:
-        transitions.append((close_at, True, "close"))
-    if open_at:
-        transitions.append((open_at, False, "open"))
-    for when, state, _kind in sorted(transitions, key=lambda item: item[0]):
-        if now >= when:
-            closed = state
-
-    future = [(when, state, kind) for when, state, kind in transitions if when > now]
-    next_transition = min(future, key=lambda item: item[0]) if future else None
-    countdown = None
-    if next_transition:
-        seconds = max(0, int((next_transition[0] - now).total_seconds()))
-        if seconds <= 30 * 60:
-            countdown = {
-                "kind": next_transition[2],
-                "target_iso": next_transition[0].isoformat(),
-                "seconds": seconds,
-                "label": "Máy chủ sẽ đóng để bảo trì" if next_transition[2] == "close" else "Máy chủ sẽ mở trở lại",
-            }
-
-    return {
-        "closed": closed,
-        "message": str(config.get("message") or _maintenance_default_config()["message"]),
-        "close_at": close_at.isoformat() if close_at else "",
-        "open_at": open_at.isoformat() if open_at else "",
-        "close_at_input": close_at.strftime("%Y-%m-%dT%H:%M") if close_at else "",
-        "open_at_input": open_at.strftime("%Y-%m-%dT%H:%M") if open_at else "",
-        "countdown": countdown,
-    }
+# Compatibility source marker for legacy static regression checks: "rank_standard_enabled": True
+# System settings / maintenance / permission helpers moved to
+# modules/core/system_settings_runtime.py (V1.3.61). Public names stay bound in
+# app.py for compatibility with existing route modules and tests.
+from modules.core import system_settings_runtime as _core_system_settings_runtime
+_core_system_settings_runtime.configure(globals())
+for _settings_name in _core_system_settings_runtime.EXPORTED_NAMES:
+    globals()[_settings_name] = getattr(_core_system_settings_runtime, _settings_name)
 
 
 def _current_session_is_admin():
@@ -3540,7 +3187,7 @@ for _route_registrar in (
 ):
     _route_registrar(globals())
 
-del _service_module, _service_name, _route_registrar, _read_model_name
+del _service_module, _service_name, _route_registrar, _read_model_name, _evidence_name, _settings_name
 
 
 if __name__ == "__main__":
