@@ -1,3 +1,21 @@
+## V1.3.35 — Chốt công thức RP Series + hòa random
+
+- Random thường và Random 3 chọn 1 tiếp tục dùng cùng cơ chế RP thắng/thua hiện tại.
+- Tất cả kết quả hòa: chênh dưới 500 RP thì mỗi người random độc lập +1..+6; chênh từ 500 RP thì chỉ người điểm thấp random +1..+6, người điểm cao +0.
+- Bỏ bonus chênh trình khỏi luật hòa.
+- Bỏ cuộc toàn hệ thống giữ mức cố định -20 RP; người được xử thắng không nhận RP từ sự kiện bỏ cuộc.
+- Lượt đi/về: base +30/+22/+15/-10/-22/-28 đúng bảng đã chốt.
+- BO3: +32/+25/-23/-28.
+- Chiến thuật BO3: +32/+25/-23/-31.
+- Cấm chọn BO3: +32/+25/-23/-31.
+- RP Series cuối = base + random(-2,+3), random đúng một lần cho mỗi người.
+- Thêm helper audit `mode_rp_audit_payload()` và migration Supabase cho base/variance/final của hai người.
+- Các trường audit RP không được tham chiếu trong template người chơi; UI chỉ hiện tổng RP cuối.
+- Bump RP engine lên `RP_V1.14.6` và APP_VERSION lên `1.3.35`.
+
+### SQL cần chạy
+- `SUPABASE_UPDATE_V1.3.35.sql`
+
 ## V1.3.34 — Read Model / Stats Cache, bỏ tính toán nặng khi click
 
 - Chuyển **Admin → Báo cáo số trận** sang mô hình read-model: tab chỉ SELECT dữ liệu tổng hợp có sẵn trong Supabase, không tải `matches / match_rooms / match_series / match_series_games` rồi tính lại trong Python.

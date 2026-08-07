@@ -25,24 +25,24 @@
                     </div>
                     {% if mode.series_type != 'single' %}
                     <details class="admin-rp-details">
-                        <summary>Công thức RP Series</summary>
-                        <div class="admin-rank-mode-fields">
+                        <summary>Công thức RP Series (đã chốt)</summary>
+                        <div class="admin-rank-mode-fields admin-rp-fixed-summary">
                         {% if code == 'home_away' %}
-                            <label>Thắng 1 + hòa 1<input type="number" name="{{ code }}__rp__one_win_one_draw_win" value="{{ mode.rp.one_win_one_draw_win or 0 }}"></label>
-                            <label>Thua 1 + hòa 1<input type="number" name="{{ code }}__rp__one_win_one_draw_loss" value="{{ mode.rp.one_win_one_draw_loss or 0 }}"></label>
-                            <label>Thắng cả 2 lượt<input type="number" name="{{ code }}__rp__win_both" value="{{ mode.rp.win_both or 0 }}"></label>
-                            <label>Thua cả 2 lượt<input type="number" name="{{ code }}__rp__lose_both" value="{{ mode.rp.lose_both or 0 }}"></label>
-                            <label>Hòa chung cuộc<input type="number" name="{{ code }}__rp__draw" value="{{ mode.rp.draw or 0 }}"></label>
+                            <div><span>Thắng cả 2</span><strong>+{{ mode.rp.win_both }}</strong></div>
+                            <div><span>Thắng 1 + hòa 1</span><strong>+{{ mode.rp.one_win_one_draw_win }}</strong></div>
+                            <div><span>1 thắng + 1 thua, thắng tổng</span><strong>+{{ mode.rp.split_aggregate_win }}</strong></div>
+                            <div><span>1 thắng + 1 thua, thua tổng</span><strong>{{ mode.rp.split_aggregate_loss }}</strong></div>
+                            <div><span>Thua 1 + hòa 1</span><strong>{{ mode.rp.one_win_one_draw_loss }}</strong></div>
+                            <div><span>Thua cả 2</span><strong>{{ mode.rp.lose_both }}</strong></div>
                         {% else %}
-                            <label>Thắng 2–0<input type="number" name="{{ code }}__rp__win_2_0" value="{{ mode.rp.win_2_0 or 0 }}"></label>
-                            <label>Thua 0–2<input type="number" name="{{ code }}__rp__lose_0_2" value="{{ mode.rp.lose_0_2 or 0 }}"></label>
-                            <label>Thắng 2–1<input type="number" name="{{ code }}__rp__win_2_1" value="{{ mode.rp.win_2_1 or 0 }}"></label>
-                            <label>Thua 1–2<input type="number" name="{{ code }}__rp__lose_1_2" value="{{ mode.rp.lose_1_2 or 0 }}"></label>
-                            <label>Hòa Series<input type="number" name="{{ code }}__rp__draw_1_1" value="{{ mode.rp.draw_1_1 or 0 }}"></label>
-                            <label>Ba trận hòa<input type="number" name="{{ code }}__rp__draw_all" value="{{ mode.rp.draw_all or 0 }}"></label>
+                            <div><span>Thắng 2–0</span><strong>+{{ mode.rp.win_2_0 }}</strong></div>
+                            <div><span>Thắng 2–1</span><strong>+{{ mode.rp.win_2_1 }}</strong></div>
+                            <div><span>Thua 1–2</span><strong>{{ mode.rp.lose_1_2 }}</strong></div>
+                            <div><span>Thua 0–2</span><strong>{{ mode.rp.lose_0_2 }}</strong></div>
                         {% endif %}
-                            <label>RP người được xử thắng<input type="number" name="{{ code }}__rp__forfeit_win" value="{{ mode.rp.forfeit_win or 0 }}"></label>
-                            <label>RP người bỏ cuộc<input type="number" name="{{ code }}__rp__forfeit_loss" value="{{ mode.rp.forfeit_loss or 0 }}"></label>
+                            <div><span>Biến động</span><strong>-2 → +3</strong></div>
+                            <div><span>Hòa</span><strong>Random +1 → +6</strong></div>
+                            <div><span>Bỏ cuộc</span><strong>-20 RP</strong></div>
                         </div>
                     </details>
                     {% else %}<p class="small">Chế độ trận đơn dùng công thức RP Rank hiện tại.</p>{% endif %}

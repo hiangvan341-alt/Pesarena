@@ -1,8 +1,9 @@
 import json
+import random
 from copy import deepcopy
 from .catalog import DEFAULT_MODE_CONFIGS, MODE_ORDER, RANK_RANDOM, RANDOM3_PICK1
 _CONTEXT={}; SETTING_KEY='rank_mode_configs_v1'
-EXPORTED_NAMES=('save_rank_mode_configs','get_rank_mode_configs','get_rank_mode','rank_mode_catalog_for_players','check_rank_mode_eligibility','rank_mode_eligibility_for_room','get_user_rank_mode_unlocks','list_rank_mode_user_unlocks','save_user_rank_mode_unlocks','resolve_series_result','calculate_mode_rp','is_series_mode','legacy_team_tier_for_mode','normalize_rank_mode_code','MODE_ORDER','RANK_RANDOM','RANDOM3_PICK1')
+EXPORTED_NAMES=('save_rank_mode_configs','get_rank_mode_configs','get_rank_mode','rank_mode_catalog_for_players','check_rank_mode_eligibility','rank_mode_eligibility_for_room','get_user_rank_mode_unlocks','list_rank_mode_user_unlocks','save_user_rank_mode_unlocks','resolve_series_result','calculate_mode_rp','mode_rp_audit_payload','mode_series_rp_audit_payload','is_series_mode','legacy_team_tier_for_mode','normalize_rank_mode_code','MODE_ORDER','RANK_RANDOM','RANDOM3_PICK1')
 def configure(context):
  global _CONTEXT; _CONTEXT=context
 def _deep_merge(base, override):
@@ -31,7 +32,14 @@ def get_rank_mode_configs():
   raw=((result.data or [{}])[0]).get('setting_value'); raw=json.loads(raw) if isinstance(raw,str) else raw
   if isinstance(raw,dict):
    for code in MODE_ORDER:
-    if isinstance(raw.get(code),dict): configs[code]=_deep_merge(configs[code],raw[code])
+    if isinstance(raw.get(code),dict):
+     configs[code]=_deep_merge(configs[code],raw[code])
+     # Công thức Series V1.3.35 được chốt lại. Nếu Supabase còn cấu hình RP
+     # từ bản cũ, chỉ thay phần RP bằng bộ mặc định mới; các điều kiện mở khóa,
+     # enabled, pool... vẫn được giữ nguyên.
+     canonical_rp=(DEFAULT_MODE_CONFIGS.get(code) or {}).get('rp') or {}
+     if canonical_rp.get('formula_version') and ((raw.get(code) or {}).get('rp') or {}).get('formula_version')!=canonical_rp.get('formula_version'):
+      configs[code]['rp']=deepcopy(canonical_rp)
  except Exception: pass
  return configs
 def get_rank_mode(code): return get_rank_mode_configs()[normalize_rank_mode_code(code)]
@@ -141,12 +149,75 @@ def resolve_series_result(mode_code,games,forfeiting_user_id=None):
  if len(clean)>=int(mode.get('max_games') or 3):
   w='player1' if p1>p2 else 'player2' if p2>p1 else 'draw'; return {'status':'completed','reason':'max_games','winner_side':w,'score':f'{p1}-{p2}','p1_wins':p1,'p2_wins':p2,'draws':draws}
  return {'status':'playing','p1_wins':p1,'p2_wins':p2,'draws':draws}
-def calculate_mode_rp(mode_code,series_result,winner_side=None,forfeit=False):
- mode=get_rank_mode(mode_code); rp=mode.get('rp') or {}
+def _mode_randint(rng, minimum, maximum):
+ return int((rng or random).randint(int(minimum), int(maximum)))
+
+def _mode_draw_points(player1_rp, player2_rp, rng):
+ """Luật hòa dùng chung: <500 RP thì cả hai random +1..+6; >=500 chỉ người thấp RP được random."""
+ p1=int(player1_rp or 0); p2=int(player2_rp or 0)
+ if abs(p1-p2)>=500:
+  if p1<p2: return _mode_randint(rng,1,6),0
+  if p2<p1: return 0,_mode_randint(rng,1,6)
+ return _mode_randint(rng,1,6),_mode_randint(rng,1,6)
+
+def _with_variance(base, rng):
+ variance=_mode_randint(rng,-2,3)
+ return int(base),int(variance),int(base)+int(variance)
+
+def calculate_mode_rp(mode_code,series_result,winner_side=None,forfeit=False,player1_rp=0,player2_rp=0,rng=None):
+ """Tính RP cho Series.
+
+ Random/3 chọn 1 vẫn dùng ``rank_current``. Các mode Series dùng RP cơ sở +
+ random(-2,+3) đúng một lần cho mỗi người. Hòa dùng luật +1..+6 riêng.
+ Bỏ cuộc chỉ phạt người bỏ cuộc -20 RP, người còn lại không nhận RP.
+ """
+ mode=get_rank_mode(mode_code); rp=mode.get('rp') or {}; rng=rng or random
  if mode.get('series_type')=='single': return {'formula':'rank_current'}
- if forfeit or series_result.get('reason')=='forfeit': return {'winner':int(rp.get('forfeit_win') or 0),'loser':int(rp.get('forfeit_loss') or 0),'key':'forfeit'}
+ if forfeit or series_result.get('reason')=='forfeit':
+  offender=series_result.get('forfeiting_side')
+  result={'key':'forfeit','forfeit_loss':-20,'winner':0,'loser':-20}
+  if offender in ('player1','player2'):
+   result.update({'player1':-20 if offender=='player1' else 0,'player2':-20 if offender=='player2' else 0})
+  return result
  if series_result.get('winner_side')=='draw' or not winner_side:
-  key='draw_all' if int(series_result.get('draws') or 0)>=int(mode.get('max_games') or 3) else 'draw_1_1'; value=int(rp.get(key,rp.get('draw',0)) or 0); return {'player1':value,'player2':value,'key':key}
- score=str(series_result.get('score') or '')
- if score=='2-0': return {'winner':int(rp.get('win_2_0') or rp.get('win_both') or 0),'loser':int(rp.get('lose_0_2') or rp.get('lose_both') or 0),'key':'2-0'}
- return {'winner':int(rp.get('win_2_1') or rp.get('one_win_one_draw_win') or 0),'loser':int(rp.get('lose_1_2') or rp.get('one_win_one_draw_loss') or 0),'key':'2-1'}
+  p1,p2=_mode_draw_points(player1_rp,player2_rp,rng)
+  return {'player1':p1,'player2':p2,'key':'draw','player1_base':None,'player1_variance':None,'player1_final':p1,'player2_base':None,'player2_variance':None,'player2_final':p2}
+
+ code=normalize_rank_mode_code(mode_code)
+ p1wins=int(series_result.get('p1_wins') or 0); p2wins=int(series_result.get('p2_wins') or 0); draws=int(series_result.get('draws') or 0)
+ if code=='home_away':
+  if max(p1wins,p2wins)>=2:
+   key='win_both'; win_base=int(rp.get('win_both') or 30); lose_base=int(rp.get('lose_both') or -28)
+  elif draws>=1 and max(p1wins,p2wins)>=1:
+   key='one_win_one_draw'; win_base=int(rp.get('one_win_one_draw_win') or 22); lose_base=int(rp.get('one_win_one_draw_loss') or -22)
+  else:
+   key='split_aggregate'; win_base=int(rp.get('split_aggregate_win') or 15); lose_base=int(rp.get('split_aggregate_loss') or -10)
+ else:
+  score=str(series_result.get('score') or '')
+  if score=='2-0': key='2-0'; win_base=int(rp.get('win_2_0') or 32); lose_base=int(rp.get('lose_0_2') or -28)
+  else: key='2-1'; win_base=int(rp.get('win_2_1') or 25); lose_base=int(rp.get('lose_1_2') or -23)
+
+ wb,wv,wf=_with_variance(win_base,rng); lb,lv,lf=_with_variance(lose_base,rng)
+ result={'winner':wf,'loser':lf,'key':key,'winner_base':wb,'winner_variance':wv,'winner_final':wf,'loser_base':lb,'loser_variance':lv,'loser_final':lf}
+ if winner_side=='player1':
+  result.update({'player1':wf,'player2':lf,'player1_base':wb,'player1_variance':wv,'player1_final':wf,'player2_base':lb,'player2_variance':lv,'player2_final':lf})
+ elif winner_side=='player2':
+  result.update({'player1':lf,'player2':wf,'player1_base':lb,'player1_variance':lv,'player1_final':lf,'player2_base':wb,'player2_variance':wv,'player2_final':wf})
+ return result
+
+def mode_rp_audit_payload(rp_result):
+ """Các cột audit chỉ lưu Supabase; UI người chơi không sử dụng chúng."""
+ rp_result=rp_result or {}
+ return {
+  'rp_base1':rp_result.get('player1_base'), 'rp_variance1':rp_result.get('player1_variance'), 'rp_final1':rp_result.get('player1_final',rp_result.get('player1')),
+  'rp_base2':rp_result.get('player2_base'), 'rp_variance2':rp_result.get('player2_variance'), 'rp_final2':rp_result.get('player2_final',rp_result.get('player2')),
+ }
+
+
+def mode_series_rp_audit_payload(rp_result):
+ """Payload tương ứng bảng match_series, chỉ lưu Supabase."""
+ rp_result=rp_result or {}
+ return {
+  'rp_base_player1':rp_result.get('player1_base'), 'rp_variance_player1':rp_result.get('player1_variance'), 'rp_final_player1':rp_result.get('player1_final',rp_result.get('player1')),
+  'rp_base_player2':rp_result.get('player2_base'), 'rp_variance_player2':rp_result.get('player2_variance'), 'rp_final_player2':rp_result.get('player2_final',rp_result.get('player2')),
+ }
