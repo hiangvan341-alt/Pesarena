@@ -109,9 +109,26 @@
     rowsEl.innerHTML = '<tr><td colspan="4">Đang chạy kiểm tra server và browser...</td></tr>';
     try {
       const started = new Date().toISOString();
-      const res = await fetch(cfg.endpoint, {credentials:'same-origin', headers:{'Accept':'application/json'}});
-      const data = await res.json();
-      const server = data && data.report && Array.isArray(data.report.checks) ? data.report.checks.map(x => ({group:'Server', ...x})) : [item('Server','Safety API','FAIL','Không nhận được report hợp lệ.')];
+      const res = await fetch(cfg.endpoint, {
+        credentials:'same-origin',
+        cache:'no-store',
+        headers:{'Accept':'application/json','X-PES-Safety-Lab':'1'}
+      });
+      const contentType = String(res.headers.get('content-type') || '').toLowerCase();
+      const raw = await res.text();
+      let data = null;
+      if (contentType.includes('application/json')) {
+        try { data = JSON.parse(raw); } catch (parseError) {
+          throw new Error('Safety API trả JSON lỗi cú pháp (HTTP '+res.status+').');
+        }
+      } else {
+        const preview = raw.replace(/\s+/g,' ').slice(0,120);
+        const redirected = res.redirected ? ('; redirected='+res.url) : '';
+        throw new Error('Safety API trả '+(contentType || 'non-JSON')+' HTTP '+res.status+redirected+'. Preview: '+preview);
+      }
+      const server = data && data.report && Array.isArray(data.report.checks)
+        ? data.report.checks.map(x => ({group:'Server', ...x}))
+        : [item('Server','Safety API','FAIL','Không nhận được report hợp lệ (HTTP '+res.status+').')];
       const browser = browserChecks();
       lastReport = {
         generated_at: new Date().toISOString(),

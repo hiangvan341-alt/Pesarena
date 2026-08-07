@@ -1,3 +1,12 @@
+# V1.3.59 — Safety API + Modular Boundary Cleanup
+
+- Sửa Safety Lab: backend luôn trả JSON khi audit runtime lỗi; frontend không parse JSON mù khi nhận HTML/redirect.
+- Sửa `room/_extra_controls.html` không còn đóng thẻ thuộc file cha; loại bỏ 1 `</div>` dư legacy.
+- `room_detail.html` tự sở hữu/đóng `#roomLiveShell`.
+- Audit `room_detail.html`, `style.css`, `app.py`; ghi `MODULAR_CLEANUP_AUDIT_V1.3.59.md`.
+- Không thay logic RP / Room core / Match / Invite / Presence.
+- Thêm `test_v1359_safety_cleanup_regression.py`.
+
 # V1.3.58 — Modular Startup Binding Audit Fix
 
 - Sửa `AttributeError: module 'modules.blackbox' has no attribute 'blackbox_config'`.

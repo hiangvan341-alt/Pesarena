@@ -46,11 +46,47 @@ def register_routes(context):
 
 
     @app.route("/api/admin/blackbox/safety", methods=["GET"])
-    @login_required
-    @admin_required
     def api_admin_blackbox_safety():
-        report = run_server_safety_audit(context, blackbox_config(), blackbox_store_batch)
-        return jsonify({"ok": True, "report": report})
+        # API-specific auth keeps every outcome JSON. Generic page decorators may
+        # redirect to HTML, which makes diagnostics ambiguous for fetch clients.
+        user_id = session.get("user_id")
+        if not user_id:
+            return jsonify({"ok": False, "error": "authentication_required"}), 401
+        try:
+            user = current_user()
+        except Exception as exc:
+            try:
+                app.logger.exception("Black Box Safety auth lookup failed: %s", exc)
+            except Exception:
+                pass
+            return jsonify({"ok": False, "error": "authentication_lookup_failed"}), 500
+        if not user or not is_admin_user(user):
+            return jsonify({"ok": False, "error": "admin_required"}), 403
+
+        # Diagnostics must report their own failure as JSON instead of letting Flask
+        # return the generic HTML 500 page (which the Safety Lab cannot parse).
+        try:
+            report = run_server_safety_audit(context, blackbox_config(), blackbox_store_batch)
+            response = jsonify({"ok": True, "report": report})
+            response.headers["Cache-Control"] = "no-store"
+            return response
+        except Exception as exc:
+            try:
+                app.logger.exception("Black Box Safety API failed: %s", exc)
+            except Exception:
+                pass
+            report = {
+                "overall": "FAIL",
+                "counts": {"PASS": 0, "WARNING": 0, "FAIL": 1, "NOT_TESTED": 0},
+                "checks": [{
+                    "name": "Safety API runtime",
+                    "status": "FAIL",
+                    "detail": f"{type(exc).__name__}: {str(exc)[:300]}",
+                }],
+            }
+            response = jsonify({"ok": False, "error": "safety_audit_failed", "report": report})
+            response.headers["Cache-Control"] = "no-store"
+            return response, 500
 
     @app.route("/admin/blackbox/incident/<incident_id>")
     @login_required

@@ -1,4 +1,4 @@
-/* PES Arena V1.3.52
+/* PES Arena compatibility stylesheet entrypoint
  * Compatibility entrypoint only. Legacy CSS was split into ordered modules.
  * Do not add new feature CSS here; create a scoped module under static/css/.
  * Import order is intentionally identical to the historical style.css cascade.
