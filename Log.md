@@ -1,3 +1,13 @@
+# V1.3.60 — Safety Lab Import Guard
+
+- Sửa `NameError: cannot access free variable 'exc'` trong Safety API V1.3.59.
+- Nguyên nhân: fallback function được định nghĩa trong `except Exception as exc` rồi tham chiếu `exc`; Python xóa exception variable sau khi rời `except`.
+- Chuyển Safety Lab sang lazy loader `_load_safety_runner()` tại thời điểm gọi API.
+- Nếu `modules.blackbox.safety` import lỗi: API vẫn trả JSON `200` ở chế độ degraded và ghi rõ lỗi import thật.
+- Nếu audit runtime lỗi: API vẫn trả JSON lỗi có cấu trúc.
+- Không sửa Room / RP / Match / Invite / Presence / CSS gameplay.
+- Thêm regression test chống closure giữ exception variable.
+
 # V1.3.59 — Safety API + Modular Boundary Cleanup
 
 - Sửa Safety Lab: backend luôn trả JSON khi audit runtime lỗi; frontend không parse JSON mù khi nhận HTML/redirect.
