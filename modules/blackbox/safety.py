@@ -11,7 +11,7 @@ import json
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[2]
-BASELINE_FILE = Path(__file__).with_name("baseline_v1352.json")
+BASELINE_FILE = Path(__file__).with_name("baseline_v1369.json")
 
 CRITICAL_PATHS = [
     "modules/rp_engine.py",
@@ -47,8 +47,9 @@ def source_isolation_audit():
     try:
         baseline = json.loads(BASELINE_FILE.read_text(encoding="utf-8"))
     except Exception as exc:
-        return [_result("Baseline V1.3.52", "NOT_TESTED", f"Không đọc được baseline: {type(exc).__name__}")]
+        return [_result("Black Box source baseline", "NOT_TESTED", f"Không đọc được baseline: {type(exc).__name__}")]
 
+    baseline_version = str(baseline.get("baseline_version") or "unknown")
     out = []
     for rel in CRITICAL_PATHS:
         current = ROOT / rel
@@ -58,9 +59,9 @@ def source_isolation_audit():
             continue
         actual = _sha256(current)
         if actual == expected:
-            out.append(_result(rel, "PASS", "Không thay đổi so với V1.3.52.", hash=actual[:12]))
+            out.append(_result(rel, "PASS", f"Khớp baseline an toàn V{baseline_version}.", hash=actual[:12], baseline_version=baseline_version))
         else:
-            out.append(_result(rel, "WARNING", "Có thay đổi so với V1.3.52; cần review regression.", baseline=expected[:12], current=actual[:12]))
+            out.append(_result(rel, "WARNING", f"Có thay đổi so với baseline an toàn V{baseline_version}; cần regression review.", baseline=expected[:12], current=actual[:12], baseline_version=baseline_version))
     return out
 
 

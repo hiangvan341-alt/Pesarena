@@ -11,7 +11,7 @@ Cho phép Admin tự kiểm tra Black Box mà không phải thao tác gameplay b
 5. Có thể bấm `⬇ Xuất báo cáo JSON` để gửi phân tích.
 
 ## Các nhóm tự động
-- Source isolation: so hash 14 module gameplay quan trọng với baseline V1.3.52.
+- Source isolation: so hash 14 module gameplay quan trọng với baseline an toàn hiện tại V1.3.69.
 - Kill Switch: kiểm tra cấu hình server/client và khi OFF thì frontend không load `blackbox.js`.
 - Crash test: ép lớp lưu Black Box ném exception trong bộ nhớ, xác nhận exception không bubble ra gameplay.
 - Storage probe: read-only tới `blackbox_incidents`.

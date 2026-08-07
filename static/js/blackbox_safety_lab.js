@@ -19,6 +19,13 @@
     return {group, name, status, detail, ...(extra || {})};
   }
 
+  function uiLayer(el){
+    if (!el || !el.closest) return 'page';
+    if (el.closest('.player-topbar')) return 'topbar';
+    if (el.closest('.topbar-account-dropdown, .notification-panel, [role="dialog"], .modal, .dropdown-menu')) return 'overlay';
+    return 'page';
+  }
+
   function scanOverlaps(){
     const selectors = 'button,a,.btn,[role="button"],input[type="submit"],input[type="button"],select';
     const els = Array.from(document.querySelectorAll(selectors)).filter(el => {
@@ -39,6 +46,10 @@
         if (++pairs > maxPairs) break;
         const b = els[j];
         if (a.contains(b) || b.contains(a)) continue;
+        // Sticky topbar, dropdowns/modals and normal page content are separate UI layers.
+        // Cross-layer overlap is intentional (content scrolls underneath overlays/header),
+        // so only report collisions between controls in the same interaction layer.
+        if (uiLayer(a) !== uiLayer(b)) continue;
         const br = b.getBoundingClientRect();
         const iw = Math.max(0, Math.min(ar.right, br.right) - Math.max(ar.left, br.left));
         const ih = Math.max(0, Math.min(ar.bottom, br.bottom) - Math.max(ar.top, br.top));

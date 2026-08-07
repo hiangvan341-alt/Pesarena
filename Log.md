@@ -1,3 +1,26 @@
+# V1.3.70 — Black Box Signal Cleanup
+
+**Ngày:** 2026-08-08 (Asia/Bangkok)
+
+## Chế độ
+- FIX NHANH / bảo trì Black Box; chỉ xử lý 2 WARNING còn lại của Safety Lab V1.3.69.
+
+## Thay đổi
+- Thay baseline nguồn Black Box cũ V1.3.52 bằng baseline an toàn V1.3.69 sau khi các regression hiện tại đã được xác nhận.
+- `modules/blackbox/safety.py`: đọc `baseline_v1369.json` và hiển thị phiên bản baseline động thay vì hard-code V1.3.52.
+- `static/js/blackbox_safety_lab.js`: overlap scanner chỉ so control trong cùng UI layer; bỏ false-positive giữa sticky topbar/overlay và nội dung trang cuộn phía dưới.
+- Giữ kiểm tra off-screen control từ V1.3.68.
+- `APP_VERSION`: 1.3.69 → 1.3.70.
+
+## Không thay đổi
+- Không sửa CSS layout thực tế, Room gameplay, RP, Match, Invite, Admin permission hay Supabase.
+- Không thay schema/data production.
+
+## Regression guard
+- Thêm `test_v1370_blackbox_signal_cleanup.py` bảo vệ baseline mới, hash `room_runtime`, phân lớp overlap scanner và version.
+
+---
+
 # V1.3.69 — Project Docs / SQL Cleanup
 
 **Ngày:** 2026-08-08 (Asia/Bangkok)
