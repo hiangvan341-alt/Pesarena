@@ -66,7 +66,7 @@ def register_routes(context):
     @admin_required
     def admin():
         admin_started_at = time.perf_counter()
-        allowed_admin_tabs = {"overview", "users", "passwords", "rooms", "matches", "match-report", "rank-modes", "test-data", "system", "economy", "rp-tools", "logs"}
+        allowed_admin_tabs = {"overview", "users", "passwords", "rooms", "matches", "match-report", "rank-modes", "test-data", "system", "economy", "rp-tools", "logs", "blackbox"}
         active_admin_tab = str(request.args.get("tab") or "overview").strip().lower()
         if active_admin_tab not in allowed_admin_tabs:
             active_admin_tab = "overview"
@@ -183,6 +183,9 @@ def register_routes(context):
             admin_safe_load("audit_logs", list_admin_activity_logs, [])
             if active_admin_tab == "logs" and is_owner_user(current_user()) else []
         )
+        blackbox_incidents = admin_safe_load("blackbox_incidents", lambda: blackbox_list_incidents(120), []) if active_admin_tab == "blackbox" else []
+        blackbox_stats = blackbox_summary(blackbox_incidents) if active_admin_tab == "blackbox" else {"total": 0, "open": 0, "critical": 0, "error": 0, "warning": 0}
+        blackbox_cfg = blackbox_config() if active_admin_tab == "blackbox" else {"enabled": False}
         duplicate_ip_groups = admin_safe_load(
             "duplicate_ips", lambda: build_duplicate_ip_groups(admin_users), []
         ) if active_admin_tab in {"overview", "users"} else []
@@ -222,6 +225,9 @@ def register_routes(context):
             active_announcement=admin_safe_load("announcement", get_active_announcement, None) if active_admin_tab in {"overview", "system"} else None,
             password_reset_requests=password_reset_requests,
             audit_logs=audit_logs,
+            blackbox_incidents=blackbox_incidents,
+            blackbox_summary=blackbox_stats,
+            blackbox_config=blackbox_cfg,
             duplicate_ip_groups=duplicate_ip_groups,
             duplicate_ip_user_count=duplicate_ip_user_count,
             ip_device_status=ip_device_status,

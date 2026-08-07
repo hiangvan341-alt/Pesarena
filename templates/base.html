@@ -58,6 +58,25 @@
     </script>
     <script src="{{ static_asset('js/session-timeout.js') }}" defer></script>
     {% endif %}
+    {% if current_user and not (auth_only|default(false)) %}
+      {% set bb_cfg = blackbox_runtime_config %}
+      {% if bb_cfg.enabled and bb_cfg.client_enabled %}
+      <script>
+      window.PES_BLACKBOX_CONFIG = {
+        enabled: true,
+        ingestUrl: {{ url_for('api_blackbox_events')|tojson }},
+        appVersion: {{ APP_VERSION|tojson }},
+        captureClicks: {{ bb_cfg.capture_clicks|tojson }},
+        captureNetwork: {{ bb_cfg.capture_network|tojson }},
+        batchSize: {{ bb_cfg.batch_size|tojson }},
+        maxBuffer: {{ bb_cfg.max_buffer|tojson }},
+        flushMs: {{ bb_cfg.flush_ms|tojson }},
+        slowApiMs: {{ bb_cfg.slow_api_ms|tojson }}
+      };
+      </script>
+      <script src="{{ static_asset('js/blackbox.js') }}" defer></script>
+      {% endif %}
+    {% endif %}
 
 <script>
 (function initTheme(){

@@ -1,3 +1,54 @@
+# V1.3.54 — Black Box Safety Lab / Kill Switch / Automated Audit
+
+**Ngày:** 08/08/2026 (Asia/Bangkok)
+
+## An toàn triển khai
+- Sửa Kill Switch frontend: chỉ load `blackbox.js` khi cả `BLACKBOX_ENABLED` và `BLACKBOX_CLIENT_ENABLED` bật. Khi client OFF không gắn listener/timer/wrap fetch.
+- Thêm `modules/blackbox/safety.py` và baseline hash V1.3.52 cho 14 module gameplay quan trọng.
+- Thêm crash test fail-open bằng storage override trong bộ nhớ; không ghi dữ liệu giả vào Supabase.
+- Thêm storage probe read-only.
+
+## Safety Lab Admin
+- Tab `🛡 Black Box` có nút `▶ Chạy kiểm tra tự động`.
+- Tự chạy Server audit + Browser micro benchmark + UI/CSS overlap scan + Navigation Timing.
+- Kết quả tách `PASS / WARNING / FAIL / NOT TESTED`, không giả PASS cho luồng gameplay 2 người.
+- Cho phép xuất báo cáo JSON.
+
+## Kiểm tra trước đóng gói
+- Python compile: PASS.
+- JavaScript syntax (`blackbox.js`, `blackbox_safety_lab.js`): PASS.
+- Source isolation: 14/14 module gameplay quan trọng không đổi so với V1.3.52.
+- Forced storage exception fail-open: PASS.
+- Full Flask runtime chưa chạy trong sandbox do môi trường không cài Flask.
+
+---
+
+# V1.3.53 — PES Arena Black Box + Chrome Debugger
+
+**Ngày:** 08/08/2026 (Asia/Bangkok)
+
+## Black Box tích hợp
+- Nâng `modules/observability` thành hệ giám sát hai lớp: logging request sẵn có + `modules/blackbox` lưu event/incident riêng.
+- Frontend `static/js/blackbox.js` ghi buffer tối đa, gửi batch nền, theo dõi JS error/unhandled rejection/API chậm/API lỗi/click quan trọng/page visibility.
+- Luồng fail-open: lỗi bảng Black Box hoặc lỗi lưu telemetry không làm hỏng request/gameplay; endpoint ingest vẫn trả accepted để tránh block giao diện.
+- Tự che các trường nhạy cảm: password, secret, token, Authorization, cookie, session, API key và Parsec.
+- Thêm tab Admin `🛡 Black Box` và trang Timeline theo incident/session.
+- Thêm migration riêng `migrations/20260808_blackbox.sql`; không sửa schema Room/Match/RP.
+
+## Chrome Extension bổ trợ
+- `chrome_extension/pes_arena_blackbox/`: Manifest V3, giữ 60 giây event gần nhất trên tab test.
+- Bắt JS error, unhandled rejection, console.error, fetch status/duration và click nút/link.
+- Cho phép xuất report JSON và chụp màn hình hiện tại.
+- Extension là công cụ Admin/Test, không thay thế Black Box server.
+
+## Test
+- `test_blackbox_v1353.py`: 6/6 PASS.
+- Python compile Black Box + app.py: PASS.
+- Chrome manifest JSON: PASS.
+- Full Flask runtime import chưa chạy trong sandbox do môi trường không cài package Flask; không phải lỗi source của dự án.
+
+---
+
 # V1.3.52 — Module hóa Room / CSS legacy / App Core + System Logging
 
 **Ngày:** 08/08/2026 (Asia/Bangkok)

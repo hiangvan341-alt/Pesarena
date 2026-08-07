@@ -71,7 +71,7 @@ from modules.win_streaks import (
 load_dotenv()
 
 APP_NAME = "PES Arena – Bản Lĩnh Sân Cỏ"
-APP_VERSION = "1.3.52"
+APP_VERSION = "1.3.54"
 DEFAULT_POINTS = 1000
 DEVICE_COOKIE_NAME = "rankzone_device_id"
 COOLDOWN_MINUTES = 3
@@ -1479,6 +1479,7 @@ def inject_globals():
             "active_announcement": None,
             "bell_notifications": [],
             "unread_notification_count": 0,
+            "blackbox_runtime_config": blackbox_config(),
         }
 
     # Tối ưu phản hồi HTML: không chặn render để chờ phòng, lời mời và thông báo
@@ -1518,6 +1519,7 @@ def inject_globals():
         "bell_notifications": bell_notifications,
         "unread_notification_count": unread_notification_count,
         "quick_match_config": get_quick_match_config(),
+        "blackbox_runtime_config": blackbox_config(),
     }
 
 
@@ -3417,6 +3419,7 @@ from modules import gift_codes as _gift_codes_module
 from modules import rank_modes as _rank_modes_module
 from modules import rank_series as _rank_series_module
 from modules import read_model_service as _read_model_service
+from modules import blackbox as _blackbox_module
 
 for _service_module in (
     _notification_service,
@@ -3435,6 +3438,7 @@ for _service_module in (
     _ranking_rebuild_service,
     _data_cleanup_service,
     _inactivity_rp_service,
+    _blackbox_module,
 ):
     _service_module.configure(globals())
     for _service_name in _service_module.EXPORTED_NAMES:
@@ -3466,6 +3470,7 @@ from modules.daily_checkin import register_routes as _register_daily_checkin_rou
 from modules.gift_codes import register_routes as _register_gift_code_routes
 from modules.admin_economy import register_routes as _register_admin_economy_routes
 from modules.luckybox import register_routes as _register_luckybox_routes
+from modules.blackbox import register_routes as _register_blackbox_routes
 
 # Route Admin.
 from modules.admin_system_routes import register_routes as _register_admin_system_routes
@@ -3492,6 +3497,7 @@ for _route_registrar in (
     _register_gift_code_routes,
     _register_admin_economy_routes,
     _register_luckybox_routes,
+    _register_blackbox_routes,
     _register_admin_system_routes,
     _register_admin_dashboard_routes,
     _register_admin_account_routes,

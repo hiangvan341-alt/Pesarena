@@ -47,6 +47,7 @@
     {% if can_admin('rp_view') %}<button class="admin-tab-button{{ ' active' if active_admin_tab == 'rp-tools' else '' }}" type="button" data-admin-tab="rp-tools" data-admin-url="{{ url_for('admin', tab='rp-tools') }}#rp-tools">📈 Công cụ RP</button>{% endif %}
     <button class="admin-tab-button{{ ' active' if active_admin_tab == 'economy' else '' }}" type="button" data-admin-tab="economy" data-admin-url="{{ url_for('admin', tab='economy') }}#economy">🪙 Zcoin & Gift Code</button>
     {% if can_admin('admin_logs_view') %}<button class="admin-tab-button{{ ' active' if active_admin_tab == 'logs' else '' }}" type="button" data-admin-tab="logs" data-admin-url="{{ url_for('admin', tab='logs') }}#logs">🧾 Nhật ký</button>{% endif %}
+    <button class="admin-tab-button{{ ' active' if active_admin_tab == 'blackbox' else '' }}" type="button" data-admin-tab="blackbox" data-admin-url="{{ url_for('admin', tab='blackbox') }}#blackbox">🛡 Black Box</button>
 </div>
 
 {% set admin_tab_template = 'admin/tabs/' ~ active_admin_tab ~ '.html' %}
