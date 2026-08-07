@@ -1,3 +1,15 @@
+# V1.3.74 — Room Action Visibility Guard
+
+- Chế độ: FIX NHANH giao diện phòng đấu.
+- Kiểm tra đủ 7 nhóm thao tác: Sẵn Sàng + Thoát Phòng; Hủy Sẵn Sàng; Thoát Phòng/Bỏ cuộc; Đá Tiếp + Về sảnh; Gửi Kết Quả; Thoát an toàn; Đưa khỏi phòng.
+- Nguyên nhân: action group bị đặt lại về normal-flow trong `08-action-layout-guard.css`; với Mode card + Series HUD + VS, control ở cuối có thể bị đẩy khỏi khung center cố định 535px.
+- Sửa: desktop dùng action dock cố định ở đáy cho các trạng thái `waiting_ready`, `playing`, `waiting_result_confirm`, `disputed`, `confirmed`; chừa khoảng trống 76px.
+- `Gửi Kết Quả` dùng score dock riêng và chừa 158px.
+- Host `Đưa khỏi phòng` được guard riêng trên card đối thủ khi `waiting_ready`, không phụ thuộc trạng thái Ready.
+- Mobile giữ normal-flow để không che nội dung.
+- Đồng bộ kiểm tra cả `_center_stage.html` và `_room_live_content.html` (polling).
+- Test: 11 passed; compileall PASS.
+
 # V1.3.73 — Profile + Match History Repository Binding Hotfix
 
 **Ngày:** 2026-08-08 (Asia/Bangkok)

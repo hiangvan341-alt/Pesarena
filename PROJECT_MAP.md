@@ -254,3 +254,9 @@ Không chạy SQL thay đổi dữ liệu thật trong test nếu chưa có guar
 - Storage schema: `project_docs/sql/20260808_blackbox.sql`
 - Hai bảng `blackbox_events` và `blackbox_incidents` là server-only; production phải chạy migration trước khi Storage check có thể PASS.
 
+
+
+## V1.3.74 — Room action visibility
+- Guard cuối cho nút phòng đấu: `static/css/room/08-action-layout-guard.css`.
+- Nút theo trạng thái render ở `templates/room/_center_stage.html`; bản polling tương ứng ở `templates/_room_live_content.html`.
+- Nút host đưa khách khỏi phòng ở `templates/room/_guest_card.html`.
