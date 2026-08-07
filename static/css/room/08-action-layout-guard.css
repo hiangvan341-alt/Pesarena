@@ -150,3 +150,122 @@
   filter:brightness(1.18) saturate(1.08) !important;
   box-shadow:inset 0 1px 0 rgba(255,255,255,.18),0 0 18px var(--room-btn-glow),0 6px 14px rgba(0,0,0,.18) !important;
 }
+
+
+/* V1.3.72 — Host/guest action visibility guard.
+   The center stage is fixed-height on desktop. Series HUD + countdown + VS can otherwise push
+   role-specific controls below the clipped viewport. Compact action-bearing states and reserve
+   a visible footer lane for both host and guest controls. */
+@media (min-width: 821px) {
+  .arena-room-v2 .room-center-stage-plain.room-state-playing,
+  .arena-room-v2 .room-center-stage-plain.room-state-waiting_result_confirm,
+  .arena-room-v2 .room-center-stage-plain.room-state-disputed,
+  .arena-room-v2 .room-center-stage-plain.room-state-confirmed {
+    gap: 4px;
+    padding-bottom: 10px;
+    justify-content: flex-start;
+  }
+
+  .arena-room-v2 .room-center-stage-plain.room-state-playing > .room-master-active-mode,
+  .arena-room-v2 .room-center-stage-plain.room-state-waiting_result_confirm > .room-master-active-mode,
+  .arena-room-v2 .room-center-stage-plain.room-state-disputed > .room-master-active-mode,
+  .arena-room-v2 .room-center-stage-plain.room-state-confirmed > .room-master-active-mode {
+    min-height: 178px;
+    padding-top: 9px;
+    padding-bottom: 7px;
+  }
+
+  .arena-room-v2 .room-center-stage-plain.room-state-playing .room-master-mode-heading small,
+  .arena-room-v2 .room-center-stage-plain.room-state-waiting_result_confirm .room-master-mode-heading small,
+  .arena-room-v2 .room-center-stage-plain.room-state-disputed .room-master-mode-heading small,
+  .arena-room-v2 .room-center-stage-plain.room-state-confirmed .room-master-mode-heading small {
+    min-height: 0;
+    font-size: 8.8px;
+    line-height: 1.22;
+  }
+
+  .arena-room-v2 .room-center-stage-plain.room-state-playing .room-master-mode-emblem,
+  .arena-room-v2 .room-center-stage-plain.room-state-waiting_result_confirm .room-master-mode-emblem,
+  .arena-room-v2 .room-center-stage-plain.room-state-disputed .room-master-mode-emblem,
+  .arena-room-v2 .room-center-stage-plain.room-state-confirmed .room-master-mode-emblem {
+    width: 78px;
+    height: 64px;
+    margin: 3px auto;
+  }
+
+  .arena-room-v2 .room-center-stage-plain.room-state-playing .room-master-mode-emblem img,
+  .arena-room-v2 .room-center-stage-plain.room-state-waiting_result_confirm .room-master-mode-emblem img,
+  .arena-room-v2 .room-center-stage-plain.room-state-disputed .room-master-mode-emblem img,
+  .arena-room-v2 .room-center-stage-plain.room-state-confirmed .room-master-mode-emblem img {
+    width: 64px;
+    height: 64px;
+  }
+
+  .arena-room-v2 .room-center-stage-plain.room-state-playing .room-master-unlock-pill,
+  .arena-room-v2 .room-center-stage-plain.room-state-waiting_result_confirm .room-master-unlock-pill,
+  .arena-room-v2 .room-center-stage-plain.room-state-disputed .room-master-unlock-pill,
+  .arena-room-v2 .room-center-stage-plain.room-state-confirmed .room-master-unlock-pill {
+    min-width: 145px;
+    padding: 4px 9px;
+  }
+
+  .arena-room-v2 .room-center-stage-plain.room-state-playing .room-master-room-ready,
+  .arena-room-v2 .room-center-stage-plain.room-state-waiting_result_confirm .room-master-room-ready,
+  .arena-room-v2 .room-center-stage-plain.room-state-disputed .room-master-room-ready,
+  .arena-room-v2 .room-center-stage-plain.room-state-confirmed .room-master-room-ready {
+    margin-top: 4px;
+    padding: 4px 8px;
+  }
+
+  .arena-room-v2 .room-center-stage-plain.room-state-playing .room-center-countdown-label,
+  .arena-room-v2 .room-center-stage-plain.room-state-waiting_result_confirm .room-center-countdown-label,
+  .arena-room-v2 .room-center-stage-plain.room-state-disputed .room-center-countdown-label,
+  .arena-room-v2 .room-center-stage-plain.room-state-confirmed .room-center-countdown-label {
+    margin-top: 0;
+    font-size: 9px;
+  }
+
+  .arena-room-v2 .room-center-stage-plain.room-state-playing .room-center-countdown,
+  .arena-room-v2 .room-center-stage-plain.room-state-waiting_result_confirm .room-center-countdown,
+  .arena-room-v2 .room-center-stage-plain.room-state-disputed .room-center-countdown,
+  .arena-room-v2 .room-center-stage-plain.room-state-confirmed .room-center-countdown {
+    margin: 0;
+    font-size: 32px;
+    line-height: 1;
+  }
+
+  .arena-room-v2 .room-center-stage-plain.room-state-playing .room-center-vs-image {
+    width: 88px;
+    height: 88px;
+    margin: 1px auto;
+  }
+
+  .arena-room-v2 .room-center-stage-plain.room-state-playing > .room-center-primary-actions,
+  .arena-room-v2 .room-center-stage-plain.room-state-playing > .room-action-zone,
+  .arena-room-v2 .room-center-stage-plain.room-state-waiting_result_confirm > .room-center-primary-actions,
+  .arena-room-v2 .room-center-stage-plain.room-state-waiting_result_confirm > .room-action-zone,
+  .arena-room-v2 .room-center-stage-plain.room-state-disputed > .room-center-primary-actions,
+  .arena-room-v2 .room-center-stage-plain.room-state-disputed > .room-action-zone,
+  .arena-room-v2 .room-center-stage-plain.room-state-confirmed > .room-center-primary-actions,
+  .arena-room-v2 .room-center-stage-plain.room-state-confirmed > .room-action-zone {
+    flex: 0 0 auto;
+    margin: 3px auto 7px;
+    visibility: visible;
+    opacity: 1;
+  }
+
+  /* Host-only kick control belongs to the opponent card and must not be squeezed away by
+     long names, streak badges or ready state copy. */
+  .arena-room-v2 .room-guest-card-kick {
+    flex: 0 0 auto;
+    width: min(100%, 190px);
+    margin: 7px auto 0;
+    position: relative;
+    z-index: 5;
+  }
+  .arena-room-v2 .room-guest-card-kick-btn {
+    width: 100%;
+    white-space: normal;
+    line-height: 1.15;
+  }
+}

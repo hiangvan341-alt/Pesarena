@@ -1,13 +1,26 @@
-# V1.3.71 — Room Notifications + Series HUD + Action Button Glass
+# V1.3.72 — Room Host/Guest Action Visibility Hotfix
 
-- Chế độ: NÂNG CẤP MODULE — giao diện phòng đấu.
-- Xóa hoàn toàn `window.alert()` khỏi source Room/UI; thông báo chủ động dùng `PESDialog.notify()/toast`, tự chọn tone info/success/warning/error theo nội dung.
-- Loại native `confirm()` còn sót trong các fragment Room quan trọng (tranh chấp, rút tranh chấp, bỏ cuộc) và chuyển sang `room-action-confirm-form` + modal PES Arena hiện có.
-- Di chuyển Series HUD từ ngay dưới thẻ mode xuống đúng luồng trung tâm: sau trạng thái/countdown và trước VS/kết quả.
-- Rút gọn dòng Series thành `Trận/Lượt x/y • RP chốt khi Series kết thúc`; nền HUD trong hơn, viền vàng nhẹ và vẫn hỗ trợ Tactical/Ban Pick tương tác.
-- Làm riêng 3 nút `Mời đấu / ⚡ Tìm nhanh / Thoát phòng`: nền glass trong hơn, viền neon sáng hơn, chữ trắng rõ và hover nổi hơn; không ảnh hưởng Parsec.
-- Không thay Backend, RP, Rank logic, Supabase hay database.
-- Kiểm tra: JS syntax PASS, Python compile PASS, Jinja parse PASS, UI regression assertions PASS, 11 targeted Series/Room asset tests PASS.
+**Ngày:** 2026-08-08 (Asia/Bangkok)
+
+## Chế độ
+- FIX NHANH giao diện phòng đấu.
+
+## Lỗi
+- Các nút chức năng của người chơi, đặc biệt phía đối thủ/guest khi đang thi đấu, có thể bị đẩy xuống dưới khung giữa và bị cắt vì center stage cố định 535px + overflow hidden.
+- Khối Series HUD V1.3.71 làm tăng chiều cao luồng trung tâm, khiến lỗi dễ xuất hiện hơn ở playing/result states.
+
+## Sửa
+- `static/css/room/08-action-layout-guard.css`: compact các trạng thái playing/waiting_result_confirm/disputed/confirmed để dành lane hiển thị cho action footer.
+- Thu gọn VS/countdown/mode card trong các trạng thái có nhiều control; không đổi logic gameplay.
+- Giữ action zone của cả host và guest luôn visible trong vùng center stage.
+- Bảo vệ nút `Đưa khỏi phòng` trên card đối thủ khỏi bị co/cắt bởi tên dài, streak badge hoặc trạng thái ready.
+- `templates/room_detail.html`: thêm `data-viewer-role` để debug rõ host/guest/admin.
+- `APP_VERSION`: 1.3.71 → 1.3.72.
+
+## Không thay đổi
+- Không sửa RP, API, Supabase, matchmaking, Series logic hay Parsec.
+
+---
 
 # V1.3.70 — Black Box Signal Cleanup
 
