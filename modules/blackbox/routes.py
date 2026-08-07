@@ -4,7 +4,20 @@ from __future__ import annotations
 
 def register_routes(context):
     globals().update(context)
-    from .safety import run_server_safety_audit
+    try:
+        from .safety import run_server_safety_audit
+    except Exception as exc:
+        # Safety Lab is optional. A diagnostics import error must never crash app startup.
+        def run_server_safety_audit(_context, _cfg, _store_batch):
+            return {
+                "overall": "WARNING",
+                "counts": {"PASS": 0, "WARNING": 1, "FAIL": 0, "NOT_TESTED": 1},
+                "checks": [{
+                    "name": "Safety Lab import",
+                    "status": "NOT_TESTED",
+                    "detail": f"Safety Lab disabled: {type(exc).__name__}",
+                }],
+            }
 
     @app.route("/api/blackbox/config", methods=["GET"])
     @login_required

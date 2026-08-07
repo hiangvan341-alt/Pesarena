@@ -48,17 +48,31 @@ def _bool_env(name, default):
     return raw.strip().lower() in {"1", "true", "yes", "on"}
 
 
+def _int_env(name, default, minimum=None, maximum=None):
+    """Parse optional numeric env safely; malformed values must never crash Flask."""
+    try:
+        value = int(str(os.getenv(name, default)).strip())
+    except (TypeError, ValueError):
+        value = int(default)
+    if minimum is not None:
+        value = max(int(minimum), value)
+    if maximum is not None:
+        value = min(int(maximum), value)
+    return value
+
+
 def blackbox_config():
+    # This function is called from page-render context. It must be exception-free.
     return {
         "enabled": _bool_env("BLACKBOX_ENABLED", True),
         "client_enabled": _bool_env("BLACKBOX_CLIENT_ENABLED", True),
         "capture_clicks": _bool_env("BLACKBOX_CAPTURE_CLICKS", True),
         "capture_network": _bool_env("BLACKBOX_CAPTURE_NETWORK", True),
         "capture_console": _bool_env("BLACKBOX_CAPTURE_CONSOLE", True),
-        "batch_size": max(5, min(50, int(os.getenv("BLACKBOX_BATCH_SIZE") or 20))),
-        "flush_ms": max(3000, min(60000, int(os.getenv("BLACKBOX_FLUSH_MS") or 10000))),
-        "slow_api_ms": max(500, int(os.getenv("BLACKBOX_SLOW_API_MS") or 2500)),
-        "max_buffer": max(50, min(500, int(os.getenv("BLACKBOX_MAX_BUFFER") or 200))),
+        "batch_size": _int_env("BLACKBOX_BATCH_SIZE", 20, 5, 50),
+        "flush_ms": _int_env("BLACKBOX_FLUSH_MS", 10000, 3000, 60000),
+        "slow_api_ms": _int_env("BLACKBOX_SLOW_API_MS", 2500, 500, None),
+        "max_buffer": _int_env("BLACKBOX_MAX_BUFFER", 200, 50, 500),
         "app_version": str(_CONTEXT.get("APP_VERSION") or "unknown"),
     }
 

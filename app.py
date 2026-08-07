@@ -71,7 +71,7 @@ from modules.win_streaks import (
 load_dotenv()
 
 APP_NAME = "PES Arena – Bản Lĩnh Sân Cỏ"
-APP_VERSION = "1.3.54"
+APP_VERSION = "1.3.55"
 DEFAULT_POINTS = 1000
 DEVICE_COOKIE_NAME = "rankzone_device_id"
 COOLDOWN_MINUTES = 3
@@ -1447,6 +1447,40 @@ def before_request():
         print(f"Before request warning: {exc}")
 
 
+def _safe_blackbox_runtime_config():
+    """Black Box must never make a normal page render fail.
+
+    Returns a fully disabled config if the module is unavailable or any environment
+    value is malformed. This is intentionally fail-open for PES Arena gameplay.
+    """
+    fallback = {
+        "enabled": False,
+        "client_enabled": False,
+        "capture_clicks": False,
+        "capture_network": False,
+        "capture_console": False,
+        "batch_size": 20,
+        "flush_ms": 10000,
+        "slow_api_ms": 2500,
+        "max_buffer": 200,
+        "app_version": APP_VERSION,
+    }
+    try:
+        fn = globals().get("blackbox_config")
+        if not callable(fn):
+            return fallback
+        cfg = fn() or {}
+        if not isinstance(cfg, dict):
+            return fallback
+        return {**fallback, **cfg}
+    except Exception as exc:
+        try:
+            app.logger.warning("Black Box config disabled after error: %s", exc)
+        except Exception:
+            pass
+        return fallback
+
+
 @app.context_processor
 
 def inject_globals():
@@ -1479,7 +1513,7 @@ def inject_globals():
             "active_announcement": None,
             "bell_notifications": [],
             "unread_notification_count": 0,
-            "blackbox_runtime_config": blackbox_config(),
+            "blackbox_runtime_config": _safe_blackbox_runtime_config(),
         }
 
     # Tối ưu phản hồi HTML: không chặn render để chờ phòng, lời mời và thông báo
@@ -1519,7 +1553,7 @@ def inject_globals():
         "bell_notifications": bell_notifications,
         "unread_notification_count": unread_notification_count,
         "quick_match_config": get_quick_match_config(),
-        "blackbox_runtime_config": blackbox_config(),
+        "blackbox_runtime_config": _safe_blackbox_runtime_config(),
     }
 
 

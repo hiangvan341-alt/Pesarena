@@ -974,3 +974,12 @@
 - Admin Ban/Pick: ép pool tối thiểu = 2 x số lượt cấm mỗi bên + 6; thời gian cấm/chọn tối thiểu 5 giây.
 - Admin permission: sửa Rank modes yêu cầu `system_features_manage`; sửa unlock mode người dùng yêu cầu `users_edit`.
 - Thêm `docs/SYSTEM_INSPECTION_V1.3.51.md` và test audit V1.3.51.
+
+
+## V1.3.55 - Black Box Startup Crash Guard (2026-08-08)
+- Hotfix sau lỗi Vercel `FUNCTION_INVOCATION_FAILED` ở V1.3.54.
+- Black Box config trong context processor chuyển sang `_safe_blackbox_runtime_config()`; mọi exception => Black Box OFF, trang chính vẫn render.
+- Numeric env BLACKBOX_* parse an toàn; giá trị sai không còn làm Flask ném ValueError.
+- `modules.blackbox.__init__` không import Safety Lab lúc startup.
+- Safety Lab import lỗi => chỉ Safety Lab NOT_TESTED, không làm app crash.
+- Không sửa module gameplay/RP/Room/Invite/Presence.
