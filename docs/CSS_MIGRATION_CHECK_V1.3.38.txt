@@ -1,0 +1,22 @@
+PES Arena V1.3.38 — CSS Migration Check
+=======================================
+
+Nguồn so sánh: V1.3.37 static/css/arena_room_v2.css
+Đích: 7 file static/css/room/*.css theo đúng thứ tự load.
+
+Kết quả:
+- Tổng ký tự CSS V1.3.37: 69797
+- Tổng ký tự rule sau khi ghép 7 module và chuẩn hóa lại relative asset URL: 69797
+- Nội dung rule/cascade: BYTE-EQUIVALENT = TRUE
+- Ngoặc CSS của từng module: PASS
+- Tất cả selector trong 7 Room module đều scope bằng `.arena-room-v2`: PASS
+- Test module/Presence/Invite/Quick Match/Rank Mode/Room: 22/22 PASS
+
+Full pytest:
+- Collection bị dừng bởi 2 test Lucky Box lịch sử vì project hiện không chứa:
+  docs/update_luckybox_core_v1_14_41_42.sql
+  docs/update_luckybox_admin_v1_14_41_43.sql
+- Hai file thiếu này đã thiếu từ source đầu vào và không liên quan thay đổi V1.3.38.
+
+Kết luận:
+Việc tách CSS ở V1.3.38 là thay đổi cấu trúc, không thay đổi rule/cascade Room so với V1.3.37.

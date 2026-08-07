@@ -1,0 +1,171 @@
+/* PES Arena V1.3.38 — Room CSS module: 06-responsive-performance.css
+   Scope: Compact responsive behavior and performance/repaint reductions.
+   IMPORTANT: load order is defined in templates/room_detail.html. */
+/* V1.3.28 — Tinh gọn luồng thao tác, giữ lịch sử phòng và làm viền nút nhẹ hơn. */
+.arena-room-v2 .arena-btn{
+  border-width:1px !important;
+  box-shadow:
+    inset 0 1px 0 rgba(255,255,255,.11),
+    inset 0 -8px 14px rgba(0,0,0,.18),
+    0 0 0 1px rgba(255,255,255,.02),
+    0 0 10px rgba(0,0,0,.06),
+    0 6px 12px rgba(0,0,0,.18) !important;
+}
+.arena-room-v2 .arena-btn.gold,
+.arena-room-v2 .arena-btn.yellow,
+.arena-room-v2 .arena-btn.is-gold,
+.arena-room-v2 .arena-action-invite,
+.arena-room-v2 .room-center-random-trigger{
+  --room-btn-border:rgba(220,174,74,.78);
+  --room-btn-glow:rgba(216,167,59,.14);
+}
+.arena-room-v2 .arena-btn.green,
+.arena-room-v2 .arena-btn.is-success,
+.arena-room-v2 .arena-action-quick,
+.arena-room-v2 .room-submit-result-btn,
+.arena-room-v2 .room-result-btn.confirm{
+  --room-btn-border:rgba(29,214,147,.78);
+  --room-btn-glow:rgba(20,216,146,.13);
+}
+.arena-room-v2 .arena-btn.red,
+.arena-room-v2 .arena-btn.is-danger,
+.arena-room-v2 .arena-action-exit,
+.arena-room-v2 .room-guest-card-kick-btn{
+  --room-btn-border:rgba(216,78,108,.76);
+  --room-btn-glow:rgba(217,67,98,.12);
+}
+.arena-room-v2 .arena-btn.gray,
+.arena-room-v2 .arena-btn.is-secondary,
+.arena-room-v2 .room-result-btn.disagree{
+  --room-btn-border:rgba(116,134,208,.74);
+  --room-btn-glow:rgba(102,125,209,.11);
+}
+
+.arena-room-v2 .room-master-unlock-pill{
+  min-width:190px;
+  padding:8px 14px;
+  border:1px solid rgba(255,215,120,.18);
+  border-radius:11px;
+  background:linear-gradient(180deg, rgba(14,22,40,.78), rgba(7,12,24,.90));
+  color:#eef3fb;
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.04);
+}
+.arena-room-v2 .room-master-room-ready{
+  border-color:rgba(147,164,201,.16);
+  border-radius:12px;
+}
+.arena-room-v2 .room-center-status-note{
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  min-height:40px;
+  margin-top:6px;
+  padding:8px 14px;
+  border:1px solid rgba(255,214,113,.16);
+  border-radius:999px;
+  background:linear-gradient(180deg, rgba(10,18,34,.88), rgba(4,10,22,.92));
+  color:#dce6f5;
+  font-size:12px;
+  font-weight:800;
+  letter-spacing:.01em;
+  text-align:center;
+}
+.arena-room-v2 .room-center-status-note::before{
+  content:'•';
+  margin-right:7px;
+  color:#f0c04f;
+  font-size:14px;
+}
+
+.arena-room-v2 .room-guest-card-kick-btn{
+  min-height:36px;
+  padding:6px 12px;
+  border-radius:11px;
+  font-size:11px;
+  opacity:.92;
+}
+
+@media (max-width:1450px){
+  .arena-room-v2 .room-master-unlock-pill{min-width:176px;padding:7px 12px;font-size:10.5px}
+  .arena-room-v2 .room-center-status-note{font-size:11px}
+}
+
+
+/* V1.3.29 — Performance pass: giảm hiệu ứng GPU nặng và repaint khi click. */
+.arena-room-v2 *,
+.arena-room-v2 *::before,
+.arena-room-v2 *::after{
+  -webkit-backdrop-filter:none !important;
+  backdrop-filter:none !important;
+}
+.arena-room-v2 .arena-btn,
+.arena-room-v2 .room-master-mode-card,
+.arena-room-v2 .room-share-button{
+  transition:transform .12s ease, filter .12s ease, border-color .12s ease !important;
+}
+.arena-room-v2 .arena-btn:hover:not(:disabled):not(.disabled),
+.arena-room-v2 .room-master-mode-card:hover:not(:disabled){
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.08),0 5px 10px rgba(0,0,0,.16) !important;
+}
+@media (prefers-reduced-motion: reduce){
+  .arena-room-v2 *,
+  .arena-room-v2 *::before,
+  .arena-room-v2 *::after{
+    animation:none !important;
+    transition:none !important;
+    scroll-behavior:auto !important;
+  }
+}
+
+/* V1.3.30 — Cân cụm nút chờ đối thủ, tăng độ trong suốt và giữ lịch sử luôn hiển thị. */
+.arena-room-v2 .room-center-primary-actions-three{
+  width:min(calc(100% - 34px), 390px) !important;
+  gap:10px !important;
+  margin-left:auto;
+  margin-right:auto;
+}
+.arena-room-v2 .room-center-primary-actions-three .room-center-action-btn{
+  min-height:42px !important;
+  height:42px !important;
+  padding:7px 10px !important;
+  border-radius:12px !important;
+  font-size:11.5px !important;
+}
+.arena-room-v2 .room-center-primary-actions-three .arena-btn{
+  --room-btn-top:rgba(21,29,45,.58);
+  --room-btn-bottom:rgba(7,12,23,.68);
+  background-image:linear-gradient(180deg,rgba(255,255,255,.055),rgba(255,255,255,0) 38%),linear-gradient(180deg,var(--room-btn-top),var(--room-btn-bottom)) !important;
+  border-color:color-mix(in srgb,var(--room-btn-border) 62%,transparent) !important;
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.06),0 4px 10px rgba(0,0,0,.14) !important;
+}
+.arena-room-v2 .room-center-primary-actions-three .arena-btn.gold{
+  --room-btn-top:rgba(91,65,15,.54);
+  --room-btn-bottom:rgba(40,25,5,.62);
+}
+.arena-room-v2 .room-center-primary-actions-three .arena-action-quick{
+  --room-btn-top:rgba(6,74,48,.52);
+  --room-btn-bottom:rgba(3,35,24,.62);
+}
+.arena-room-v2 .room-center-primary-actions-three .arena-action-exit{
+  --room-btn-top:rgba(82,18,35,.50);
+  --room-btn-bottom:rgba(38,8,18,.62);
+}
+.arena-room-v2 .room-center-primary-actions-three .arena-btn:hover{
+  filter:brightness(1.08);
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.09),0 5px 12px rgba(0,0,0,.17) !important;
+}
+.arena-room-v2 .room-bottom-side:empty::before{
+  content:'Lịch sử phòng chưa có dữ liệu.';
+  display:block;
+  padding:14px;
+  border:1px solid rgba(216,165,60,.24);
+  border-radius:14px;
+  background:rgba(4,11,21,.82);
+  color:#aeb9c7;
+  font-size:12px;
+}
+@media(max-width:1450px){
+  .arena-room-v2 .room-center-primary-actions-three{width:min(calc(100% - 28px),360px)!important;gap:8px!important}
+  .arena-room-v2 .room-center-primary-actions-three .room-center-action-btn{font-size:10.5px!important;padding-inline:8px!important}
+}
+

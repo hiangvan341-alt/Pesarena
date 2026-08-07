@@ -10,7 +10,7 @@ INVITE_JS = (ROOT / 'static/js/invite_center.js').read_text(encoding='utf-8')
 
 
 def test_v137_presence_is_physically_modularized():
-    assert 'APP_VERSION = "1.3.37"' in APP
+    assert 'APP_VERSION = "1.3.38"' in APP
     assert "static_asset('js/presence.js')" in BASE
     assert 'def is_online(' in PRESENCE_SERVICE
     assert 'function postHeartbeat()' in PRESENCE_JS

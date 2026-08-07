@@ -1,0 +1,105 @@
+/* PES Arena V1.3.38 — Room CSS module: 07-parsec-history-polish.css
+   Scope: Parsec/history sizing and final room visual polish.
+   IMPORTANT: load order is defined in templates/room_detail.html. */
+/* V1.3.32 — Thu gọn Parsec, tăng không gian lịch sử và đồng bộ nút phòng. */
+.arena-room-v2 .room-arena-right-rail{
+  gap:8px;
+}
+.arena-room-v2 .room-arena-right-rail > .parsec-room-panel{
+  flex:0 0 auto;
+  min-height:0;
+  padding:10px 11px;
+  overflow:visible;
+}
+.arena-room-v2 .parsec-room-panel .parsec-room-heading{
+  margin-bottom:8px;
+}
+.arena-room-v2 .parsec-room-panel .parsec-room-heading h3{
+  margin:0;
+  font-size:12px;
+}
+.arena-room-v2 .parsec-room-panel .parsec-room-block + .parsec-room-block{
+  margin-top:9px;
+}
+.arena-room-v2 .parsec-room-panel .parsec-room-label{
+  margin-bottom:5px;
+  font-size:8.5px;
+}
+.arena-room-v2 .parsec-room-panel .parsec-room-inline{
+  gap:6px;
+}
+.arena-room-v2 .parsec-room-panel .parsec-room-input,
+.arena-room-v2 .parsec-room-panel .parsec-room-link-form input{
+  min-height:32px;
+  height:32px;
+  padding:5px 8px;
+  border-radius:8px;
+  font-size:9.5px;
+}
+.arena-room-v2 .parsec-room-panel .parsec-room-link-inline{
+  display:grid;
+  grid-template-columns:minmax(0,1fr) auto auto;
+  align-items:center;
+  gap:6px;
+  margin:0;
+}
+.arena-room-v2 .parsec-room-panel .parsec-action-btn{
+  min-height:32px;
+  height:32px;
+  padding:5px 9px;
+  border-radius:8px;
+  font-size:9px;
+}
+.arena-room-v2 .parsec-room-panel .parsec-room-note{
+  margin:8px 0 0;
+  font-size:8.5px;
+  line-height:1.35;
+}
+.arena-room-v2 .parsec-room-panel .parsec-room-empty{
+  min-height:32px;
+  padding:7px 8px;
+  font-size:9px;
+}
+
+/* Nút chính: sáng hơn nhưng nền kính trong hơn, tránh đè màu và tránh viền gắt. */
+.arena-room-v2 .arena-action-invite,
+.arena-room-v2 .arena-action-quick,
+.arena-room-v2 .arena-action-exit{
+  border-color:rgba(255,255,255,.22) !important;
+  color:#fff !important;
+  text-shadow:0 1px 2px rgba(0,0,0,.55);
+  backdrop-filter:none;
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.16),0 5px 12px rgba(0,0,0,.14) !important;
+}
+.arena-room-v2 .arena-action-invite{
+  background:linear-gradient(180deg,rgba(244,190,70,.52),rgba(157,98,12,.38)) !important;
+}
+.arena-room-v2 .arena-action-quick{
+  background:linear-gradient(180deg,rgba(44,218,148,.50),rgba(7,112,74,.36)) !important;
+}
+.arena-room-v2 .arena-action-exit{
+  background:linear-gradient(180deg,rgba(241,83,111,.50),rgba(128,22,48,.36)) !important;
+}
+.arena-room-v2 .arena-action-invite:hover,
+.arena-room-v2 .arena-action-quick:hover,
+.arena-room-v2 .arena-action-exit:hover{
+  filter:brightness(1.13) saturate(1.08);
+  border-color:rgba(255,255,255,.34) !important;
+}
+
+@media(max-width:1450px){
+  .arena-room-v2 .parsec-room-panel .parsec-room-link-inline{
+    grid-template-columns:minmax(0,1fr) auto;
+  }
+  .arena-room-v2 .parsec-room-panel .parsec-delete-btn{
+    grid-column:2;
+  }
+}
+
+/* Lịch sử phòng được ưu tiên diện tích sau khi thu gọn Parsec. */
+.arena-room-v2 .room-bottom-side .room-history-full{
+  min-height:190px;
+}
+.arena-room-v2 .room-bottom-side .room-score-history-list{
+  max-height:320px;
+}

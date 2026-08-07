@@ -1,7 +1,14 @@
 {% extends "base.html" %}
 {% from "_avatar_macros.html" import player_avatar %}
 {% block head_extra %}
-<link rel="stylesheet" href="{{ static_asset('css/arena_room_v2.css') }}">
+{# V1.3.38: Room CSS is split by responsibility. Keep this order: later modules intentionally refine earlier ones. #}
+<link rel="stylesheet" href="{{ static_asset('css/room/01-shell-layout.css') }}">
+<link rel="stylesheet" href="{{ static_asset('css/room/02-club-visuals.css') }}">
+<link rel="stylesheet" href="{{ static_asset('css/room/03-mode-selector.css') }}">
+<link rel="stylesheet" href="{{ static_asset('css/room/04-actions-history.css') }}">
+<link rel="stylesheet" href="{{ static_asset('css/room/05-action-states.css') }}">
+<link rel="stylesheet" href="{{ static_asset('css/room/06-responsive-performance.css') }}">
+<link rel="stylesheet" href="{{ static_asset('css/room/07-parsec-history-polish.css') }}">
 <style>
 .arena-room-v2 {
   --arena-stadium-blue: url("{{ room_asset('stadium-blue.webp') }}");

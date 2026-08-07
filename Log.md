@@ -739,3 +739,40 @@
 - Thêm override giới hạn trong `.arena-room-v2`: bỏ toàn bộ nền tím, viền tím và glow tím của wrapper.
 - Giữ riêng nút QUAY QUÂN màu vàng gold, subtitle nằm bên dưới nền trong suốt.
 - Không sửa route, API, trạng thái phòng hoặc luồng random 3 CLB.
+
+## V1.3.38 - 2026-08-07 13:55 (Asia/Bangkok)
+
+### Nội dung
+- Dọn `arena_room_v2.css` 1.500+ dòng thành 7 module CSS Room có trách nhiệm rõ ràng.
+- Giữ nguyên thứ tự cascade cũ để tránh thay đổi giao diện ngoài ý muốn.
+- `arena_room_v2.css` trở thành compatibility index; code mới không thêm rule trực tiếp vào đây.
+- Nâng `scripts/audit_css_flow.py` để quét CSS đệ quy, thống kê selector trùng trong từng module, xung đột giữa module, `!important` và rule có khả năng ẩn UI.
+- Thêm tài liệu `docs/MODULE_STRUCTURE_V1.3.38.md` quy định luồng kiểm lỗi Frontend -> Backend -> Data -> DOM -> CSS và quyền sở hữu từng module.
+- Thêm test bảo vệ thứ tự CSS Room, scope `.arena-room-v2` và cân bằng block CSS.
+- Không thay route/API, Presence, Invite, Quick Match, RP, Rank unlock hoặc schema Supabase.
+
+### File chính
+- `app.py`
+- `templates/room_detail.html`
+- `static/css/arena_room_v2.css`
+- `static/css/room/01-shell-layout.css`
+- `static/css/room/02-club-visuals.css`
+- `static/css/room/03-mode-selector.css`
+- `static/css/room/04-actions-history.css`
+- `static/css/room/05-action-states.css`
+- `static/css/room/06-responsive-performance.css`
+- `static/css/room/07-parsec-history-polish.css`
+- `scripts/audit_css_flow.py`
+- `docs/MODULE_STRUCTURE_V1.3.38.md`
+- `docs/CSS_MODULE_AUDIT_V1.3.38.txt`
+- `test_module_css_structure_v138.py`
+
+### So với V1.3.37
+- V1.3.37 phát hiện CSS Room chồng chéo nhưng vẫn dùng một file lớn.
+- V1.3.38 tách vật lý CSS Room thành các module có thứ tự tải rõ ràng và có test/audit bảo vệ ranh giới module.
+
+### Kiểm thử V1.3.38
+- So sánh CSS Room trước/sau khi tách: 69.797 ký tự rule, byte-equivalent sau khi chuẩn hóa relative asset URL: PASS.
+- 7/7 module cân bằng ngoặc và toàn bộ selector được scope `.arena-room-v2`: PASS.
+- Nhóm Room/Presence/Invite/Quick Match/Rank Mode: 22/22 PASS.
+- Full pytest không chạy hết do source đầu vào thiếu 2 SQL Lucky Box lịch sử; không phải regression của V1.3.38.

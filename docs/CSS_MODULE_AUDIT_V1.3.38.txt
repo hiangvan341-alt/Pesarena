@@ -1,0 +1,171 @@
+PES Arena CSS Module Flow Audit
+================================
+CSS source files: 22
+!important total: 1342
+Cross-file exact duplicate selectors: 89
+Cross-file selectors touching Room modules: 68
+Selectors that can hide UI: 131
+
+!important by file
+  1116  static/style.css
+    62  static/css/profile_showcase.css
+    24  static/css/parsec_room.css
+    24  static/css/room/06-responsive-performance.css
+    19  static/css/quick_match.css
+    17  static/css/room/05-action-states.css
+    14  static/css/room/01-shell-layout.css
+    13  static/css/room/03-mode-selector.css
+    12  static/css/room/04-actions-history.css
+    10  static/css/shop_phase3.css
+     7  static/css/room/07-parsec-history-polish.css
+     6  static/css/luckybox_user.css
+     6  static/css/zcoin.css
+     5  static/css/zcoin_rewards.css
+     3  static/css/streak_animation.css
+     2  static/css/admin_dashboard.css
+     2  static/css/luckybox_admin.css
+
+Repeated selectors inside each Room module
+  static/css/room/01-shell-layout.css: 57 repeated selectors
+      x6  .arena-room-v2 .room-arena-frame
+      x6  .arena-room-v2 .room-arena-right-rail
+      x6  .arena-room-v2 .room-center-stage-plain
+      x6  .arena-room-v2 .room-side-card
+      x5  .arena-room-v2 .room-master-card-icon
+      x5  .arena-room-v2 .room-master-card-icon img
+      x5  .arena-room-v2 .room-master-mode-grid
+      x5  .arena-room-v2 .room-team-card.away
+  static/css/room/02-club-visuals.css: 5 repeated selectors
+      x3  .arena-room-v2 .club-selection-title
+      x2  .arena-room-v2 .club-selection-title::after
+      x2  .arena-room-v2 .club-selection-title::before
+      x2  .arena-room-v2 .room-master-brand
+      x2  .arena-room-v2 .room-master-brand img
+  static/css/room/03-mode-selector.css: 14 repeated selectors
+      x3  .arena-room-v2 .room-history-full .room-score-history-list
+      x2  .arena-room-v2 .room-center-stage-plain > .room-action-zone
+      x2  .arena-room-v2 .room-center-stage-plain > .room-center-primary-actions
+      x2  .arena-room-v2 .room-center-stage-plain > .room-center-random-form
+      x2  .arena-room-v2 .room-center-stage-plain > .room-center-random-trigger
+      x2  .arena-room-v2 .room-center-stage-plain > .room-center-score-panel
+      x2  .arena-room-v2 .room-master-card-icon
+      x2  .arena-room-v2 .room-master-card-icon img
+  static/css/room/04-actions-history.css: 27 repeated selectors
+      x4  .arena-room-v2 .room-bottom-side .room-score-history-list
+      x4  .arena-room-v2 .room-result-btn.arena-btn
+      x3  .arena-room-v2 .arena-btn
+      x3  .arena-room-v2 .room-bottom-shell
+      x3  .arena-room-v2 .room-result-actions
+      x2  .arena-room-v2 .arena-action-exit
+      x2  .arena-room-v2 .arena-action-quick
+      x2  .arena-room-v2 .arena-btn.gray
+  static/css/room/05-action-states.css: 11 repeated selectors
+      x4  .arena-room-v2 .room-center-stage-plain > .room-action-zone
+      x4  .arena-room-v2 .room-center-stage-plain > .room-center-primary-actions
+      x4  .arena-room-v2 .room-center-stage-plain > .room-center-random-form
+      x2  .arena-room-v2 .arena-btn
+      x2  .arena-room-v2 .room-center-stage-plain > .room-action-zone .room-center-action-btn
+      x2  .arena-room-v2 .room-center-stage-plain > .room-action-zone:has(> :nth-child(3))
+      x2  .arena-room-v2 .room-center-stage-plain > .room-action-zone:has(> :only-child)
+      x2  .arena-room-v2 .room-center-stage-plain > .room-center-primary-actions .room-center-action-btn
+  static/css/room/06-responsive-performance.css: 9 repeated selectors
+      x2  .arena-room-v2 *
+      x2  .arena-room-v2 *::after
+      x2  .arena-room-v2 *::before
+      x2  .arena-room-v2 .arena-btn
+      x2  .arena-room-v2 .room-center-primary-actions-three
+      x2  .arena-room-v2 .room-center-primary-actions-three .room-center-action-btn
+      x2  .arena-room-v2 .room-center-status-note
+      x2  .arena-room-v2 .room-guest-card-kick-btn
+  static/css/room/07-parsec-history-polish.css: 4 repeated selectors
+      x2  .arena-room-v2 .arena-action-exit
+      x2  .arena-room-v2 .arena-action-invite
+      x2  .arena-room-v2 .arena-action-quick
+      x2  .arena-room-v2 .parsec-room-panel .parsec-room-link-inline
+
+Cross-module Room selector ownership conflicts (top 50)
+  .arena-room-v2 .arena-action-exit -> static/css/room/01-shell-layout.css, static/css/room/04-actions-history.css, static/css/room/05-action-states.css, static/css/room/06-responsive-performance.css, static/css/room/07-parsec-history-polish.css
+  .arena-room-v2 .arena-action-invite -> static/css/room/01-shell-layout.css, static/css/room/04-actions-history.css, static/css/room/05-action-states.css, static/css/room/06-responsive-performance.css, static/css/room/07-parsec-history-polish.css
+  .arena-room-v2 .arena-action-quick -> static/css/room/01-shell-layout.css, static/css/room/04-actions-history.css, static/css/room/05-action-states.css, static/css/room/06-responsive-performance.css, static/css/room/07-parsec-history-polish.css
+  .arena-room-v2 .room-center-random-trigger -> static/css/room/01-shell-layout.css, static/css/room/04-actions-history.css, static/css/room/05-action-states.css, static/css/room/06-responsive-performance.css
+  .arena-room-v2 -> static/css/room/01-shell-layout.css, static/css/room/02-club-visuals.css, static/css/room/03-mode-selector.css
+  .arena-room-v2 .arena-btn -> static/css/room/04-actions-history.css, static/css/room/05-action-states.css, static/css/room/06-responsive-performance.css
+  .arena-room-v2 .arena-btn.gold -> static/css/room/04-actions-history.css, static/css/room/05-action-states.css, static/css/room/06-responsive-performance.css
+  .arena-room-v2 .arena-btn.gray -> static/css/room/04-actions-history.css, static/css/room/05-action-states.css, static/css/room/06-responsive-performance.css
+  .arena-room-v2 .arena-btn.green -> static/css/room/04-actions-history.css, static/css/room/05-action-states.css, static/css/room/06-responsive-performance.css
+  .arena-room-v2 .arena-btn.is-danger -> static/css/room/04-actions-history.css, static/css/room/05-action-states.css, static/css/room/06-responsive-performance.css
+  .arena-room-v2 .arena-btn.is-gold -> static/css/room/04-actions-history.css, static/css/room/05-action-states.css, static/css/room/06-responsive-performance.css
+  .arena-room-v2 .arena-btn.is-secondary -> static/css/room/04-actions-history.css, static/css/room/05-action-states.css, static/css/room/06-responsive-performance.css
+  .arena-room-v2 .arena-btn.is-success -> static/css/room/04-actions-history.css, static/css/room/05-action-states.css, static/css/room/06-responsive-performance.css
+  .arena-room-v2 .arena-btn.red -> static/css/room/04-actions-history.css, static/css/room/05-action-states.css, static/css/room/06-responsive-performance.css
+  .arena-room-v2 .arena-btn.yellow -> static/css/room/04-actions-history.css, static/css/room/05-action-states.css, static/css/room/06-responsive-performance.css
+  .arena-room-v2 .arena-btn:hover:not(:disabled):not(.disabled) -> static/css/room/04-actions-history.css, static/css/room/05-action-states.css, static/css/room/06-responsive-performance.css
+  .arena-room-v2 .room-center-stage-plain > .room-action-zone -> static/css/room/03-mode-selector.css, static/css/room/04-actions-history.css, static/css/room/05-action-states.css
+  .arena-room-v2 .room-center-stage-plain > .room-action-zone .room-center-action-btn -> static/css/room/03-mode-selector.css, static/css/room/04-actions-history.css, static/css/room/05-action-states.css
+  .arena-room-v2 .room-center-stage-plain > .room-center-primary-actions -> static/css/room/03-mode-selector.css, static/css/room/04-actions-history.css, static/css/room/05-action-states.css
+  .arena-room-v2 .room-center-stage-plain > .room-center-primary-actions .room-center-action-btn -> static/css/room/03-mode-selector.css, static/css/room/04-actions-history.css, static/css/room/05-action-states.css
+  .arena-room-v2 .room-center-stage-plain > .room-center-random-form -> static/css/room/03-mode-selector.css, static/css/room/04-actions-history.css, static/css/room/05-action-states.css
+  .arena-room-v2 .room-center-stage-plain > .room-center-random-trigger -> static/css/room/03-mode-selector.css, static/css/room/04-actions-history.css, static/css/room/05-action-states.css
+  .arena-room-v2 .room-guest-card-kick-btn -> static/css/room/04-actions-history.css, static/css/room/05-action-states.css, static/css/room/06-responsive-performance.css
+  .arena-room-v2 .room-master-mode-card -> static/css/room/01-shell-layout.css, static/css/room/03-mode-selector.css, static/css/room/06-responsive-performance.css
+  .arena-room-v2 .room-master-mode-card:hover:not(:disabled) -> static/css/room/01-shell-layout.css, static/css/room/03-mode-selector.css, static/css/room/06-responsive-performance.css
+  .arena-room-v2 .room-master-room-ready -> static/css/room/01-shell-layout.css, static/css/room/05-action-states.css, static/css/room/06-responsive-performance.css
+  .arena-room-v2 .room-master-unlock-pill -> static/css/room/01-shell-layout.css, static/css/room/05-action-states.css, static/css/room/06-responsive-performance.css
+  .arena-room-v2 .room-result-btn.confirm -> static/css/room/04-actions-history.css, static/css/room/05-action-states.css, static/css/room/06-responsive-performance.css
+  .arena-room-v2 .room-result-btn.disagree -> static/css/room/04-actions-history.css, static/css/room/05-action-states.css, static/css/room/06-responsive-performance.css
+  .arena-room-v2 .room-submit-result-btn -> static/css/room/04-actions-history.css, static/css/room/05-action-states.css, static/css/room/06-responsive-performance.css
+  .arena-room-v2 .arena-action-exit:hover -> static/css/room/01-shell-layout.css, static/css/room/07-parsec-history-polish.css
+  .arena-room-v2 .arena-action-invite:hover -> static/css/room/01-shell-layout.css, static/css/room/07-parsec-history-polish.css
+  .arena-room-v2 .arena-action-quick:hover -> static/css/room/01-shell-layout.css, static/css/room/07-parsec-history-polish.css
+  .arena-room-v2 .room-arena-right-rail -> static/css/room/01-shell-layout.css, static/css/room/07-parsec-history-polish.css
+  .arena-room-v2 .room-bottom-side .room-history-full -> static/css/room/04-actions-history.css, static/css/room/07-parsec-history-polish.css
+  .arena-room-v2 .room-bottom-side .room-score-history-list -> static/css/room/04-actions-history.css, static/css/room/07-parsec-history-polish.css
+  .arena-room-v2 .room-center-primary-actions-three -> static/css/room/01-shell-layout.css, static/css/room/06-responsive-performance.css
+  .arena-room-v2 .room-center-primary-actions-three .room-center-action-btn -> static/css/room/01-shell-layout.css, static/css/room/06-responsive-performance.css
+  .arena-room-v2 .room-center-random-trigger .room-center-random-sub -> static/css/room/04-actions-history.css, static/css/room/05-action-states.css
+  .arena-room-v2 .room-center-random-trigger .room-random-button-label -> static/css/room/04-actions-history.css, static/css/room/05-action-states.css
+  .arena-room-v2 .room-center-stage-plain -> static/css/room/01-shell-layout.css, static/css/room/02-club-visuals.css
+  .arena-room-v2 .room-center-stage-plain > .room-action-zone > * -> static/css/room/03-mode-selector.css, static/css/room/04-actions-history.css
+  .arena-room-v2 .room-center-stage-plain > .room-action-zone:has(> :nth-child(3)) -> static/css/room/04-actions-history.css, static/css/room/05-action-states.css
+  .arena-room-v2 .room-center-stage-plain > .room-action-zone:has(> :only-child) -> static/css/room/04-actions-history.css, static/css/room/05-action-states.css
+  .arena-room-v2 .room-center-stage-plain > .room-center-primary-actions > * -> static/css/room/03-mode-selector.css, static/css/room/04-actions-history.css
+  .arena-room-v2 .room-center-stage-plain > .room-center-primary-actions.room-center-primary-actions-three -> static/css/room/04-actions-history.css, static/css/room/05-action-states.css
+  .arena-room-v2 .room-center-stage-plain::before -> static/css/room/01-shell-layout.css, static/css/room/02-club-visuals.css
+  .arena-room-v2 .room-history-full .room-score-history-row -> static/css/room/03-mode-selector.css, static/css/room/04-actions-history.css
+  .arena-room-v2 .room-master-active-mode -> static/css/room/01-shell-layout.css, static/css/room/03-mode-selector.css
+  .arena-room-v2 .room-master-brand -> static/css/room/01-shell-layout.css, static/css/room/02-club-visuals.css
+
+State-hiding selectors relevant to room/invite (top 60)
+  static/style.css: .invite-modal-backdrop
+  static/style.css: .chat-unread-badge[hidden]
+  static/style.css: .admin-tab-panel[hidden]
+  static/style.css: .admin-user-card[hidden]
+  static/style.css: .admin-user-detail-row[hidden]
+  static/style.css: .user-notification-dropdown[hidden]
+  static/style.css: .active-room-topbar-link.is-hidden
+  static/style.css: .active-room-topbar-copy small
+  static/style.css: .active-room-topbar-copy
+  static/style.css: #bottomLobbyChat[hidden]
+  static/style.css: #bottomLobbyChat[hidden]::before
+  static/style.css: #bottomLobbyChat[hidden]::after
+  static/style.css: .room-center-random-glow
+  static/style.css: .room-center-random-icon
+  static/style.css: .room-result-btn::-webkit-details-marker
+  static/style.css: .idle-timeout-backdrop[hidden]
+  static/style.css: .room-action-modal[hidden]
+  static/style.css: .room-action-modal
+  static/style.css: .room-action-zone::before
+  static/style.css: .room-action-zone.is-post-result::before
+  static/css/admin_dashboard.css: .admin-tab-panel[hidden]
+  static/css/admin_dashboard.css: .admin-user-detail-row[hidden]
+  static/css/luckybox_user.css: .lb4-opening[hidden]
+  static/css/profile_showcase.css: .profile-v2-panel[hidden]
+  static/css/quick_match.css: .game-notice-modal[hidden]
+  static/css/room/01-shell-layout.css: .arena-room-v2 .room-team-league-text
+  static/css/room/01-shell-layout.css: .arena-room-v2 .room-center-mode-zone
+  static/css/room/01-shell-layout.css: .arena-room-v2 .room-chat-side
+  static/css/room/01-shell-layout.css: .arena-room-v2 .room-master-brand
+  static/css/room/04-actions-history.css: .arena-room-v2 .room-result-dispute > summary::-webkit-details-marker
+  static/css/shop_phase3.css: .shop3-preview-backdrop[hidden]
+  static/css/ui_dialog.css: .app-ui-dialog[hidden]
+  static/css/zcoin.css: .topbar-account-dropdown[hidden]
