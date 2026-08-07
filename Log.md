@@ -1,3 +1,14 @@
+# V1.3.61 — Supabase Asset Cleanup
+
+- Xóa toàn bộ ảnh local đã có trên Supabase.
+- Xóa `static/assets/room_v2/` và `UPLOAD_SUPABASE/`.
+- 8 Room assets dùng trực tiếp `pes-assets/room-assets/v1.3.18`.
+- CSS không còn fallback tới ảnh Room local.
+- Sửa fallback legacy `room-texture-blue.webp` (không tồn tại) sang `room-texture-dark.webp` Supabase.
+- Parsec logo dùng `room_asset()` để không phụ thuộc `STATIC_ASSET_BASE_URL`.
+- Không có ảnh mới cần upload trong V1.3.60.
+- Không sửa gameplay Room/RP/Match/Invite/Presence.
+
 # V1.3.60 — Safety Lab Import Guard
 
 - Sửa `NameError: cannot access free variable 'exc'` trong Safety API V1.3.59.

@@ -47,13 +47,12 @@ def room_asset_base_url() -> str:
 
 
 def room_asset_url(filename: str) -> str:
-    """Return URL for room_v2 assets, with local fallback."""
+    """Return public Supabase URL for room assets. Local room image copies were removed in V1.3.61."""
     clean = str(filename or "").strip().lstrip("/")
     encoded = quote(clean, safe="/")
     base = room_asset_base_url()
-    if base:
-        return f"{base}/{encoded}"
-    return url_for("static", filename=f"assets/room_v2/{clean}")
+    # Room assets are remote-only from V1.3.61.
+    return f"{base}/{encoded}"
 
 
 # V1.3.40: 6 logo chế độ được tách riêng khỏi bộ Room asset cũ.
