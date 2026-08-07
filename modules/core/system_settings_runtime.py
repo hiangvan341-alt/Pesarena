@@ -62,12 +62,13 @@ EXPORTED_NAMES = (
     "SYSTEM_FEATURE_DEFAULTS", "QUICK_MATCH_SETTING_KEY", "QUICK_MATCH_COLOR_DEFAULT",
     "QUICK_MATCH_COLOR_VALUES", "REPEAT_OPPONENT_CONFIG_SETTING_KEY",
     "REPEAT_OPPONENT_WINNER_FACTOR_DEFAULTS", "REPEAT_OPPONENT_LOSER_FACTOR_DEFAULTS", "MAINTENANCE_SETTING_KEY", "VN_TIMEZONE",
-    "has_admin_permission", "get_system_features", "system_feature_enabled", "get_quick_match_config",
+    "_admin_permissions", "has_admin_permission", "get_system_features", "system_feature_enabled", "get_quick_match_config",
     "get_repeat_opponent_rp_config", "_maintenance_default_config", "_parse_maintenance_time",
     "_normalize_maintenance_input", "get_maintenance_config", "get_maintenance_status",
 )
 
-# Typo compatibility marker is intentionally not exported at runtime; filtered in configure binding below.
+# `_admin_permissions` is intentionally exported because extracted Admin/User modules
+# receive dependencies through app.py globals() and call this helper directly.
 
 
 def configure(context):

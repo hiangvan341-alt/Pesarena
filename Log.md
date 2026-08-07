@@ -1,3 +1,11 @@
+# V1.3.65 - Admin Permission Binding Hotfix
+
+- Chế độ: FIX NHANH.
+- Lỗi: `/admin` trả HTTP 500 với `NameError: _admin_permissions is not defined`.
+- Nguyên nhân: `modules/core/system_settings_runtime.py` có `_admin_permissions()` nhưng không export qua `EXPORTED_NAMES`; các module `user_repository.py` và `admin_dashboard_routes.py` nhận dependency bằng `globals()` nên không thấy helper này.
+- Sửa: thêm `_admin_permissions` vào `EXPORTED_NAMES`, giữ nguyên logic permission hiện tại; không thay đổi route, UI, database hoặc RLS.
+- Kiểm tra: compile Python + binding smoke test + test Admin liên quan.
+
 # V1.3.64 — Persistent AI Workflow Rules
 
 **Ngày:** 2026-08-08 (Asia/Bangkok)
