@@ -1173,3 +1173,12 @@
 - `modules.blackbox.__init__` không import Safety Lab lúc startup.
 - Safety Lab import lỗi => chỉ Safety Lab NOT_TESTED, không làm app crash.
 - Không sửa module gameplay/RP/Room/Invite/Presence.
+
+## V1.3.67 — Room Rank Mode Binding Hotfix
+- Chế độ: FIX NHANH.
+- Lỗi: `POST /rooms/create` trả 500 do `modules/core/room_runtime.py` không có `normalize_rank_mode_code`.
+- Nguyên nhân: Core modules được configure trước khi `modules.rank_modes` export helper; sau khi service modules nạp xong không refresh Room Runtime.
+- Sửa: gọi lại `_core_room_runtime.configure(globals())` ngay sau khi service exports hoàn tất.
+- Phạm vi: chỉ dependency binding cho Room Runtime; không đổi logic RP, gameplay, Supabase hay CSS.
+- Kiểm tra: compile + smoke test dependency Rank Mode/Room.
+

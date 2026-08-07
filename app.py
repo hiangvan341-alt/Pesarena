@@ -69,7 +69,7 @@ from modules.win_streaks import (
 load_dotenv()
 
 APP_NAME = "PES Arena – Bản Lĩnh Sân Cỏ"
-APP_VERSION = "1.3.66"
+APP_VERSION = "1.3.67"
 DEFAULT_POINTS = 1000
 DEVICE_COOKIE_NAME = "rankzone_device_id"
 COOLDOWN_MINUTES = 3
@@ -3123,6 +3123,10 @@ for _service_module in (
     _service_module.configure(globals())
     for _service_name in _service_module.EXPORTED_NAMES:
         globals()[_service_name] = getattr(_service_module, _service_name)
+
+# Core Room Runtime was configured before rank_modes existed. Refresh it once
+# service exports are available so room enrichment can resolve Rank Mode helpers.
+_core_room_runtime.configure(globals())
 
 # Read-model V1.3.34 không export route; chỉ cung cấp các SELECT nhanh.
 _read_model_service.configure(globals())
