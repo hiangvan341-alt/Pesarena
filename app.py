@@ -32,6 +32,8 @@ from flask import (
 from supabase import create_client
 
 from modules.quick_match.service import build_candidate_sort_key, quick_match_priority_group
+from modules.presence.service import is_online as presence_is_online
+from modules.invites.service import send_invite_blocker, SEND_INVITE_MESSAGES, accept_invite_blocker
 from modules.cache_utils import (
     cache_get, cache_set, cache_delete, ttl_cache_get, ttl_cache_set, ttl_cache_delete,
 )
@@ -68,7 +70,7 @@ from modules.win_streaks import (
 load_dotenv()
 
 APP_NAME = "PES Arena – Bản Lĩnh Sân Cỏ"
-APP_VERSION = "1.3.36"
+APP_VERSION = "1.3.37"
 DEFAULT_POINTS = 1000
 DEVICE_COOKIE_NAME = "rankzone_device_id"
 COOLDOWN_MINUTES = 3
@@ -1835,9 +1837,13 @@ def get_user(user_id):
 
 
 def is_user_online_now(user):
-    seen = parse_dt((user or {}).get("last_seen_at"))
-    cutoff = now_dt() - timedelta(seconds=ONLINE_TIMEOUT_SECONDS)
-    return bool((user or {}).get("is_online")) and bool(seen) and seen >= cutoff
+    """Nguồn chuẩn Online duy nhất cho Players, Invite và Quick Match."""
+    return presence_is_online(
+        user,
+        now=now_dt(),
+        parse_datetime=parse_dt,
+        timeout_seconds=ONLINE_TIMEOUT_SECONDS,
+    )
 
 
 def _player_ranking_sort_key(player):
@@ -5599,26 +5605,17 @@ def send_invite():
 
     sender_room = state.get("room_a")
     receiver_room = state.get("room_b")
-    if state.get("match_a"):
-        flash("Bạn đang có trận chưa hoàn tất nên chưa thể gửi lời mời.", "warning")
-        return redirect(url_for("dashboard"))
-    if sender_room and not is_solo_waiting_room(sender_room, user["id"]):
-        flash("Phòng của bạn đã có đủ 2 người hoặc đã bắt đầu. Bạn không thể gửi thêm lời mời.", "warning")
-        return redirect(url_for("dashboard"))
-    if state.get("match_b"):
-        flash("Người chơi này đang thi đấu hoặc còn trận chưa hoàn tất.", "warning")
-        return redirect(url_for("players"))
-    if receiver_room and not is_solo_waiting_room(receiver_room, to_user_id):
-        flash("Phòng của người chơi này đã có đủ 2 người hoặc đã bắt đầu.", "warning")
-        return redirect(url_for("players"))
-
-    if not is_user_online_now(opponent):
-        flash("Người chơi này vừa offline. Bạn hãy chọn một đối thủ đang online khác nhé.", "danger")
-        return redirect(url_for("players"))
-
-    if state.get("pair_pending"):
-        flash("Hai người đang có lời mời chờ xử lý.", "warning")
-        return redirect(url_for("players"))
+    blocker = send_invite_blocker(
+        state,
+        sender_id=user["id"],
+        receiver_id=to_user_id,
+        receiver_online=is_user_online_now(opponent),
+        is_solo_waiting_room=is_solo_waiting_room,
+    )
+    if blocker:
+        message, category, endpoint = SEND_INVITE_MESSAGES[blocker]
+        flash(message, category)
+        return redirect(url_for(endpoint))
 
     invite_result = execute_query(
         db.table("match_invites").insert({
@@ -6047,16 +6044,25 @@ def respond_invite(invite_id):
 
     receiver_match = active_match_for_user(user["id"])
     receiver_room = active_room_for_user(user["id"])
-    if receiver_match:
+    inviter_id = invite.get("from_user_id")
+    inviter_match = active_match_for_user(inviter_id)
+    inviter_room = active_room_for_user(inviter_id)
+    accept_blocker = accept_invite_blocker(
+        receiver_match=receiver_match,
+        receiver_room=receiver_room,
+        receiver_id=user["id"],
+        inviter_match=inviter_match,
+        inviter_room=inviter_room,
+        inviter_id=inviter_id,
+        is_solo_waiting_room=is_solo_waiting_room,
+    )
+    if accept_blocker == "receiver_active_match":
         flash("Bạn đang có trận chưa hoàn tất nên không thể nhận lời mời.", "warning")
         return redirect(url_for("dashboard"))
-    if receiver_room and not is_solo_waiting_room(receiver_room, user["id"]):
+    if accept_blocker == "receiver_room_busy":
         flash("Phòng của bạn đã có đủ 2 người hoặc đã bắt đầu nên không thể nhận lời mời khác.", "warning")
         return redirect(url_for("dashboard"))
-
-    inviter_id = invite.get("from_user_id")
-    inviter_room = active_room_for_user(inviter_id)
-    if active_match_for_user(inviter_id) or (inviter_room and not is_solo_waiting_room(inviter_room, inviter_id)):
+    if accept_blocker == "inviter_unavailable":
         execute_query(
             db.table("match_invites").update({
                 "status": "cancelled",

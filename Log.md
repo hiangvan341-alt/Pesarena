@@ -1,3 +1,43 @@
+## V1.3.37 — Module hóa luồng dữ liệu + CSS Flow Audit
+
+**Ngày giờ:** 2026-08-07 13:28 (Asia/Bangkok)
+
+### Nội dung
+- Tách Presence Frontend khỏi `base.html` sang `static/js/presence.js`.
+- Tách quyết định Online/Offline sang `modules/presence/service.py`; Players, Invite và Quick Match tiếp tục dùng một nguồn chuẩn `is_user_online_now()`.
+- Tách popup/fetch lời mời Frontend sang `static/js/invite_center.js`.
+- Tách điều kiện chặn gửi/nhận lời mời sang `modules/invites/service.py`; route chỉ còn đọc request, lấy trạng thái DB, gọi service và ghi dữ liệu.
+- Thêm `docs/MODULE_FLOW_V1.3.37.md` mô tả chuỗi kiểm lỗi Frontend -> API -> Backend -> Supabase -> View Model -> DOM -> CSS.
+- Thêm `scripts/audit_css_flow.py` và báo cáo `docs/CSS_FLOW_AUDIT_V1.3.37.txt`.
+- Audit phát hiện `arena_room_v2.css` có 124 selector lặp; `style.css`/các module hiện có nhiều `!important`. Không xóa hàng loạt để tránh làm vỡ giao diện; đưa vào danh sách hotspot cần dọn theo module ở các bản sau.
+- Xác nhận `.arena-room-v2 .room-center-mode-zone {display:none}` là UI legacy ẩn có chủ đích vì giao diện hiện tại dùng `.room-master-mode-switcher`; không tự mở lại.
+- Không thay đổi schema Supabase, công thức RP hoặc điều kiện mở khóa Rank.
+
+### File chính thay đổi/thêm
+- `app.py`
+- `templates/base.html`
+- `static/js/presence.js`
+- `static/js/invite_center.js`
+- `modules/presence/__init__.py`
+- `modules/presence/service.py`
+- `modules/invites/__init__.py`
+- `modules/invites/service.py`
+- `scripts/audit_css_flow.py`
+- `docs/MODULE_FLOW_V1.3.37.md`
+- `docs/CSS_FLOW_AUDIT_V1.3.37.txt`
+- `test_module_boundaries_v137.py`
+- `test_presence_invite_modules_v137.py`
+
+### Kiểm tra
+- `python -m py_compile app.py modules/presence/service.py modules/invites/service.py`: PASS.
+- `node --check` Presence/Invite/Quick Match JS: PASS.
+- 31 test hiện hành liên quan Presence, Invite, Quick Match, Rank Mode, Room Action/Result, Parsec và Room cleanup: PASS.
+- Một số test legacy trong source vẫn hard-code version/HTML cũ; không dùng làm tiêu chí V1.3.37.
+
+### So với V1.3.36
+- V1.3.36 sửa độ tin cậy Presence/Invite.
+- V1.3.37 giữ logic đó nhưng tách thành module độc lập và bổ sung CSS flow audit để truy nguyên lỗi dễ hơn.
+
 ## V1.3.36 — Fix Presence Online + Invite Reliability
 **Thời gian:** 2026-08-07 13:20 (Asia/Bangkok)
 

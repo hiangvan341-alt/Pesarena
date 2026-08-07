@@ -26,6 +26,20 @@
     <script src="{{ static_asset('js/quick_match.js') }}" defer></script>
     {% endif %}
     <script src="{{ static_asset('js/pes_polling.js') }}" defer></script>
+    {% if current_user and not (auth_only|default(false)) %}
+    <script>
+    window.PES_PRESENCE_CONFIG = {
+        enabled: true,
+        heartbeatUrl: {{ url_for('heartbeat')|tojson }},
+        visibleInterval: 30000,
+        hiddenInterval: 60000,
+        jitter: 3000
+    };
+    </script>
+    <script src="{{ static_asset('js/presence.js') }}" defer></script>
+    <script>window.PES_INVITE_CONFIG={pendingUrl:{{ url_for('api_pending_invites')|tojson }}};</script>
+    <script src="{{ static_asset('js/invite_center.js') }}" defer></script>
+    {% endif %}
     <script src="{{ static_asset('js/zcoin.js') }}" defer></script>
     {% if request.endpoint == 'zcoin_rewards' %}
     <script src="{{ static_asset('js/zcoin_rewards.js') }}" defer></script>
@@ -286,69 +300,11 @@ function toggleTheme(){
 {% endif %}
 
 <script>
-function postHeartbeat() {
-    const task = function () {
-        return fetch("{{ url_for('heartbeat') }}", {
-            method: "POST",
-            credentials: "same-origin",
-            cache: "no-store"
-        }).catch(function () {});
-    };
-    return window.PESNet && typeof PESNet.singleFlight === "function"
-        ? PESNet.singleFlight("api:heartbeat", task)
-        : task();
-}
-
 // V1.3.36: không gửi Offline bằng pagehide/sendBeacon. Refresh, back/forward và
 // điều hướng có thể làm beacon của trang cũ đến muộn, ghi đè presence của trang
 // mới. Logout thật vẫn đánh dấu Offline; mất kết nối dùng timeout phía Backend.
 
-let lastInviteId = null;
-let inviteCountdownTimer = null;
-
-function renderInvitePopup(invite) {
-    const backdrop = document.getElementById("inviteModalBackdrop");
-    const content = document.getElementById("inviteModalContent");
-    if (!backdrop || !content || !invite) return;
-
-    lastInviteId = invite.id;
-
-    content.innerHTML = `
-        <div class="invite-modal-player">
-            <div class="invite-modal-person">
-                ${renderAvatarHtml(invite.from_avatar_url, invite.from_name, 'lg', invite.from_achievement, invite.from_avatar_frame && invite.from_avatar_frame.image_url)}
-                <p><strong>${escapeHtml(invite.from_name)}</strong> đang mời bạn thi đấu.</p>
-            </div>
-            <p class="small">Rank: ${escapeHtml(invite.from_rank)} • Điểm: ${escapeHtml(String(invite.from_points))} • Tier: ${escapeHtml(invite.tier)}</p>
-            <p class="small">Lời mời hết hạn sau <strong id="inviteCountdown">${escapeHtml(String(invite.expires_in_seconds || 0))}</strong> giây.</p>
-        </div>
-        <div class="invite-modal-actions">
-            <form method="post" action="${invite.accept_url}">
-                <button class="btn green" name="action" value="accept" type="submit">Chấp nhận</button>
-            </form>
-            <form method="post" action="${invite.reject_url}">
-                <button class="btn red" name="action" value="reject" type="submit">Từ chối</button>
-            </form>
-        </div>
-    `;
-
-    backdrop.style.display = "flex";
-
-    if (inviteCountdownTimer) clearInterval(inviteCountdownTimer);
-    let seconds = Number(invite.expires_in_seconds || 0);
-    const countdown = document.getElementById("inviteCountdown");
-    inviteCountdownTimer = setInterval(function () {
-        seconds = Math.max(0, seconds - 1);
-        if (countdown) countdown.textContent = String(seconds);
-        if (seconds <= 0) {
-            clearInterval(inviteCountdownTimer);
-            inviteCountdownTimer = null;
-            backdrop.style.display = "none";
-            lastInviteId = null;
-        }
-    }, 1000);
-}
-
+// Invite popup/render/fetch đã tách sang static/js/invite_center.js.
 
 let lastKnownActiveRoomId = null;
 
@@ -389,50 +345,6 @@ function checkActiveRoom() {
         : task();
 }
 
-
-let pendingInvitesRequestPromise = null;
-let lastPendingInvitePollAt = 0;
-function checkPendingInvites() {
-    lastPendingInvitePollAt = Date.now();
-    const task = function () {
-        return fetch("{{ url_for('api_pending_invites') }}", {
-            method: "GET",
-            credentials: "same-origin",
-            cache: "no-store"
-        })
-        .then(function (res) {
-            if (res.status === 204) return {invites: []};
-            if (!res.ok) {
-                throw new Error("invite_poll_http_" + res.status);
-            }
-            return res.json();
-        })
-        .then(function (data) {
-        if (!data.invites || data.invites.length === 0) {
-            const backdrop = document.getElementById("inviteModalBackdrop");
-            if (backdrop) backdrop.style.display = "none";
-            if (inviteCountdownTimer) clearInterval(inviteCountdownTimer);
-            inviteCountdownTimer = null;
-            lastInviteId = null;
-            return;
-        }
-        const invite = data.invites[0];
-        if (invite.id !== lastInviteId) {
-            renderInvitePopup(invite);
-        }
-        })
-        .catch(function () {});
-    };
-
-    if (window.PESNet && typeof PESNet.singleFlight === "function") {
-        return PESNet.singleFlight("api:pending-invites", task);
-    }
-    if (pendingInvitesRequestPromise) return pendingInvitesRequestPromise;
-    pendingInvitesRequestPromise = Promise.resolve()
-        .then(task)
-        .finally(function () { pendingInvitesRequestPromise = null; });
-    return pendingInvitesRequestPromise;
-}
 
 function escapeHtml(text) {
     const div = document.createElement("div");
@@ -982,30 +894,8 @@ window.addEventListener("DOMContentLoaded", function () {
 
     // V1.14.41.32: ưu tiên gọi theo sự kiện. Polling chỉ còn là lớp dự phòng
     // thưa để nhận thay đổi từ thiết bị khác khi không có WebSocket/Realtime.
-    const heartbeatPoller = PESNet.createPoller({
-        key: "heartbeat",
-        task: postHeartbeat,
-        visibleInterval: 30000,
-        hiddenInterval: 60000,
-        runWhenHidden: true,
-        immediate: true,
-        jitter: 3000
-    });
-
-    // Khi quay lại PES Arena từ PES2021/Parsec, cập nhật presence ngay thay vì
-    // chờ chu kỳ poll tiếp theo. Throttle ngắn tránh focus + visibilitychange
-    // bắn hai heartbeat sát nhau.
-    let lastPresenceResumeAt = 0;
-    function heartbeatOnResume() {
-        const now = Date.now();
-        if (now - lastPresenceResumeAt < 5000) return;
-        lastPresenceResumeAt = now;
-        postHeartbeat();
-    }
-    document.addEventListener("visibilitychange", function () {
-        if (!document.hidden) heartbeatOnResume();
-    });
-    window.addEventListener("focus", heartbeatOnResume);
+    // Presence V1.3.37 đã tách sang static/js/presence.js.
+    // base.html chỉ giữ các poller thuộc Invite/Room/Announcement.
 
     // Không gọi heartbeat ngay trên mỗi click/phím. Việc này từng làm mọi thao tác
     // đồng thời kích hoạt request nền, đặc biệt chậm trên mạng yếu hoặc Supabase cold start.
@@ -1051,7 +941,7 @@ window.addEventListener("DOMContentLoaded", function () {
     // Watchdog độc lập: nếu một module JS khác lỗi hoặc poller bị dừng quá lâu,
     // lời mời vẫn được kiểm tra lại. Không tạo request trùng nhờ singleFlight.
     window.setInterval(function () {
-        if (!document.hidden && Date.now() - lastPendingInvitePollAt >= 30000) {
+        if (!document.hidden && Date.now() - ((window.PESInviteCenter && PESInviteCenter.getLastPollAt()) || 0) >= 30000) {
             checkPendingInvites();
         }
     }, 30000);

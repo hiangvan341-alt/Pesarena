@@ -1,0 +1,111 @@
+PES Arena CSS Flow Audit
+========================
+CSS files: 16
+!important total: 1342
+Cross-file exact duplicate selectors: 21
+Repeated selectors inside arena_room_v2.css: 124
+Selectors that can hide UI: 131
+
+!important by file
+  1116  static/style.css
+    87  static/css/arena_room_v2.css
+    62  static/css/profile_showcase.css
+    24  static/css/parsec_room.css
+    19  static/css/quick_match.css
+    10  static/css/shop_phase3.css
+     6  static/css/luckybox_user.css
+     6  static/css/zcoin.css
+     5  static/css/zcoin_rewards.css
+     3  static/css/streak_animation.css
+     2  static/css/admin_dashboard.css
+     2  static/css/luckybox_admin.css
+
+Room repeated selectors (top 30)
+  x8  .arena-room-v2 .room-center-stage-plain > .room-action-zone
+  x8  .arena-room-v2 .room-center-stage-plain > .room-center-primary-actions
+  x7  .arena-room-v2 .arena-action-exit
+  x7  .arena-room-v2 .arena-action-quick
+  x7  .arena-room-v2 .arena-btn
+  x7  .arena-room-v2 .room-arena-right-rail
+  x7  .arena-room-v2 .room-center-stage-plain
+  x7  .arena-room-v2 .room-center-stage-plain > .room-center-random-form
+  x7  .arena-room-v2 .room-master-card-icon
+  x7  .arena-room-v2 .room-master-card-icon img
+  x7  .arena-room-v2 .room-master-mode-card
+  x6  .arena-room-v2 .arena-action-invite
+  x6  .arena-room-v2 .room-arena-frame
+  x6  .arena-room-v2 .room-master-mode-card strong
+  x6  .arena-room-v2 .room-side-card
+  x5  .arena-room-v2
+  x5  .arena-room-v2 .room-bottom-side .room-score-history-list
+  x5  .arena-room-v2 .room-center-primary-actions-three
+  x5  .arena-room-v2 .room-center-stage-plain > .room-center-random-trigger
+  x5  .arena-room-v2 .room-guest-card-kick-btn
+  x5  .arena-room-v2 .room-master-active-mode
+  x5  .arena-room-v2 .room-master-brand
+  x5  .arena-room-v2 .room-master-mode-emblem
+  x5  .arena-room-v2 .room-master-mode-grid
+  x5  .arena-room-v2 .room-master-unlock-pill
+  x5  .arena-room-v2 .room-result-btn.arena-btn
+  x5  .arena-room-v2 .room-team-card.away
+  x5  .arena-room-v2 .room-team-card.home
+  x4  .arena-room-v2 .arena-btn.gray
+  x4  .arena-room-v2 .arena-btn.green
+
+Cross-file duplicate selectors (non-keyframe, top 40)
+  :root -> static/css/luckybox_user.css, static/css/shop_phase3.css, static/style.css
+  .admin-report-read-model-warning -> static/css/admin.css, static/css/admin_dashboard.css
+  .admin-report-read-model-warning code -> static/css/admin.css, static/css/admin_dashboard.css
+  .admin-report-read-model-warning strong -> static/css/admin.css, static/css/admin_dashboard.css
+  .admin-score-edit-cell -> static/css/admin_dashboard.css, static/style.css
+  .admin-score-edit-cell input -> static/css/admin_dashboard.css, static/style.css
+  .admin-score-edit-cell span -> static/css/admin_dashboard.css, static/style.css
+  .admin-tab-button -> static/css/admin_dashboard.css, static/style.css
+  .admin-tab-panel[hidden] -> static/css/admin_dashboard.css, static/style.css
+  .admin-tabs -> static/css/admin_dashboard.css, static/style.css
+  .admin-user-compact-form -> static/css/admin_dashboard.css, static/style.css
+  .admin-user-detail-row[hidden] -> static/css/admin_dashboard.css, static/style.css
+  .display-name-form input:disabled -> static/css/shop_phase3.css, static/style.css
+  .name-style-champion-gold -> static/css/shop_phase3.css, static/style.css
+  .name-style-elite-purple -> static/css/shop_phase3.css, static/style.css
+  .name-style-neon-blue -> static/css/shop_phase3.css, static/style.css
+  .room-layout-v137 .room-arena-right-rail -> static/css/parsec_room.css, static/style.css
+  .room-layout-v137 .room-chat-side -> static/css/parsec_room.css, static/style.css
+  .room-layout-v137 .room-quick-match-row .room-quick-match-btn.is-searching -> static/css/quick_match.css, static/style.css
+  .room-layout-v137 .room-score-history-panel -> static/css/parsec_room.css, static/style.css
+  .room-layout-v137 .room-side-info-panel -> static/css/parsec_room.css, static/style.css
+
+State-hiding selectors relevant to room/invite (top 40)
+  static/style.css: .invite-modal-backdrop
+  static/style.css: .chat-unread-badge[hidden]
+  static/style.css: .admin-tab-panel[hidden]
+  static/style.css: .admin-user-card[hidden]
+  static/style.css: .admin-user-detail-row[hidden]
+  static/style.css: .user-notification-dropdown[hidden]
+  static/style.css: .active-room-topbar-link.is-hidden
+  static/style.css: .active-room-topbar-copy small
+  static/style.css: .active-room-topbar-copy
+  static/style.css: #bottomLobbyChat[hidden]
+  static/style.css: #bottomLobbyChat[hidden]::before
+  static/style.css: #bottomLobbyChat[hidden]::after
+  static/style.css: .room-center-random-glow
+  static/style.css: .room-center-random-icon
+  static/style.css: .room-result-btn::-webkit-details-marker
+  static/style.css: .idle-timeout-backdrop[hidden]
+  static/style.css: .room-action-modal[hidden]
+  static/style.css: .room-action-modal
+  static/style.css: .room-action-zone::before
+  static/style.css: .room-action-zone.is-post-result::before
+  static/css/admin_dashboard.css: .admin-tab-panel[hidden]
+  static/css/admin_dashboard.css: .admin-user-detail-row[hidden]
+  static/css/arena_room_v2.css: .arena-room-v2 .room-team-league-text
+  static/css/arena_room_v2.css: .arena-room-v2 .room-center-mode-zone
+  static/css/arena_room_v2.css: .arena-room-v2 .room-chat-side
+  static/css/arena_room_v2.css: .arena-room-v2 .room-master-brand
+  static/css/arena_room_v2.css: .arena-room-v2 .room-result-dispute > summary::-webkit-details-marker
+  static/css/luckybox_user.css: .lb4-opening[hidden]
+  static/css/profile_showcase.css: .profile-v2-panel[hidden]
+  static/css/quick_match.css: .game-notice-modal[hidden]
+  static/css/shop_phase3.css: .shop3-preview-backdrop[hidden]
+  static/css/ui_dialog.css: .app-ui-dialog[hidden]
+  static/css/zcoin.css: .topbar-account-dropdown[hidden]
