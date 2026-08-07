@@ -55,10 +55,12 @@ def create_series(room, mode_code):
     return (result.data or [None])[0]
 
 
-def update_series(series_id, payload, expected_status=None):
+def update_series(series_id, payload, expected_status=None, expected_updated_at=None):
     query = _g("db").table("match_series").update({**payload, "updated_at": _g("now_iso")()}).eq("id", series_id)
     if expected_status:
         query = query.eq("status", expected_status)
+    if expected_updated_at:
+        query = query.eq("updated_at", expected_updated_at)
     return _g("execute_query")(query, "rank_series_update", attempts=2)
 
 

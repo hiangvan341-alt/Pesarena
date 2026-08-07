@@ -24,7 +24,7 @@
 {% set room_room_viewer_is_host = (current_user.id|string == room.host_user_id|string) %}
 {% set room_viewer_is_guest = (room.guest_user_id and current_user.id|string == room.guest_user_id|string) %}
 {# Rank toggle compatibility: system_features.rank_standard_enabled #}
-<div id="roomLiveShell" class="room-view-shell arena-room-v2" data-room-state-key="{{ initial_room_state_key|e }}" data-room-status="{{ room.status|e }}">
+<div id="roomLiveShell" class="room-view-shell arena-room-v2" data-room-state-key="{{ initial_room_state_key|e }}" data-room-status="{{ room.status|e }}" data-room-mode="{{ selected_rank_mode|e }}" data-series-phase="{{ (rank_series.phase if rank_series else '')|e }}">
 
 {% include "_streak_animation.html" %}
 
@@ -672,6 +672,8 @@ function bindRoomShareButton() {
 
 let currentRoomStateKey = {{ initial_room_state_key|tojson }};
 let currentRoomStatus = {{ room.status|tojson }};
+let currentRoomMode = {{ selected_rank_mode|tojson }};
+let currentSeriesPhase = {{ (rank_series.phase if rank_series else '')|tojson }};
 const currentRoomUserIsHost = {{ (room_room_viewer_is_host or current_user.role == 'admin')|tojson }};
 const currentRoomUserIsGuest = {{ (room_viewer_is_guest)|tojson }};
 const currentRoomPath = {{ url_for('room_detail', room_id=room.id)|tojson }};
@@ -809,6 +811,7 @@ function getRoomStateInterval() {
     if (currentRoomStatus === "playing") return currentRoomUserIsGuest ? 7000 : 12000;
     if (currentRoomStatus === "friendly_playing") return 15000;
     if (currentRoomStatus === "waiting_result_confirm") return currentRoomUserIsGuest ? 5000 : 8000;
+    if (currentRoomStatus === "waiting_ready" && currentRoomMode === "ban_pick_bo3" && ["ban_pick", "ban", "pick"].includes(currentSeriesPhase)) return 3000;
     if (currentRoomStatus === "waiting_ready") return 8000;
     if (currentRoomStatus === "confirmed") return 8000;
     return 15000;
@@ -879,8 +882,27 @@ function getFlashFromDocument(doc) {
     };
 }
 
+function bindSeriesTurnCountdown() {
+    document.querySelectorAll(".series-turn-countdown").forEach(function (el) {
+        if (el.dataset.bound === "1") return;
+        el.dataset.bound = "1";
+        let seconds = Math.max(0, Number(el.dataset.seconds || 0));
+        el.textContent = String(seconds);
+        const timer = window.setInterval(function () {
+            if (!document.contains(el)) { window.clearInterval(timer); return; }
+            if (seconds > 0) seconds -= 1;
+            el.textContent = String(seconds);
+            if (seconds <= 0) {
+                window.clearInterval(timer);
+                window.setTimeout(requestImmediateRoomStateCheck, 150);
+            }
+        }, 1000);
+    });
+}
+
 function rebindRoomDynamicUi() {
     bindRoomShareButton();
+    bindSeriesTurnCountdown();
     bindRoomScoreDraft();
     bindRoomAjaxForms();
     if (typeof bindRoomChatForm === "function") bindRoomChatForm();
@@ -902,6 +924,8 @@ function replaceRoomShellFromDocument(doc) {
     currentShell.replaceWith(nextShell);
     currentRoomStateKey = nextShell.dataset.roomStateKey || currentRoomStateKey;
     currentRoomStatus = nextShell.dataset.roomStatus || currentRoomStatus;
+    currentRoomMode = nextShell.dataset.roomMode || currentRoomMode;
+    currentSeriesPhase = nextShell.dataset.seriesPhase || currentSeriesPhase;
     rebindRoomDynamicUi();
     return true;
 }

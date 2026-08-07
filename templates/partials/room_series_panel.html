@@ -41,8 +41,11 @@
         {% set my_turn_to_ban = (bp.phase == 'ban' and ((expected_host and room_room_viewer_is_host) or ((not expected_host) and room_viewer_is_guest))) %}
         {% set can_pick = (bp.phase == 'pick' and ((room_room_viewer_is_host and not bp.host_pick) or (room_viewer_is_guest and bp.host_pick and not bp.guest_pick))) %}
         <div class="series-meta">
-            {% if bp.phase == 'ban' %}Cấm {{ bp.ban_count|int }}/6 • {{ 'Lượt Chủ phòng' if expected_host else 'Lượt Đối thủ' }}
+            {% if bp.phase == 'ban' %}Cấm {{ bp.ban_count|int }}/{{ (rank_mode_configs.get('ban_pick_bo3', {}).get('bans_per_player', 3)|int) * 2 }} • {{ 'Lượt Chủ phòng' if expected_host else 'Lượt Đối thủ' }}
             {% else %}Chọn CLB • {{ 'Chủ phòng chọn trước' if not bp.host_pick else ('Đối thủ chọn' if not bp.guest_pick else 'Đã khóa đội') }}{% endif %}
+            {% if bp.phase in ['ban','pick'] and bp.turn_actor %}
+            • Tự động random sau <strong class="series-turn-countdown" data-seconds="{{ bp.turn_remaining_seconds|default(0)|int }}">{{ bp.turn_remaining_seconds|default(0)|int }}</strong>s
+            {% endif %}
         </div>
         {% if my_turn_to_ban or can_pick %}
         <div class="series-actions">

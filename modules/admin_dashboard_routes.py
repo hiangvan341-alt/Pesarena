@@ -11,6 +11,7 @@ def register_routes(context):
     @app.route("/admin/rank-modes", methods=["POST"])
     @login_required
     @admin_required
+    @admin_permission_required("system_features_manage")
     def admin_save_rank_modes():
         configs = get_rank_mode_configs()
         int_fields = ("min_rp", "min_matches", "max_rp_gap", "pool_size", "bans_per_player", "ban_seconds", "pick_seconds")
@@ -31,6 +32,15 @@ def register_routes(context):
                     try: rp[field] = int(request.form.get(key) or 0)
                     except (TypeError, ValueError): pass
             mode["rp"] = rp
+        # Guard cấu hình Cấm/Chọn: pool phải đủ cho toàn bộ lượt cấm + tối đa 3 trận,
+        # mỗi trận cần 2 CLB mới vì CLB đã dùng không được dùng lại.
+        ban_pick = configs.get("ban_pick_bo3") or {}
+        bans_per_player = max(0, int(ban_pick.get("bans_per_player") or 3))
+        minimum_pool = bans_per_player * 2 + 6
+        ban_pick["pool_size"] = max(minimum_pool, int(ban_pick.get("pool_size") or minimum_pool))
+        ban_pick["ban_seconds"] = max(5, int(ban_pick.get("ban_seconds") or 30))
+        ban_pick["pick_seconds"] = max(5, int(ban_pick.get("pick_seconds") or 30))
+        configs["ban_pick_bo3"] = ban_pick
         save_rank_mode_configs(configs)
         flash("Đã lưu cấu hình 6 chế độ Rank.", "success")
         return redirect(url_for("admin", tab="rank-modes") + "#rank-modes")
@@ -38,6 +48,7 @@ def register_routes(context):
     @app.route("/admin/rank-modes/user-unlocks/<user_id>", methods=["POST"])
     @login_required
     @admin_required
+    @admin_permission_required("users_edit")
     def admin_save_user_rank_mode_unlocks(user_id):
         user = get_user(user_id)
         if not user:

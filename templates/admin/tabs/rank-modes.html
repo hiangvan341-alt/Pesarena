@@ -17,7 +17,7 @@
                         <label>Số trận tối thiểu<input type="number" min="0" name="{{ code }}__min_matches" value="{{ mode.min_matches or 0 }}"></label>
                         <label>Chênh RP tối đa<input type="number" min="0" name="{{ code }}__max_rp_gap" value="{{ mode.max_rp_gap or 0 }}"></label>
                         {% if code == 'ban_pick_bo3' %}
-                        <label>Kích thước Pool<input type="number" min="6" name="{{ code }}__pool_size" value="{{ mode.pool_size or 20 }}"></label>
+                        <label>Kích thước Pool<input type="number" min="12" name="{{ code }}__pool_size" value="{{ mode.pool_size or 20 }}"><small>Tối thiểu = 2 × lượt cấm mỗi bên + 6 CLB cho tối đa 3 trận.</small></label>
                         <label>Lượt cấm mỗi bên<input type="number" min="0" name="{{ code }}__bans_per_player" value="{{ mode.bans_per_player or 3 }}"></label>
                         <label>Thời gian cấm (giây)<input type="number" min="5" name="{{ code }}__ban_seconds" value="{{ mode.ban_seconds or 30 }}"></label>
                         <label>Thời gian chọn (giây)<input type="number" min="5" name="{{ code }}__pick_seconds" value="{{ mode.pick_seconds or 30 }}"></label>

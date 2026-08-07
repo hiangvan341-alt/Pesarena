@@ -70,7 +70,7 @@ from modules.win_streaks import (
 load_dotenv()
 
 APP_NAME = "PES Arena – Bản Lĩnh Sân Cỏ"
-APP_VERSION = "1.3.50"
+APP_VERSION = "1.3.51"
 DEFAULT_POINTS = 1000
 DEVICE_COOKIE_NAME = "rankzone_device_id"
 COOLDOWN_MINUTES = 3
@@ -4878,6 +4878,15 @@ def api_room_state(room_id):
 
     if user["id"] not in [room["host_user_id"], room["guest_user_id"]] and not is_admin_user(user):
         return polling_stop_response("room_access_ended")
+
+    # Cấm/Chọn BO3: polling cũng là nhịp watchdog. Khi hết thời gian, server
+    # tự random đúng 1 CLB cho lượt hiện tại rồi cấp deadline mới cho lượt sau.
+    try:
+        timeout_result = process_series_timeouts(room)
+        if timeout_result.get("changed"):
+            room = get_room_poll_snapshot(room_id) or room
+    except ValueError:
+        pass
 
     series_version = get_series_poll_version(room)
     state_key = build_room_state_key(room, series_version)

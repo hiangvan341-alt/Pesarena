@@ -16,6 +16,9 @@ def prepare(service, room, series, games, host, guest):
             state["active_game_no"] = game_no
             state["host_pick"] = None
             state["guest_pick"] = None
-            state["phase"] = "pick" if int(state.get("ban_count") or 0) >= 6 else "ban"
+            cfg = service.get_mode_config()
+            total_bans = max(0, int(cfg.get("bans_per_player") or 3)) * 2
+            state["phase"] = "pick" if int(state.get("ban_count") or 0) >= total_bans else "ban"
+            service.reset_ban_pick_deadline(state)
             service.save_ban_pick(series, state)
     return {"action": "ban_pick", "game_no": game_no, "state": state, "label": f"Cấm chọn {game_no}/3"}

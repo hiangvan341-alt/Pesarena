@@ -884,3 +884,12 @@
 - BO3 kết thúc 2-0 chỉ phát sinh 2 match thực tế nên chỉ tốn 2 lượt; nếu cần trận 3 mới tốn lượt thứ 3.
 - Catalog chọn mode hiển thị lý do khóa khi một trong hai người không đủ lượt ngày.
 - Test mới V1.3.46: 6/6 PASS. Nhóm Rank mode lõi bổ sung: 17 PASS; 2 test legacy Admin toggle cũ không còn khớp kiến trúc partial hiện tại, không liên quan thay đổi này.
+
+## V1.3.51 — 2026-08-08
+- Ban/Pick BO3: hết giờ cấm tự random 1 CLB để cấm; hết giờ chọn tự random 1 CLB hợp lệ.
+- Thêm deadline từng lượt + countdown UI + watchdog qua room polling 3 giây chỉ khi Ban/Pick đang chờ thao tác.
+- Thêm optimistic guard theo `match_series.updated_at` để giảm xử lý timeout trùng.
+- Tactical BO3: không tái sử dụng bất kỳ CLB nào đã xuất hiện trong 3 lựa chọn trước đó của Series.
+- Admin Ban/Pick: ép pool tối thiểu = 2 x số lượt cấm mỗi bên + 6; thời gian cấm/chọn tối thiểu 5 giây.
+- Admin permission: sửa Rank modes yêu cầu `system_features_manage`; sửa unlock mode người dùng yêu cầu `users_edit`.
+- Thêm `docs/SYSTEM_INSPECTION_V1.3.51.md` và test audit V1.3.51.

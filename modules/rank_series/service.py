@@ -20,7 +20,7 @@ HANDLERS = {
 }
 EXPORTED_NAMES = (
     "SERIES_MODES", "get_room_series_context", "prepare_next_series_game",
-    "choose_tactical_club", "ban_pick_action", "confirm_series_child_match",
+    "choose_tactical_club", "ban_pick_action", "process_series_timeouts", "confirm_series_child_match",
     "is_series_child_match", "cancel_active_series_for_room", "finalize_series_forfeit",
 )
 
@@ -116,24 +116,67 @@ def build_three_choices(host, guest, used, game_no):
 
 def save_pending(series, phase, pending):
     meta = metadata(series); meta["phase"] = phase; meta["pending_choices"] = pending
+    if phase == "choose" and pending:
+        seen = list(meta.get("tactical_seen_clubs") or [])
+        seen_norm = {str(x).casefold() for x in seen if x}
+        for key in ("host_options", "guest_options"):
+            for team in pending.get(key) or []:
+                name = team.get("name")
+                if name and name.casefold() not in seen_norm:
+                    seen.append(name); seen_norm.add(name.casefold())
+        meta["tactical_seen_clubs"] = seen
     repository.update_series(series["id"], {"metadata": meta})
     series["metadata"] = meta
+
+
+def _ban_pick_turn_seconds(phase):
+    cfg = _g("get_rank_mode")("ban_pick_bo3") or {}
+    key = "ban_seconds" if phase == "ban" else "pick_seconds"
+    return max(5, int(cfg.get(key) or 30))
+
+
+def _reset_ban_pick_deadline(state):
+    phase = state.get("phase") or "ban"
+    if phase not in {"ban", "pick"}:
+        state.pop("turn_deadline_at", None)
+        state.pop("turn_actor", None)
+        state.pop("turn_seconds", None)
+        return state
+    if phase == "ban":
+        actor = "host" if int(state.get("ban_count") or 0) % 2 == 0 else "guest"
+    else:
+        actor = "host" if not state.get("host_pick") else "guest" if not state.get("guest_pick") else None
+    if not actor:
+        state.pop("turn_deadline_at", None)
+        state.pop("turn_actor", None)
+        state.pop("turn_seconds", None)
+        return state
+    seconds = _ban_pick_turn_seconds(phase)
+    state["turn_actor"] = actor
+    state["turn_seconds"] = seconds
+    state["turn_deadline_at"] = _g("future_iso")(seconds)
+    return state
 
 
 def build_ban_pick_pool(host, guest, game_no):
     teams = list(_g("_all_random_teams")())
-    if len(teams) < 20:
-        raise ValueError("Cần ít nhất 20 CLB hoạt động cho Cấm chọn CLB BO3.")
-    # Rank-neutral shared pool: the same 20-club pool is visible to both players for the entire BO3.
-    sample = random.SystemRandom().sample(teams, 20)
-    return {"game_no": int(game_no), "active_game_no": int(game_no), "phase": "ban", "ban_count": 0,
+    cfg = _g("get_rank_mode")("ban_pick_bo3") or {}
+    pool_size = max(6, int(cfg.get("pool_size") or 20))
+    if len(teams) < pool_size:
+        raise ValueError(f"Cần ít nhất {pool_size} CLB hoạt động cho Cấm chọn CLB BO3.")
+    sample = random.SystemRandom().sample(teams, pool_size)
+    state = {"game_no": int(game_no), "active_game_no": int(game_no), "phase": "ban", "ban_count": 0,
             "pool": [_team_pack(t) for t in sample], "banned": [], "host_pick": None, "guest_pick": None, "action_order": 0}
+    return _reset_ban_pick_deadline(state)
 
 
-def save_ban_pick(series, state):
+def save_ban_pick(series, state, expected_updated_at=None):
     meta = metadata(series); meta["phase"] = "ban_pick"; meta["ban_pick"] = state
-    repository.update_series(series["id"], {"metadata": meta})
+    result = repository.update_series(series["id"], {"metadata": meta}, expected_updated_at=expected_updated_at)
+    if expected_updated_at and not (result.data or []):
+        raise ValueError("Lượt Cấm/Chọn vừa được người chơi khác xử lý. Giao diện sẽ tự cập nhật.")
     series["metadata"] = meta
+    return result
 
 
 def _ensure_series(room, mode_code):
@@ -224,6 +267,8 @@ class _GlobalsProxy:
     save_pending = staticmethod(save_pending)
     build_ban_pick_pool = staticmethod(build_ban_pick_pool)
     save_ban_pick = staticmethod(save_ban_pick)
+    reset_ban_pick_deadline = staticmethod(_reset_ban_pick_deadline)
+    get_mode_config = staticmethod(lambda: _g("get_rank_mode")("ban_pick_bo3") or {})
 
 def globals_proxy():
     return _GlobalsProxy
@@ -256,7 +301,16 @@ def choose_tactical_club(room, user_id, choice_index):
     return {"started": True, **_start_match(room, series, int(state["game_no"]), pair, "tactical_bo3")}
 
 
-def ban_pick_action(room, user_id, action, club_name):
+def _available_ban_pick_clubs(series, state):
+    banned = set(state.get("banned") or [])
+    used = {x.casefold() for x in used_clubs(series) if x}
+    taken = {state.get("host_pick"), state.get("guest_pick")}
+    return [x.get("name") for x in (state.get("pool") or [])
+            if x.get("name") and x.get("name") not in banned and x.get("name") not in taken
+            and x.get("name").casefold() not in used]
+
+
+def ban_pick_action(room, user_id, action, club_name, source="user"):
     series = repository.get_active_series(room.get("id"))
     if not series or series.get("mode_code") != "ban_pick_bo3":
         raise ValueError("Không có lượt Cấm chọn đang hoạt động.")
@@ -267,19 +321,26 @@ def ban_pick_action(room, user_id, action, club_name):
     if not (is_host or is_guest): raise ValueError("Bạn không thuộc phòng này.")
     pool_names = [x.get("name") for x in state.get("pool") or []]
     if club_name not in pool_names: raise ValueError("CLB không nằm trong pool hiện tại.")
+    action = str(action or "").strip().lower()
     banned = list(state.get("banned") or [])
     action_order = int(state.get("action_order") or 0) + 1
+    expected_updated_at = series.get("updated_at")
     if state.get("phase") == "ban":
+        if action != "ban": raise ValueError("Hiện tại phải thực hiện lượt cấm CLB.")
         expected_host = (int(state.get("ban_count") or 0) % 2 == 0)
         if expected_host != is_host: raise ValueError("Chưa tới lượt cấm của bạn.")
         if club_name in banned: raise ValueError("CLB này đã bị cấm.")
         banned.append(club_name); state["banned"] = banned; state["ban_count"] = int(state.get("ban_count") or 0) + 1
-        state["action_order"] = action_order
-        repository.add_club_action(series["id"], None, user_id, "ban", club_name, action_order)
-        if state["ban_count"] >= 6: state["phase"] = "pick"
-        save_ban_pick(series, state)
-        return {"started": False, "phase": state["phase"]}
+        state["action_order"] = action_order; state["last_action_source"] = source
+        cfg = _g("get_rank_mode")("ban_pick_bo3") or {}
+        total_bans = max(0, int(cfg.get("bans_per_player") or 3)) * 2
+        if state["ban_count"] >= total_bans: state["phase"] = "pick"
+        _reset_ban_pick_deadline(state)
+        save_ban_pick(series, state, expected_updated_at=expected_updated_at)
+        repository.add_club_action(series["id"], int(state.get("active_game_no") or 1), user_id, "ban_auto" if source == "timeout_random" else "ban", club_name, action_order)
+        return {"started": False, "phase": state["phase"], "auto": source == "timeout_random", "club_name": club_name}
     if state.get("phase") != "pick": raise ValueError("Hiện chưa ở bước chọn CLB.")
+    if action != "pick": raise ValueError("Hiện tại phải thực hiện lượt chọn CLB.")
     if club_name in banned: raise ValueError("CLB này đã bị cấm.")
     used = {x.casefold() for x in used_clubs(series) if x}
     if club_name.casefold() in used: raise ValueError("CLB này đã được dùng trong Series.")
@@ -291,15 +352,51 @@ def ban_pick_action(room, user_id, action, club_name):
         if state.get("guest_pick"): raise ValueError("Đối thủ đã chọn CLB.")
         if club_name == state.get("host_pick"): raise ValueError("Hai bên không thể chọn cùng CLB.")
         state["guest_pick"] = club_name
-    state["action_order"] = action_order
-    repository.add_club_action(series["id"], int(state.get("active_game_no") or 1), user_id, "pick", club_name, action_order)
-    save_ban_pick(series, state)
+    state["action_order"] = action_order; state["last_action_source"] = source
+    _reset_ban_pick_deadline(state)
+    save_ban_pick(series, state, expected_updated_at=expected_updated_at)
+    repository.add_club_action(series["id"], int(state.get("active_game_no") or 1), user_id, "pick_auto" if source == "timeout_random" else "pick", club_name, action_order)
     if not state.get("host_pick") or not state.get("guest_pick"):
-        return {"started": False, "phase": "pick"}
+        return {"started": False, "phase": "pick", "auto": source == "timeout_random", "club_name": club_name}
     a, b = _team_by_name(state["host_pick"]), _team_by_name(state["guest_pick"])
     pair = {"team_a": a["name"], "team_b": b["name"], "overall_a": a["overall"], "overall_b": b["overall"],
             "logo_a": a["logo"], "logo_b": b["logo"], "league_a": a["league"], "league_b": b["league"]}
-    return {"started": True, **_start_match(room, series, int(state.get("active_game_no") or 1), pair, "ban_pick_bo3")}
+    return {"started": True, "auto": source == "timeout_random", "club_name": club_name, **_start_match(room, series, int(state.get("active_game_no") or 1), pair, "ban_pick_bo3")}
+
+
+def process_series_timeouts(room):
+    """Resolve expired Ban/Pick turns. Safe to call from room polling.
+
+    One expired turn creates exactly one random action; the next action gets its own
+    fresh deadline. Optimistic ``updated_at`` matching prevents two pollers from
+    applying the same expired turn twice.
+    """
+    if not room or room.get("status") != "waiting_ready":
+        return {"changed": False}
+    if _g("normalize_rank_mode_code")(room.get("team_tier")) != "ban_pick_bo3":
+        return {"changed": False}
+    series = repository.get_active_series(room.get("id"))
+    if not series or series.get("mode_code") != "ban_pick_bo3":
+        return {"changed": False}
+    state = dict(metadata(series).get("ban_pick") or {})
+    if state.get("phase") not in {"ban", "pick"}:
+        return {"changed": False}
+    deadline = state.get("turn_deadline_at")
+    if not deadline or int(_g("seconds_until")(deadline)) > 0:
+        return {"changed": False, "remaining": int(_g("seconds_until")(deadline)) if deadline else None}
+    actor = state.get("turn_actor")
+    if actor not in {"host", "guest"}:
+        _reset_ban_pick_deadline(state)
+        save_ban_pick(series, state, expected_updated_at=series.get("updated_at"))
+        return {"changed": True, "repaired_timer": True}
+    user_id = room.get("host_user_id") if actor == "host" else room.get("guest_user_id")
+    available = _available_ban_pick_clubs(series, state)
+    if not available:
+        raise ValueError("Không còn CLB hợp lệ để hệ thống tự động Cấm/Chọn.")
+    club_name = random.SystemRandom().choice(available)
+    action = "ban" if state.get("phase") == "ban" else "pick"
+    result = ban_pick_action(room, user_id, action, club_name, source="timeout_random")
+    return {"changed": True, "action": action, "actor": actor, "club_name": club_name, **result}
 
 
 def is_series_child_match(match):
@@ -422,7 +519,10 @@ def get_room_series_context(room):
            "updated_at": series.get("updated_at"), "game_no": game_no, "games": games, "p1_wins": p1, "p2_wins": p2, "draws": draws, "score": f"{p1} - {p2}", "metadata": meta, "can_start": bool(room.get("guest_ready"))}
     if mode_code == "home_away": ctx["score"] = f"{int(series.get('aggregate_player1') or 0)} - {int(series.get('aggregate_player2') or 0)}"
     if meta.get("pending_choices"): ctx["choices"] = meta["pending_choices"]
-    if meta.get("ban_pick"): ctx["ban_pick"] = meta["ban_pick"]
+    if meta.get("ban_pick"):
+        bp = dict(meta["ban_pick"])
+        bp["turn_remaining_seconds"] = int(_g("seconds_until")(bp.get("turn_deadline_at"))) if bp.get("turn_deadline_at") else 0
+        ctx["ban_pick"] = bp
     return ctx
 
 
