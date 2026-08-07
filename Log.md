@@ -1,3 +1,14 @@
+# V1.3.71 — Room Notifications + Series HUD + Action Button Glass
+
+- Chế độ: NÂNG CẤP MODULE — giao diện phòng đấu.
+- Xóa hoàn toàn `window.alert()` khỏi source Room/UI; thông báo chủ động dùng `PESDialog.notify()/toast`, tự chọn tone info/success/warning/error theo nội dung.
+- Loại native `confirm()` còn sót trong các fragment Room quan trọng (tranh chấp, rút tranh chấp, bỏ cuộc) và chuyển sang `room-action-confirm-form` + modal PES Arena hiện có.
+- Di chuyển Series HUD từ ngay dưới thẻ mode xuống đúng luồng trung tâm: sau trạng thái/countdown và trước VS/kết quả.
+- Rút gọn dòng Series thành `Trận/Lượt x/y • RP chốt khi Series kết thúc`; nền HUD trong hơn, viền vàng nhẹ và vẫn hỗ trợ Tactical/Ban Pick tương tác.
+- Làm riêng 3 nút `Mời đấu / ⚡ Tìm nhanh / Thoát phòng`: nền glass trong hơn, viền neon sáng hơn, chữ trắng rõ và hover nổi hơn; không ảnh hưởng Parsec.
+- Không thay Backend, RP, Rank logic, Supabase hay database.
+- Kiểm tra: JS syntax PASS, Python compile PASS, Jinja parse PASS, UI regression assertions PASS, 11 targeted Series/Room asset tests PASS.
+
 # V1.3.70 — Black Box Signal Cleanup
 
 **Ngày:** 2026-08-08 (Asia/Bangkok)

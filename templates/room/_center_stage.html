@@ -13,7 +13,6 @@
                     <strong>{{ 2 if room.has_guest else 1 }} / 2</strong>
                 </div>
             </div>
-            {% include "partials/room_series_panel.html" %}
             {% if room.status == "waiting_ready" and room.friendly_random3_active %}
             <div class="room-center-random3-zone">
                 <div class="room-center-mode-title">RANDOM 3 CHỌN 1</div>
@@ -43,6 +42,9 @@
                 <div class="room-center-countdown-label">Thời gian thi đấu</div>
                 <div class="room-center-countdown" id="roomStartCountdown" data-seconds="{{ room.match_elapsed_seconds }}" data-mode="up">00:00</div>
                 {% endif %}
+                <div class="room-series-hud-slot">
+                    {% include "partials/room_series_panel.html" %}
+                </div>
                 {% if room.status == 'waiting_result_confirm' %}
                     <div class="room-result-review" aria-label="Tỷ số đang chờ xác nhận">
                         <div class="room-result-score">{{ room.host_score }} <span>-</span> {{ room.guest_score }}</div>

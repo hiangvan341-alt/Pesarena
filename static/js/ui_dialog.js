@@ -139,8 +139,19 @@
         });
     }, true);
 
-    window.PESDialog = { confirm: confirmDialog, toast };
-    window.alert = function (message) { toast(message, 'info'); };
+    function inferToastTone(message) {
+        const text = String(message || '').toLowerCase();
+        if (/lỗi|thất bại|không thể|error|failed|từ chối/.test(text)) return 'error';
+        if (/thành công|đã lưu|đã gửi|hoàn tất|success/.test(text)) return 'success';
+        if (/cảnh báo|chú ý|warning|bỏ cuộc|trừ rp/.test(text)) return 'warning';
+        return 'info';
+    }
+
+    window.PESDialog = {
+        confirm: confirmDialog,
+        toast,
+        notify: function (message, tone) { toast(message, tone || inferToastTone(message)); }
+    };
 
     function startLegacyObserver() {
         prepareLegacyConfirms(document);

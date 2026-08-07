@@ -49,7 +49,6 @@
             <div class="room-master-unlock-pill">{{ active_rank_mode.label if active_rank_mode else 'Rank thường Random' }}</div>
             <div class="room-master-room-ready"><span>{% if not room.has_guest %}Đang chờ đối thủ{% elif room.status == 'waiting_ready' and not room.guest_ready %}Chờ đối thủ sẵn sàng{% elif room.status == 'waiting_ready' %}Hai người đã sẵn sàng{% else %}Trận đang diễn ra{% endif %}</span><strong>{{ 2 if room.has_guest else 1 }} / 2</strong></div>
         </div>
-        {% include "partials/room_series_panel.html" %}
             {% if room.status == "waiting_ready" and room.friendly_random3_active %}
             <div class="room-center-random3-zone">
                 <div class="room-center-mode-title">RANDOM 3 CHỌN 1</div>
@@ -79,6 +78,9 @@
                 <div class="room-center-countdown-label">Thời gian thi đấu</div>
                 <div class="room-center-countdown" id="roomStartCountdown" data-seconds="{{ room.match_elapsed_seconds }}" data-mode="up">00:00</div>
                 {% endif %}
+                <div class="room-series-hud-slot">
+                    {% include "partials/room_series_panel.html" %}
+                </div>
                 {% if room.status == 'waiting_result_confirm' %}
                     <div class="room-result-review" aria-label="Tỷ số đang chờ xác nhận">
                         <div class="room-result-score">{{ room.host_score }} <span>-</span> {{ room.guest_score }}</div>
@@ -89,7 +91,13 @@
                             </form>
                             <details class="room-result-dispute">
                                 <summary class="room-result-btn arena-btn is-secondary disagree">× Không Đồng Ý</summary>
-                                <form class="dispute-form room-result-dispute-form" method="post" action="{{ url_for('room_dispute_result', room_id=room.id) }}" enctype="multipart/form-data" onsubmit="return confirm('Gửi tranh chấp cho Admin? Trận sẽ chưa được tính điểm.');">
+                                <form class="dispute-form room-result-dispute-form room-action-confirm-form" method="post" action="{{ url_for('room_dispute_result', room_id=room.id) }}" enctype="multipart/form-data"
+                                      data-modal-tone="warning"
+                                      data-modal-icon="⚠"
+                                      data-modal-title="Gửi tranh chấp?"
+                                      data-modal-message="Trận sẽ tạm thời chưa được tính điểm và được chuyển tới Admin xử lý."
+                                      data-modal-note="CHỜ ADMIN XỬ LÝ"
+                                      data-modal-confirm-label="Gửi tranh chấp">
                                     <label>Lý do tranh chấp</label>
                                     <select name="reason_code" required>
                                         <option value="">-- Chọn lý do --</option>
@@ -505,7 +513,13 @@
         {% endif %}
         <p class="small">Hai người có thể về sảnh và tiếp tục sử dụng app. Trận này chỉ được tính điểm sau khi Admin xử lý.</p>
         {% if room.dispute and current_user.id == room.dispute.raised_by_id %}
-        <form class="inline-form" method="post" action="{{ url_for('room_withdraw_dispute', room_id=room.id) }}" onsubmit="return confirm('Rút tranh chấp và chấp nhận tỷ số ban đầu? Điểm rank sẽ được cập nhật ngay.');">
+        <form class="inline-form room-action-confirm-form" method="post" action="{{ url_for('room_withdraw_dispute', room_id=room.id) }}"
+              data-modal-tone="warning"
+              data-modal-icon="↩"
+              data-modal-title="Rút tranh chấp?"
+              data-modal-message="Bạn sẽ chấp nhận tỷ số ban đầu và điểm rank được cập nhật ngay."
+              data-modal-note="XÁC NHẬN KẾT QUẢ"
+              data-modal-confirm-label="Rút tranh chấp">
             <button class="btn arena-btn green" type="submit">↩️ Rút tranh chấp và chấp nhận kết quả</button>
         </form>
         {% endif %}

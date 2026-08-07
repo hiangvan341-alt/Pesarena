@@ -1,13 +1,13 @@
 {% if rank_series and selected_rank_mode in ['home_away','bo3','tactical_bo3','ban_pick_bo3'] %}
-<div class="series-panel" aria-label="Tiến trình Series">
+<div class="series-panel{% if room.status == 'waiting_ready' and selected_rank_mode in ['tactical_bo3','ban_pick_bo3'] %} is-interactive{% endif %}" aria-label="Tiến trình Series">
     <div class="series-score">
-        <span>{% if selected_rank_mode == 'home_away' %}TỔNG TỶ SỐ{% else %}SERIES{% endif %}</span>
+        <span class="series-label">{% if selected_rank_mode == 'home_away' %}TỔNG TỶ SỐ{% else %}SERIES{% endif %}</span>
         <strong>{{ rank_series.score }}</strong>
     </div>
     <div class="series-meta">
-        {% if selected_rank_mode == 'home_away' %}Lượt {{ rank_series.game_no if rank_series.game_no <= 2 else 2 }}/2
-        {% else %}Trận {{ rank_series.game_no if rank_series.game_no <= 3 else 3 }}/3{% endif %}
-        • RP chỉ được chốt một lần khi Series kết thúc
+        <span>{% if selected_rank_mode == 'home_away' %}Lượt {{ rank_series.game_no if rank_series.game_no <= 2 else 2 }}/2{% else %}Trận {{ rank_series.game_no if rank_series.game_no <= 3 else 3 }}/3{% endif %}</span>
+        <span class="series-meta-dot" aria-hidden="true">•</span>
+        <span class="series-rp-rule">RP chốt khi Series kết thúc</span>
     </div>
     {% if rank_series.games %}
     <div class="series-history-mini">
