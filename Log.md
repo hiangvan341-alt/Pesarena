@@ -797,3 +797,13 @@
 - Cả logo thẻ chọn mode và logo mode đang chọn dùng chung helper `mode_asset()`, bỏ nhu cầu upload trùng vào `emblems/`.
 - Giữ toàn bộ asset phòng khác ở `room-assets/v1.3.18` để không phải upload lại nền/VS/Parsec.
 - Thêm sẵn cây thư mục rỗng `pes-assets/room-assets/v1.3.40/modes/` trong gói release để người dùng tự đặt 6 WebP rồi upload Supabase.
+
+
+## V1.3.41 - 2026-08-07 17:19 (Asia/Bangkok)
+
+- Dọn ảnh thừa sau khi chuyển 6 logo mode sang Supabase `room-assets/v1.3.40/modes/1.webp` -> `6.webp`.
+- Xóa 12 logo cũ trùng lặp trong `static/assets/room_v2/modes/` và `static/assets/room_v2/emblems/`.
+- Xóa 12 logo mode/emblem cũ trong gói `UPLOAD_SUPABASE` v1.3.18; các asset Room nền/VS/Parsec còn dùng vẫn được giữ nguyên.
+- Xóa `trophy_gold.svg`, `trophy_silver.svg`, `trophy_bronze.svg` vì không có HTML/CSS/JS/Python nào tham chiếu.
+- Giữ nguyên cây `pes-assets/room-assets/v1.3.40/modes/` để người dùng tự đặt `1.webp` -> `6.webp` và upload Supabase.
+- Không thay logic Backend, API, RP, Rank Mode, Presence hoặc Invite.

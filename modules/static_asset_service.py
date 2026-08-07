@@ -85,10 +85,8 @@ def mode_asset_url(mode_code: str) -> str:
     if not filename:
         # Giữ fallback dễ chẩn đoán nếu sau này thêm mode mới mà quên map logo.
         filename = f"{quote(code, safe='')}.webp" if code else "3.webp"
-    base = mode_asset_base_url()
-    if base:
-        return f"{base}/{filename}"
-    return url_for("static", filename=f"assets/room_v2/modes/{filename}")
+    # V1.3.41: logo mode chỉ sống trên Supabase v1.3.40; không giữ bản local trùng lặp.
+    return f"{mode_asset_base_url()}/{filename}"
 
 def asset_url(filename: str) -> str:
     clean = str(filename or "").strip().lstrip("/")

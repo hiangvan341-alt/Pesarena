@@ -4,7 +4,7 @@ ROOT = Path(__file__).resolve().parent
 def read(rel): return (ROOT/rel).read_text(encoding='utf-8')
 
 def test_version():
-    assert 'APP_VERSION = "1.3.40"' in read('app.py')
+    assert 'APP_VERSION = "1.3.41"' in read('app.py')
 
 def test_mode_base_and_mapping():
     s=read('modules/static_asset_service.py')
