@@ -33,7 +33,7 @@ def register_routes(context):
             mode["rp"] = rp
         save_rank_mode_configs(configs)
         flash("Đã lưu cấu hình 6 chế độ Rank.", "success")
-        return redirect(url_for("admin") + "#rank-modes")
+        return redirect(url_for("admin", tab="rank-modes") + "#rank-modes")
 
     @app.route("/admin/rank-modes/user-unlocks/<user_id>", methods=["POST"])
     @login_required
@@ -42,18 +42,30 @@ def register_routes(context):
         user = get_user_by_id(user_id)
         if not user:
             flash("Không tìm thấy tài khoản.", "error")
-            return redirect(url_for("admin") + "#rank-modes")
+            return redirect(url_for("admin", tab="rank-modes") + "#rank-modes")
         selected = [code for code in MODE_ORDER if request.form.get(f"mode__{code}") == "1"]
         actor = current_user() or {}
         save_user_rank_mode_unlocks(user_id, selected, actor.get("id"))
         display_name = user.get("display_name") or user.get("username") or user_id
         flash(f"Đã cập nhật quyền chế độ Rank cho {display_name}.", "success")
-        return redirect(url_for("admin") + "#users")
+        return redirect(url_for("admin", tab="users") + "#users")
 
     @app.route("/admin")
     @login_required
     @admin_required
     def admin():
+        admin_started_at = time.perf_counter()
+        allowed_admin_tabs = {"overview", "users", "passwords", "rooms", "matches", "match-report", "rank-modes", "test-data", "system", "economy", "rp-tools", "logs"}
+        active_admin_tab = str(request.args.get("tab") or "overview").strip().lower()
+        if active_admin_tab not in allowed_admin_tabs:
+            active_admin_tab = "overview"
+
+        needs_rooms = active_admin_tab == "rooms"
+        needs_matches = active_admin_tab == "matches"
+        needs_users = active_admin_tab in {"overview", "users", "system", "match-report"}
+        needs_passwords = active_admin_tab in {"overview", "passwords"}
+        needs_rank_modes = active_admin_tab in {"users", "rank-modes", "system", "match-report"}
+
         # Trang Admin chứa nhiều khối dữ liệu độc lập. Một truy vấn phụ lỗi không được
         # làm sập toàn bộ trang; khối lỗi sẽ tạm trả danh sách rỗng và ghi log Vercel.
         def admin_safe_load(label, loader, default):
@@ -64,28 +76,35 @@ def register_routes(context):
                 app.logger.exception("Admin load failed [%s]: %s", label, exc)
                 return default
 
-        all_rooms = admin_safe_load("rooms", list_rooms, [])
+        all_rooms = admin_safe_load("rooms", list_rooms, []) if needs_rooms else []
 
-        # Dọn các phòng chờ bị nhân đôi do double-click hoặc nhiều Vercel instance
-        # xử lý đồng thời. Chỉ xóa waiting_ready chưa có match_id nên không ảnh hưởng
-        # trận đang đá, kết quả, RP hay tranh chấp.
-        duplicate_cleanup_count = 0
-        participant_ids = {
-            str(value)
-            for room in all_rooms
-            for value in (room.get("host_user_id"), room.get("guest_user_id"))
-            if value
-        }
-        for participant_id in participant_ids:
-            duplicate_cleanup_count += admin_safe_load(
-                f"cleanup_duplicate_rooms:{participant_id}",
-                lambda uid=participant_id: cleanup_duplicate_waiting_rooms(uid),
-                0,
+        # Không thực hiện thao tác ghi/xóa dữ liệu trong request mở tab Admin.
+        # Bản cũ quét từng người chơi rồi gọi cleanup_duplicate_waiting_rooms(),
+        # tạo N+1 truy vấn Supabase và là nguyên nhân lớn khiến tab phản hồi rất chậm.
+
+        all_matches = admin_safe_load("matches", list_matches, []) if needs_matches else []
+
+        if active_admin_tab == "overview":
+            # Tổng quan chỉ cần số lượng/trạng thái. Không enrich toàn bộ phòng,
+            # không auto-confirm từng trận và không tải các cột lớn như rp_details.
+            all_rooms = admin_safe_load(
+                "overview_rooms",
+                lambda: execute_query(
+                    db.table("match_rooms").select("id,status,note").order("created_at", desc=True).limit(2000),
+                    "admin_overview_rooms",
+                    attempts=1,
+                ).data or [],
+                [],
             )
-        if duplicate_cleanup_count:
-            all_rooms = admin_safe_load("rooms_after_duplicate_cleanup", list_rooms, [])
-
-        all_matches = admin_safe_load("matches", list_matches, [])
+            all_matches = admin_safe_load(
+                "overview_matches",
+                lambda: execute_query(
+                    db.table("matches").select("id,status").order("created_at", desc=True).limit(5000),
+                    "admin_overview_matches",
+                    attempts=1,
+                ).data or [],
+                [],
+            )
 
         # Báo cáo số trận theo múi giờ Việt Nam. Dùng dữ liệu matches đã tải để
         # tránh phát sinh thêm nhiều truy vấn và giữ kết quả thống nhất với tab Trận đấu.
@@ -135,11 +154,29 @@ def register_routes(context):
                 return None
 
         report_matches = []
-        for match in all_matches:
+        if active_admin_tab == "match-report":
+            # Chỉ lấy các cột báo cáo và lọc ngay tại Supabase. Không gọi list_matches()
+            # vì hàm đó tải toàn bộ trận, enrich user và kiểm tra auto-confirm từng dòng.
+            report_columns = "id,created_at,status,player1_id,player2_id,score1,score2,delta1,delta2,rp_details,note"
+            report_query = db.table("matches").select(report_columns).order("created_at", desc=True)
+            if report_start_date:
+                start_dt = datetime.combine(report_start_date, datetime.min.time(), tzinfo=vn_tz).astimezone(timezone.utc)
+                end_dt = datetime.combine(report_end_date + timedelta(days=1), datetime.min.time(), tzinfo=vn_tz).astimezone(timezone.utc)
+                report_query = report_query.gte("created_at", start_dt.isoformat()).lt("created_at", end_dt.isoformat())
+            else:
+                # Giới hạn an toàn để tránh một request serverless tải dữ liệu vô hạn.
+                report_query = report_query.limit(10000)
+            report_rows = admin_safe_load(
+                "match_report_rows",
+                lambda: execute_query(report_query, "admin_match_report_rows", attempts=2).data or [],
+                [],
+            )
+        else:
+            report_rows = all_matches
+
+        for match in report_rows:
             match_date = _match_vn_date(match)
             if match_date is None:
-                continue
-            if report_start_date and not (report_start_date <= match_date <= report_end_date):
                 continue
             row = dict(match)
             row["_report_date"] = match_date
@@ -156,7 +193,21 @@ def register_routes(context):
         # "Đã xác nhận.", làm mất dấu Random 3 chọn 1. Ưu tiên đọc team_tier
         # của phòng liên kết để thống kê đúng cả các trận lịch sử đã bị mất note.
         room_mode_by_match_id = {}
-        for room in all_rooms:
+        report_room_rows = all_rooms
+        if active_admin_tab == "match-report" and report_matches:
+            room_query = db.table("match_rooms").select("match_id,team_tier,created_at")
+            if report_start_date:
+                start_dt = datetime.combine(report_start_date, datetime.min.time(), tzinfo=vn_tz).astimezone(timezone.utc)
+                end_dt = datetime.combine(report_end_date + timedelta(days=1), datetime.min.time(), tzinfo=vn_tz).astimezone(timezone.utc)
+                room_query = room_query.gte("created_at", start_dt.isoformat()).lt("created_at", end_dt.isoformat())
+            else:
+                room_query = room_query.limit(10000)
+            report_room_rows = admin_safe_load(
+                "match_report_rooms",
+                lambda: execute_query(room_query, "admin_match_report_rooms", attempts=1).data or [],
+                [],
+            )
+        for room in report_room_rows:
             match_id = str((room or {}).get("match_id") or "").strip()
             if not match_id:
                 continue
@@ -246,8 +297,21 @@ def register_routes(context):
             bucket["date_label"] = day.strftime("%d/%m/%Y")
             match_report_daily.append(bucket)
 
-        series_rows = admin_safe_load("rank_series", lambda: execute_query(db.table("match_series").select("*"), "admin_rank_series", attempts=1).data or [], [])
-        series_games = admin_safe_load("rank_series_games", lambda: execute_query(db.table("match_series_games").select("*"), "admin_rank_series_games", attempts=1).data or [], [])
+        series_rows = []
+        series_games = []
+        if active_admin_tab == "match-report":
+            series_query = db.table("match_series").select("*")
+            games_query = db.table("match_series_games").select("*")
+            if report_start_date:
+                start_iso = datetime.combine(report_start_date, datetime.min.time(), tzinfo=vn_tz).astimezone(timezone.utc).isoformat()
+                end_iso = datetime.combine(report_end_date + timedelta(days=1), datetime.min.time(), tzinfo=vn_tz).astimezone(timezone.utc).isoformat()
+                series_query = series_query.gte("created_at", start_iso).lt("created_at", end_iso)
+                games_query = games_query.gte("created_at", start_iso).lt("created_at", end_iso)
+            else:
+                series_query = series_query.limit(5000)
+                games_query = games_query.limit(15000)
+            series_rows = admin_safe_load("rank_series", lambda: execute_query(series_query, "admin_rank_series", attempts=1).data or [], [])
+            series_games = admin_safe_load("rank_series_games", lambda: execute_query(games_query, "admin_rank_series_games", attempts=1).data or [], [])
         games_by_series = {}
         for game in series_games:
             games_by_series.setdefault(str(game.get("series_id") or ""), []).append(game)
@@ -275,6 +339,17 @@ def register_routes(context):
             stat["completion_rate"] = round(stat["completed"] * 100 / stat["series"], 1) if stat["series"] else 0
             stat["avg_rp"] = round(stat["rp_added"] / stat["completed"], 1) if stat["completed"] else 0
 
+        report_mode_configs = admin_safe_load("rank_mode_configs_report", get_rank_mode_configs, {}) if active_admin_tab == "match-report" else {}
+        mode_rows = []
+        for code in MODE_ORDER:
+            mode_cfg = dict(report_mode_configs.get(code) or get_rank_mode(code))
+            mode_rows.append({
+                **mode_cfg,
+                "match_count": report_mode_counts.get(code, 0),
+                "percent": round(report_mode_counts.get(code, 0) * 100 / len(report_matches), 1) if report_matches else 0,
+                **series_stats.get(code, {}),
+            })
+        popular_code = max(report_mode_counts, key=report_mode_counts.get) if report_matches else None
         match_report = {
             "range": report_range,
             "range_label": report_range_labels[report_range],
@@ -289,19 +364,32 @@ def register_routes(context):
             "confirmed_goals": report_confirmed_goals,
             "positive_rp": report_positive_rp,
             "mode_counts": report_mode_counts,
-            "mode_rows": [{**get_rank_mode(code), "match_count": report_mode_counts.get(code, 0), "percent": round(report_mode_counts.get(code, 0) * 100 / len(report_matches), 1) if report_matches else 0, **series_stats.get(code, {})} for code in MODE_ORDER],
-            "popular_mode": get_rank_mode(max(report_mode_counts, key=report_mode_counts.get)).get("label") if report_matches else "Chưa có dữ liệu",
+            "mode_rows": mode_rows,
+            "popular_mode": (report_mode_configs.get(popular_code) or {}).get("label", popular_code) if popular_code else "Chưa có dữ liệu",
         }
 
-        raw_users = admin_safe_load("users", list_all_users, [])
-        for mode_row in match_report.get("mode_rows", []):
-            unlocked = 0
-            for user in raw_users:
-                if str(user.get("role") or "player") != "player":
-                    continue
-                if check_rank_mode_eligibility(mode_row.get("code"), user).get("eligible"):
-                    unlocked += 1
-            mode_row["unlocked_players"] = unlocked
+        raw_users = admin_safe_load("users", list_all_users, []) if needs_users else []
+        if active_admin_tab == "match-report":
+            # Tính số người mở khóa hoàn toàn trong RAM. Bản cũ gọi
+            # check_rank_mode_eligibility cho từng user x từng mode, kéo theo hàng
+            # trăm/hàng nghìn truy vấn get_rank_mode + get_user_unlocks.
+            unlock_map = admin_safe_load("rank_mode_unlock_map", list_rank_mode_user_unlocks, {})
+            for mode_row in match_report.get("mode_rows", []):
+                code = mode_row.get("code")
+                min_rp = int(mode_row.get("min_rp") or 0)
+                min_matches = int(mode_row.get("min_matches") or 0)
+                enabled = bool(mode_row.get("enabled", True))
+                unlocked = 0
+                for user in raw_users:
+                    if str(user.get("role") or "player") != "player":
+                        continue
+                    uid = str(user.get("id") or "")
+                    manual = code in set(unlock_map.get(uid) or ())
+                    rp = int(user.get("rank_points") or 0)
+                    played = int(user.get("wins") or 0) + int(user.get("draws") or 0) + int(user.get("losses") or 0)
+                    if enabled and (manual or (rp >= min_rp and played >= min_matches)):
+                        unlocked += 1
+                mode_row["unlocked_players"] = unlocked
         admin_users = admin_safe_load(
             "decorate_users", lambda: decorate_admin_users(raw_users), []
         )
@@ -318,10 +406,10 @@ def register_routes(context):
 
         password_reset_requests = admin_safe_load(
             "password_resets", lambda: list_password_reset_requests("pending"), []
-        )
+        ) if needs_passwords else []
         raw_disputes = admin_safe_load(
             "match_disputes", lambda: list_match_disputes("pending"), []
-        )
+        ) if active_admin_tab in {"overview", "matches"} else []
         pending_disputes = []
         for item in raw_disputes:
             try:
@@ -331,11 +419,11 @@ def register_routes(context):
 
         audit_logs = (
             admin_safe_load("audit_logs", list_admin_activity_logs, [])
-            if is_owner_user(current_user()) else []
+            if active_admin_tab == "logs" and is_owner_user(current_user()) else []
         )
         duplicate_ip_groups = admin_safe_load(
             "duplicate_ips", lambda: build_duplicate_ip_groups(admin_users), []
-        )
+        ) if active_admin_tab in {"overview", "users"} else []
         duplicate_ip_user_count = len({
             str(account.get("id"))
             for group in duplicate_ip_groups
@@ -348,7 +436,7 @@ def register_routes(context):
         ip_device_status["account_ip_count"] = sum(1 for user in admin_users if user.get("known_ips"))
         ip_device_status["duplicate_group_count"] = len(duplicate_ip_groups)
 
-        return render_template(
+        rendered_admin = render_template(
             "admin.html",
             admin_users=admin_users,
             players=players,
@@ -368,8 +456,8 @@ def register_routes(context):
                 )
             ][:30],
             all_rooms=all_rooms[:80],
-            invites=admin_safe_load("invites", lambda: list_invites("pending"), []),
-            active_announcement=admin_safe_load("announcement", get_active_announcement, None),
+            invites=admin_safe_load("invites", lambda: list_invites("pending"), []) if active_admin_tab in {"overview", "rooms"} else [],
+            active_announcement=admin_safe_load("announcement", get_active_announcement, None) if active_admin_tab in {"overview", "system"} else None,
             password_reset_requests=password_reset_requests,
             audit_logs=audit_logs,
             duplicate_ip_groups=duplicate_ip_groups,
@@ -381,13 +469,25 @@ def register_routes(context):
             admin_permission_groups=ADMIN_PERMISSION_GROUPS,
             admin_permission_labels=ADMIN_PERMISSION_LABELS,
             current_admin_permissions=_admin_permissions(current_user()),
-            system_features=admin_safe_load("system_features", get_system_features, dict(SYSTEM_FEATURE_DEFAULTS)),
-            maintenance_config=admin_safe_load("maintenance_config", get_maintenance_config, _maintenance_default_config()),
-            maintenance_status=admin_safe_load("maintenance_status", get_maintenance_status, {"closed": False, "countdown": None}),
+            system_features=admin_safe_load("system_features", get_system_features, dict(SYSTEM_FEATURE_DEFAULTS)) if active_admin_tab == "system" else dict(SYSTEM_FEATURE_DEFAULTS),
+            maintenance_config=admin_safe_load("maintenance_config", get_maintenance_config, _maintenance_default_config()) if active_admin_tab == "system" else _maintenance_default_config(),
+            maintenance_status=admin_safe_load("maintenance_status", get_maintenance_status, {"closed": False, "countdown": None}) if active_admin_tab == "system" else {"closed": False, "countdown": None},
             match_report=match_report,
             match_report_daily=match_report_daily,
-            rank_mode_configs=admin_safe_load("rank_mode_configs", get_rank_mode_configs, {}),
+            rank_mode_configs=admin_safe_load("rank_mode_configs", get_rank_mode_configs, {}) if needs_rank_modes else {},
             rank_mode_order=MODE_ORDER,
-            rank_mode_user_unlocks=admin_safe_load("rank_mode_user_unlocks", list_rank_mode_user_unlocks, {}),
+            rank_mode_user_unlocks=admin_safe_load("rank_mode_user_unlocks", list_rank_mode_user_unlocks, {}) if active_admin_tab == "users" else {},
+            active_admin_tab=active_admin_tab,
         )
+        app.logger.info(
+            "ADMIN_PERF tab=%s range=%s duration_ms=%d rooms=%d matches=%d users=%d report_matches=%d",
+            active_admin_tab,
+            report_range,
+            int((time.perf_counter() - admin_started_at) * 1000),
+            len(all_rooms),
+            len(all_matches),
+            len(raw_users),
+            len(report_matches),
+        )
+        return rendered_admin
 

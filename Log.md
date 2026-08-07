@@ -1,3 +1,65 @@
+## V1.3.33 — Tối ưu toàn bộ luồng Admin và sửa lỗi hủy phòng 500
+
+### Nguyên nhân chính đã phát hiện
+- Route `/admin` cũ vừa đọc dữ liệu vừa chạy `cleanup_duplicate_waiting_rooms()` cho từng người tham gia phòng. Đây là N+1 truy vấn Supabase và có thể tạo hàng chục/hàng trăm request chỉ trong một lần mở tab.
+- Tab Báo cáo gọi `list_matches()` nên tải toàn bộ bảng `matches`, enrich người chơi và chạy kiểm tra auto-confirm trên từng trận, dù chỉ xem Hôm nay/Hôm qua.
+- Phần “Đã mở khóa” gọi `check_rank_mode_eligibility()` cho từng user × 6 chế độ; mỗi lần tiếp tục đọc config và quyền mở khóa từ database, gây bùng nổ số truy vấn.
+- Báo cáo tải toàn bộ `match_series`, `match_series_games`, `match_rooms` và `users` trước khi lọc thời gian.
+- Trang Tổng quan tải toàn bộ phòng và toàn bộ trận chỉ để lấy số lượng trạng thái.
+- Route hủy phòng dùng `.execute()` trực tiếp và không có lớp bắt lỗi tổng; chỉ cần update phòng/lời mời lỗi là trả thẳng Internal Server Error.
+
+### Đã sửa
+- Loại bỏ hoàn toàn cleanup phòng trùng khỏi request đọc tab Admin. Không còn thao tác ghi/xóa dữ liệu khi chỉ mở trang.
+- Tab Báo cáo dùng query riêng, chỉ chọn các cột cần thiết và lọc `created_at` ngay tại Supabase.
+- Khoảng Hôm nay/Hôm qua/3 ngày/1 tuần/1 tháng không còn tải toàn bộ lịch sử.
+- Toàn thời gian có giới hạn an toàn 10.000 trận để tránh request serverless vượt tài nguyên.
+- Query phòng liên kết và Series được lọc theo cùng khoảng ngày; chế độ Toàn thời gian có limit an toàn.
+- Tải cấu hình Rank và quyền mở khóa đúng 1 lần; tính số tài khoản đủ điều kiện hoàn toàn trong RAM, không gọi database theo từng user × mode.
+- Trang Tổng quan chỉ query các cột `id,status,note` và giới hạn dữ liệu phục vụ thống kê.
+- Thêm log `ADMIN_PERF` gồm tab, khoảng báo cáo, thời gian xử lý và số dòng đã tải để kiểm tra trực tiếp trong Vercel Logs.
+- Route hủy phòng chuyển sang `execute_query()` có retry ngắn, idempotent khi double-click, tách lỗi cập nhật lời mời khỏi lỗi hủy phòng và luôn redirect kèm thông báo thay vì trang 500.
+- Lỗi ghi nhật ký hoặc lỗi lời mời phụ không còn làm hỏng thao tác chính.
+- Cập nhật `APP_VERSION` thành `1.3.33`.
+
+### File đã sửa
+- `app.py`
+- `modules/admin_dashboard_routes.py`
+- `modules/admin_data_routes.py`
+- `test_admin_performance_v1333.py`
+
+### Kiểm tra
+- Python compile: đạt.
+- Jinja parse các tab Admin: đạt.
+- Test tối ưu V1.3.33: 3/3 đạt.
+- Hai test legacy cũ đọc chuỗi trực tiếp từ `admin.html` không còn phù hợp sau khi Admin đã tách tab thành partial; không phải lỗi runtime.
+
+
+## V1.3.32 — Tách Admin theo tab, thu gọn Parsec và làm sáng nút phòng
+
+- Giảm `templates/admin.html` từ khoảng 71 KB xuống còn khung chung khoảng 4 KB.
+- Tách 12 tab Admin thành các template trong `templates/admin/tabs/`.
+- Route `/admin` nhận `?tab=` và chỉ gọi dữ liệu cần cho tab đang mở; không còn tải đồng thời user, phòng, trận, báo cáo, nhật ký và cấu hình cho mọi lần truy cập.
+- Sửa `admin_dashboard.js`: bấm tab chuyển sang URL module riêng và hiển thị trạng thái đang tải.
+- Cập nhật các redirect của Quản lý người dùng và Quản lý chế độ Rank về đúng tab mới.
+- Đưa nút `Lưu` và `Xóa` lên cùng hàng với ô Link Parsec.
+- Bỏ `flex: 1` của panel Parsec, thu gọn padding, khoảng cách, input và nút để panel chỉ cao đúng nội dung.
+- Tăng không gian hiển thị và vùng cuộn của Lịch sử đấu.
+- Làm sáng Mời đấu / Tìm nhanh / Thoát phòng bằng nền kính vàng, xanh, đỏ trong hơn; viền nhẹ và đồng bộ hơn.
+- Thêm `docs/MODULE_AUDIT_V1.3.32.md`.
+- Cập nhật `APP_VERSION` thành `1.3.32`.
+
+### File chính đã sửa
+- `app.py`
+- `modules/admin_dashboard_routes.py`
+- `modules/admin_player_routes.py`
+- `templates/admin.html`
+- `templates/admin/tabs/*.html`
+- `templates/partials/parsec_room_panel.html`
+- `static/js/admin_dashboard.js`
+- `static/css/arena_room_v2.css`
+- `docs/MODULE_AUDIT_V1.3.32.md`
+
+
 ## V1.3.31 — Sửa lag tab Admin, gom quản lý chế độ và chuẩn hóa thông báo
 
 - Sửa lỗi nghiêm trọng trong `admin_dashboard.js`: listener `pointerdown` từng được tạo lại bên trong hàm đổi tab, khiến số listener tăng sau mỗi lần click và tab Admin ngày càng lag.

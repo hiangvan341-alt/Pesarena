@@ -2,55 +2,28 @@
     'use strict';
 
     const buttons = Array.from(document.querySelectorAll('[data-admin-tab]'));
-    const panels = Array.from(document.querySelectorAll('[data-admin-panel]'));
-    const allowedTabs = new Set(buttons.map((button) => button.dataset.adminTab));
-    let activeTab = null;
+    const currentPanel = document.querySelector('[data-admin-panel]');
+    const activeTab = currentPanel ? currentPanel.dataset.adminPanel : 'overview';
 
-    function loadLazyModule(tabName) {
-        const panel = document.querySelector('[data-admin-panel="' + tabName + '"]');
-        if (!panel) return;
-        panel.querySelectorAll('iframe[data-admin-lazy-src]').forEach((frame) => {
-            if (!frame.getAttribute('src')) frame.setAttribute('src', frame.dataset.adminLazySrc);
-        });
-    }
+    buttons.forEach((button) => {
+        const isActive = button.dataset.adminTab === activeTab;
+        button.classList.toggle('active', isActive);
+        button.setAttribute('aria-selected', isActive ? 'true' : 'false');
+        button.tabIndex = isActive ? 0 : -1;
+    });
 
-    function activateAdminTab(tabName, options) {
-        const config = options || {};
-        const selected = allowedTabs.has(tabName) ? tabName : 'overview';
-        if (selected === activeTab && !config.force) return;
-        activeTab = selected;
-
-        buttons.forEach((button) => {
-            const isActive = button.dataset.adminTab === selected;
-            button.classList.toggle('active', isActive);
-            button.setAttribute('aria-selected', isActive ? 'true' : 'false');
-            button.tabIndex = isActive ? 0 : -1;
-        });
-
-        panels.forEach((panel) => {
-            const isActive = panel.dataset.adminPanel === selected;
-            panel.hidden = !isActive;
-            panel.classList.toggle('is-active', isActive);
-        });
-
-        loadLazyModule(selected);
-        if (config.updateHash !== false) history.replaceState(null, '', '#' + selected);
-    }
-
-    // Một listener duy nhất. Bản cũ tạo listener pointerdown lặp lại mỗi lần đổi tab,
-    // khiến số handler tăng dần và gây cảm giác click ngày càng lag.
+    // Mỗi tab Admin là một module tải riêng từ server. Không còn dựng toàn bộ
+    // admin.html và toàn bộ dữ liệu của mọi tab trong một request.
     document.addEventListener('click', (event) => {
         const button = event.target.closest('[data-admin-tab]');
         if (!button) return;
         event.preventDefault();
-        activateAdminTab(button.dataset.adminTab);
+        const targetUrl = button.dataset.adminUrl;
+        if (!targetUrl || button.dataset.adminTab === activeTab) return;
+        button.classList.add('is-loading');
+        button.setAttribute('aria-busy', 'true');
+        window.location.assign(targetUrl);
     });
-
-    window.addEventListener('hashchange', () => {
-        activateAdminTab(window.location.hash.slice(1), { updateHash: false });
-    });
-
-    activateAdminTab(window.location.hash.slice(1), { updateHash: false, force: true });
 
     const searchInput = document.getElementById('adminUserSearch');
     const duplicateOnly = document.getElementById('adminDuplicateOnly');
