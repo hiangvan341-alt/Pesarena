@@ -188,6 +188,17 @@ Khi sửa Invite/Quick Match: **không chuyển route sang file khác trong cùn
 
 ---
 
+### Chính sách ảnh từ V1.3.62
+
+- Ảnh UI dùng chung: Supabase `pes-assets/v1/` — không giữ bản local trùng lặp.
+- Ảnh Shop: Supabase `pes-assets/v1.14.41/shop/`.
+- Lucky Box: Supabase `pes-assets/v1.14.41/luckybox/`.
+- Room: Supabase `pes-assets/room-assets/v1.3.18/`.
+- Logo 6 chế độ Rank: Supabase `pes-assets/room-assets/v1.3.40/modes/`.
+- Logo CLB/giải: bucket `team-logos`.
+- `modules/static_asset_service.py` là nguồn duy nhất tạo URL ảnh giao diện.
+- Không tạo lại `UPLOAD_SUPABASE/` trong ZIP Production sau khi asset đã được xác minh trên Storage.
+
 ## 11. Database / Supabase
 
 | Nhóm | Nơi kiểm tra |

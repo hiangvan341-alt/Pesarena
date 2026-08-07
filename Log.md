@@ -1,3 +1,33 @@
+# V1.3.62 — Remote Asset Cleanup
+
+**Ngày:** 2026-08-08 (Asia/Bangkok)
+
+## Mục tiêu
+- Làm gọn ZIP Production và loại bỏ ảnh đã có trên Supabase Storage.
+- Biến Supabase thành nguồn mặc định cho ảnh chung, Shop, Lucky Box, Room và logo chế độ.
+
+## Thay đổi
+- `modules/static_asset_service.py`: thêm default URL Supabase đã xác minh cho `STATIC_ASSET_BASE_URL`, `SHOP_ASSET_BASE_URL`, `LUCKYBOX_ASSET_BASE_URL`; Room/Mode tiếp tục dùng URL mặc định Supabase.
+- `static/css/room/01-shell-layout.css`, `static/css/room/02-club-visuals.css`: fallback ảnh Room chuyển từ file local sang URL Supabase.
+- Xóa `static/assets/room_v2/`: 8 ảnh local đã trùng với `pes-assets/room-assets/v1.3.18/`.
+- Xóa `UPLOAD_SUPABASE/`: gói staging 8 ảnh đã upload xong, không còn cần trong bản Production.
+- `.env.example`: các biến asset đổi thành optional override, không còn bắt buộc để ảnh hoạt động.
+- `PROJECT_MAP.md`: bổ sung chính sách asset remote-only.
+- Cập nhật test Room asset theo kiến trúc remote-only.
+- Xóa `templates/partials/room_dynamic_state.html`: partial không còn được runtime tham chiếu và còn trỏ tới `static/rank_frames/*.png` đã không tồn tại.
+- Xóa `HUONG_DAN_UPLOAD_LOGO_V1.3.40.txt`: hướng dẫn upload một lần đã hoàn tất, tránh làm rối root dự án.
+- Fallback nền login trong CSS legacy cũng chuyển sang Supabase, không còn URL ảnh local.
+- `app.py`: tăng phiên bản `1.3.61` → `1.3.62`.
+
+## Supabase đã đối chiếu
+- `pes-assets/v1/`: 27 file.
+- `pes-assets/v1.14.41/shop/`: 30 file.
+- `pes-assets/v1.14.41/luckybox/`: 18 file.
+- `pes-assets/room-assets/v1.3.18/`: 21 file.
+- `pes-assets/room-assets/v1.3.40/modes/`: 6 file.
+
+---
+
 # V1.3.61 — App Core Map + Logging Standard
 
 **Ngày:** 08/08/2026 02:13 (Asia/Bangkok)  

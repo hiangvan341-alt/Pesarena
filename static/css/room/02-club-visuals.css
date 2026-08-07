@@ -64,7 +64,7 @@
 .arena-room-v2 .room-center-stage-plain {
   background-image:
     linear-gradient(180deg, rgba(2, 8, 18, .18) 0%, rgba(2, 8, 18, .42) 42%, rgba(2, 8, 18, .68) 100%),
-    var(--arena-center-stadium, url('../../assets/room_v2/center-stadium.webp'));
+    var(--arena-center-stadium, url('https://wlnvdfghatgeygecwrqb.supabase.co/storage/v1/object/public/pes-assets/room-assets/v1.3.18/center-stadium.webp'));
   background-size: cover;
   background-position: center 55%;
   background-repeat: no-repeat;
@@ -89,7 +89,7 @@
   border-radius: 20px;
   background-image:
     linear-gradient(180deg, rgba(1, 7, 15, .54), rgba(1, 7, 15, .72)),
-    var(--arena-room-texture, url('../../assets/room_v2/room-texture-dark.webp'));
+    var(--arena-room-texture, url('https://wlnvdfghatgeygecwrqb.supabase.co/storage/v1/object/public/pes-assets/room-assets/v1.3.18/room-texture-dark.webp'));
   background-size: cover;
   background-position: center;
   background-repeat: no-repeat;

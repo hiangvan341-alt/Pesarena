@@ -6,9 +6,9 @@ Biến môi trường hỗ trợ:
 - LUCKYBOX_ASSET_BASE_URL: URL public riêng cho thư mục Lucky Box.
 - ROOM_ASSET_BASE_URL: URL public riêng cho asset giao diện phòng đấu.
 
-Khi biến tương ứng để trống, hệ thống tự dùng file trong ``/static``. Việc tách
-Shop ra thành URL riêng cho phép chuyển dần ảnh nặng lên Storage mà không ảnh
-hưởng logo hoặc tài nguyên giao diện thiết yếu.
+Từ V1.3.62, ảnh giao diện Production dùng Supabase Storage làm nguồn mặc định.
+Các biến môi trường chỉ còn là override khi cần đổi bucket/path; không cần giữ
+bản ảnh local trùng lặp trong ZIP triển khai.
 """
 from __future__ import annotations
 
@@ -22,17 +22,30 @@ def _clean_base(value: str | None) -> str:
     return (value or "").strip().rstrip("/")
 
 
+DEFAULT_STATIC_ASSET_BASE_URL = (
+    "https://wlnvdfghatgeygecwrqb.supabase.co/storage/v1/object/public/"
+    "pes-assets/v1"
+)
+DEFAULT_SHOP_ASSET_BASE_URL = (
+    "https://wlnvdfghatgeygecwrqb.supabase.co/storage/v1/object/public/"
+    "pes-assets/v1.14.41/shop"
+)
+DEFAULT_LUCKYBOX_ASSET_BASE_URL = (
+    "https://wlnvdfghatgeygecwrqb.supabase.co/storage/v1/object/public/"
+    "pes-assets/v1.14.41/luckybox"
+)
+
+
 def asset_base_url() -> str:
-    return _clean_base(os.getenv("STATIC_ASSET_BASE_URL"))
+    return _clean_base(os.getenv("STATIC_ASSET_BASE_URL") or DEFAULT_STATIC_ASSET_BASE_URL)
 
 
 def shop_asset_base_url() -> str:
-    return _clean_base(os.getenv("SHOP_ASSET_BASE_URL"))
+    return _clean_base(os.getenv("SHOP_ASSET_BASE_URL") or DEFAULT_SHOP_ASSET_BASE_URL)
 
 
 def luckybox_asset_base_url() -> str:
-    return _clean_base(os.getenv("LUCKYBOX_ASSET_BASE_URL"))
-
+    return _clean_base(os.getenv("LUCKYBOX_ASSET_BASE_URL") or DEFAULT_LUCKYBOX_ASSET_BASE_URL)
 
 
 DEFAULT_ROOM_ASSET_BASE_URL = (
@@ -47,13 +60,15 @@ def room_asset_base_url() -> str:
 
 
 def room_asset_url(filename: str) -> str:
-    """Return URL for room_v2 assets, with local fallback."""
+    """Return public Supabase URL for room assets.
+
+    V1.3.62 removes the duplicated local room image bundle. The environment
+    variable remains an optional override, while the verified public Storage
+    path is the safe default.
+    """
     clean = str(filename or "").strip().lstrip("/")
     encoded = quote(clean, safe="/")
-    base = room_asset_base_url()
-    if base:
-        return f"{base}/{encoded}"
-    return url_for("static", filename=f"assets/room_v2/{clean}")
+    return f"{room_asset_base_url()}/{encoded}"
 
 
 # V1.3.40: 6 logo chế độ được tách riêng khỏi bộ Room asset cũ.
