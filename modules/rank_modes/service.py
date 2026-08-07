@@ -169,15 +169,17 @@ def calculate_mode_rp(mode_code,series_result,winner_side=None,forfeit=False,pla
 
  Random/3 chọn 1 vẫn dùng ``rank_current``. Các mode Series dùng RP cơ sở +
  random(-2,+3) đúng một lần cho mỗi người. Hòa dùng luật +1..+6 riêng.
- Bỏ cuộc chỉ phạt người bỏ cuộc -20 RP, người còn lại không nhận RP.
+ Bỏ cuộc trong Series: người bỏ cuộc -20 RP, người còn lại +20 RP, không random.
  """
  mode=get_rank_mode(mode_code); rp=mode.get('rp') or {}; rng=rng or random
  if mode.get('series_type')=='single': return {'formula':'rank_current'}
  if forfeit or series_result.get('reason')=='forfeit':
   offender=series_result.get('forfeiting_side')
-  result={'key':'forfeit','forfeit_loss':-20,'winner':0,'loser':-20}
+  win_points=int(rp.get('forfeit_win') if rp.get('forfeit_win') is not None else 20)
+  loss_points=int(rp.get('forfeit_loss') if rp.get('forfeit_loss') is not None else -20)
+  result={'key':'forfeit','forfeit_win':win_points,'forfeit_loss':loss_points,'winner':win_points,'loser':loss_points}
   if offender in ('player1','player2'):
-   result.update({'player1':-20 if offender=='player1' else 0,'player2':-20 if offender=='player2' else 0})
+   result.update({'player1':loss_points if offender=='player1' else win_points,'player2':loss_points if offender=='player2' else win_points})
   return result
  if series_result.get('winner_side')=='draw' or not winner_side:
   p1,p2=_mode_draw_points(player1_rp,player2_rp,rng)

@@ -98,18 +98,20 @@ def register_routes(context):
 
         penalty_delta = apply_room_abandon_penalty(user["id"])
         _award_forfeit_win(room.get("host_user_id"))
+        winner_delta = apply_series_forfeit_win_reward(room, room.get("host_user_id"))
         record_room_forfeit_match(
             room,
             offender_role="guest",
             penalty_delta=penalty_delta if penalty_delta is not None else -ROOM_ABANDON_PENALTY,
             reason=reason,
             event_type="guest_manual_forfeit",
+            winner_delta=winner_delta,
         )
 
         create_user_notification(
             room.get("host_user_id"),
             "🚪 Đối thủ đã bỏ cuộc",
-            f'{user["display_name"]} đã thoát phòng và bị trừ {ROOM_ABANDON_PENALTY} RP. Bạn được tính 1 trận thắng và tăng chuỗi thắng, nhưng không được cộng RP.',
+            f'{user["display_name"]} đã thoát phòng và bị trừ {ROOM_ABANDON_PENALTY} RP. Bạn được tính 1 trận thắng, tăng chuỗi thắng' + (f' và được cộng {winner_delta} RP.' if winner_delta else '.'),
             "/matches",
             "guest_forfeit",
         )
@@ -192,18 +194,20 @@ def register_routes(context):
 
         penalty_delta = apply_room_abandon_penalty(user["id"])
         _award_forfeit_win(room.get("guest_user_id"))
+        winner_delta = apply_series_forfeit_win_reward(room, room.get("guest_user_id"))
         record_room_forfeit_match(
             room,
             offender_role="host",
             penalty_delta=penalty_delta if penalty_delta is not None else -ROOM_ABANDON_PENALTY,
             reason=reason,
             event_type="host_manual_forfeit",
+            winner_delta=winner_delta,
         )
 
         create_user_notification(
             room.get("guest_user_id"),
             "🚪 Chủ phòng đã bỏ cuộc",
-            f'{user["display_name"]} đã thoát phòng và bị trừ {ROOM_ABANDON_PENALTY} RP. Bạn được tính 1 trận thắng và tăng chuỗi thắng, nhưng không được cộng RP.',
+            f'{user["display_name"]} đã thoát phòng và bị trừ {ROOM_ABANDON_PENALTY} RP. Bạn được tính 1 trận thắng, tăng chuỗi thắng' + (f' và được cộng {winner_delta} RP.' if winner_delta else '.'),
             "/matches",
             "host_forfeit",
         )

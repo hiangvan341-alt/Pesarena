@@ -70,7 +70,7 @@ from modules.win_streaks import (
 load_dotenv()
 
 APP_NAME = "PES Arena – Bản Lĩnh Sân Cỏ"
-APP_VERSION = "1.3.44"
+APP_VERSION = "1.3.45"
 DEFAULT_POINTS = 1000
 DEVICE_COOKIE_NAME = "rankzone_device_id"
 COOLDOWN_MINUTES = 3
@@ -3026,6 +3026,37 @@ def apply_room_abandon_penalty(user_id, amount=ROOM_ABANDON_PENALTY):
     return -(old_points - new_points)
 
 
+SERIES_FORFEIT_RP = 20
+
+def room_uses_series_rank_mode(room):
+    """True chỉ cho 4 chế độ Rank Series; Rank đơn/giao hữu không dùng thưởng bỏ cuộc +20."""
+    if not isinstance(room, dict) or room.get("match_mode") == MATCH_MODE_FRIENDLY:
+        return False
+    try:
+        return bool(is_series_mode(room.get("team_tier") or SMART_RANDOM_MODE))
+    except Exception:
+        return False
+
+def apply_series_forfeit_win_reward(room, winner_id, amount=SERIES_FORFEIT_RP):
+    """Cộng đúng +20 RP cho người còn lại khi đối thủ bỏ cuộc trong một Series."""
+    if not winner_id or not room_uses_series_rank_mode(room):
+        return 0
+    player = get_user(winner_id)
+    if not player:
+        return 0
+    reward = max(0, int(amount or 0))
+    old_points = int(player.get("rank_points", 0) or 0)
+    new_points = old_points + reward
+    execute_query(
+        db.table("users").update({"rank_points": new_points}).eq("id", winner_id),
+        "apply_series_forfeit_win_reward",
+    )
+    cache_delete("_rz_users_map")
+    cache_delete("_rz_players_all")
+    ttl_cache_delete("players_raw")
+    return new_points - old_points
+
+
 HOST_BROWSER_OFFLINE_GRACE_SECONDS = 20
 HOST_BROWSER_OFFLINE_ROOM_STATUSES = {"playing", "friendly_playing"}
 
@@ -3082,12 +3113,14 @@ def close_room_if_host_browser_offline(room):
 
     room.update(update_data)
     penalty_delta = apply_room_abandon_penalty(host_id, ROOM_ABANDON_PENALTY)
+    winner_delta = apply_series_forfeit_win_reward(room, guest_id)
     record_room_forfeit_match(
         room,
         offender_role="host",
         penalty_delta=penalty_delta if penalty_delta is not None else -ROOM_ABANDON_PENALTY,
         reason=reason,
         event_type="host_browser_offline_forfeit",
+        winner_delta=winner_delta,
     )
 
     create_user_notification(
@@ -3100,7 +3133,7 @@ def close_room_if_host_browser_offline(room):
     create_user_notification(
         guest_id,
         "🚪 Chủ phòng đã Offline",
-        "Phòng đã tự đóng. Bạn không bị cộng hoặc trừ RP và có thể tạo phòng mới ngay.",
+        f"Phòng đã tự đóng. " + (f"Bạn được cộng {winner_delta} RP do đối thủ bỏ cuộc trong Series." if winner_delta else "Bạn không bị cộng hoặc trừ RP."),
         "/rooms",
         "host_browser_offline_room_closed",
     )
@@ -3129,18 +3162,21 @@ def close_room_with_timeout_penalty(room, offender_role, reason):
         return False
 
     room.update(update_data)
-    penalty_amount = random.SystemRandom().randint(*ROOM_TIMEOUT_PENALTY_RANGE)
+    is_series = room_uses_series_rank_mode(room)
+    penalty_amount = SERIES_FORFEIT_RP if is_series else random.SystemRandom().randint(*ROOM_TIMEOUT_PENALTY_RANGE)
     penalty_delta = apply_room_abandon_penalty(offender_id, penalty_amount)
+    offender_name = room.get("host_name") if offender_role == "host" else room.get("guest_name")
+    other_id = room.get("guest_user_id") if offender_role == "host" else room.get("host_user_id")
+    winner_delta = apply_series_forfeit_win_reward(room, other_id)
     record_room_forfeit_match(
         room,
         offender_role=offender_role,
         penalty_delta=penalty_delta if penalty_delta is not None else -penalty_amount,
         reason=reason,
         event_type="timeout_forfeit",
+        winner_delta=winner_delta,
     )
 
-    offender_name = room.get("host_name") if offender_role == "host" else room.get("guest_name")
-    other_id = room.get("guest_user_id") if offender_role == "host" else room.get("host_user_id")
     create_user_notification(
         offender_id,
         "⏱️ Trận bị tính là bỏ trận",
@@ -3151,7 +3187,7 @@ def close_room_with_timeout_penalty(room, offender_role, reason):
     create_user_notification(
         other_id,
         "⏱️ Phòng đấu đã tự đóng",
-        f"{offender_name or 'Đối thủ'} bị tính là bỏ trận. Bạn không bị cộng hoặc trừ RP.",
+        f"{offender_name or 'Đối thủ'} bị tính là bỏ trận. " + (f"Bạn được cộng {winner_delta} RP." if winner_delta else "Bạn không bị cộng hoặc trừ RP."),
         "/matches",
         "room_timeout",
     )

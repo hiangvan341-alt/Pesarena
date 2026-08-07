@@ -814,3 +814,11 @@
 - Sửa lỗi cascade: 04-actions-history.css trước đây load sau và ghi đè kích thước logo từ 03-mode-selector.css về 50x50px.
 - Phóng phần artwork thực của 1.webp -> 6.webp khoảng 3 lần bằng transform + khung crop, không thay Backend/mapping/Supabase.
 - Nới cột icon vừa đủ để logo lớn nhưng không đè tên chế độ/trạng thái mở khóa.
+
+
+## V1.3.45 - Series Forfeit +20/-20
+- 4 mode Series (Lượt đi/về, BO3, Chiến thuật BO3, Cấm chọn BO3): bên bỏ cuộc luôn -20 RP, bên còn lại +20 RP.
+- Áp dụng không phụ thuộc tỷ số/trận con đã diễn ra trước đó.
+- Đồng bộ cho bỏ cuộc thủ công, host offline giữa trận và timeout bị tính bỏ trận.
+- Lịch sử matches lưu đồng thời delta người bỏ cuộc và người được xử thắng.
+- Rank Random và Random 3 chọn 1 giữ nguyên luật hiện tại.

@@ -44,7 +44,7 @@ def test_draw_rules_random_1_to_6():
 def test_forfeit_fixed_minus_20():
  result=service.resolve_series_result('tactical_bo3',[],forfeiting_user_id='u1')
  rp=service.calculate_mode_rp('tactical_bo3',result,'player2',True)
- assert rp['winner']==0 and rp['loser']==-20 and rp['forfeit_loss']==-20
+ assert rp['winner']==20 and rp['loser']==-20 and rp['forfeit_win']==20 and rp['forfeit_loss']==-20
 
 def test_supabase_audit_payload_only_contains_calc_fields():
  result={'player1_base':32,'player1_variance':-1,'player1_final':31,'player2_base':-28,'player2_variance':2,'player2_final':-26}
