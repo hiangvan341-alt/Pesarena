@@ -306,3 +306,38 @@
   .arena-room-v2 .room-master-mode-emblem { width: 124px; height: 108px; }
   .arena-room-v2 .room-master-mode-emblem img { width: 104px; height: 104px; max-width: 104px; max-height: 104px; transform: scale(1.16); }
 }
+
+
+/* V1.3.44 — ACTIVE MODE LOGO ONLY.
+   Source WebP files are 3:2 canvases whose visible artwork uses only ~35–45% of the width.
+   Magnify the artwork itself, not the layout box, so the center panel keeps its proportions. */
+.arena-room-v2 .room-master-mode-emblem {
+  width: 136px;
+  height: 112px;
+  overflow: hidden;
+  display: grid;
+  place-items: center;
+}
+.arena-room-v2 .room-master-mode-emblem img {
+  width: 118px;
+  height: 118px;
+  max-width: 118px;
+  max-height: 118px;
+  object-fit: contain;
+  object-position: center;
+  transform: scale(2.45);
+  transform-origin: center center;
+}
+@media (max-width:1450px) and (min-width:1181px) {
+  .arena-room-v2 .room-master-mode-emblem {
+    width: 126px;
+    height: 104px;
+  }
+  .arena-room-v2 .room-master-mode-emblem img {
+    width: 108px;
+    height: 108px;
+    max-width: 108px;
+    max-height: 108px;
+    transform: scale(2.45);
+  }
+}

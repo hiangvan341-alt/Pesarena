@@ -271,3 +271,44 @@
   }
 }
 
+
+
+/* V1.3.44 — BOTTOM MODE LOGOS ONLY.
+   This file loads after 03-mode-selector.css, so the final dimensions must live here.
+   Crop the transparent canvas visually and enlarge the real emblem about 3x versus V1.3.43. */
+.arena-room-v2 .room-bottom-main .room-master-mode-card {
+  grid-template-columns: 88px minmax(0,1fr);
+}
+.arena-room-v2 .room-bottom-main .room-master-card-icon {
+  width: 84px;
+  height: 78px;
+  overflow: hidden;
+  display: grid;
+  place-items: center;
+}
+.arena-room-v2 .room-bottom-main .room-master-card-icon img {
+  width: 82px;
+  height: 82px;
+  max-width: 82px;
+  max-height: 82px;
+  object-fit: contain;
+  object-position: center;
+  transform: scale(2.55);
+  transform-origin: center center;
+}
+@media (max-width:1450px) and (min-width:1181px) {
+  .arena-room-v2 .room-bottom-main .room-master-mode-card {
+    grid-template-columns: 82px minmax(0,1fr);
+  }
+  .arena-room-v2 .room-bottom-main .room-master-card-icon {
+    width: 78px;
+    height: 74px;
+  }
+  .arena-room-v2 .room-bottom-main .room-master-card-icon img {
+    width: 76px;
+    height: 76px;
+    max-width: 76px;
+    max-height: 76px;
+    transform: scale(2.65);
+  }
+}

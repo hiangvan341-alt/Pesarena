@@ -807,3 +807,10 @@
 - Xóa `trophy_gold.svg`, `trophy_silver.svg`, `trophy_bronze.svg` vì không có HTML/CSS/JS/Python nào tham chiếu.
 - Giữ nguyên cây `pes-assets/room-assets/v1.3.40/modes/` để người dùng tự đặt `1.webp` -> `6.webp` và upload Supabase.
 - Không thay logic Backend, API, RP, Rank Mode, Presence hoặc Invite.
+
+
+## V1.3.44 - 2026-08-07 17:48 (Asia/Bangkok)
+- Chỉ sửa CSS hiển thị logo chế độ.
+- Sửa lỗi cascade: 04-actions-history.css trước đây load sau và ghi đè kích thước logo từ 03-mode-selector.css về 50x50px.
+- Phóng phần artwork thực của 1.webp -> 6.webp khoảng 3 lần bằng transform + khung crop, không thay Backend/mapping/Supabase.
+- Nới cột icon vừa đủ để logo lớn nhưng không đè tên chế độ/trạng thái mở khóa.
