@@ -99,6 +99,7 @@ def register_routes(context):
         penalty_delta = apply_room_abandon_penalty(user["id"])
         _award_forfeit_win(room.get("host_user_id"))
         winner_delta = apply_series_forfeit_win_reward(room, room.get("host_user_id"))
+        finalize_series_forfeit(room, user.get("id"), penalty_delta, winner_delta)
         record_room_forfeit_match(
             room,
             offender_role="guest",
@@ -195,6 +196,7 @@ def register_routes(context):
         penalty_delta = apply_room_abandon_penalty(user["id"])
         _award_forfeit_win(room.get("guest_user_id"))
         winner_delta = apply_series_forfeit_win_reward(room, room.get("guest_user_id"))
+        finalize_series_forfeit(room, user.get("id"), penalty_delta, winner_delta)
         record_room_forfeit_match(
             room,
             offender_role="host",

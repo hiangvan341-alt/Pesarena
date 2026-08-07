@@ -13,10 +13,13 @@ def test_random_route_cannot_fall_through_series_to_rank_random():
     assert '"team_tier": selected_rank_mode' in routes
 
 def test_initial_and_fragment_use_same_mode_source_and_series_guard():
+    # V1.3.48+ Series đã có orchestrator thật: cả initial render và live fragment
+    # phải route 4 Series sang start-next-game, Random3 sang route riêng.
     for name in ('templates/room_detail.html', 'templates/_room_live_content.html'):
         html = (ROOT / name).read_text(encoding='utf-8')
-        assert "selected_rank_mode not in ['rank_random', 'random3_pick1']" in html
         assert "selected_rank_mode == 'random3_pick1'" in html
+        assert "room_series_start_next_game" in html
+        assert "selected_rank_mode in ['home_away','bo3','tactical_bo3','ban_pick_bo3']" in html
 
 def test_center_action_layout_guard_loaded_last():
     html = (ROOT / 'templates/room_detail.html').read_text(encoding='utf-8')

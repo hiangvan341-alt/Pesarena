@@ -157,6 +157,8 @@ def register_routes(context):
             "room": room,
             "rank_mode_catalog": rank_mode_catalog_for_players(host_player, guest_player),
             "selected_rank_mode": selected_rank_mode,
+            "selected_rank_mode_config": get_rank_mode(selected_rank_mode),
+            "rank_series": get_room_series_context(room),
             "initial_room_state_key": build_room_state_key(room),
             "friendly_tiers": get_available_team_tiers(),
             "room_head_to_head": build_room_head_to_head(room),

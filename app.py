@@ -70,7 +70,7 @@ from modules.win_streaks import (
 load_dotenv()
 
 APP_NAME = "PES Arena – Bản Lĩnh Sân Cỏ"
-APP_VERSION = "1.3.47"
+APP_VERSION = "1.3.49"
 DEFAULT_POINTS = 1000
 DEVICE_COOKIE_NAME = "rankzone_device_id"
 COOLDOWN_MINUTES = 3
@@ -3114,6 +3114,7 @@ def close_room_if_host_browser_offline(room):
     room.update(update_data)
     penalty_delta = apply_room_abandon_penalty(host_id, ROOM_ABANDON_PENALTY)
     winner_delta = apply_series_forfeit_win_reward(room, guest_id)
+    finalize_series_forfeit(room, host_id, penalty_delta, winner_delta)
     record_room_forfeit_match(
         room,
         offender_role="host",
@@ -3168,6 +3169,7 @@ def close_room_with_timeout_penalty(room, offender_role, reason):
     offender_name = room.get("host_name") if offender_role == "host" else room.get("guest_name")
     other_id = room.get("guest_user_id") if offender_role == "host" else room.get("host_user_id")
     winner_delta = apply_series_forfeit_win_reward(room, other_id)
+    finalize_series_forfeit(room, offender_id, penalty_delta, winner_delta)
     record_room_forfeit_match(
         room,
         offender_role=offender_role,
@@ -6352,6 +6354,7 @@ from modules import daily_checkin as _daily_checkin_module
 from modules.parsec_room import service as _parsec_room_service
 from modules import gift_codes as _gift_codes_module
 from modules import rank_modes as _rank_modes_module
+from modules import rank_series as _rank_series_module
 from modules import read_model_service as _read_model_service
 
 for _service_module in (
@@ -6365,6 +6368,7 @@ for _service_module in (
     _daily_checkin_module,
     _gift_codes_module,
     _rank_modes_module,
+    _rank_series_module,
     _parsec_room_service,
     _match_result_service,
     _ranking_rebuild_service,
@@ -6389,6 +6393,7 @@ from modules.room_access_routes import register_routes as _register_room_access_
 from modules.room_rematch_routes import register_routes as _register_room_rematch_routes
 from modules.room_team_routes import register_routes as _register_room_team_routes
 from modules.room_result_routes import register_routes as _register_room_result_routes
+from modules.rank_series import register_routes as _register_rank_series_routes
 from modules.match_history_routes import register_routes as _register_match_history_routes
 from modules.zcoin import register_routes as _register_zcoin_routes
 from modules.profile import register_routes as _register_profile_routes
@@ -6414,6 +6419,7 @@ for _route_registrar in (
     _register_room_rematch_routes,
     _register_room_team_routes,
     _register_room_result_routes,
+    _register_rank_series_routes,
     _register_match_history_routes,
     _register_zcoin_routes,
     _register_profile_routes,

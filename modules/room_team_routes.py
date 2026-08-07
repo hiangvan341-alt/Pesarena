@@ -31,7 +31,11 @@ def register_routes(context):
         if decode_friendly_random3_state(room.get("note")):
             flash("Phòng đang ở bước Random 3 chọn 1. Hãy hoàn tất lựa chọn hiện tại.", "warning")
             return redirect(url_for("room_detail", room_id=room_id))
-        if room.get("match_id") or room.get("host_team") or room.get("guest_team"):
+        # V1.3.49: trận con Series có thể vừa được reset DB nhưng client vẫn giữ snapshot
+        # host_team/guest_team cũ trong một nhịp polling. Không chặn Series chỉ vì đội cũ;
+        # orchestrator tự kiểm tra match_id/status và sẽ ghi đè cặp đội của trận tiếp theo.
+        requested_mode = normalize_rank_mode_code(room.get("team_tier") or RANK_RANDOM)
+        if (room.get("match_id") or room.get("host_team") or room.get("guest_team")) and not is_series_mode(requested_mode):
             flash("Phòng đã được quay đội hoặc đã tạo trận.", "warning")
             return redirect(url_for("room_detail", room_id=room_id))
 
@@ -68,9 +72,20 @@ def register_routes(context):
                 continuing_series = "__RANK_MODE_LOCKED__" in (room.get("note") or "") and is_series_mode(selected_rank_mode)
                 if not selected_mode_config.get("enabled", True):
                     raise ValueError(f"Chế độ {selected_mode_config.get('label') or selected_rank_mode} đang tạm tắt.")
-                # Route random-teams chỉ được phép chạy Rank thường. Random 3 có route riêng;
-                # các Series chưa được nối bộ điều phối trận con nên tuyệt đối không được rơi
-                # xuống smart_random rồi ghi đè team_tier thành Rank thường.
+                # V1.3.49: đây là endpoint tương thích ngược. UI Series phải gọi route
+                # /series/start-next-game, nhưng nếu polling/live-partial hoặc client cũ vẫn POST
+                # vào /random-teams thì dispatch sang bộ điều phối Series thay vì báo lỗi.
+                # Random 3 chọn 1 vẫn có route riêng.
+                if is_series_mode(selected_rank_mode):
+                    result = prepare_next_series_game(room)
+                    action = result.get("action")
+                    if action == "start_match":
+                        flash(f"Đã bắt đầu {result.get('label') or 'trận tiếp theo'}.", "success")
+                    elif action == "choose":
+                        flash("Đã tạo 3 CLB cho mỗi bên. Hai người hãy khóa lựa chọn.", "success")
+                    else:
+                        flash("Đã mở bước Cấm/Chọn CLB.", "success")
+                    return redirect(url_for("room_detail", room_id=room_id))
                 if selected_rank_mode != RANK_RANDOM:
                     raise ValueError(f"Chế độ {selected_mode_config.get('label') or selected_rank_mode} không dùng luồng Quay quân Rank thường.")
                 assert_rank_mode_daily_quota(
@@ -177,6 +192,10 @@ def register_routes(context):
             return redirect(url_for("room_detail", room_id=room_id))
         if "__RANK_MODE_LOCKED__" in (room.get("note") or ""):
             flash("Lượt đá tiếp giữ nguyên chế độ của trận trước, không cần chọn lại.", "warning")
+            return redirect(url_for("room_detail", room_id=room_id))
+        active_series = get_room_series_context(room)
+        if active_series and active_series.get("active"):
+            flash("Series đang diễn ra nên không thể đổi chế độ giữa chừng.", "warning")
             return redirect(url_for("room_detail", room_id=room_id))
         selected_mode = normalize_rank_mode_code(request.form.get("rank_mode") or RANK_RANDOM)
         host = get_user(room.get("host_user_id")) or {}

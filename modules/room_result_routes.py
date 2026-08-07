@@ -210,6 +210,20 @@ def register_routes(context):
             return redirect(url_for("room_detail", room_id=room_id))
 
         try:
+            # Series modes confirm each child match without per-game RP.
+            # The orchestrator records the child result and applies the configured
+            # Series RP exactly once when Home/Away or BO3 is complete.
+            if is_series_child_match(match):
+                series_result = confirm_series_child_match(room, match, user.get("id"))
+                if series_result.get("series_completed"):
+                    flash(
+                        f"Đã xác nhận trận và hoàn tất Series. RP: {int(series_result.get('delta1') or 0):+d} / {int(series_result.get('delta2') or 0):+d}.",
+                        "success",
+                    )
+                else:
+                    flash("Đã xác nhận trận con. Series tiếp tục sang trận kế tiếp và chưa tính RP giữa chừng.", "success")
+                return redirect(url_for("room_detail", room_id=room_id))
+
             try:
                 users_before_streak_event = users_map()
             except Exception as exc:

@@ -1,3 +1,12 @@
+# V1.3.49 — Sửa quay quân trận con thứ 2 của Series
+
+- Ngày: 2026-08-07 (Asia/Bangkok)
+- Lỗi: sau khi xác nhận trận con đầu tiên, live polling render `templates/partials/room_dynamic_state.html` với form quay đội trỏ nhầm về `/room/<id>/random-teams`. Endpoint này chặn mọi mode khác Rank thường nên hiện popup “Phòng đã được quay đội hoặc đã tạo trận” / không thể tạo trận thứ 2.
+- Sửa `templates/partials/room_dynamic_state.html`: đồng bộ route với `room_detail.html` và `_room_live_content.html`; 4 mode Series gọi `room_series_start_next_game`, Random 3 gọi route riêng, Rank thường mới gọi `room_random_teams`.
+- Sửa `modules/room_team_routes.py`: thêm lớp tương thích ngược, nếu client/polling cũ vẫn gọi `/random-teams` trong Series thì tự dispatch sang `prepare_next_series_game()` thay vì rơi vào luồng Rank thường.
+- Giữ nguyên `team_tier` của Series, `guest_ready=True`, xóa `match_id`/đội cũ sau trận con để trận tiếp theo tạo sạch.
+- Thêm `test_series_second_game_v149.py`.
+
 ## V1.3.47 - 2026-08-07 22:58 (Asia/Bangkok)
 
 ### Sửa luồng hiển thị 6 chế độ Rank + chống CSS chồng nút
