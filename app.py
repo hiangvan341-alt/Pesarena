@@ -60,6 +60,7 @@ from modules.static_asset_service import (
     room_asset_url, room_asset_base_url, mode_asset_url, mode_asset_base_url,
 )
 from modules.profile import equipment_service as profile_equipment_service
+from modules.observability import configure_app_logging, log_system_event
 from modules.win_streaks import (
     WIN_STREAK_TITLES, WIN_STREAK_EVENT_PREFIX, get_win_streak_title,
     get_win_streak_badge, build_win_streak_event, encode_win_streak_room_note,
@@ -70,7 +71,7 @@ from modules.win_streaks import (
 load_dotenv()
 
 APP_NAME = "PES Arena – Bản Lĩnh Sân Cỏ"
-APP_VERSION = "1.3.51"
+APP_VERSION = "1.3.52"
 DEFAULT_POINTS = 1000
 DEVICE_COOKIE_NAME = "rankzone_device_id"
 COOLDOWN_MINUTES = 3
@@ -189,6 +190,8 @@ app.secret_key = _flask_secret_key
 app.permanent_session_lifetime = timedelta(days=30)
 del _flask_secret_key
 
+configure_app_logging(app, APP_VERSION)
+
 _STATIC_FINGERPRINT_CACHE = {}
 
 def static_asset(filename):
@@ -281,9 +284,25 @@ def execute_query(query, label="Supabase", attempts=4, delay=0.25):
             ))
 
             if not transient or attempt >= max(1, attempts) - 1:
-                print(f"{label} failed after {attempt + 1} attempt(s): {exc}")
+                log_system_event(
+                    "database_query_failed",
+                    level=40,
+                    label=label,
+                    attempts=attempt + 1,
+                    transient=transient,
+                    error_type=type(exc).__name__,
+                    error=str(exc),
+                )
                 raise
 
+            log_system_event(
+                "database_query_retry",
+                level=30,
+                label=label,
+                attempt=attempt + 1,
+                max_attempts=max(1, attempts),
+                error_type=type(exc).__name__,
+            )
             # Backoff ngắn: 0.25s, 0.5s, 0.75s...
             time.sleep(delay * (attempt + 1))
 
@@ -383,135 +402,14 @@ def get_dispute_evidence_signed_url(object_path, expires_in=3600):
         return None
 
 
-def achievement_progress(player, definition, position=None):
-    metric = definition.get("metric")
-    threshold = max(1, int(definition.get("threshold", 1) or 1))
-    if metric == "position":
-        current = 1 if position == 1 and calculated_total_matches(player) >= 5 else 0
-    else:
-        current = max(0, int(player.get(metric, 0) or 0))
-    return current, threshold, min(100, round((current / threshold) * 100))
 
 
-def eligible_achievement_codes(player, position=None):
-    eligible = []
-    for definition in ACHIEVEMENT_DEFINITIONS:
-        current, threshold, _ = achievement_progress(player, definition, position)
-        if current >= threshold:
-            eligible.append(definition["code"])
-    return eligible
 
 
-def list_user_achievement_map():
-    cached = cache_get("_rz_user_achievement_map")
-    if cached is not None:
-        return cached
-    shared = ttl_cache_get("achievement_map")
-    if shared is not None:
-        return cache_set("_rz_user_achievement_map", shared)
-    mapped = {}
-    try:
-        result = execute_query(
-            db.table("user_achievements").select("user_id,achievement_code,unlocked_at"),
-            "list_user_achievements",
-            attempts=2,
-        )
-        for row in result.data or []:
-            mapped.setdefault(str(row.get("user_id")), {})[row.get("achievement_code")] = row
-    except Exception as exc:
-        print(f"list_user_achievement_map warning: {exc}")
-    ttl_cache_set("achievement_map", mapped, 30)
-    return cache_set("_rz_user_achievement_map", mapped)
 
 
-def decorate_player_achievements(player, position=None, achievement_map=None):
-    if not player:
-        return player
-    achievement_map = achievement_map if achievement_map is not None else list_user_achievement_map()
-    saved = achievement_map.get(str(player.get("id")), {})
-    achievements = []
-    for definition in ACHIEVEMENT_DEFINITIONS:
-        current, threshold, progress = achievement_progress(player, definition, position)
-        unlocked = definition["code"] in saved or current >= threshold
-        item = dict(definition)
-        item.update({
-            "unlocked": unlocked,
-            "unlocked_at": (saved.get(definition["code"]) or {}).get("unlocked_at"),
-            "current": current,
-            "progress": progress,
-        })
-        achievements.append(item)
-    unlocked_items = sorted(
-        [item for item in achievements if item.get("unlocked")],
-        key=lambda item: int(item.get("priority", 0)),
-        reverse=True,
-    )
-    player["achievements"] = achievements
-    player["unlocked_achievements"] = unlocked_items
-    player["achievement_count"] = len(unlocked_items)
-    player["featured_achievement"] = unlocked_items[0] if unlocked_items else None
-    return player
 
 
-def sync_achievements_for_users(user_ids, notify=True):
-    user_ids = [str(user_id) for user_id in dict.fromkeys(user_ids or []) if user_id]
-    if not user_ids or db is None:
-        return []
-    try:
-        result = execute_query(
-            db.table("users").select("*").eq("role", "player"),
-            "achievement_fresh_players",
-            attempts=2,
-        )
-        players = [dict(item) for item in (result.data or [])]
-        players.sort(key=_player_ranking_sort_key)
-        positions = {str(item.get("id")): index for index, item in enumerate(players, 1)}
-        by_id = {str(item.get("id")): item for item in players}
-
-        existing_result = execute_query(
-            db.table("user_achievements").select("user_id,achievement_code"),
-            "achievement_existing",
-            attempts=2,
-        )
-        existing = {(str(row.get("user_id")), row.get("achievement_code")) for row in (existing_result.data or [])}
-        newly_unlocked = []
-        for user_id in user_ids:
-            player = by_id.get(user_id)
-            if not player:
-                continue
-            for code in eligible_achievement_codes(player, positions.get(user_id)):
-                if (user_id, code) in existing:
-                    continue
-                try:
-                    execute_query(
-                        db.table("user_achievements").insert({
-                            "user_id": user_id,
-                            "achievement_code": code,
-                            "unlocked_at": now_iso(),
-                        }),
-                        "achievement_unlock",
-                        attempts=2,
-                    )
-                    existing.add((user_id, code))
-                    newly_unlocked.append((user_id, code))
-                    if notify:
-                        definition = ACHIEVEMENT_BY_CODE.get(code, {})
-                        create_user_notification(
-                            user_id,
-                            f"{definition.get('icon', '🏅')} Huy hiệu mới",
-                            f"Bạn đã mở khóa huy hiệu {definition.get('name', code)}.",
-                            f"/profile/{user_id}",
-                            "achievement",
-                        )
-                except Exception as exc:
-                    if "duplicate" not in str(exc).lower():
-                        print(f"achievement_unlock warning: {exc}")
-        if has_request_context():
-            setattr(g, "_rz_user_achievement_map", None)
-        return newly_unlocked
-    except Exception as exc:
-        print(f"sync_achievements_for_users warning: {exc}")
-        return []
 
 
 def hash_password(password: str) -> str:
@@ -831,250 +729,32 @@ RANK_RANGE_SETTING_KEY = "rank_ranges"
 _rank_range_cache = {"value": None, "expires_at": 0.0}
 
 
-def _validate_rank_ranges(raw_ranges):
-    """Validate the 10 rank definitions stored in system_settings."""
-    if isinstance(raw_ranges, dict):
-        raw_ranges = raw_ranges.get("ranks") or raw_ranges.get("value") or raw_ranges
-    if not isinstance(raw_ranges, list) or len(raw_ranges) != 10:
-        raise ValueError("Cấu hình khoảng điểm Rank phải có đúng 10 Rank.")
-
-    normalized = []
-    previous_max = -1
-    required_text_fields = ("name", "short_name", "abbr", "code", "icon", "slug")
-    for index, item in enumerate(raw_ranges):
-        if not isinstance(item, dict):
-            raise ValueError(f"Rank {index + 1} không đúng định dạng.")
-        row = dict(item)
-        minimum = int(row.get("min"))
-        maximum_raw = row.get("max")
-        maximum = None if maximum_raw in (None, "", "null") else int(maximum_raw)
-        if index == 0 and minimum != 0:
-            raise ValueError("Rank đầu tiên phải bắt đầu từ 0 RP.")
-        if index > 0 and minimum != previous_max + 1:
-            raise ValueError(f"Rank {index + 1} phải bắt đầu từ {previous_max + 1} RP.")
-        if index < 9 and maximum is None:
-            raise ValueError(f"Rank {index + 1} phải có điểm kết thúc.")
-        if maximum is not None and maximum < minimum:
-            raise ValueError(f"Khoảng điểm Rank {index + 1} không hợp lệ.")
-        if index == 9 and maximum is not None:
-            raise ValueError("Rank cuối cùng phải để max = null.")
-        for field in required_text_fields:
-            row[field] = str(row.get(field) or "").strip()
-            if not row[field]:
-                raise ValueError(f"Rank {index + 1} thiếu trường {field}.")
-        row["min"] = minimum
-        row["max"] = maximum
-        normalized.append(row)
-        previous_max = maximum if maximum is not None else previous_max
-    return normalized
 
 
-def load_rank_ranges(force=False):
-    """Always load active Rank ranges from Supabase system_settings."""
-    now = time.time()
-    if not force and _rank_range_cache["value"] is not None and now < _rank_range_cache["expires_at"]:
-        return _rank_range_cache["value"]
-    if db is None:
-        raise RuntimeError("Chưa cấu hình kết nối Supabase để đọc khoảng điểm Rank.")
-
-    result = execute_query(
-        db.table("system_settings").select("setting_value").eq("setting_key", RANK_RANGE_SETTING_KEY).limit(1),
-        "load_rank_ranges",
-        attempts=3,
-    )
-    if not result.data:
-        # Tự tạo cấu hình lần đầu để không cần chạy hoặc lưu file SQL trên GitHub.
-        execute_query(
-            db.table("system_settings").upsert({
-                "setting_key": RANK_RANGE_SETTING_KEY,
-                "setting_value": DEFAULT_RANKS,
-                "updated_at": now_iso(),
-            }, on_conflict="setting_key"),
-            "seed_rank_ranges",
-            attempts=3,
-        )
-        configured = _validate_rank_ranges(DEFAULT_RANKS)
-    else:
-        stored = result.data[0].get("setting_value")
-        if isinstance(stored, str):
-            stored = json.loads(stored)
-        configured = _validate_rank_ranges(stored)
-
-    _rank_range_cache.update({"value": configured, "expires_at": now + 30})
-    return configured
 
 
-def get_rank_ranges():
-    return load_rank_ranges()
 
 
-def get_rank_info(points: int):
-    ranks = load_rank_ranges()
-    safe=max(0,int(points or 0)); selected=ranks[0]
-    for rank in ranks:
-        if safe>=rank["min"]: selected=rank
-    result=dict(selected); nxt=next((r for r in ranks if r["min"]>safe),None)
-    result["points"]=safe; result["next_rank"]=nxt
-    result["points_to_next"]=max(0,nxt["min"]-safe) if nxt else 0
-    if nxt:
-        span=max(1,nxt["min"]-selected["min"]); result["progress"]=max(0,min(100,round(((safe-selected["min"])/span)*100)))
-    else: result["progress"]=100
-    return result
-
-def is_goat_player(player, position=None):
-    """GOAT is the official level 10 rank (2700+ RP)."""
-    return bool(player) and get_rank_info(player.get("rank_points", 0)).get("code") == "GOAT"
 
 
-def get_player_rank_info(player, position=None):
-    return get_rank_info(player.get("rank_points", 0) if player else 0)
-
-def get_rank_name(points:int)->str: return get_rank_info(points)["name"]
-def get_rank_display(points:int)->str:
-    r=get_rank_info(points); return f'{r["icon"]} {r["name"]}'
 
 
-def get_team_power_score(team_name):
-    """Đọc power_score của CLB trực tiếp từ bảng teams trên Supabase."""
-    info = get_db_team_info(team_name) if team_name else None
-    if info and info.get("power_score") is not None:
-        try:
-            return float(info.get("power_score"))
-        except (TypeError, ValueError):
-            pass
-    return 73.33
 
 
-def get_tier_strength(tier):
-    """Return numeric club strength: D=1 ... S+=7."""
-    values = {"D": 1, "C": 2, "B": 3, "A": 4, "A+": 5, "S": 6, "S+": 7}
-    return values.get(str(tier or "").strip().upper(), 1)
 
 
-def get_match_difficulty(player, opponent, player_tier, opponent_tier):
-    """Combined rank gap and club compensation.
-
-    Positive values mean the player's real matchup is harder; negative values
-    mean the player has the easier matchup.
-    """
-    rank_gap = get_rank_level(opponent.get("rank_points", 0)) - get_rank_level(player.get("rank_points", 0))
-    club_compensation = get_tier_strength(player_tier) - get_tier_strength(opponent_tier)
-    return rank_gap - club_compensation
 
 
-def get_difficulty_factor(difficulty, won):
-    """Return the requested win/loss coefficient for one player."""
-    difficulty = int(difficulty or 0)
-    if difficulty >= 3:
-        return 1.20 if won else 0.80
-    if difficulty >= 1:
-        return 1.10 if won else 0.90
-    if difficulty <= -3:
-        return 0.80 if won else 1.20
-    if difficulty <= -1:
-        return 0.90 if won else 1.10
-    return 1.00
 
 
-def _match_affects_streak(match):
-    details = (match or {}).get("rp_details") or {}
-    if not isinstance(details, dict):
-        return True
-    repeat = details.get("repeat_opponent") or {}
-    return not (isinstance(repeat, dict) and repeat.get("streak_eligible") is False)
 
 
-def get_current_loss_streak(user_id):
-    """Đếm số trận thua liên tiếp gần nhất từ lịch sử đã xác nhận."""
-    if not user_id or db is None:
-        return 0
-    try:
-        result = execute_query(
-            db.table("matches")
-            .select("player1_id,player2_id,score1,score2,status,created_at,rp_details")
-            .or_(f"player1_id.eq.{user_id},player2_id.eq.{user_id}")
-            .eq("status", "confirmed")
-            .order("created_at", desc=True)
-            .limit(30),
-            f"get_loss_streak:{user_id}",
-            attempts=2,
-        )
-    except Exception as exc:
-        print(f"get_current_loss_streak warning user={user_id}: {type(exc).__name__}: {exc}")
-        return 0
-
-    streak = 0
-    for match in result.data or []:
-        if not _match_affects_streak(match):
-            continue
-        score1 = _safe_int(match.get("score1"), -1)
-        score2 = _safe_int(match.get("score2"), -1)
-        if score1 < 0 or score2 < 0 or score1 == score2:
-            break
-        is_player1 = str(match.get("player1_id")) == str(user_id)
-        lost = (is_player1 and score1 < score2) or ((not is_player1) and score2 < score1)
-        if not lost:
-            break
-        streak += 1
-    return streak
 
 
-def get_loss_recovery_win_step(user_id):
-    """Trả 1/2 nếu người chơi đang ở trận thắng phục hồi sau >=5 trận thua."""
-    if not user_id or db is None:
-        return 0
-    try:
-        result = execute_query(
-            db.table("matches")
-            .select("player1_id,player2_id,score1,score2,status,created_at,rp_details")
-            .or_(f"player1_id.eq.{user_id},player2_id.eq.{user_id}")
-            .eq("status", "confirmed")
-            .order("created_at", desc=True)
-            .limit(30),
-            f"get_loss_recovery:{user_id}", attempts=2,
-        )
-    except Exception as exc:
-        print(f"get_loss_recovery warning user={user_id}: {type(exc).__name__}: {exc}")
-        return 0
-    outcomes = []
-    for match in result.data or []:
-        if not _match_affects_streak(match):
-            continue
-        s1, s2 = _safe_int(match.get("score1"), -1), _safe_int(match.get("score2"), -1)
-        if s1 < 0 or s2 < 0 or s1 == s2:
-            break
-        is_p1 = str(match.get("player1_id")) == str(user_id)
-        won = (is_p1 and s1 > s2) or ((not is_p1) and s2 > s1)
-        outcomes.append("win" if won else "loss")
-    recent_wins = 0
-    for outcome in outcomes:
-        if outcome != "win": break
-        recent_wins += 1
-    if recent_wins not in (0, 1):
-        return 0
-    prior_losses = 0
-    for outcome in outcomes[recent_wins:]:
-        if outcome != "loss": break
-        prior_losses += 1
-    return recent_wins + 1 if prior_losses >= 5 else 0
 
 
-def calculate_deltas(player_a, player_b, score_a: int, score_b: int, team_a=None, team_b=None,
-                     team_overall_a=None, team_overall_b=None, team_tier_a=None, team_tier_b=None,
-                     rng=None):
-    """Lớp tương thích: route cũ gọi như trước, công thức nằm trong rp_engine."""
-    player_a_for_rp = dict(player_a or {})
-    player_b_for_rp = dict(player_b or {})
-    player_a_for_rp["loss_streak"] = get_current_loss_streak(player_a_for_rp.get("id"))
-    player_b_for_rp["loss_streak"] = get_current_loss_streak(player_b_for_rp.get("id"))
-    player_a_for_rp["loss_recovery_win_step"] = get_loss_recovery_win_step(player_a_for_rp.get("id"))
-    player_b_for_rp["loss_recovery_win_step"] = get_loss_recovery_win_step(player_b_for_rp.get("id"))
-    return calculate_ranked_deltas(
-        player_a_for_rp, player_b_for_rp, score_a, score_b, get_rank_level=get_rank_level,
-        team_a=team_a, team_b=team_b, team_overall_a=team_overall_a,
-        team_overall_b=team_overall_b, team_tier_a=team_tier_a, team_tier_b=team_tier_b,
-        rng=rng,
-    )
+
+
 
 TEAM_LOGO_BUCKET = "team-logos"
 LEAGUE_LOGO_FOLDER = "league-logos"
@@ -1097,25 +777,6 @@ LEAGUE_LOGO_FILES = {
     "süper lig": "super-lig.png",
 }
 
-def get_league_logo_url(league_name):
-    """Tạo URL public tới team-logos/league-logos trên Supabase Storage."""
-    import unicodedata
-    raw = str(league_name or "").strip()
-    if not raw or not supabase_url:
-        return ""
-    key = " ".join(raw.lower().replace("-", " ").replace("_", " ").split())
-    key_ascii = "".join(ch for ch in unicodedata.normalize("NFKD", key) if not unicodedata.combining(ch))
-    filename = LEAGUE_LOGO_FILES.get(key) or LEAGUE_LOGO_FILES.get(key_ascii)
-    if not filename:
-        for alias, candidate in LEAGUE_LOGO_FILES.items():
-            if alias in key or alias in key_ascii:
-                filename = candidate
-                break
-    if not filename:
-        return ""
-    from urllib.parse import quote
-    object_path = f"{LEAGUE_LOGO_FOLDER}/{filename}"
-    return f"{supabase_url}/storage/v1/object/public/{TEAM_LOGO_BUCKET}/{quote(object_path, safe='/')}"
 
 SMART_RANDOM_MODE = "Smart Rank"
 
@@ -1147,51 +808,8 @@ RANK_CLUB_TIER_WEIGHTS = {
 }
 
 
-def power_score_to_tier(power_score):
-    """Classify one club into S+..D using power_score only."""
-    try:
-        score = float(power_score)
-    except (TypeError, ValueError):
-        return "D"
-    for tier in CLUB_TIER_ORDER:
-        minimum, maximum = CLUB_TIER_RANGES[tier]
-        if minimum <= score <= maximum:
-            return tier
-    if score > CLUB_TIER_RANGES["S+"][1]:
-        return "S+"
-    return "D"
 
 
-def _normalize_team_row(row):
-    """Chuẩn hóa một dòng CLB lấy trực tiếp từ bảng teams trên Supabase."""
-    if not row:
-        return None
-    name = row.get("team") or row.get("display")
-    if not name:
-        return None
-    try:
-        overall = int(row.get("overall") or 0)
-    except (TypeError, ValueError):
-        return None
-    if overall <= 0:
-        return None
-    return {
-        "id": row.get("id"),
-        "display": str(name),
-        "team": str(name),
-        "league": row.get("league") or "",
-        "overall": overall,
-        "tier": str(row.get("tier") or power_score_to_tier(row.get("power_score"))).strip().upper(),
-        "logo_file": row.get("logo_file") or "",
-        "logo_url": row.get("logo_url") or "",
-        "defence": row.get("defence"),
-        "midfield": row.get("midfield"),
-        "attack": row.get("attack"),
-        "speed": row.get("speed"),
-        "strength": row.get("strength"),
-        "total_stats": row.get("total_stats"),
-        "power_score": row.get("power_score"),
-    }
 
 
 _TEAM_CACHE = {"loaded_at": 0.0, "rows": [], "by_name": {}, "pools": {}}
@@ -1199,71 +817,16 @@ _TEAM_CACHE_TTL_SECONDS = 30
 TEAM_COUNT = 0
 
 
-def _load_teams_from_supabase(force=False):
-    """Chỉ đọc CLB từ Supabase; không còn CSV hoặc teams_data.py dự phòng."""
-    global TEAM_COUNT
-    now = time.monotonic()
-    if not force and _TEAM_CACHE["rows"] and now - _TEAM_CACHE["loaded_at"] < _TEAM_CACHE_TTL_SECONDS:
-        return _TEAM_CACHE["rows"]
-    if db is None:
-        raise RuntimeError("Chưa cấu hình kết nối Supabase để đọc bảng teams.")
-    result = execute_query(
-        db.table("teams")
-        .select("id,league,team,overall,defence,midfield,attack,speed,strength,total_stats,power_score,tier,logo_file,logo_url,is_active")
-        .eq("is_active", True),
-        "load_teams_from_supabase",
-        attempts=3,
-    )
-    rows = []
-    by_name = {}
-    pools = {}
-    for raw in result.data or []:
-        team = _normalize_team_row(raw)
-        if not team:
-            continue
-        rows.append(team)
-        by_name[team["team"].casefold()] = team
-        pools.setdefault(team["overall"], []).append(team)
-    if not rows:
-        raise RuntimeError("Bảng teams trên Supabase không có CLB hoạt động.")
-    _TEAM_CACHE.update({"loaded_at": now, "rows": rows, "by_name": by_name, "pools": pools})
-    TEAM_COUNT = len(rows)
-    return rows
 
 
-def get_random_team_pools():
-    """Trả nhóm CLB theo overall, chỉ từ Supabase."""
-    _load_teams_from_supabase()
-    return _TEAM_CACHE["pools"]
 
 
-def get_db_team_info(team_name):
-    """Tìm CLB theo tên trong dữ liệu Supabase đã cache ngắn hạn."""
-    if not team_name:
-        return None
-    try:
-        _load_teams_from_supabase()
-        return _TEAM_CACHE["by_name"].get(str(team_name).casefold())
-    except Exception as exc:
-        print(f"get_db_team_info error: {exc}")
-        return None
 
 
-def get_team_info(team_name):
-    return get_db_team_info(team_name)
 
 
-def get_team_overall(team_name):
-    info = get_db_team_info(team_name)
-    try:
-        return int(info.get("overall")) if info else 0
-    except (TypeError, ValueError):
-        return 0
 
 
-def get_team_tier(team_name):
-    info = get_db_team_info(team_name)
-    return str(info.get("tier") or "") if info else ""
 
 
 SMART_RANDOM_MODE = "Smart Tier Random"
@@ -1274,470 +837,45 @@ MATCH_MODE_FRIENDLY = "friendly"
 FRIENDLY_RANDOM3_MODE = "random3_pick1"
 FRIENDLY_RANDOM3_NOTE_PREFIX = "FRIENDLY_RANDOM3:"
 
-def build_friendly_random3_state(host_player, guest_player):
-    """Chia 3 CLB mỗi bên; tránh đội trong 5 trận gần nhất với đúng đối thủ."""
-    if not host_player or not guest_player:
-        raise ValueError("Không tải được thông tin Rank của hai người chơi.")
-
-    all_teams = _all_random_teams()
-    if len(all_teams) < 6:
-        raise ValueError("Cần ít nhất 6 CLB để dùng Random 3 chọn 1.")
-
-    picked_names = []
-    selected_history = {
-        "host": _recent_pair_team_names(host_player.get("id"), guest_player.get("id")),
-        "guest": _recent_pair_team_names(guest_player.get("id"), host_player.get("id")),
-    }
-
-    def pack(team):
-        return {
-            "name": team.get("display"),
-            "overall": int(team.get("overall") or 0),
-            "total_stats": int(team.get("total_stats") or 0),
-            "tier": str(team.get("tier") or "").strip().upper(),
-            "logo": team.get("logo_url") or "",
-            "league": team.get("league") or "",
-        }
-
-    def pick_three(player, side):
-        options = []
-        opponent_id = guest_player.get("id") if side == "host" else host_player.get("id")
-        for _ in range(3):
-            # picked_names là danh sách cấm cứng để 6 lựa chọn của hai bên
-            # không bao giờ trùng nhau. Lịch sử đối đầu là danh sách cấm mềm:
-            # hệ thống ưu tiên tránh, nhưng có thể nới khi pool Tier đã cạn.
-            team, _, _, _ = _pick_rank_team(
-                player,
-                all_teams,
-                extra_excluded=picked_names,
-                opponent_id=opponent_id,
-                include_pair_history=True,
-            )
-            name = team.get("display")
-            picked_names.append(name)
-            options.append(pack(team))
-        return options
-
-    host_level = get_rank_level(host_player.get("rank_points", 0))
-    guest_level = get_rank_level(guest_player.get("rank_points", 0))
-    rank_ranges = load_rank_ranges()
-
-    host_options = pick_three(host_player, "host")
-    guest_options = pick_three(guest_player, "guest")
-    all_options = host_options + guest_options
-    normalized_names = [_normalize_team_name(item.get("name")) for item in all_options]
-    if len(all_options) != 6 or len(set(normalized_names)) != 6:
-        raise ValueError("Không thể tạo 6 CLB khác nhau cho Random 3 chọn 1. Vui lòng thử lại.")
-
-    return {
-        "mode": FRIENDLY_RANDOM3_MODE,
-        "distribution": "rank_weighted",
-        "host_rank": rank_ranges[host_level]["name"],
-        "guest_rank": rank_ranges[guest_level]["name"],
-        "host_rank_points": int(host_player.get("rank_points") or 0),
-        "guest_rank_points": int(guest_player.get("rank_points") or 0),
-        "host_tier_weights": get_rank_tier_weights(host_level),
-        "guest_tier_weights": get_rank_tier_weights(guest_level),
-        "host_options": host_options,
-        "guest_options": guest_options,
-        "host_choice": None,
-        "guest_choice": None,
-    }
-
-def encode_friendly_random3_state(state):
-    return FRIENDLY_RANDOM3_NOTE_PREFIX + json.dumps(state, ensure_ascii=False, separators=(",", ":"))
-
-def decode_friendly_random3_state(note):
-    text = str(note or "")
-    if not text.startswith(FRIENDLY_RANDOM3_NOTE_PREFIX):
-        return None
-    try:
-        data = json.loads(text[len(FRIENDLY_RANDOM3_NOTE_PREFIX):])
-        return data if data.get("mode") == FRIENDLY_RANDOM3_MODE else None
-    except Exception:
-        return None
 
 
-def get_rank_level(points: int) -> int:
-    """Return rank level from 0 (lowest) to 9 (highest)."""
-    safe_points = max(0, int(points or 0))
-    level = 0
-    for index, rank in enumerate(load_rank_ranges()):
-        if safe_points >= rank["min"]:
-            level = index
-    return level
+
+
 
 
 RANK_TIER_SETTING_KEY = "rank_club_tier_weights"
 _rank_tier_config_cache = {"value": None, "expires_at": 0.0}
 
 
-def _validate_rank_tier_weights(raw_weights):
-    """Validate imported 1..10 Rank mapping and convert it to internal 0..9 levels."""
-    if not isinstance(raw_weights, dict):
-        raise ValueError("RANK_CLUB_TIER_WEIGHTS phải là một dictionary.")
-
-    normalized = {}
-    for rank_number in range(1, len(load_rank_ranges()) + 1):
-        row = raw_weights.get(rank_number)
-        if row is None:
-            row = raw_weights.get(str(rank_number))
-        if not isinstance(row, dict) or not row:
-            raise ValueError(f"Rank {rank_number} chưa có tỷ lệ Tier CLB.")
-
-        clean_row = {}
-        total = 0
-        for tier, percent in row.items():
-            tier = str(tier).strip().upper()
-            if tier not in CLUB_TIER_ORDER:
-                raise ValueError(f"Rank {rank_number} có Tier không hợp lệ: {tier}.")
-            if isinstance(percent, bool) or not isinstance(percent, (int, float)):
-                raise ValueError(f"Tỷ lệ {tier} của Rank {rank_number} phải là số.")
-            percent = int(percent)
-            if percent < 0 or percent > 100:
-                raise ValueError(f"Tỷ lệ {tier} của Rank {rank_number} phải từ 0 đến 100.")
-            if percent:
-                clean_row[tier] = percent
-                total += percent
-
-        if total != 100:
-            raise ValueError(f"Tổng tỷ lệ Rank {rank_number} đang là {total}%, bắt buộc phải bằng 100%.")
-        normalized[rank_number - 1] = clean_row
-    return normalized
 
 
-def load_rank_tier_weights(force=False):
-    now = time.time()
-    if not force and _rank_tier_config_cache["value"] is not None and now < _rank_tier_config_cache["expires_at"]:
-        return _rank_tier_config_cache["value"]
-
-    configured = RANK_CLUB_TIER_WEIGHTS
-    if db is not None:
-        try:
-            result = execute_query(
-                db.table("system_settings").select("setting_value").eq("setting_key", RANK_TIER_SETTING_KEY).limit(1),
-                "load_rank_tier_weights",
-                attempts=2,
-            )
-            if result.data:
-                stored = result.data[0].get("setting_value")
-                if isinstance(stored, str):
-                    stored = json.loads(stored)
-                configured = _validate_rank_tier_weights(stored)
-        except Exception as exc:
-            print(f"load_rank_tier_weights fallback warning: {exc}")
-
-    _rank_tier_config_cache.update({"value": configured, "expires_at": now + 30})
-    return configured
 
 
-def get_rank_tier_weights(level: int):
-    """Return the active Admin-configured Tier percentages for one rank level."""
-    safe_level = max(0, min(len(load_rank_ranges()) - 1, int(level or 0)))
-    return load_rank_tier_weights().get(safe_level, RANK_CLUB_TIER_WEIGHTS[safe_level])
 
 
-def _all_random_teams():
-    pools = get_random_team_pools()
-    teams = []
-    for pool in pools.values():
-        for team in pool:
-            team = dict(team)
-            try:
-                team["power_score"] = float(team.get("power_score"))
-            except (TypeError, ValueError):
-                team["power_score"] = round(73.33 + (int(team.get("overall", 73)) - 73) * 0.75, 2)
-            # Tier is always calculated from power_score, never trusted from stale CSV data.
-            team["tier"] = power_score_to_tier(team["power_score"])
-            teams.append(team)
-    return teams
 
 
-def _normalize_team_name(name):
-    return " ".join(str(name or "").strip().casefold().split())
 
 
-def _is_random3_match(match):
-    note = str(match.get("note") or "").casefold()
-    return "random 3 chọn 1" in note or FRIENDLY_RANDOM3_MODE in note
 
 
-def _recent_pair_team_names(user_id, opponent_id, limit=RECENT_TEAM_EXCLUSION_COUNT):
-    """CLB người chơi đã dùng trong N trận confirmed gần nhất với đúng đối thủ.
-
-    Lịch sử dùng chung cho Rank thường và Random 3 chọn 1. Khi đổi đối thủ,
-    danh sách chống lặp tự tách theo cặp người chơi mới.
-    """
-    if not user_id or not opponent_id:
-        return []
-    names = []
-    try:
-        matches = sorted(
-            list_matches(),
-            key=lambda item: str(item.get("created_at") or item.get("updated_at") or ""),
-            reverse=True,
-        )
-        for match in matches:
-            if str(match.get("status") or "").lower() != "confirmed":
-                continue
-            p1 = match.get("player1_id")
-            p2 = match.get("player2_id")
-            if p1 == user_id and p2 == opponent_id:
-                name = match.get("team1")
-            elif p2 == user_id and p1 == opponent_id:
-                name = match.get("team2")
-            else:
-                continue
-            if name:
-                names.append(str(name).strip())
-            if len(names) >= limit:
-                break
-    except Exception as exc:
-        print(f"recent_pair_team_history warning: {exc}")
-    return names
 
 
-def _teams_in_tiers(teams, tiers, excluded_names=None):
-    allowed = {str(tier).upper() for tier in (tiers or [])}
-    excluded = {_normalize_team_name(name) for name in (excluded_names or []) if name}
-    return [
-        team for team in teams
-        if str(team.get("tier") or "").upper() in allowed
-        and _normalize_team_name(team.get("display")) not in excluded
-    ]
 
 
-def _weighted_tier_choice(tier_weights, teams, excluded_names):
-    """Pick a Tier by configured percentage, then return clubs in that Tier.
-
-    If a configured Tier has no available club after anti-repeat filtering,
-    the remaining available percentages are automatically re-normalized.
-    """
-    available = []
-    for tier, weight in (tier_weights or {}).items():
-        candidates = _teams_in_tiers(teams, [tier], excluded_names)
-        if candidates and float(weight or 0) > 0:
-            available.append((tier, float(weight), candidates))
-    if not available:
-        return None, []
-
-    roll = random.random() * sum(weight for _, weight, _ in available)
-    cumulative = 0.0
-    for tier, weight, candidates in available:
-        cumulative += weight
-        if roll <= cumulative:
-            return tier, candidates
-    tier, _, candidates = available[-1]
-    return tier, candidates
-
-def _nearest_rank_tier_candidates(tier_weights, teams, excluded_names):
-    """Tìm CLB ở Tier gần nhất khi các Tier có tỷ lệ đã hết lựa chọn.
-
-    Danh sách cấm vẫn được tôn trọng. Cơ chế này chỉ mở rộng sang Tier liền kề,
-    tránh làm Random 3 chọn 1 thất bại khi một Rank chỉ được cấu hình 1 Tier
-    nhưng Tier đó không đủ 6 CLB khác nhau cho cả hai người.
-    """
-    excluded = {_normalize_team_name(name) for name in (excluded_names or []) if name}
-    available_by_tier = {}
-    for team in teams:
-        if _normalize_team_name(team.get("display")) in excluded:
-            continue
-        tier = str(team.get("tier") or "").upper()
-        if tier in CLUB_TIER_ORDER:
-            available_by_tier.setdefault(tier, []).append(team)
-
-    preferred_indexes = [
-        CLUB_TIER_ORDER.index(str(tier).upper())
-        for tier, weight in (tier_weights or {}).items()
-        if str(tier).upper() in CLUB_TIER_ORDER and float(weight or 0) > 0
-    ]
-    if not preferred_indexes:
-        preferred_indexes = list(range(len(CLUB_TIER_ORDER)))
-
-    ranked_tiers = []
-    for tier, candidates in available_by_tier.items():
-        tier_index = CLUB_TIER_ORDER.index(tier)
-        distance = min(abs(tier_index - preferred) for preferred in preferred_indexes)
-        ranked_tiers.append((distance, tier_index, tier, candidates))
-    if not ranked_tiers:
-        return None, []
-
-    ranked_tiers.sort(key=lambda item: (item[0], item[1]))
-    nearest_distance = ranked_tiers[0][0]
-    nearest = [item for item in ranked_tiers if item[0] == nearest_distance]
-    _, _, selected_tier, candidates = random.choice(nearest)
-    return selected_tier, candidates
 
 
-def _pick_rank_team(player, all_teams, extra_excluded=None, opponent_id=None, include_pair_history=True):
-    level = get_rank_level(player.get("rank_points", 0))
-    tier_weights = get_rank_tier_weights(level)
-    recent = (
-        _recent_pair_team_names(player.get("id"), opponent_id)
-        if include_pair_history and opponent_id
-        else []
-    )
-    # extra là danh sách cấm cứng (đội đã xuất hiện trong lượt hiện tại).
-    # recent là danh sách cấm mềm (đội đã dùng trong lịch sử đối đầu gần đây).
-    extra = list(extra_excluded or [])
-    strict_excluded = list(dict.fromkeys(recent + extra))
-
-    selected_tier, candidates = _weighted_tier_choice(tier_weights, all_teams, strict_excluded)
-    if not candidates:
-        selected_tier, candidates = _nearest_rank_tier_candidates(
-            tier_weights, all_teams, strict_excluded
-        )
-
-    # Nếu lịch sử 5 trận làm cạn toàn bộ pool, nới riêng lịch sử nhưng vẫn
-    # tuyệt đối không cho trùng đội trong 6 lựa chọn của lượt hiện tại.
-    if not candidates and recent:
-        selected_tier, candidates = _weighted_tier_choice(tier_weights, all_teams, extra)
-        if not candidates:
-            selected_tier, candidates = _nearest_rank_tier_candidates(
-                tier_weights, all_teams, extra
-            )
-
-    if not candidates:
-        raise ValueError(
-            f"Không đủ CLB hoạt động để tạo lựa chọn cho rank {load_rank_ranges()[level]['name']}."
-        )
-    return random.choice(candidates), selected_tier, tier_weights, recent
 
 
-def get_smart_random_rule(player_a, player_b):
-    level_a = get_rank_level(player_a.get("rank_points", 0))
-    level_b = get_rank_level(player_b.get("rank_points", 0))
-    return {
-        "level_a": level_a,
-        "level_b": level_b,
-        "rank_gap": abs(level_a - level_b),
-        "advantage": "Mỗi Rank có tỷ lệ xuất hiện Tier CLB riêng.",
-        "summary": "Random theo tỷ lệ Tier riêng; tránh CLB đã dùng trong 5 trận confirmed gần nhất với đúng đối thủ, dùng chung cả Rank thường và Random 3 chọn 1; hai bên không trùng CLB.",
-        "rule_a": get_rank_tier_weights(level_a),
-        "rule_b": get_rank_tier_weights(level_b),
-    }
 
 
-def smart_random_team_pair(player_a, player_b):
-    """Random clubs from rank-linked S+..D tiers with anti-repeat protection."""
-    all_teams = _all_random_teams()
-    if len(all_teams) < 2:
-        raise ValueError("Không đủ dữ liệu CLB để Smart Random.")
-
-    team_a, tier_a_selected, weights_a, recent_a = _pick_rank_team(
-        player_a, all_teams, opponent_id=player_b.get("id")
-    )
-    team_b, tier_b_selected, weights_b, recent_b = _pick_rank_team(
-        player_b,
-        all_teams,
-        extra_excluded=[team_a.get("display")],
-        opponent_id=player_a.get("id"),
-    )
-
-    if str(team_a.get("display")).casefold() == str(team_b.get("display")).casefold():
-        allowed_b = set(weights_b.keys())
-        excluded_b = {
-            _normalize_team_name(name)
-            for name in list(recent_b) + [team_a.get("display")]
-            if name
-        }
-        alternatives = [
-            team for team in all_teams
-            if _normalize_team_name(team.get("display")) not in excluded_b
-            and str(team.get("tier") or "").upper() in allowed_b
-        ]
-        if not alternatives:
-            raise ValueError("Không tìm được hai CLB khác nhau trong các Tier phù hợp.")
-        team_b = random.choice(alternatives)
-
-    return {
-        "mode": SMART_RANDOM_MODE,
-        "team_a": team_a["display"],
-        "team_b": team_b["display"],
-        "overall_a": int(team_a["overall"]),
-        "overall_b": int(team_b["overall"]),
-        "total_stats_a": int(team_a.get("total_stats") or 0),
-        "total_stats_b": int(team_b.get("total_stats") or 0),
-        "power_score_a": float(team_a.get("power_score", 0)),
-        "power_score_b": float(team_b.get("power_score", 0)),
-        "tier_a": team_a["tier"],
-        "tier_b": team_b["tier"],
-        "logo_a": team_a.get("logo_url") or "",
-        "logo_b": team_b.get("logo_url") or "",
-        "league_a": team_a.get("league") or "",
-        "league_b": team_b.get("league") or "",
-        "team_id_a": team_a.get("id"),
-        "team_id_b": team_b.get("id"),
-        "band_a": tier_a_selected,
-        "band_b": tier_b_selected,
-        "recent_excluded_a": recent_a,
-        "recent_excluded_b": recent_b,
-        "rank_gap": abs(get_rank_level(player_a.get("rank_points", 0)) - get_rank_level(player_b.get("rank_points", 0))),
-        "summary": get_smart_random_rule(player_a, player_b)["summary"],
-    }
 
 
-def get_available_team_tiers():
-    """Return active club tiers for the friendly-mode selector."""
-    tiers = []
-    for team in _all_random_teams():
-        tier = str(team.get("tier") or "").strip().upper()
-        if tier and tier not in tiers:
-            tiers.append(tier)
-    preferred = CLUB_TIER_ORDER
-    return sorted(tiers, key=lambda value: (preferred.index(value) if value in preferred else 99, value))
 
 
-def friendly_random_team_pair(tier, excluded_names=None):
-    """Pick two different active clubs from the selected tier; no history is created."""
-    selected_tier = str(tier or "").strip().upper()
-    if not selected_tier:
-        raise ValueError("Hãy chọn Tier CLB cho trận giao hữu.")
-    excluded = {str(name or "").casefold() for name in (excluded_names or []) if name}
-    candidates = [
-        team for team in _all_random_teams()
-        if str(team.get("tier") or "").strip().upper() == selected_tier
-        and _normalize_team_name(team.get("display")) not in excluded
-    ]
-    if len(candidates) < 2 and excluded:
-        candidates = [
-            team for team in _all_random_teams()
-            if str(team.get("tier") or "").strip().upper() == selected_tier
-        ]
-    if len(candidates) < 2:
-        raise ValueError(f"Tier {selected_tier} cần ít nhất 2 CLB khác nhau để đá giao hữu.")
-    team_a, team_b = random.sample(candidates, 2)
-    return {
-        "mode": MATCH_MODE_FRIENDLY,
-        "selected_tier": selected_tier,
-        "team_a": team_a["display"],
-        "team_b": team_b["display"],
-        "overall_a": int(team_a["overall"]),
-        "overall_b": int(team_b["overall"]),
-        "total_stats_a": int(team_a.get("total_stats") or 0),
-        "total_stats_b": int(team_b.get("total_stats") or 0),
-        "power_score_a": float(team_a.get("power_score", 0)),
-        "power_score_b": float(team_b.get("power_score", 0)),
-        "tier_a": team_a.get("tier") or selected_tier,
-        "tier_b": team_b.get("tier") or selected_tier,
-        "logo_a": team_a.get("logo_url") or "",
-        "logo_b": team_b.get("logo_url") or "",
-        "league_a": team_a.get("league") or "",
-        "league_b": team_b.get("league") or "",
-    }
 
 
-def apply_host_xp_factor(delta, factor=HOST_XP_FACTOR):
-    """Apply the room-host coefficient to the absolute RP change."""
-    try:
-        safe_factor = float(factor or HOST_XP_FACTOR)
-    except (TypeError, ValueError):
-        safe_factor = HOST_XP_FACTOR
-    value = int(delta or 0)
-    if value <= 0:
-        return value
-    adjusted = round(value * safe_factor)
-    return max(1, adjusted)
+
 
 
 def require_db():
@@ -1796,1782 +934,142 @@ def set_device_cookie(response):
 # Database helpers
 # =========================
 
-def get_user_by_username(username):
-    """Find a user by username without creating extra Supabase clients."""
-    require_db()
-    normalized = str(username or "").strip()
-    if not normalized:
-        return None
-
-    result = execute_query(
-        db.table("users").select("*").ilike("username", normalized).limit(20),
-        "get_user_by_username",
-    )
-    target = normalized.casefold()
-    return next(
-        (
-            row for row in (result.data or [])
-            if str(row.get("username") or "").strip().casefold() == target
-        ),
-        None,
-    )
 
 
-def calculated_total_matches(player):
-    """Nguồn chuẩn duy nhất: tổng trận = thắng + hòa + thua."""
-    player = player or {}
-    return max(0, int(player.get("wins", 0) or 0)) + max(0, int(player.get("draws", 0) or 0)) + max(0, int(player.get("losses", 0) or 0))
 
 
-def normalize_player_match_totals(player):
-    item = dict(player or {})
-    item["total_matches"] = calculated_total_matches(item)
-    return item
 
 
-def get_user(user_id):
-    require_db()
-    result = execute_query(
-        db.table("users").select("*").eq("id", user_id).limit(1),
-        "get_user",
-    )
-    return normalize_player_match_totals(result.data[0]) if result.data else None
 
 
-def is_user_online_now(user):
-    """Nguồn chuẩn Online duy nhất cho Players, Invite và Quick Match."""
-    return presence_is_online(
-        user,
-        now=now_dt(),
-        parse_datetime=parse_dt,
-        timeout_seconds=ONLINE_TIMEOUT_SECONDS,
-    )
 
 
-def _player_ranking_sort_key(player):
-    points = int(player.get("rank_points", 0) or 0)
-    wins = int(player.get("wins", 0) or 0)
-    goals_for = int(player.get("goals_for", 0) or 0)
-    goals_against = int(player.get("goals_against", 0) or 0)
-    total_matches = calculated_total_matches(player)
-    name = str(player.get("display_name") or player.get("username") or "").casefold()
-    return (-points, -wins, -(goals_for - goals_against), -goals_for, -total_matches, name)
 
 
-def list_players(include_admin=False):
-    require_db()
-    cached = cache_get("_rz_players_all")
-    if cached is None:
-        shared = ttl_cache_get("players_raw")
-        if shared is None:
-            result = execute_query(
-                db.table("users").select("*").order("rank_points", desc=True),
-                "list_players",
-            )
-            shared = result.data or []
-            ttl_cache_set("players_raw", shared, 8)
-        cached = [dict(row) for row in shared]
-        cache_set("_rz_players_all", cached)
-
-    players = cached if include_admin else [p for p in cached if p.get("role") == "player"]
-    safe = []
-    for player in players:
-        item = normalize_player_match_totals(player)
-        item["is_online"] = is_user_online_now(item)
-        safe.append(item)
-
-    # Xếp hạng ổn định khi nhiều người bằng điểm: thắng, hiệu số, bàn thắng, số trận.
-    achievement_map = list_user_achievement_map()
-    if not include_admin:
-        safe.sort(key=_player_ranking_sort_key)
-        for position, item in enumerate(safe, 1):
-            item["position"] = position
-            item["rank_info"] = get_player_rank_info(item, position)
-            decorate_player_achievements(item, position, achievement_map)
-    else:
-        for item in safe:
-            item["rank_info"] = get_rank_info(item.get("rank_points", 0))
-            decorate_player_achievements(item, None, achievement_map)
-
-    # Gắn mỹ phẩm hồ sơ theo lô để Players/BXH/Dashboard dùng chung,
-    # tránh truy vấn N+1 cho từng người chơi.
-    try:
-        avatar_frame_map = profile_equipment_service.build_avatar_frame_map(safe)
-        name_style_map = profile_equipment_service.build_name_style_map(safe)
-        profile_badge_map = profile_equipment_service.build_profile_badge_map(safe)
-    except Exception as exc:
-        app.logger.debug("Player cosmetic map fallback: %s", exc)
-        avatar_frame_map = {}
-        name_style_map = {}
-        profile_badge_map = {}
-    for item in safe:
-        user_id = str(item.get("id"))
-        item["avatar_frame"] = avatar_frame_map.get(user_id)
-        item["name_style"] = name_style_map.get(user_id)
-        item["profile_badge"] = profile_badge_map.get(user_id)
-        metadata = (item.get("name_style") or {}).get("metadata") if isinstance(item.get("name_style"), dict) else {}
-        item["name_style_class"] = str((metadata or {}).get("css_class") or "").strip()
-
-    return safe
 
 
-def users_map():
-    cached = cache_get("_rz_users_map")
-    if cached is not None:
-        return cached
-
-    mapped = {user["id"]: user for user in list_players(include_admin=True)}
-    return cache_set("_rz_users_map", mapped)
 
 
-def get_device_link(device_id):
-    result = db.table("user_devices").select("*").eq("device_id", device_id).limit(1).execute()
-    return result.data[0] if result.data else None
 
 
-def is_admin_managed_test_account(user):
-    """Tài khoản do Admin tạo/import: không bị khóa theo thiết bị hoặc cảnh báo trùng IP."""
-    marker = str((user or {}).get("register_ip") or "").strip().upper()
-    return marker.startswith("ADMIN_TEST") or marker.startswith("ADMIN_CREATED")
 
 
 IP_WARNING_SETTING_KEY = "duplicate_ip_warning_config"
 _ip_warning_config_cache = {"value": None, "expires_at": 0.0}
 
 
-def get_duplicate_ip_warning_config(force=False):
-    """Cấu hình cảnh báo IP: bật/tắt toàn cục và danh sách tài khoản tin cậy."""
-    now = time.time()
-    if not force and _ip_warning_config_cache["value"] is not None and now < _ip_warning_config_cache["expires_at"]:
-        return dict(_ip_warning_config_cache["value"])
-
-    config = {"enabled": True, "ignore_admin_managed": True, "trusted_user_ids": []}
-    if db is not None:
-        try:
-            result = execute_query(
-                db.table("system_settings").select("setting_value")
-                .eq("setting_key", IP_WARNING_SETTING_KEY).limit(1),
-                "load_duplicate_ip_warning_config", attempts=2,
-            )
-            stored = (result.data or [{}])[0].get("setting_value") if result.data else {}
-            if isinstance(stored, dict):
-                config["enabled"] = bool(stored.get("enabled", True))
-                config["ignore_admin_managed"] = bool(stored.get("ignore_admin_managed", True))
-                config["trusted_user_ids"] = sorted({str(x) for x in (stored.get("trusted_user_ids") or []) if x})
-        except Exception as exc:
-            print(f"duplicate ip config warning: {exc}")
-
-    _ip_warning_config_cache.update({"value": dict(config), "expires_at": now + 30})
-    return config
-
-
-def user_ignored_for_duplicate_ip(user, config=None):
-    config = config or get_duplicate_ip_warning_config()
-    if not user:
-        return False
-    user_id = str(user.get("id") or "")
-    if user_id and user_id in set(config.get("trusted_user_ids") or []):
-        return True
-    if config.get("ignore_admin_managed", True):
-        return user.get("role") == "admin" or is_admin_user(user) or is_admin_managed_test_account(user)
-    return False
-
-
-def link_device_to_user(user):
-    # Admin chính và tài khoản do Admin tạo/import không bị giới hạn thiết bị/IP.
-    # Đây chỉ là ngoại lệ xác thực; mọi trận Rank vẫn tính W/H/B và RP bình thường.
-    if user.get("role") == "admin" or is_admin_managed_test_account(user):
-        return True, ""
-
-    device_id = get_device_id()
-    link = get_device_link(device_id)
-
-    if link and link["user_id"] != user["id"]:
-        return False, "Thiết bị này đã được liên kết với một tài khoản player khác."
-
-    ip = get_client_ip()
-    user_agent = request.headers.get("User-Agent", "")
-
-    if not link:
-        execute_query(
-            db.table("user_devices").insert({
-                "user_id": user["id"],
-                "device_id": device_id,
-                "ip_address": ip,
-                "user_agent": user_agent,
-                "last_seen_at": now_iso(),
-            }),
-            "link_device_create",
-        )
-    else:
-        execute_query(
-            db.table("user_devices").update({
-                "ip_address": ip,
-                "user_agent": user_agent,
-                "last_seen_at": now_iso(),
-            }).eq("id", link["id"]),
-            "link_device_update",
-        )
-
-    return True, ""
-
-
-def device_can_register():
-    device_id = get_device_id()
-    link = get_device_link(device_id)
-    if link:
-        return False, "Thiết bị này đã có tài khoản player. Mỗi thiết bị chỉ được tạo 1 tài khoản."
-
-    ip = get_client_ip()
-    ua = request.headers.get("User-Agent", "")
-
-    # Chặn mềm: cùng IP + cùng User Agent đã từng đăng ký.
-    result = (
-        db.table("users")
-        .select("id")
-        .eq("role", "player")
-        .eq("register_ip", ip)
-        .eq("register_user_agent", ua)
-        .limit(1)
-        .execute()
-    )
-
-    if result.data:
-        return False, "Thiết bị/trình duyệt này có dấu hiệu đã đăng ký tài khoản player."
-
-    return True, ""
 
 
 
-def list_all_users():
-    require_db()
-    result = execute_query(
-        db.table("users").select("*").order("created_at", desc=True),
-        "list_all_users",
-    )
-    return result.data or []
 
 
-def log_admin_action(action, target_type="system", target_id=None, target_label="", details=""):
-    """Ghi nhật ký quản trị; lỗi ghi log không được làm hỏng thao tác chính."""
-    try:
-        actor = current_user()
-        if not actor or not is_admin_user(actor):
-            return
-        execute_query(
-            db.table("admin_activity_logs").insert({
-                "admin_user_id": actor.get("id"),
-                "admin_name": actor.get("username") or actor.get("display_name") or "Admin",
-                "action": str(action)[:80],
-                "target_type": str(target_type)[:50],
-                "target_id": str(target_id)[:120] if target_id else None,
-                "target_label": str(target_label)[:160] if target_label else None,
-                "details": str(details)[:1000] if details else None,
-                "ip_address": get_client_ip(),
-            }),
-            "log_admin_action",
-            attempts=2,
-        )
-    except Exception as exc:
-        print(f"Admin audit log warning: {exc}")
 
 
-def existing_user_id(user_id):
-    """Trả về UUID chỉ khi người dùng thực sự còn tồn tại trong public.users."""
-    if not user_id:
-        return None
-    try:
-        result = execute_query(
-            db.table("users").select("id").eq("id", user_id).limit(1),
-            "existing_user_id",
-            attempts=1,
-        )
-        rows = result.data or []
-        return rows[0].get("id") if rows else None
-    except Exception as exc:
-        print(f"existing_user_id warning: {exc}")
-        return None
 
 
-def create_admin_announcement(title, message, admin_user_id=None):
-    """Tạo thông báo và tự phục hồi khi khóa ngoại admin cũ bị lệch.
-
-    Một số dự án nâng cấp từ phiên bản cũ còn giữ session/admin UUID không còn
-    tồn tại trong public.users. Khi đó Postgres trả mã 23503. Thông báo không
-    bắt buộc phải có admin_user_id nên ta thử lại với NULL thay vì gây lỗi 500.
-    """
-    payload = {
-        "admin_user_id": existing_user_id(admin_user_id),
-        "title": title,
-        "message": message,
-        "is_active": True,
-    }
-    try:
-        return db.table("admin_announcements").insert(payload).execute()
-    except Exception as exc:
-        error_code = str(getattr(exc, "code", "") or "")
-        error_text = str(exc)
-        if payload["admin_user_id"] and (error_code == "23503" or "23503" in error_text):
-            payload["admin_user_id"] = None
-            return db.table("admin_announcements").insert(payload).execute()
-        raise
 
 
-def list_admin_activity_logs(limit=150):
-    try:
-        result = execute_query(
-            db.table("admin_activity_logs")
-            .select("*")
-            .order("created_at", desc=True)
-            .limit(limit),
-            "list_admin_activity_logs",
-        )
-        return result.data or []
-    except Exception as exc:
-        print(f"list_admin_activity_logs warning: {exc}")
-        return []
 
 
-def get_password_reset_request(request_id):
-    result = execute_query(
-        db.table("password_reset_requests").select("*").eq("id", request_id).limit(1),
-        "get_password_reset_request",
-    )
-    return result.data[0] if result.data else None
 
 
-def list_password_reset_requests(status=None, limit=100):
-    try:
-        query = (
-            db.table("password_reset_requests")
-            .select("*")
-            .order("created_at", desc=True)
-            .limit(limit)
-        )
-        if status:
-            query = query.eq("status", status)
-        result = execute_query(query, "list_password_reset_requests")
-        rows = [dict(row) for row in (result.data or [])]
-        users = users_map()
-        for row in rows:
-            user = users.get(row.get("user_id"), {})
-            row["current_username"] = user.get("username") or row.get("username_snapshot") or "-"
-            row["current_zalo_name"] = user.get("zalo_name") or row.get("zalo_name_snapshot") or "-"
-        return rows
-    except Exception as exc:
-        print(f"list_password_reset_requests warning: {exc}")
-        return []
 
 
-def list_user_devices():
-    """Lấy IP thiết bị và lưu trạng thái tải để Admin không hiểu nhầm dữ liệu rỗng."""
-    require_db()
-    list_user_devices.last_status = {
-        "ok": False,
-        "row_count": 0,
-        "error": None,
-        "source": "user_devices",
-    }
-    try:
-        result = execute_query(
-            db.table("user_devices")
-            .select("user_id,ip_address,last_seen_at,created_at")
-            .order("last_seen_at", desc=True),
-            "list_user_devices",
-        )
-        rows = result.data or []
-        list_user_devices.last_status = {
-            "ok": True,
-            "row_count": len(rows),
-            "error": None,
-            "source": "user_devices",
-        }
-        return rows
-    except Exception as exc:
-        # Không làm sập trang Admin, nhưng phải đưa trạng thái lỗi ra giao diện.
-        message = str(exc).strip() or exc.__class__.__name__
-        list_user_devices.last_status = {
-            "ok": False,
-            "row_count": 0,
-            "error": message[:240],
-            "source": "register_ip_only",
-        }
-        print(f"list_user_devices warning: {exc}")
-        return []
+
+
+
+
+
+
 
 
 list_user_devices.last_status = {"ok": None, "row_count": 0, "error": None, "source": "not_loaded"}
 
 
-def decorate_admin_users(users):
-    """Bổ sung IP/trùng IP cho Admin bằng read-model nếu đã cài V1.3.34."""
-    rows = [dict(user) for user in users]
-    for row in rows:
-        row["admin_permissions"] = _admin_permissions(row)
-
-    config = get_duplicate_ip_warning_config()
-    warnings_enabled = bool(config.get("enabled", True))
-    username_by_id = {str(user.get("id")): user.get("username", "-") for user in rows}
-
-    # Fast path: một SELECT nhỏ, không quét user_devices rồi group lại mỗi lần mở tab.
-    ip_cache = None
-    try:
-        loader = globals().get("load_user_ip_cache")
-        if callable(loader):
-            ip_cache = loader()
-    except Exception:
-        ip_cache = None
-
-    if ip_cache is not None:
-        list_user_devices.last_status = {
-            "ok": True, "row_count": len(ip_cache), "error": None, "source": "read_model_ip_cache"
-        }
-        ip_owners = {}
-        for user_id, item in ip_cache.items():
-            for ip in (item.get("known_ips") or []):
-                if ip:
-                    ip_owners.setdefault(str(ip), set()).add(str(user_id))
-        for user in rows:
-            user_id = str(user.get("id") or "")
-            item = ip_cache.get(user_id) or {}
-            known_ips = [str(ip) for ip in (item.get("known_ips") or []) if ip]
-            duplicate_ips = [str(ip) for ip in (item.get("duplicate_ips") or []) if ip]
-            duplicate_accounts = sorted({
-                username_by_id.get(owner_id, "-")
-                for ip in duplicate_ips
-                for owner_id in ip_owners.get(ip, set())
-                if owner_id != user_id
-            })
-            trusted = user_ignored_for_duplicate_ip(user, config)
-            detected = bool(duplicate_ips)
-            user["latest_ip"] = item.get("latest_ip") or user.get("register_ip") or "-"
-            user["known_ips"] = known_ips
-            user["duplicate_ips"] = duplicate_ips
-            user["duplicate_ip_count"] = int(item.get("duplicate_ip_count") or 0)
-            user["duplicate_ip_accounts"] = duplicate_accounts
-            user["duplicate_ip_detected"] = detected
-            user["duplicate_ip_trusted"] = trusted
-            user["duplicate_ip_warning_visible"] = detected and warnings_enabled and not trusted
-        return rows
-
-    # Compatibility fallback trước khi chạy migration V1.3.34.
-    devices = list_user_devices()
-    known_ips_by_user = {str(user.get("id")): set() for user in rows}
-    latest_ip_by_user = {}
-    row_by_id = {str(user.get("id")): user for user in rows}
-    for user in rows:
-        user_id = str(user.get("id") or "")
-        register_ip = str(user.get("register_ip") or "").strip()
-        if user_id and register_ip and not register_ip.upper().startswith(("ADMIN_TEST", "ADMIN_CREATED")):
-            known_ips_by_user.setdefault(user_id, set()).add(register_ip)
-    for device in devices:
-        user_id = str(device.get("user_id") or "")
-        ip = str(device.get("ip_address") or "").strip()
-        if not user_id or not ip or user_id not in row_by_id:
-            continue
-        known_ips_by_user.setdefault(user_id, set()).add(ip)
-        latest_ip_by_user.setdefault(user_id, ip)
-    ip_owners = {}
-    for user_id, ip_values in known_ips_by_user.items():
-        for ip in ip_values:
-            ip_owners.setdefault(ip, set()).add(user_id)
-    for user in rows:
-        user_id = str(user.get("id") or "")
-        known_ips = sorted(known_ips_by_user.get(user_id, set()))
-        duplicate_ips = [ip for ip in known_ips if len(ip_owners.get(ip, set())) > 1]
-        duplicate_accounts = sorted({username_by_id.get(owner_id, "-") for ip in duplicate_ips for owner_id in ip_owners.get(ip, set()) if owner_id != user_id})
-        trusted = user_ignored_for_duplicate_ip(user, config)
-        detected = bool(duplicate_accounts)
-        user["latest_ip"] = latest_ip_by_user.get(user_id) or user.get("register_ip") or "-"
-        user["known_ips"] = known_ips
-        user["duplicate_ips"] = duplicate_ips
-        user["duplicate_ip_count"] = max([len(ip_owners.get(ip, set())) for ip in duplicate_ips] or [0])
-        user["duplicate_ip_accounts"] = duplicate_accounts
-        user["duplicate_ip_detected"] = detected
-        user["duplicate_ip_trusted"] = trusted
-        user["duplicate_ip_warning_visible"] = detected and warnings_enabled and not trusted
-    return rows
-
-def build_duplicate_ip_groups(users):
-    """Gom các IP đang được từ 2 tài khoản trở lên sử dụng để Admin dễ kiểm tra clone."""
-    ip_users = {}
-
-    for user in users:
-        user_id = str(user.get("id") or "")
-        if not user_id:
-            continue
-        for ip in user.get("known_ips") or []:
-            normalized_ip = (ip or "").strip()
-            if not normalized_ip:
-                continue
-            ip_users.setdefault(normalized_ip, {})[user_id] = user
-
-    groups = []
-    for ip, owners in ip_users.items():
-        if len(owners) < 2:
-            continue
-
-        accounts = sorted(
-            [
-                {
-                    "id": owner.get("id"),
-                    "username": owner.get("username") or "-",
-                    "display_name": owner.get("display_name") or owner.get("username") or "-",
-                    "account_status": owner.get("account_status") or "approved",
-                    "role": owner.get("role") or "player",
-                    "admin_level": owner.get("admin_level") or "none",
-                }
-                for owner in owners.values()
-            ],
-            key=lambda item: item["username"].lower(),
-        )
-        groups.append({
-            "ip": ip,
-            "account_count": len(accounts),
-            "accounts": accounts,
-            "usernames": [item["username"] for item in accounts],
-        })
-
-    groups.sort(key=lambda item: (-item["account_count"], item["ip"]))
-    return groups
-
-
-def get_invite_code_record(code_value):
-    code_value = normalize_invite_code(code_value)
-    if not code_value:
-        return None
-    result = execute_query(
-        db.table("registration_invite_codes")
-        .select("*")
-        .eq("code", code_value)
-        .limit(1),
-        "get_invite_code_record",
-    )
-    return result.data[0] if result.data else None
-
-
-def list_registration_invite_codes(limit=100):
-    result = execute_query(
-        db.table("registration_invite_codes")
-        .select("*")
-        .order("created_at", desc=True)
-        .limit(limit),
-        "list_registration_invite_codes",
-    )
-    records = result.data or []
-    users = {u["id"]: u for u in list_all_users()}
-    for record in records:
-        record["created_by_name"] = users.get(record.get("created_by"), {}).get("display_name", "-")
-        record["used_by_name"] = users.get(record.get("used_by"), {}).get("display_name", "-")
-    return records
-
-
-def auto_confirm_expired_match_if_needed(match):
-    """Tự xác nhận trận chờ quá 1 phút, độc lập với trạng thái phòng.
-
-    Hủy/đóng phòng chỉ giải phóng người chơi. Kết quả đã nhập vẫn tiếp tục
-    chờ xác nhận và được tính RP sau thời hạn nếu không có tranh chấp.
-    """
-    if not match or match.get("status") != "waiting_confirm":
-        return match
-    submitted_at = aware_utc(parse_dt(match.get("updated_at"))) or aware_utc(parse_dt(match.get("created_at")))
-    if not submitted_at or submitted_at + timedelta(seconds=RESULT_CONFIRM_TIMEOUT_SECONDS) > now_dt():
-        return match
-    try:
-        # Lưu trạng thái người chơi/phòng trước khi cộng RP để tạo đúng sự kiện
-        # chuỗi thắng hoặc SHUTDOWN cho cả luồng tự xác nhận sau 1 phút.
-        users_before_streak_event = users_map()
-        room_before_result = None
-        try:
-            room_before_result_query = execute_query(
-                db.table("match_rooms").select("*").eq("match_id", match.get("id")).limit(1),
-                "load_room_before_auto_confirm_streak_event",
-                attempts=2,
-            )
-            room_before_result = (room_before_result_query.data or [None])[0]
-        except Exception as room_exc:
-            print(
-                f"load_room_before_auto_confirm_streak_event warning match={match.get('id')}: "
-                f"{type(room_exc).__name__}: {room_exc}"
-            )
-
-        # Series child matches must never pass through the single-match RP engine.
-        # V1.3.49 auto-confirmed an expired child with apply_match_result(), which
-        # could award per-game RP and leave match_series_games out of sync.
-        if is_series_child_match(match):
-            if not room_before_result:
-                raise ValueError("Không tìm thấy phòng của trận con Series để tự xác nhận.")
-            auto_confirmer = room_before_result.get("guest_user_id") or room_before_result.get("host_user_id")
-            confirm_series_child_match(room_before_result, dict(match), auto_confirmer)
-            streak_event = None
-        else:
-            apply_match_result(dict(match))
-            streak_event = build_win_streak_event(
-                match, room_before_result, users_before_streak_event
-            )
-            if streak_event:
-                publish_global_streak_event(streak_event)
-
-        fresh_result = execute_query(
-            db.table("matches").select("*").eq("id", match.get("id")).limit(1),
-            "reload_auto_confirmed_match",
-            attempts=2,
-        )
-        fresh = dict(fresh_result.data[0]) if fresh_result.data else dict(match)
-
-        # Chỉ đưa phòng đang chờ kết quả về trạng thái sẵn sàng. Nếu Admin đã
-        # hủy phòng, giữ phòng cancelled nhưng kết quả vẫn được tính bình thường.
-        room_result = execute_query(
-            db.table("match_rooms").select("id,status").eq("match_id", match.get("id")).limit(1),
-            "load_room_for_auto_confirm",
-            attempts=2,
-        )
-        linked_room = (room_result.data or [None])[0]
-        if linked_room and linked_room.get("status") == "waiting_result_confirm" and not is_series_child_match(fresh):
-            execute_query(
-                db.table("match_rooms").update({
-                    "status": "waiting_ready",
-                    "guest_ready": False,
-                    "host_score": None,
-                    "guest_score": None,
-                    "match_id": None,
-                    "submitted_by_id": None,
-                    "confirmed_by_id": None,
-                    "state_expires_at": None,
-                    "updated_at": now_iso(),
-                }).eq("id", linked_room.get("id")).eq("status", "waiting_result_confirm"),
-                "release_room_after_auto_confirm",
-                attempts=2,
-            )
-        cache_delete("_rz_matches_all", "_rz_rooms_all")
-        ttl_cache_delete("matches_raw")
-        ttl_cache_delete("rooms_raw")
-        return fresh
-    except Exception as exc:
-        print(f"auto_confirm_expired_match warning match={match.get('id')}: {type(exc).__name__}: {exc}")
-        return match
-
-
-def _safe_player_display_name(player):
-    """Return a render-safe player name; never leak Python None into HTML."""
-    player = player or {}
-    value = player.get("display_name") or player.get("username") or "Unknown"
-    value = str(value).strip()
-    return value if value and value.lower() != "none" else "Unknown"
-
-
-def hydrate_match_player_fields(match):
-    """Attach player display/avatar fields to a raw matches row.
-
-    V1.3.34 introduced targeted read-model queries that return raw match rows.
-    This helper makes those rows safe for Dashboard/Profile/History without
-    reverting to a full-table match query or causing per-match user queries.
-    users_map() is request-cached, so multiple matches reuse one user snapshot.
-    """
-    item = match if isinstance(match, dict) else dict(match or {})
-    users = users_map()
-    for prefix in ("player1", "player2"):
-        user_id = item.get(f"{prefix}_id")
-        player = users.get(user_id) or users.get(str(user_id)) or {}
-        current_name = item.get(f"{prefix}_name")
-        if current_name is None or not str(current_name).strip() or str(current_name).strip().lower() == "none":
-            item[f"{prefix}_name"] = _safe_player_display_name(player)
-        for field, source in (
-            ("avatar_url", "avatar_url"),
-            ("avatar_frame", "avatar_frame"),
-            ("achievement", "featured_achievement"),
-        ):
-            key = f"{prefix}_{field}"
-            if not item.get(key):
-                item[key] = player.get(source)
-    return item
-
-
-def list_matches(status=None):
-    require_db()
-
-    cached = cache_get("_rz_matches_all")
-    if cached is None:
-        query = db.table("matches").select("*").order("created_at", desc=True)
-        result = execute_query(query, "list_matches")
-        cached = result.data or []
-        cache_set("_rz_matches_all", cached)
-
-    processed_matches = [auto_confirm_expired_match_if_needed(dict(m)) for m in cached]
-    matches = [m for m in processed_matches if not status or m.get("status") == status]
-    users = users_map()
-
-    for match in matches:
-        hydrate_match_player_fields(match)
-        match["submitted_by_name"] = _safe_player_display_name(users.get(match.get("submitted_by_id"), {})) if match.get("submitted_by_id") else ""
-        match["winner_name"] = _safe_player_display_name(users.get(match.get("winner_id"), {})) if match.get("winner_id") else ""
-        match["loser_name"] = _safe_player_display_name(users.get(match.get("loser_id"), {})) if match.get("loser_id") else ""
-
-    return matches
-
-
-def match_status_label(status):
-    return MATCH_STATUS_LABELS.get(status, str(status or "-").replace("_", " ").title())
-
-
-def _normalize_match_score(value):
-    """Return an integer score while preserving a missing score as None."""
-    if value is None or value == "":
-        return None
-    try:
-        return int(round(float(value)))
-    except (TypeError, ValueError, OverflowError):
-        return None
-
-
-def _same_user_id(left, right):
-    """Compare Supabase/user IDs safely even when one side is not a string."""
-    if left is None or right is None:
-        return False
-    return str(left) == str(right)
-
-
-def _normalize_match_delta(value):
-    """Normalize RP deltas returned as int, float or numeric string."""
-    try:
-        return int(round(float(value or 0)))
-    except (TypeError, ValueError, OverflowError):
-        return 0
-
-
-def decorate_match_for_view(match, viewer_id=None):
-    """Prepare one match with a single, consistent left/right display order.
-
-    Personal history and Profile always put the viewed player on the left.
-    System-wide history keeps the original player1/player2 order. Winner/loser
-    display data is derived from the confirmed score, so stale winner_id fields
-    cannot make the UI show the wrong side.
-    """
-    item = dict(match or {})
-    hydrate_match_player_fields(item)
-    item["is_forfeit"] = is_forfeit_match(item)
-    item["forfeit_loser_id"] = forfeit_loser_id(item) if item["is_forfeit"] else None
-    if item["is_forfeit"]:
-        item["note"] = forfeit_display_note(item)
-    item["status_label"] = "Bỏ cuộc" if item["is_forfeit"] else match_status_label(item.get("status"))
-    item["created_at_display"] = format_vn_datetime(item.get("created_at"))
-    item["is_cancelled"] = item.get("status") == "cancelled"
-    rp_details = item.get("rp_details") or {}
-    repeat_details = rp_details.get("repeat_opponent") if isinstance(rp_details, dict) else {}
-    repeat_details = repeat_details if isinstance(repeat_details, dict) else {}
-    item["repeat_opponent_details"] = repeat_details
-    item["is_no_rp_pair_match"] = repeat_details.get("counted_for_rp") is False
-    item["repeat_encounter_number"] = repeat_details.get("encounter_number")
-
-    score1 = _normalize_match_score(item.get("score1"))
-    score2 = _normalize_match_score(item.get("score2"))
-    item["score1_normalized"] = score1
-    item["score2_normalized"] = score2
-
-    player1_id = item.get("player1_id")
-    player2_id = item.get("player2_id")
-    viewer_is_player1 = _same_user_id(viewer_id, player1_id)
-    viewer_is_player2 = _same_user_id(viewer_id, player2_id)
-    item["is_mine"] = bool(viewer_is_player1 or viewer_is_player2)
-
-    computed_winner_id = None
-    computed_loser_id = None
-    is_confirmed_result = (
-        item.get("status") == "confirmed"
-        and score1 is not None
-        and score2 is not None
-    )
-    if is_confirmed_result:
-        if score1 > score2:
-            computed_winner_id, computed_loser_id = player1_id, player2_id
-        elif score2 > score1:
-            computed_winner_id, computed_loser_id = player2_id, player1_id
-
-    # Display-only winner/loser fields use the score as source of truth.
-    item["display_winner_id"] = computed_winner_id
-    item["display_loser_id"] = computed_loser_id
-    if computed_winner_id is not None:
-        item["winner_name"] = (
-            item.get("player1_name")
-            if _same_user_id(computed_winner_id, player1_id)
-            else item.get("player2_name")
-        )
-        item["loser_name"] = (
-            item.get("player2_name")
-            if _same_user_id(computed_loser_id, player2_id)
-            else item.get("player1_name")
-        )
-    elif is_confirmed_result:
-        item["winner_name"] = ""
-        item["loser_name"] = ""
-
-    # Personal views always put the relevant player on the left.
-    left_is_player1 = not viewer_is_player2
-    if left_is_player1:
-        left_prefix, right_prefix = "player1", "player2"
-        left_score, right_score = score1, score2
-        left_delta, right_delta = item.get("delta1"), item.get("delta2")
-        left_team, right_team = item.get("team1"), item.get("team2")
-    else:
-        left_prefix, right_prefix = "player2", "player1"
-        left_score, right_score = score2, score1
-        left_delta, right_delta = item.get("delta2"), item.get("delta1")
-        left_team, right_team = item.get("team2"), item.get("team1")
-
-    def side_value(prefix, suffix):
-        return item.get(f"{prefix}_{suffix}")
-
-    item["left_player_id"] = side_value(left_prefix, "id")
-    item["left_player_name"] = side_value(left_prefix, "name")
-    item["left_avatar_url"] = side_value(left_prefix, "avatar_url")
-    item["left_avatar_frame"] = side_value(left_prefix, "avatar_frame")
-    item["left_achievement"] = side_value(left_prefix, "achievement")
-    item["left_team"] = left_team
-    item["left_score"] = left_score
-    item["left_delta"] = _normalize_match_delta(left_delta)
-
-    item["right_player_id"] = side_value(right_prefix, "id")
-    item["right_player_name"] = side_value(right_prefix, "name")
-    item["right_avatar_url"] = side_value(right_prefix, "avatar_url")
-    item["right_avatar_frame"] = side_value(right_prefix, "avatar_frame")
-    item["right_achievement"] = side_value(right_prefix, "achievement")
-    item["right_team"] = right_team
-    item["right_score"] = right_score
-    item["right_delta"] = _normalize_match_delta(right_delta)
-
-    if item["is_forfeit"]:
-        item["score_display"] = "Bỏ cuộc"
-    elif item["is_cancelled"]:
-        item["score_display"] = "Không tính"
-    else:
-        left_score_display = left_score if left_score is not None else "-"
-        right_score_display = right_score if right_score is not None else "-"
-        item["score_display"] = f"{left_score_display} - {right_score_display}"
-
-    item["left_result_code"] = "neutral"
-    item["left_result_label"] = item["status_label"]
-    item["right_result_code"] = "neutral"
-    item["right_result_label"] = item["status_label"]
-
-    if item["is_forfeit"]:
-        left_is_loser = _same_user_id(item.get("forfeit_loser_id"), item.get("left_player_id"))
-        right_is_loser = _same_user_id(item.get("forfeit_loser_id"), item.get("right_player_id"))
-        if left_is_loser:
-            item["left_result_code"], item["left_result_label"] = "loss", "THUA BỎ CUỘC"
-            item["right_result_code"], item["right_result_label"] = "neutral", "ĐỐI THỦ BỎ CUỘC"
-        elif right_is_loser:
-            item["left_result_code"], item["left_result_label"] = "neutral", "ĐỐI THỦ BỎ CUỘC"
-            item["right_result_code"], item["right_result_label"] = "loss", "THUA BỎ CUỘC"
-        else:
-            item["left_result_code"] = item["right_result_code"] = "cancelled"
-            item["left_result_label"] = item["right_result_label"] = "BỎ CUỘC"
-    elif is_confirmed_result:
-        if left_score > right_score:
-            item["left_result_code"], item["left_result_label"] = "win", "THẮNG"
-            item["right_result_code"], item["right_result_label"] = "loss", "THUA"
-        elif left_score < right_score:
-            item["left_result_code"], item["left_result_label"] = "loss", "THUA"
-            item["right_result_code"], item["right_result_label"] = "win", "THẮNG"
-        else:
-            item["left_result_code"] = item["right_result_code"] = "draw"
-            item["left_result_label"] = item["right_result_label"] = "HÒA"
-    elif item.get("status") == "cancelled":
-        item["left_result_code"] = item["right_result_code"] = "cancelled"
-        item["left_result_label"] = item["right_result_label"] = "ĐÃ HỦY"
-    elif item.get("status") == "disputed":
-        item["left_result_code"] = item["right_result_code"] = "disputed"
-        item["left_result_label"] = item["right_result_label"] = "TRANH CHẤP"
-    else:
-        item["left_result_code"] = item["right_result_code"] = "pending"
-
-    item["result_code"] = "neutral"
-    item["result_label"] = item["status_label"]
-    item["my_delta"] = None
-    item["opponent_id"] = None
-    item["opponent_name"] = None
-    item["my_avatar_url"] = None
-    item["opponent_avatar_url"] = None
-    item["my_avatar_frame"] = None
-    item["opponent_avatar_frame"] = None
-    item["my_achievement"] = None
-    item["opponent_achievement"] = None
-    item["my_team"] = None
-    item["opponent_team"] = None
-
-    if item["is_mine"]:
-        # The viewed/current player is always the left side in personal views.
-        item["result_code"] = item["left_result_code"]
-        item["result_label"] = item["left_result_label"]
-        item["my_delta"] = item["left_delta"]
-        item["opponent_id"] = item["right_player_id"]
-        item["opponent_name"] = item["right_player_name"]
-        item["my_avatar_url"] = item["left_avatar_url"]
-        item["opponent_avatar_url"] = item["right_avatar_url"]
-        item["my_avatar_frame"] = item["left_avatar_frame"]
-        item["opponent_avatar_frame"] = item["right_avatar_frame"]
-        item["my_achievement"] = item["left_achievement"]
-        item["opponent_achievement"] = item["right_achievement"]
-        item["my_team"] = item["left_team"]
-        item["opponent_team"] = item["right_team"]
-
-    return item
-
-def build_player_activity_map(rooms=None, matches=None):
-    rooms = list_rooms() if rooms is None else rooms
-    matches = list_matches() if matches is None else matches
-    activity = {}
-
-    def set_status(user_id, code, label):
-        if not user_id:
-            return
-        current = activity.get(user_id)
-        if not current or ACTIVITY_PRIORITY.get(code, 0) > ACTIVITY_PRIORITY.get(current.get("code"), 0):
-            activity[user_id] = {"code": code, "label": label}
-
-    for room in rooms:
-        if not room_is_active(room):
-            continue
-        if room.get("status") == "waiting_ready":
-            code, label = "in_room", "Đang trong phòng"
-        elif room.get("status") == "waiting_result_confirm":
-            code, label = "waiting_confirm", "Chờ xác nhận"
-        else:
-            code, label = "playing", "Đang thi đấu"
-        set_status(room.get("host_user_id"), code, label)
-        set_status(room.get("guest_user_id"), code, label)
-
-    for match in matches:
-        if match.get("status") == "waiting_confirm":
-            code, label = "waiting_confirm", "Chờ xác nhận"
-        elif match.get("status") == "playing":
-            code, label = "playing", "Đang thi đấu"
-        else:
-            continue
-        set_status(match.get("player1_id"), code, label)
-        set_status(match.get("player2_id"), code, label)
-
-    return activity
-
-
-def get_match(match_id):
-    result = execute_query(
-        db.table("matches").select("*").eq("id", match_id).limit(1),
-        "get_match",
-    )
-    match = dict(result.data[0]) if result.data else None
-    return auto_confirm_expired_match_if_needed(match) if match else None
-
-
-def get_match_dispute(dispute_id):
-    result = execute_query(
-        db.table("match_disputes").select("*").eq("id", dispute_id).limit(1),
-        "get_match_dispute",
-    )
-    return dict(result.data[0]) if result.data else None
-
-
-def get_match_dispute_by_match(match_id, statuses=None):
-    query = db.table("match_disputes").select("*").eq("match_id", match_id).order("created_at", desc=True).limit(1)
-    if statuses:
-        status_list = list(statuses) if not isinstance(statuses, str) else [statuses]
-        query = query.in_("status", status_list)
-    result = execute_query(query, "get_match_dispute_by_match")
-    return dict(result.data[0]) if result.data else None
-
-
-def list_match_disputes(status=None):
-    query = db.table("match_disputes").select("*").order("created_at", desc=True)
-    if status:
-        query = query.eq("status", status)
-    result = execute_query(query, "list_match_disputes")
-    return [dict(item) for item in (result.data or [])]
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 # Dịch vụ thông báo cá nhân đã tách sang modules/notification_service.py.
 
-def dispute_reason_label(reason_code):
-    return DISPUTE_REASON_OPTIONS.get(reason_code, DISPUTE_REASON_OPTIONS["other"])
-
-
-def create_or_update_match_dispute(
-    room,
-    raised_by_id,
-    reason_code,
-    details="",
-    source="player",
-    evidence_path=None,
-):
-    if not room or not room.get("match_id"):
-        return None
-
-    reason_code = reason_code if reason_code in DISPUTE_REASON_OPTIONS else "other"
-    details = (details or "").strip()[:500]
-    existing = get_match_dispute_by_match(room.get("match_id"), DISPUTE_PENDING_STATUSES)
-    payload = {
-        "room_id": room.get("id"),
-        "raised_by_id": raised_by_id,
-        "reason_code": reason_code,
-        "reason_label": dispute_reason_label(reason_code),
-        "details": details or None,
-        "source": source,
-        "submitted_score1": room.get("host_score"),
-        "submitted_score2": room.get("guest_score"),
-        "status": "pending",
-        "updated_at": now_iso(),
-    }
-    if evidence_path:
-        payload.update({
-            "evidence_path": evidence_path,
-            "evidence_uploaded_at": now_iso(),
-        })
-
-    if existing:
-        result = execute_query(
-            db.table("match_disputes").update(payload).eq("id", existing.get("id")),
-            "update_match_dispute",
-        )
-    else:
-        payload["match_id"] = room.get("match_id")
-        result = execute_query(
-            db.table("match_disputes").insert(payload),
-            "create_match_dispute",
-        )
-    return dict(result.data[0]) if result.data else existing
-
-
-def decorate_match_dispute(dispute, all_matches=None):
-    item = dict(dispute or {})
-    match = None
-    if item.get("match_id") and all_matches is not None:
-        match = next((m for m in all_matches if str(m.get("id")) == str(item.get("match_id"))), None)
-    if item.get("match_id") and match is None:
-        match = get_match(item.get("match_id"))
-    users = users_map()
-    player1 = users.get((match or {}).get("player1_id"), {})
-    player2 = users.get((match or {}).get("player2_id"), {})
-    raised_by = users.get(item.get("raised_by_id"), {})
-    resolved_by = users.get(item.get("resolved_by_id"), {})
-
-    item["match"] = match or {}
-    item["player1_name"] = player1.get("display_name", "Unknown")
-    item["player2_name"] = player2.get("display_name", "Unknown")
-    item["player1_username"] = player1.get("username", "-")
-    item["player2_username"] = player2.get("username", "-")
-    item["player1_points"] = int(player1.get("rank_points", 0) or 0)
-    item["player2_points"] = int(player2.get("rank_points", 0) or 0)
-    item["raised_by_name"] = raised_by.get("display_name") or ("Hệ thống" if item.get("source") == "timeout" else "Không xác định")
-    item["resolved_by_name"] = resolved_by.get("display_name", "")
-    item["reason_label"] = item.get("reason_label") or dispute_reason_label(item.get("reason_code"))
-    item["evidence_url"] = get_dispute_evidence_signed_url(item.get("evidence_path"))
-    if item.get("submitted_score1") is None:
-        item["submitted_score1"] = (match or {}).get("score1")
-    if item.get("submitted_score2") is None:
-        item["submitted_score2"] = (match or {}).get("score2")
-
-    candidates = all_matches if all_matches is not None else list_matches()
-    pair = {(match or {}).get("player1_id"), (match or {}).get("player2_id")}
-    item["head_to_head"] = [
-        other for other in candidates
-        if other.get("status") == "confirmed"
-        and str(other.get("id")) != str(item.get("match_id"))
-        and {other.get("player1_id"), other.get("player2_id")} == pair
-    ][:5]
-    return item
 
 
 
-def invite_expiry_dt(invite):
-    explicit = aware_utc(parse_dt(invite.get("expires_at")))
-    if explicit:
-        return explicit
-    created = aware_utc(parse_dt(invite.get("created_at")))
-    return created + timedelta(seconds=INVITE_TIMEOUT_SECONDS) if created else None
 
 
-def expire_invite_if_needed(invite):
-    if not invite or invite.get("status") != "pending":
-        return invite
-
-    expires_at = invite_expiry_dt(invite)
-    invite["expires_at"] = expires_at.isoformat() if expires_at else None
-    invite["expires_in_seconds"] = max(0, int((expires_at - now_dt()).total_seconds())) if expires_at else 0
-
-    if expires_at and expires_at <= now_dt():
-        try:
-            execute_query(
-                db.table("match_invites").update({
-                    "status": "expired",
-                    "updated_at": now_iso(),
-                }).eq("id", invite.get("id")).eq("status", "pending"),
-                "expire_match_invite",
-            )
-            invite["status"] = "expired"
-            invite["expires_in_seconds"] = 0
-        except Exception as exc:
-            print(f"expire_invite_if_needed warning: {exc}")
-    return invite
 
 
-def get_invite(invite_id):
-    result = execute_query(
-        db.table("match_invites").select("*").eq("id", invite_id).limit(1),
-        "get_invite",
-    )
-    invite = dict(result.data[0]) if result.data else None
-    return expire_invite_if_needed(invite) if invite else None
 
 
-def list_invites(status=None):
-    cached = cache_get("_rz_invites_all")
-    if cached is None:
-        shared = ttl_cache_get("invites_raw")
-        if shared is None:
-            query = db.table("match_invites").select("*").order("created_at", desc=True)
-            result = execute_query(query, "list_invites")
-            shared = result.data or []
-            ttl_cache_set("invites_raw", shared, 3)
-        cached = [dict(row) for row in shared]
-        cache_set("_rz_invites_all", cached)
-
-    processed = []
-    for raw in cached:
-        invite = expire_invite_if_needed(dict(raw))
-        if status and invite.get("status") != status:
-            continue
-        processed.append(invite)
-
-    users = users_map()
-    for invite in processed:
-        from_user = users.get(invite.get("from_user_id"), {})
-        to_user = users.get(invite.get("to_user_id"), {})
-        invite["from_name"] = from_user.get("display_name", "Unknown")
-        invite["from_avatar_url"] = from_user.get("avatar_url")
-        invite["from_avatar_frame"] = from_user.get("avatar_frame")
-        invite["from_achievement"] = from_user.get("featured_achievement")
-        invite["from_points"] = from_user.get("rank_points", 0)
-        invite["from_rank"] = get_rank_display(from_user.get("rank_points", 0))
-        invite["to_name"] = to_user.get("display_name", "Unknown")
-        invite["to_avatar_url"] = to_user.get("avatar_url")
-        invite["to_avatar_frame"] = to_user.get("avatar_frame")
-        invite["to_achievement"] = to_user.get("featured_achievement")
-        invite["to_points"] = to_user.get("rank_points", 0)
-        invite["to_rank"] = get_rank_display(to_user.get("rank_points", 0))
-
-    return processed
 
 
-def room_state_expiry_dt(room):
-    """Short state-specific deadline such as ready/result/rematch timeout."""
-    explicit = aware_utc(parse_dt(room.get("state_expires_at")))
-    if explicit:
-        return explicit
-
-    updated = aware_utc(parse_dt(room.get("updated_at"))) or aware_utc(parse_dt(room.get("created_at")))
-    if not updated:
-        return None
-
-    status = room.get("status")
-    note = room.get("note") or ""
-    if status == "waiting_ready":
-        # Phòng chưa bắt đầu được xử lý bằng bộ đếm không hoạt động 30 phút.
-        return None
-    if status == "waiting_result_confirm":
-        return updated + timedelta(seconds=RESULT_CONFIRM_TIMEOUT_SECONDS)
-    if status == "confirmed" and note in {REMATCH_HOST_READY_NOTE, REMATCH_GUEST_READY_NOTE}:
-        return updated + timedelta(seconds=REMATCH_TIMEOUT_SECONDS)
-    return None
 
 
-def room_inactivity_expiry_dt(room):
-    """Đóng phòng chờ sau 30 phút, phòng đã bắt đầu sau 60 phút không hoạt động."""
-    active_statuses = {"waiting_ready", "playing", "friendly_playing", "waiting_result_confirm"}
-    status = room.get("status")
-    note = room.get("note") or ""
-    if status == "confirmed" and note in {REMATCH_HOST_READY_NOTE, REMATCH_GUEST_READY_NOTE}:
-        active = True
-    else:
-        active = status in active_statuses
-    if not active:
-        return None
-
-    last_activity = aware_utc(parse_dt(room.get("updated_at"))) or aware_utc(parse_dt(room.get("created_at")))
-    if not last_activity:
-        return None
-    timeout_seconds = (
-        ROOM_EMPTY_INACTIVITY_TIMEOUT_SECONDS
-        if status == "waiting_ready"
-        else ROOM_MATCH_INACTIVITY_TIMEOUT_SECONDS
-    )
-    return last_activity + timedelta(seconds=timeout_seconds)
 
 
-def room_expiry_dt(room):
-    state_expiry = room_state_expiry_dt(room)
-    inactivity_expiry = room_inactivity_expiry_dt(room)
-    candidates = [dt for dt in (state_expiry, inactivity_expiry) if dt]
-    return min(candidates) if candidates else None
 
 
-def apply_room_abandon_penalty(user_id, amount=ROOM_ABANDON_PENALTY):
-    """Trừ RP và tính một trận thua do bỏ trận, không cộng thắng cho đối thủ."""
-    if not user_id:
-        return None
-    player = get_user(user_id)
-    if not player:
-        return None
-    penalty = max(0, int(amount or 0))
-    old_points = int(player.get("rank_points", 0) or 0)
-    new_points = max(0, old_points - penalty)
-    execute_query(
-        db.table("users").update({
-            "rank_points": new_points,
-            "losses": int(player.get("losses", 0) or 0) + 1,
-            "total_matches": int(player.get("wins", 0) or 0) + int(player.get("draws", 0) or 0) + int(player.get("losses", 0) or 0) + 1,
-            "streak": 0,
-        }).eq("id", user_id),
-        "apply_room_abandon_penalty",
-    )
-    cache_delete("_rz_users_map")
-    cache_delete("_rz_players_all")
-    return -(old_points - new_points)
+
+
+
+
 
 
 SERIES_FORFEIT_RP = 20
 
-def room_uses_series_rank_mode(room):
-    """True chỉ cho 4 chế độ Rank Series; Rank đơn/giao hữu không dùng thưởng bỏ cuộc +20."""
-    if not isinstance(room, dict) or room.get("match_mode") == MATCH_MODE_FRIENDLY:
-        return False
-    try:
-        return bool(is_series_mode(room.get("team_tier") or SMART_RANDOM_MODE))
-    except Exception:
-        return False
 
-def apply_series_forfeit_win_reward(room, winner_id, amount=SERIES_FORFEIT_RP):
-    """Cộng đúng +20 RP cho người còn lại khi đối thủ bỏ cuộc trong một Series."""
-    if not winner_id or not room_uses_series_rank_mode(room):
-        return 0
-    player = get_user(winner_id)
-    if not player:
-        return 0
-    reward = max(0, int(amount or 0))
-    old_points = int(player.get("rank_points", 0) or 0)
-    new_points = old_points + reward
-    execute_query(
-        db.table("users").update({"rank_points": new_points}).eq("id", winner_id),
-        "apply_series_forfeit_win_reward",
-    )
-    cache_delete("_rz_users_map")
-    cache_delete("_rz_players_all")
-    ttl_cache_delete("players_raw")
-    return new_points - old_points
 
 
 HOST_BROWSER_OFFLINE_GRACE_SECONDS = 20
 HOST_BROWSER_OFFLINE_ROOM_STATUSES = {"playing", "friendly_playing"}
 
 
-def close_room_if_host_browser_offline(room):
-    """Đóng phòng khi chủ đã đóng tab/trình duyệt và presence chuyển Offline.
-
-    Chỉ áp dụng sau khi trận đã bắt đầu. Khách không được cộng/trừ RP, không
-    thay đổi thắng/hòa/thua hoặc chuỗi. Điều kiện update theo status giúp chống
-    xử lý lặp trên nhiều instance Vercel.
-    """
-    if not room or room.get("status") not in HOST_BROWSER_OFFLINE_ROOM_STATUSES:
-        return False
-
-    host_id = room.get("host_user_id")
-    guest_id = room.get("guest_user_id")
-    if not host_id or not guest_id:
-        return False
-
-    try:
-        host = get_user(host_id)
-    except Exception as exc:
-        print(f"Host offline check warning: {exc}")
-        return False
-    if not host or host.get("is_online") is not False:
-        return False
-
-    last_seen = aware_utc(parse_dt(host.get("last_seen_at")))
-    if not last_seen:
-        return False
-    if now_dt() < last_seen + timedelta(seconds=HOST_BROWSER_OFFLINE_GRACE_SECONDS):
-        return False
-
-    original_status = room.get("status")
-    reason = (
-        f"{host.get('display_name') or host.get('username') or 'Chủ phòng'} "
-        f"đã đóng trình duyệt khi trận đang diễn ra và bị trừ {ROOM_ABANDON_PENALTY} RP."
-    )
-    update_data = {
-        "status": "cancelled",
-        "guest_ready": False,
-        "note": reason,
-        "state_expires_at": None,
-        "updated_at": now_iso(),
-    }
-    result = execute_query(
-        db.table("match_rooms").update(update_data)
-        .eq("id", room.get("id"))
-        .eq("status", original_status),
-        "host_browser_offline_close_room",
-    )
-    if not (result.data or []):
-        return False
-
-    room.update(update_data)
-    penalty_delta = apply_room_abandon_penalty(host_id, ROOM_ABANDON_PENALTY)
-    winner_delta = apply_series_forfeit_win_reward(room, guest_id)
-    finalize_series_forfeit(room, host_id, penalty_delta, winner_delta)
-    record_room_forfeit_match(
-        room,
-        offender_role="host",
-        penalty_delta=penalty_delta if penalty_delta is not None else -ROOM_ABANDON_PENALTY,
-        reason=reason,
-        event_type="host_browser_offline_forfeit",
-        winner_delta=winner_delta,
-    )
-
-    create_user_notification(
-        host_id,
-        "⚠️ Bạn đã thoát trận",
-        f"Phòng đã đóng vì trình duyệt của bạn Offline. Bạn bị trừ {ROOM_ABANDON_PENALTY} RP và mất chuỗi thắng.",
-        "/matches",
-        "host_browser_offline_penalty",
-    )
-    create_user_notification(
-        guest_id,
-        "🚪 Chủ phòng đã Offline",
-        f"Phòng đã tự đóng. " + (f"Bạn được cộng {winner_delta} RP do đối thủ bỏ cuộc trong Series." if winner_delta else "Bạn không bị cộng hoặc trừ RP."),
-        "/rooms",
-        "host_browser_offline_room_closed",
-    )
-    cache_delete("_rz_rooms_all")
-    ttl_cache_delete("rooms_raw")
-    return True
 
 
-def close_room_with_timeout_penalty(room, offender_role, reason):
-    """Đóng phòng và phạt ngẫu nhiên 22–25 RP đúng một lần."""
-    room_id = room.get("id")
-    original_status = room.get("status")
-    offender_id = room.get("host_user_id") if offender_role == "host" else room.get("guest_user_id")
-    update_data = {
-        "status": "cancelled",
-        "note": reason,
-        "state_expires_at": None,
-        "updated_at": now_iso(),
-    }
-    result = execute_query(
-        db.table("match_rooms").update(update_data).eq("id", room_id).eq("status", original_status),
-        "close_room_timeout_penalty",
-    )
-    # Nếu request khác đã đóng phòng trước, không trừ điểm lần thứ hai.
-    if not (result.data or []):
-        return False
-
-    room.update(update_data)
-    is_series = room_uses_series_rank_mode(room)
-    penalty_amount = SERIES_FORFEIT_RP if is_series else random.SystemRandom().randint(*ROOM_TIMEOUT_PENALTY_RANGE)
-    penalty_delta = apply_room_abandon_penalty(offender_id, penalty_amount)
-    offender_name = room.get("host_name") if offender_role == "host" else room.get("guest_name")
-    other_id = room.get("guest_user_id") if offender_role == "host" else room.get("host_user_id")
-    winner_delta = apply_series_forfeit_win_reward(room, other_id)
-    finalize_series_forfeit(room, offender_id, penalty_delta, winner_delta)
-    record_room_forfeit_match(
-        room,
-        offender_role=offender_role,
-        penalty_delta=penalty_delta if penalty_delta is not None else -penalty_amount,
-        reason=reason,
-        event_type="timeout_forfeit",
-        winner_delta=winner_delta,
-    )
-
-    create_user_notification(
-        offender_id,
-        "⏱️ Trận bị tính là bỏ trận",
-        f"Bạn bị trừ {abs(int(penalty_delta or -penalty_amount))} RP vì {reason.lower()}",
-        "/matches",
-        "room_timeout_penalty",
-    )
-    create_user_notification(
-        other_id,
-        "⏱️ Phòng đấu đã tự đóng",
-        f"{offender_name or 'Đối thủ'} bị tính là bỏ trận. " + (f"Bạn được cộng {winner_delta} RP." if winner_delta else "Bạn không bị cộng hoặc trừ RP."),
-        "/matches",
-        "room_timeout",
-    )
-    return True
 
 
-def expire_room_if_needed(room):
-    if not room:
-        return room
-
-    expires_at = room_expiry_dt(room)
-    room["state_expires_at"] = expires_at.isoformat() if expires_at else None
-    room["timeout_seconds"] = max(0, int((expires_at - now_dt()).total_seconds())) if expires_at else 0
-    if not expires_at or expires_at > now_dt():
-        return room
-
-    status = room.get("status")
-    note = room.get("note") or ""
-    mode = room.get("match_mode") or MATCH_MODE_RANKED
-    state_expiry = room_state_expiry_dt(room)
-    inactivity_expiry = room_inactivity_expiry_dt(room)
-    inactivity_expired = bool(
-        inactivity_expiry
-        and inactivity_expiry <= now_dt()
-        and (not state_expiry or inactivity_expiry <= state_expiry)
-    )
-
-    try:
-        # Trận Xếp hạng đã quay đội nhưng chủ không nhập kết quả trong 60 phút.
-        if status == "playing" and mode == MATCH_MODE_RANKED and inactivity_expired:
-            close_room_with_timeout_penalty(
-                room,
-                "host",
-                "Chủ phòng không nhập kết quả sau 60 phút và bị tính là thoát trận.",
-            )
-            room["timeout_seconds"] = 0
-            return room
-
-        # Đã nhập tỷ số nhưng chưa xác nhận: sau 1 phút tự xác nhận kết quả.
-        # Không phạt người quên xác nhận và không phụ thuộc phòng còn hoạt động hay đã hủy.
-        if status == "waiting_result_confirm" and mode == MATCH_MODE_RANKED:
-            pending_match = get_match(room.get("match_id")) if room.get("match_id") else None
-            if pending_match and pending_match.get("status") == "confirmed":
-                room.update({
-                    "status": "waiting_ready",
-                    "guest_ready": False,
-                    "host_score": None,
-                    "guest_score": None,
-                    "match_id": None,
-                    "submitted_by_id": None,
-                    "confirmed_by_id": None,
-                    "state_expires_at": None,
-                    "updated_at": now_iso(),
-                })
-            room["timeout_seconds"] = 0
-            return room
-
-        # Giao hữu hoặc phòng chưa bắt đầu: chỉ đóng, không trừ điểm.
-        if inactivity_expired or status == "waiting_ready":
-            update_data = {
-                "status": "cancelled",
-                "note": (
-                    "Phòng tự đóng sau 30 phút không hoạt động."
-                    if status == "waiting_ready"
-                    else "Phòng tự đóng sau 60 phút không hoạt động."
-                ),
-                "state_expires_at": None,
-                "updated_at": now_iso(),
-            }
-            result = execute_query(
-                db.table("match_rooms").update(update_data).eq("id", room.get("id")).eq("status", status),
-                "expire_room_inactivity",
-            )
-            if result.data or []:
-                room.update(update_data)
-                if room.get("match_id"):
-                    execute_query(
-                        db.table("matches").update({
-                            "status": "cancelled",
-                            "note": (
-                                "Phòng tự đóng sau 30 phút không hoạt động; không áp dụng phạt RP."
-                                if status == "waiting_ready"
-                                else "Phòng tự đóng sau 60 phút không hoạt động; không áp dụng phạt RP."
-                            ),
-                            "updated_at": now_iso(),
-                        }).eq("id", room.get("match_id")),
-                        "cancel_inactive_room_match",
-                    )
-            room["timeout_seconds"] = 0
-            return room
-
-        if status == "confirmed" and note in {REMATCH_HOST_READY_NOTE, REMATCH_GUEST_READY_NOTE}:
-            update_data = {
-                "note": REMATCH_EXPIRED_NOTE,
-                "state_expires_at": None,
-                "updated_at": now_iso(),
-            }
-            execute_query(
-                db.table("match_rooms").update(update_data).eq("id", room.get("id")),
-                "expire_rematch_request",
-            )
-            room.update(update_data)
-            room["timeout_seconds"] = 0
-    except Exception as exc:
-        print(f"expire_room_if_needed warning: {exc}")
-
-    return room
 
 
-def _reconcile_waiting_rank_room_mode(room):
-    """Keep a waiting ranked room on an enabled Admin mode.
-
-    V1.3.49 used the legacy flag ``rank_standard_enabled`` as if it meant
-    "Rank Random is enabled". In reality that flag means "at least one ranked
-    mode is enabled", so a Home/Away-only setup still created smart_random rooms.
-    This conditional migration repairs old waiting rooms once and preserves an
-    active Series/match without changing its mode mid-flight.
-    """
-    if not room or room.get("status") != "waiting_ready":
-        return room
-    if (room.get("match_mode") or MATCH_MODE_RANKED) != MATCH_MODE_RANKED:
-        return room
-    note = str(room.get("note") or "")
-    if room.get("match_id") or decode_friendly_random3_state(note) or note.startswith("__SERIES_ACTIVE__"):
-        return room
-    try:
-        current = normalize_rank_mode_code(room.get("team_tier"))
-        resolved = resolve_enabled_rank_mode(current)
-    except Exception:
-        return room
-    if resolved == current:
-        return room
-    storage_mode = legacy_team_tier_for_mode(resolved)
-    try:
-        changed = execute_query(
-            db.table("match_rooms").update({
-                "team_tier": storage_mode,
-                "friendly_tier": None,
-                "note": f"Chế độ cũ đã bị Admin khóa. Phòng chuyển sang {get_rank_mode(resolved).get('label') or resolved}.",
-                "updated_at": now_iso(),
-            }).eq("id", room.get("id")).eq("status", "waiting_ready"),
-            "reconcile_waiting_rank_room_mode",
-            attempts=2,
-        )
-        if changed.data or []:
-            room.update(dict((changed.data or [{}])[0]))
-            cache_delete("_rz_rooms_all")
-            ttl_cache_delete("rooms_raw")
-        else:
-            room["team_tier"] = storage_mode
-    except Exception as exc:
-        app.logger.debug("Room mode reconcile skipped room=%s: %s", room.get("id"), exc)
-    return room
 
 
-def get_room(room_id):
-    result = execute_query(
-        db.table("match_rooms").select("*").eq("id", room_id).limit(1),
-        "get_room",
-    )
-    room = dict(result.data[0]) if result.data else None
-    if room:
-        expire_room_if_needed(room)
-        _reconcile_waiting_rank_room_mode(room)
-        enrich_room(room)
-    return room
 
 
-def get_room_poll_snapshot(room_id):
-    """Lightweight room read for polling: no users_map, team hydration or cosmetics."""
-    result = execute_query(
-        db.table("match_rooms").select("*").eq("id", room_id).limit(1),
-        "get_room_poll_snapshot",
-        attempts=1,
-    )
-    room = dict(result.data[0]) if result.data else None
-    if not room:
-        return None
-    expire_room_if_needed(room)
-    _reconcile_waiting_rank_room_mode(room)
-    note = room.get("note") or ""
-    room["rematch_host_ready"] = note == REMATCH_HOST_READY_NOTE
-    room["rematch_guest_ready"] = note == REMATCH_GUEST_READY_NOTE
-    room["rematch_host_declined"] = note == REMATCH_HOST_DECLINED_NOTE
-    room["rematch_guest_declined"] = note == REMATCH_GUEST_DECLINED_NOTE
-    room["rematch_declined"] = room["rematch_host_declined"] or room["rematch_guest_declined"]
-    room["rematch_expired"] = note == REMATCH_EXPIRED_NOTE
-    room["timeout_seconds"] = seconds_until(room.get("state_expires_at"))
-    room["dispute"] = None
-    if room.get("status") == "disputed" and room.get("match_id"):
-        try:
-            dispute = get_match_dispute_by_match(room.get("match_id"), DISPUTE_PENDING_STATUSES)
-            if dispute:
-                room["dispute"] = decorate_match_dispute(dispute)
-        except Exception:
-            pass
-    return room
 
 
-def get_series_poll_version(room):
-    """Return one tiny version token for active Series so the opponent refreshes on picks/bans."""
-    if not room:
-        return ""
-    try:
-        mode = normalize_rank_mode_code(room.get("team_tier"))
-        if mode not in SERIES_MODES:
-            return ""
-        result = execute_query(
-            db.table("match_series").select("id,status,updated_at").eq("room_id", room.get("id"))
-              .in_("status", ["waiting", "playing", "processing_result"]).order("created_at", desc=True).limit(1),
-            "rank_series_poll_version",
-            attempts=1,
-        )
-        series = (result.data or [None])[0]
-        if not series:
-            return ""
-        return f"{series.get('id')}:{series.get('status')}:{series.get('updated_at')}"
-    except Exception:
-        return ""
 
 
-def enrich_room(room):
-    users = users_map()
-    host = users.get(room.get("host_user_id"), {})
-    guest = users.get(room.get("guest_user_id"), {})
-    # Reuse these objects in the room template context. Previously the room page
-    # queried host/guest again after users_map() had already loaded them.
-    room["_host_player"] = host
-    room["_guest_player"] = guest if room.get("guest_user_id") else None
-
-    raw_room_id = str(room.get("id") or "")
-    compact_room_id = "".join(ch for ch in raw_room_id.upper() if ch.isalnum())
-    room["room_code"] = (compact_room_id[:6] or "ROOM00")
-
-    room["host_name"] = host.get("display_name", "Unknown")
-    room["host_name_style_class"] = str(host.get("name_style_class") or "").strip()
-    room["host_profile_badge"] = host.get("profile_badge")
-    room["host_avatar_url"] = host.get("avatar_url")
-    room["host_avatar_frame"] = host.get("avatar_frame")
-    room["host_achievement"] = host.get("featured_achievement")
-    room["host_points"] = host.get("rank_points", 0)
-    room["host_rank_info"] = get_rank_info(host.get("rank_points", 0))
-    room["host_rank"] = get_rank_display(host.get("rank_points", 0))
-    room["host_streak"] = int(host.get("streak", 0) or 0)
-    room["host_streak_badge"] = get_win_streak_badge(room["host_streak"])
-    room["has_guest"] = bool(room.get("guest_user_id"))
-    room["guest_name"] = guest.get("display_name", "Đang chờ đối thủ") if room["has_guest"] else "Đang chờ đối thủ"
-    room["guest_name_style_class"] = str(guest.get("name_style_class") or "").strip() if room["has_guest"] else ""
-    room["guest_profile_badge"] = guest.get("profile_badge") if room["has_guest"] else None
-    room["guest_avatar_url"] = guest.get("avatar_url") if room["has_guest"] else None
-    room["guest_avatar_frame"] = guest.get("avatar_frame") if room["has_guest"] else None
-    room["guest_achievement"] = guest.get("featured_achievement") if room["has_guest"] else None
-    room["guest_points"] = guest.get("rank_points", 0) if room["has_guest"] else 0
-    room["guest_rank_info"] = get_rank_info(guest.get("rank_points", 0)) if room["has_guest"] else None
-    room["guest_rank"] = get_rank_display(guest.get("rank_points", 0)) if room["has_guest"] else "Chưa có người chơi"
-    room["guest_streak"] = int(guest.get("streak", 0) or 0) if room["has_guest"] else 0
-    room["guest_streak_badge"] = get_win_streak_badge(room["guest_streak"]) if room["has_guest"] else None
-    room["streak_event"] = parse_win_streak_room_note(room.get("note"))
-    if room.get("host_team"):
-        info = get_db_team_info(room.get("host_team")) or {}
-        room["host_team_overall"] = room.get("host_team_overall") or info.get("overall") or get_team_overall(room.get("host_team"))
-        room["host_team_logo_url"] = room.get("host_team_logo_url") or info.get("logo_url")
-        room["host_team_league"] = room.get("host_team_league") or info.get("league") or ""
-        room["host_team_league_logo_url"] = get_league_logo_url(room["host_team_league"])
-        room["host_team_tier"] = info.get("tier") or get_team_tier(room.get("host_team"))
-        room["host_team_total_stats"] = int(info.get("total_stats") or 0)
-    else:
-        room["host_team_total_stats"] = 0
-    if room.get("guest_team"):
-        info = get_db_team_info(room.get("guest_team")) or {}
-        room["guest_team_overall"] = room.get("guest_team_overall") or info.get("overall") or get_team_overall(room.get("guest_team"))
-        room["guest_team_logo_url"] = room.get("guest_team_logo_url") or info.get("logo_url")
-        room["guest_team_league"] = room.get("guest_team_league") or info.get("league") or ""
-        room["guest_team_league_logo_url"] = get_league_logo_url(room["guest_team_league"])
-        room["guest_team_tier"] = info.get("tier") or get_team_tier(room.get("guest_team"))
-        room["guest_team_total_stats"] = int(info.get("total_stats") or 0)
-    else:
-        room["guest_team_total_stats"] = 0
-    room["smart_random_rule"] = get_smart_random_rule(host, guest)
-    room["rematch_host_ready"] = room.get("note") == REMATCH_HOST_READY_NOTE
-    room["rematch_guest_ready"] = room.get("note") == REMATCH_GUEST_READY_NOTE
-    room["rematch_host_declined"] = room.get("note") == REMATCH_HOST_DECLINED_NOTE
-    room["rematch_guest_declined"] = room.get("note") == REMATCH_GUEST_DECLINED_NOTE
-    room["rematch_declined"] = room["rematch_host_declined"] or room["rematch_guest_declined"]
-    room["match_mode"] = room.get("match_mode") or MATCH_MODE_RANKED
-    room["friendly_tier"] = room.get("friendly_tier") or "A"
-    random3_state = decode_friendly_random3_state(room.get("note"))
-    room["friendly_random3"] = random3_state
-    room["friendly_random3_active"] = bool(random3_state)
-    room["friendly_random3_host_chosen"] = bool(random3_state and random3_state.get("host_choice") is not None)
-    room["friendly_random3_guest_chosen"] = bool(random3_state and random3_state.get("guest_choice") is not None)
-    room["host_team_league"] = room.get("host_team_league") or ""
-    room["guest_team_league"] = room.get("guest_team_league") or ""
-    room["host_team_league_logo_url"] = room.get("host_team_league_logo_url") or get_league_logo_url(room["host_team_league"])
-    room["guest_team_league_logo_url"] = room.get("guest_team_league_logo_url") or get_league_logo_url(room["guest_team_league"])
-    room["rematch_expired"] = room.get("note") == REMATCH_EXPIRED_NOTE
-    room["dispute"] = None
-    if room.get("status") == "disputed" and room.get("match_id"):
-        try:
-            dispute = get_match_dispute_by_match(room.get("match_id"), DISPUTE_PENDING_STATUSES)
-            if dispute:
-                room["dispute"] = decorate_match_dispute(dispute)
-        except Exception as exc:
-            print(f"enrich_room dispute warning: {exc}")
-    room["timeout_seconds"] = seconds_until(room.get("state_expires_at"))
-    state_expiry = room_state_expiry_dt(room)
-    inactivity_expiry = room_inactivity_expiry_dt(room)
-    inactivity_is_next = bool(
-        inactivity_expiry
-        and (not state_expiry or inactivity_expiry <= state_expiry)
-    )
-    if inactivity_is_next and room.get("timeout_seconds", 0) > 0:
-        room["timeout_label"] = "Phòng sẽ tự đóng nếu không có hoạt động trong"
-    elif room.get("status") == "waiting_ready" and room.get("guest_user_id") and not room.get("guest_ready"):
-        room["timeout_label"] = "Phòng sẽ tự đóng nếu không có hoạt động trong"
-    elif room.get("status") == "waiting_result_confirm":
-        room["timeout_label"] = "Khách cần xác nhận hoặc tranh chấp trong"
-    elif room.get("status") == "confirmed" and (room.get("rematch_host_ready") or room.get("rematch_guest_ready")):
-        room["timeout_label"] = "Yêu cầu đá tiếp sẽ hết hạn trong"
-    else:
-        room["timeout_label"] = ""
-
-    # V1.3.47: nhãn hiển thị phải lấy từ đúng mã chế độ Rank đang lưu trong phòng.
-    # Trước đây mọi mode ngoài random3 đều bị rút gọn thành "Xếp hạng (Rank)",
-    # khiến Lượt đi/về, BO3, Chiến thuật BO3 và Cấm chọn BO3 trông như Rank thường.
-    selected_rank_mode = normalize_rank_mode_code(room.get("team_tier") or RANK_RANDOM)
-    room["rank_mode_code"] = selected_rank_mode
-    if room.get("match_mode") == MATCH_MODE_FRIENDLY:
-        room["match_mode_label"] = f"Giao hữu Tier {room.get('friendly_tier') or ''}".strip()
-        room["battle_label"] = "Trận đấu giao hữu"
-    else:
-        try:
-            selected_mode_config = get_rank_mode(selected_rank_mode) or {}
-        except Exception:
-            selected_mode_config = {}
-        room["match_mode_label"] = selected_mode_config.get("label") or "Rank thường Random"
-        room["battle_label"] = f"Trận đấu {room['match_mode_label']}"
-    room["start_countdown_seconds"] = 0
-    room["match_elapsed_seconds"] = 0
-    if room.get("guest_user_id"):
-        time_source = room.get("updated_at") or room.get("created_at")
-        event_dt = parse_dt(time_source) if time_source else None
-        if event_dt:
-            elapsed = max(0, int((now_dt() - event_dt).total_seconds()))
-            if room.get("status") == "waiting_ready":
-                room["start_countdown_seconds"] = max(0, 300 - elapsed)
-            elif room.get("status") in {"playing", "friendly_playing", "waiting_result_confirm"}:
-                room["match_elapsed_seconds"] = elapsed
-    room["guest_ready_label"] = "Đã sẵn sàng" if room.get("guest_ready") else "Chưa sẵn sàng"
-    return room
 
 
-def list_rooms(status=None):
-    cached = cache_get("_rz_rooms_all")
-    if cached is None:
-        shared = ttl_cache_get("rooms_raw")
-        if shared is None:
-            query = db.table("match_rooms").select("*").order("created_at", desc=True)
-            result = execute_query(query, "list_rooms")
-            shared = result.data or []
-            ttl_cache_set("rooms_raw", shared, 3)
-        cached = [dict(row) for row in shared]
-        cache_set("_rz_rooms_all", cached)
-
-    rooms = []
-    for raw in cached:
-        room = expire_room_if_needed(dict(raw))
-        if status and room.get("status") != status:
-            continue
-        enrich_room(room)
-        rooms.append(room)
-    return rooms
 
 
 
@@ -3580,223 +1078,25 @@ GLOBAL_STREAK_EVENT_TTL_SECONDS = 24 * 60 * 60
 GLOBAL_STREAK_EVENT_MAX_ITEMS = 30
 
 
-def _normalize_global_streak_events(raw):
-    """Chuẩn hóa dữ liệu cũ (1 dict) và dữ liệu mới (danh sách sự kiện)."""
-    if isinstance(raw, str):
-        try:
-            raw = json.loads(raw)
-        except Exception:
-            return []
-    if isinstance(raw, dict):
-        raw = [raw]
-    if not isinstance(raw, list):
-        return []
-
-    now = now_dt()
-    active = []
-    seen = set()
-    for item in raw:
-        if not isinstance(item, dict):
-            continue
-        event_id = str(item.get("id") or "").strip()
-        if not event_id or event_id in seen:
-            continue
-        expires_at = aware_utc(parse_dt(item.get("expires_at")))
-        if not expires_at or expires_at <= now:
-            continue
-        seen.add(event_id)
-        active.append(dict(item))
-
-    # SHUTDOWN ưu tiên trước; trong cùng loại, sự kiện mới hơn đứng trước.
-    active.sort(
-        key=lambda item: (
-            0 if str(item.get("kind")) == "shutdown" else 1,
-            str(item.get("published_at") or ""),
-        )
-    )
-    shutdowns = [item for item in active if str(item.get("kind")) == "shutdown"]
-    milestones = [item for item in active if str(item.get("kind")) != "shutdown"]
-    shutdowns.sort(key=lambda item: str(item.get("published_at") or ""), reverse=True)
-    milestones.sort(key=lambda item: str(item.get("published_at") or ""), reverse=True)
-    return (shutdowns + milestones)[:GLOBAL_STREAK_EVENT_MAX_ITEMS]
-
-
-def publish_global_streak_event(event):
-    if not isinstance(event, dict) or event.get("kind") not in {"milestone", "shutdown"}:
-        return False
-    payload = dict(event)
-    payload["published_at"] = now_iso()
-    payload["expires_at"] = future_iso(GLOBAL_STREAK_EVENT_TTL_SECONDS)
-    payload["source"] = "win_streak"
-    try:
-        result = execute_query(
-            db.table("system_settings").select("setting_value")
-            .eq("setting_key", GLOBAL_STREAK_EVENT_SETTING_KEY).limit(1),
-            "read_global_streak_events", attempts=2,
-        )
-        raw = ((result.data or [{}])[0]).get("setting_value")
-        events = _normalize_global_streak_events(raw)
-        events = [item for item in events if str(item.get("id")) != str(payload.get("id"))]
-        events.append(payload)
-        events = _normalize_global_streak_events(events)
-        execute_query(
-            db.table("system_settings").upsert({
-                "setting_key": GLOBAL_STREAK_EVENT_SETTING_KEY,
-                "setting_value": json.dumps(events, ensure_ascii=False),
-                "updated_at": now_iso(),
-            }, on_conflict="setting_key"),
-            "publish_global_streak_event", attempts=2,
-        )
-        ttl_cache_delete("global_win_streak_events")
-        ttl_cache_delete("global_win_streak_event")
-        return True
-    except Exception as exc:
-        print(f"publish_global_streak_event warning: {exc}")
-        return False
-
-
-def get_active_global_streak_events():
-    cached = ttl_cache_get("global_win_streak_events")
-    if cached is not None:
-        return [] if cached is False else cached
-    try:
-        result = execute_query(
-            db.table("system_settings").select("setting_value")
-            .eq("setting_key", GLOBAL_STREAK_EVENT_SETTING_KEY).limit(1),
-            "get_active_global_streak_events", attempts=2,
-        )
-        raw = ((result.data or [{}])[0]).get("setting_value")
-        events = _normalize_global_streak_events(raw)
-        ttl_cache_set("global_win_streak_events", events if events else False, 15)
-        return events
-    except Exception as exc:
-        print(f"get_active_global_streak_events warning: {exc}")
-        return []
-
-
-def get_active_global_streak_event():
-    """Tương thích với code cũ: trả sự kiện ưu tiên đầu tiên."""
-    events = get_active_global_streak_events()
-    return events[0] if events else None
-
-
-def get_active_announcement():
-    try:
-        cached = cache_get("_rz_active_announcement")
-        if cached is not None:
-            return cached
-
-        shared = ttl_cache_get("active_announcement")
-        if shared is not None:
-            return cache_set("_rz_active_announcement", None if shared is False else shared)
-        result = execute_query(
-            db.table("admin_announcements")
-            .select("*")
-            .eq("is_active", True)
-            .order("created_at", desc=True)
-            .limit(1),
-            "get_active_announcement",
-        )
-        announcement = result.data[0] if result.data else None
-        ttl_cache_set("active_announcement", announcement if announcement is not None else False, 15)
-        return cache_set("_rz_active_announcement", announcement)
-    except Exception:
-        return None
-
-
-def enrich_chat_message(message, users=None):
-    if users is None:
-        users = users_map()
-    user = users.get(message.get("user_id"), {})
-    message["user_name"] = user.get("display_name", "Unknown")
-    message["user_avatar_url"] = user.get("avatar_url")
-    message["user_avatar_frame"] = user.get("avatar_frame")
-    message["user_avatar_frame_url"] = (user.get("avatar_frame") or {}).get("image_url") if isinstance(user.get("avatar_frame"), dict) else None
-    message["user_achievement"] = user.get("featured_achievement")
-    message["user_role"] = "admin" if is_admin_user(user) else user.get("role", "player")
-    # Giữ timestamp gốc cho logic chưa đọc, đồng thời gửi chuỗi giờ Việt Nam dễ đọc.
-    message["created_at_display"] = format_vn_datetime(message.get("created_at"))
-    return message
-
-
-def list_chat_messages(scope="global", room_id=None, limit=20):
-    query = db.table("chat_messages").select("*").eq("scope", scope)
-
-    if room_id:
-        query = query.eq("room_id", room_id)
-    else:
-        query = query.is_("room_id", "null")
-
-    result = execute_query(query.order("created_at", desc=True).limit(limit), "list_chat_messages")
-    messages = list(reversed(result.data or []))
-    users = users_map()
-    return [enrich_chat_message(message, users) for message in messages]
 
 
 
-def user_can_chat(user_id, scope="global", room_id=None):
-    query = db.table("chat_messages").select("*").eq("user_id", user_id).eq("scope", scope)
-
-    if room_id:
-        query = query.eq("room_id", room_id)
-    else:
-        query = query.is_("room_id", "null")
-
-    result = execute_query(query.order("created_at", desc=True).limit(1), "user_can_chat")
-    if not result.data:
-        return True, ""
-
-    last_time = parse_dt(result.data[0].get("created_at"))
-    if not last_time:
-        return True, ""
-
-    diff = (now_dt() - last_time).total_seconds()
-    if diff < CHAT_COOLDOWN_SECONDS:
-        wait = max(1, int(CHAT_COOLDOWN_SECONDS - diff))
-        return False, f"Bạn gửi quá nhanh. Chờ {wait} giây."
-
-    return True, ""
 
 
-def touch_room_activity(room_id):
-    """Reset the 60-minute inactivity timer after a meaningful room action."""
-    if not room_id:
-        return
-    try:
-        execute_query(
-            db.table("match_rooms").update({"updated_at": now_iso()}).eq("id", room_id),
-            "touch_room_activity",
-            attempts=1,
-        )
-        cache_delete("_rz_rooms_all")
-    except Exception as exc:
-        print(f"touch_room_activity warning: {exc}")
 
 
-def create_chat_message(user_id, message, scope="global", room_id=None):
-    message = (message or "").strip()
 
-    if not message:
-        return False, "Tin nhắn không được để trống."
 
-    if len(message) > CHAT_MAX_LENGTH:
-        return False, f"Tin nhắn tối đa {CHAT_MAX_LENGTH} ký tự."
 
-    ok, error = user_can_chat(user_id, scope, room_id)
-    if not ok:
-        return False, error
 
-    db.table("chat_messages").insert({
-        "user_id": user_id,
-        "room_id": room_id,
-        "scope": scope,
-        "message": message,
-    }).execute()
 
-    if scope == "room" and room_id:
-        touch_room_activity(room_id)
 
-    return True, ""
+
+
+
+
+
+
 
 
 
@@ -3843,50 +1143,15 @@ def current_user():
     return cache_set("_rz_current_user", fallback_user)
 
 
-def is_player_in_cooldown(user):
-    cooldown = parse_dt(user.get("matchmaking_cooldown_until"))
-    return bool(cooldown and cooldown > now_dt())
-
-
-def cooldown_text(user):
-    cooldown = parse_dt(user.get("matchmaking_cooldown_until"))
-    if not cooldown or cooldown <= now_dt():
-        return ""
-    seconds = int((cooldown - now_dt()).total_seconds())
-    minutes = max(1, seconds // 60 + (1 if seconds % 60 else 0))
-    return f"{minutes} phút"
 
 
 
-def current_pending_invites():
-    cached = cache_get("_rz_current_pending_invites")
-    if cached is not None:
-        return cached
-    try:
-        user = current_user()
-        if not user:
-            return cache_set("_rz_current_pending_invites", [])
-        invites = list_invites("pending")
-        return cache_set("_rz_current_pending_invites", [invite for invite in invites if invite["to_user_id"] == user["id"]])
-    except Exception as exc:
-        print(f"current_pending_invites warning: {exc}")
-        return []
 
 
-def current_pending_invite_count():
-    try:
-        return len(current_pending_invites())
-    except Exception:
-        return 0
 
 
-def room_is_active(room):
-    if room.get("status") in {"waiting_ready", "playing", "friendly_playing", "waiting_result_confirm"}:
-        return True
-    return (
-        room.get("status") == "confirmed"
-        and (room.get("note") or "") in {REMATCH_HOST_READY_NOTE, REMATCH_GUEST_READY_NOTE}
-    )
+
+
 
 
 ACTIVE_ROOM_STATUSES = {
@@ -3899,389 +1164,30 @@ ACTIVE_ROOM_STATUSES = {
 }
 
 
-def _direct_active_rooms_for_user(user_id, limit=20):
-    """Đọc phòng active trực tiếp từ bảng match_rooms, không dùng cache Vercel."""
-    if not user_id:
-        return []
-    result = execute_query(
-        db.table("match_rooms")
-        .select("*")
-        .or_(f"host_user_id.eq.{user_id},guest_user_id.eq.{user_id}")
-        .in_("status", sorted(ACTIVE_ROOM_STATUSES))
-        .order("updated_at", desc=True)
-        .limit(limit),
-        "active_room_for_user_direct",
-        attempts=2,
-    )
-    return list(result.data or [])
 
 
-def cleanup_duplicate_waiting_rooms(user_id):
-    """Xóa an toàn các phòng waiting_ready bị nhân đôi của một người chơi.
-
-    Chỉ đụng tới phòng chưa có match_id. Phòng có đối thủ được ưu tiên giữ lại;
-    nếu nhiều phòng cùng loại thì giữ phòng cập nhật mới nhất. Lời mời gắn với
-    phòng bị xóa cũng được đóng để không còn trạng thái treo.
-    """
-    try:
-        rooms = [
-            room for room in _direct_active_rooms_for_user(user_id)
-            if str(room.get("status") or "") == "waiting_ready" and not room.get("match_id")
-        ]
-    except Exception as exc:
-        print(f"cleanup_duplicate_waiting_rooms load warning: {exc}")
-        return 0
-    if len(rooms) <= 1:
-        return 0
-
-    rooms.sort(
-        key=lambda room: (
-            1 if room.get("guest_user_id") else 0,
-            1 if room.get("invite_id") else 0,
-            str(room.get("updated_at") or room.get("created_at") or ""),
-            str(room.get("id") or ""),
-        ),
-        reverse=True,
-    )
-    keep_id = str(rooms[0].get("id"))
-    removed = 0
-    for room in rooms[1:]:
-        room_id = room.get("id")
-        if not room_id or str(room_id) == keep_id:
-            continue
-        try:
-            deleted = execute_query(
-                db.table("match_rooms").delete()
-                .eq("id", room_id)
-                .eq("status", "waiting_ready")
-                .is_("match_id", "null"),
-                "cleanup_duplicate_waiting_room",
-                attempts=2,
-            )
-            if deleted.data:
-                removed += 1
-                invite_id = room.get("invite_id")
-                if invite_id:
-                    execute_query(
-                        db.table("match_invites").update({
-                            "status": "cancelled",
-                            "updated_at": now_iso(),
-                        }).eq("id", invite_id).eq("status", "pending"),
-                        "cleanup_duplicate_waiting_room_invite",
-                        attempts=2,
-                    )
-        except Exception as exc:
-            print(f"cleanup duplicate room warning room={room_id}: {exc}")
-    if removed:
-        cache_delete("_rz_rooms_all")
-        cache_delete("_rz_invites_all")
-        cache_delete("_rz_current_pending_invites")
-        ttl_cache_delete("rooms_raw")
-        ttl_cache_delete("invites_raw")
-    return removed
 
 
-def active_room_for_user(user_id, exclude_room_id=None):
-    """Tìm trực tiếp mọi phòng active của người chơi từ match_rooms."""
-    if not user_id:
-        return None
-    try:
-        rooms = _direct_active_rooms_for_user(user_id)
-        for room in rooms:
-            if exclude_room_id and str(room.get("id")) == str(exclude_room_id):
-                continue
-            return room
-    except Exception as exc:
-        print(f"active_room_for_user direct warning: {exc}")
-
-    try:
-        for room in list_rooms():
-            if exclude_room_id and str(room.get("id")) == str(exclude_room_id):
-                continue
-            if str(room.get("status") or "").lower() in ACTIVE_ROOM_STATUSES and user_id in [room.get("host_user_id"), room.get("guest_user_id")]:
-                return room
-    except Exception as exc:
-        print(f"active_room_for_user fallback warning: {exc}")
-    return None
 
 
-def build_room_head_to_head(room):
-    """Thống kê đối đầu trong phòng bằng truy vấn nhỏ, có fallback an toàn.
-
-    Trước đây mỗi lần khách nhận thay đổi trạng thái và tải lại phòng, hàm này
-    gọi ``list_matches("confirmed")`` nên phải lấy và làm giàu toàn bộ lịch sử
-    trận của hệ thống. Phòng chơi nhiều ván liên tiếp vì thế có thể tải chậm hơn,
-    đặc biệt ở phía khách vốn đồng bộ bằng polling. Bản này chỉ đọc các cột cần
-    thiết của đúng hai người chơi kể từ thời điểm mở phòng.
-    """
-    host_id = room.get("host_user_id")
-    guest_id = room.get("guest_user_id")
-    room_created_at = room.get("created_at")
-    room_opened_at = parse_dt(room_created_at)
-
-    empty = {
-        "available": bool(host_id and guest_id),
-        "total": 0,
-        "host_wins": 0,
-        "guest_wins": 0,
-        "draws": 0,
-        "host_goals": 0,
-        "guest_goals": 0,
-        "matches": [],
-        "since": format_vn_datetime(room_created_at),
-    }
-    if not host_id or not guest_id:
-        return empty
-
-    raw_matches = None
-    try:
-        pair_filter = (
-            f"and(player1_id.eq.{host_id},player2_id.eq.{guest_id}),"
-            f"and(player1_id.eq.{guest_id},player2_id.eq.{host_id})"
-        )
-        query = (
-            db.table("matches")
-            .select("id,player1_id,player2_id,score1,score2,delta1,delta2,created_at,status")
-            .eq("status", "confirmed")
-            .or_(pair_filter)
-        )
-        if room_created_at:
-            query = query.gte("created_at", room_created_at)
-        query = query.order("created_at", desc=True).limit(100)
-        result = execute_query(query, "room_head_to_head_pair", attempts=2)
-        raw_matches = result.data or []
-    except Exception as exc:
-        # Không để phần lịch sử phụ làm hỏng toàn bộ phòng nếu Supabase/PostgREST
-        # tạm thời không nhận bộ lọc OR. Fallback giữ nguyên hành vi bản cũ.
-        app.logger.warning("Room head-to-head optimized query failed; using cache fallback: %s", exc)
-
-    pair = {str(host_id), str(guest_id)}
-    if raw_matches is None:
-        raw_matches = []
-        for match in list_matches("confirmed"):
-            if {str(match.get("player1_id")), str(match.get("player2_id"))} != pair:
-                continue
-            match_time = parse_dt(match.get("created_at"))
-            if room_opened_at and match_time and match_time < room_opened_at:
-                continue
-            raw_matches.append(match)
-
-    selected = []
-    for match in raw_matches:
-        if {str(match.get("player1_id")), str(match.get("player2_id"))} != pair:
-            continue
-        match_time = parse_dt(match.get("created_at"))
-        if room_opened_at and match_time and match_time < room_opened_at:
-            continue
-
-        try:
-            score1 = int(match.get("score1") or 0)
-            score2 = int(match.get("score2") or 0)
-        except (TypeError, ValueError):
-            continue
-
-        host_is_player1 = str(match.get("player1_id")) == str(host_id)
-        host_score = score1 if host_is_player1 else score2
-        guest_score = score2 if host_is_player1 else score1
-        item = {
-            "id": match.get("id"),
-            "created_at_display": format_vn_datetime(match.get("created_at")),
-            "host_score": host_score,
-            "guest_score": guest_score,
-            "host_delta": _normalize_match_delta(
-                match.get("delta1") if host_is_player1 else match.get("delta2")
-            ),
-            "guest_delta": _normalize_match_delta(
-                match.get("delta2") if host_is_player1 else match.get("delta1")
-            ),
-        }
-        selected.append(item)
-
-        empty["host_goals"] += host_score
-        empty["guest_goals"] += guest_score
-        if host_score > guest_score:
-            empty["host_wins"] += 1
-        elif guest_score > host_score:
-            empty["guest_wins"] += 1
-        else:
-            empty["draws"] += 1
-
-    empty["total"] = len(selected)
-    # Cột phải chỉ cần các trận mới nhất; tổng W-D-L vẫn tính trên toàn phiên.
-    empty["matches"] = selected[:8]
-    return empty
 
 
-def _room_by_match_id(rooms):
-    return {
-        str(room.get("match_id")): room
-        for room in (rooms or [])
-        if room.get("match_id") not in (None, "")
-    }
 
 
-def match_blocks_new_room(match, linked_room=None):
-    """Chỉ khóa người chơi khi trận còn gắn với một phòng đang hoạt động.
-
-    Một bản ghi ``matches`` còn ``playing``/``waiting_confirm`` nhưng phòng đã
-    ``cancelled`` hoặc không còn tồn tại là dữ liệu mồ côi. Nó không được tiếp
-    tục chặn người chơi tạo phòng mới.
-    """
-    if not match or match.get("status") not in {"playing", "waiting_confirm"}:
-        return False
-    return bool(linked_room and room_is_active(linked_room))
 
 
-def active_match_for_user(user_id):
-    """Trả về trận thật sự đang khóa người chơi, bỏ qua match mồ côi."""
-    user_key = str(user_id)
-    rooms = list_rooms()
-    rooms_by_match = _room_by_match_id(rooms)
-    for match in list_matches():
-        if user_key not in {str(match.get("player1_id")), str(match.get("player2_id"))}:
-            continue
-        linked_room = rooms_by_match.get(str(match.get("id")))
-        if match_blocks_new_room(match, linked_room):
-            return match
-    return None
 
 
-def busy_user_ids(rooms=None, matches=None):
-    """Trả về tập user đang có phòng hoặc trận thật sự chưa hoàn tất."""
-    rooms = list_rooms() if rooms is None else rooms
-    matches = list_matches() if matches is None else matches
-    busy = set()
-
-    for room in rooms:
-        if room_is_active(room):
-            busy.add(room.get("host_user_id"))
-            busy.add(room.get("guest_user_id"))
-
-    rooms_by_match = _room_by_match_id(rooms)
-    for match in matches:
-        linked_room = rooms_by_match.get(str(match.get("id")))
-        if match_blocks_new_room(match, linked_room):
-            busy.add(match.get("player1_id"))
-            busy.add(match.get("player2_id"))
-
-    busy.discard(None)
-    return busy
 
 
-def has_active_room_between(user_a, user_b):
-    active_statuses = {"waiting_ready", "playing", "waiting_result_confirm"}
-    for room in list_rooms():
-        same_pair = {room.get("host_user_id"), room.get("guest_user_id")} == {user_a, user_b}
-        if same_pair and room.get("status") in active_statuses:
-            return True
-    return False
 
 
-def has_active_match_between(user_a, user_b):
-    active_statuses = {"playing", "waiting_confirm"}
-    for match in list_matches():
-        same_pair = {match.get("player1_id"), match.get("player2_id")} == {user_a, user_b}
-        if same_pair and match.get("status") in active_statuses:
-            return True
-    return False
 
 
-def has_pending_invite_between(user_a, user_b):
-    for invite in list_invites("pending"):
-        same_pair = {invite.get("from_user_id"), invite.get("to_user_id")} == {user_a, user_b}
-        if same_pair:
-            return True
-    return False
 
 
-def is_solo_waiting_room(room, user_id):
-    """True only when user is the host of an empty room that has not started."""
-    if not room or not user_id:
-        return False
-    return bool(
-        str(room.get("host_user_id")) == str(user_id)
-        and room.get("status") == "waiting_ready"
-        and not room.get("guest_user_id")
-    )
 
 
-def matchmaking_snapshot(user_a, user_b=None):
-    """Fetch only the small raw state needed by invite actions.
-
-    This avoids loading/enriching every room, match, achievement and team merely
-    to decide whether two users are available.
-    """
-    ids = {str(user_a)}
-    if user_b:
-        ids.add(str(user_b))
-    rooms_result = execute_query(
-        db.table("match_rooms")
-        .select("id,match_id,host_user_id,guest_user_id,status,invite_id")
-        .in_("status", ["waiting_ready", "playing", "friendly_playing", "waiting_result_confirm", "waiting_confirm", "disputed"]),
-        "matchmaking_active_rooms",
-        attempts=3,
-    )
-    matches_result = execute_query(
-        db.table("matches")
-        .select("id,player1_id,player2_id,status")
-        .in_("status", ["playing", "waiting_confirm", "processing_result", "disputed"]),
-        "matchmaking_active_matches",
-        attempts=3,
-    )
-    invites_result = execute_query(
-        db.table("match_invites")
-        .select("id,from_user_id,to_user_id,status,expires_at,created_at")
-        .eq("status", "pending"),
-        "matchmaking_pending_invites",
-        attempts=3,
-    )
-    rooms = [dict(x) for x in (rooms_result.data or [])]
-    active_match_ids = {str(r.get("match_id")) for r in rooms if r.get("match_id")}
-    # Trận mồ côi không còn phòng hoạt động không được chặn ghép trận/lời mời.
-    matches = [dict(x) for x in (matches_result.data or []) if str(x.get("id")) in active_match_ids]
-
-    invites = []
-    now = now_dt()
-    for raw in (invites_result.data or []):
-        invite = dict(raw)
-        expires_at = parse_dt(invite.get("expires_at"))
-        if expires_at and expires_at <= now:
-            try:
-                execute_query(
-                    db.table("match_invites").update({
-                        "status": "expired",
-                        "updated_at": now_iso(),
-                    }).eq("id", invite.get("id")).eq("status", "pending"),
-                    "matchmaking_expire_stale_invite",
-                    attempts=1,
-                )
-            except Exception as exc:
-                print(f"matchmaking stale invite warning id={invite.get('id')}: {exc}")
-            continue
-        invites.append(invite)
-
-    def room_for(uid):
-        uid = str(uid)
-        return next((r for r in rooms if uid in {str(r.get("host_user_id")), str(r.get("guest_user_id"))}), None)
-
-    def match_for(uid):
-        uid = str(uid)
-        return next((m for m in matches if uid in {str(m.get("player1_id")), str(m.get("player2_id"))}), None)
-
-    pair_pending = False
-    if user_b:
-        target = {str(user_a), str(user_b)}
-        pair_pending = any({str(i.get("from_user_id")), str(i.get("to_user_id"))} == target for i in invites)
-    return {
-        "rooms": rooms,
-        "matches": matches,
-        "invites": invites,
-        "room_a": room_for(user_a),
-        "room_b": room_for(user_b) if user_b else None,
-        "match_a": match_for(user_a),
-        "match_b": match_for(user_b) if user_b else None,
-        "pair_pending": pair_pending,
-    }
 
 
 def mark_current_user_active():
@@ -6458,6 +3364,31 @@ def cancel_invite(invite_id):
 
 
 
+
+
+# =========================
+# Core modules extracted from legacy app.py (V1.3.52)
+# =========================
+from modules.core import achievements as _core_achievements
+from modules.core import rank_team_service as _core_rank_team_service
+from modules.core import room_runtime as _core_room_runtime
+from modules.core import user_repository as _core_user_repository
+from modules.core import match_repository as _core_match_repository
+from modules.core import social_runtime as _core_social_runtime
+from modules.core import matchmaking_runtime as _core_matchmaking_runtime
+
+_CORE_MODULES = (
+    _core_achievements, _core_rank_team_service, _core_room_runtime,
+    _core_user_repository, _core_match_repository, _core_social_runtime,
+    _core_matchmaking_runtime,
+)
+for _core_module in _CORE_MODULES:
+    _core_module.configure(globals())
+    for _core_name in _core_module.EXPORTED_NAMES:
+        globals()[_core_name] = getattr(_core_module, _core_name)
+# Second pass refreshes cross-module dependencies after every exported name exists.
+for _core_module in _CORE_MODULES:
+    _core_module.configure(globals())
 
 
 # =========================

@@ -1,0 +1,24 @@
+        <aside class="room-side-rail room-arena-right-rail" aria-label="Thông tin bổ sung của phòng">
+            <section class="panel room-side-info-panel">
+                <h3>Thông tin phòng đấu</h3>
+                <div class="room-side-info-list">
+                    <div><span>Mã phòng</span><strong>#{{ room.room_code }}</strong></div>
+                    <div><span>Trạng thái phòng</span><strong>{{ room.status|replace('_',' ')|title }}</strong></div>
+                    <div><span>Chế độ</span><strong>{{ active_rank_mode.label if active_rank_mode else 'Rank thường Random' }}</strong></div>
+                </div>
+            </section>
+
+            {% include "partials/parsec_room_panel.html" %}
+
+            {% if system_features.room_chat_enabled %}<section class="panel room-chat-side">
+                <h2>Chat phòng</h2>
+                <div id="roomChatBox" class="chat-box"></div>
+                <form method="post" action="{{ url_for('send_room_chat', room_id=room.id) }}" class="chat-form room-chat-form">
+                    <input id="roomChatInput" name="message" maxlength="200" placeholder="Nhắn với đối thủ trong phòng..." required autocomplete="off">
+                    <button class="btn arena-btn green" type="submit">Gửi</button>
+                </form>
+                <div id="roomChatStatus" class="chat-note">Chat phòng chỉ dành cho 2 người trong phòng. Chống spam: 1 tin nhắn / 5 giây.</div>
+            </section>{% endif %}
+        </aside>
+    </div>
+

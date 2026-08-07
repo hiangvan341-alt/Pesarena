@@ -1,3 +1,33 @@
+# V1.3.52 — Module hóa Room / CSS legacy / App Core + System Logging
+
+**Ngày:** 08/08/2026 (Asia/Bangkok)
+
+## Tái cấu trúc
+- `templates/room_detail.html`: giảm từ 1.596 dòng xuống còn file điều phối ~50 dòng; tách thành 8 partial giao diện + 3 module script theo chức năng.
+- `static/style.css`: giảm từ 5.320 dòng xuống entrypoint 11 dòng; tách nguyên thứ tự cascade cũ thành 6 file `static/css/legacy/*` để tránh thay đổi giao diện ngoài ý muốn.
+- `app.py`: giảm từ 6.577 dòng xuống dưới 3.500 dòng; tách core thành `modules/core/achievements.py`, `rank_team_service.py`, `room_runtime.py`, `user_repository.py`, `match_repository.py`, `social_runtime.py`, `matchmaking_runtime.py`.
+- Giữ tên hàm public cũ thông qua lớp compatibility export để các route/module hiện tại không phải đổi đồng loạt trong một release.
+
+## Logging hệ thống
+- Thêm `modules/observability/app_logging.py`.
+- Mỗi request có `X-Request-ID`, thời gian xử lý, endpoint, status.
+- Request quá `PES_SLOW_REQUEST_MS` ghi event `slow_request`.
+- Supabase retry/fail ghi `database_query_retry` / `database_query_failed`.
+- Exception chưa xử lý ghi `uncaught_exception` kèm traceback.
+- Local/dev hỗ trợ rotating file `logs/pes_arena.log`; production/serverless ghi stdout để Vercel thu log.
+- Không ghi password/session cookie/API key/bytes bằng chứng vào log.
+
+## Tài liệu / Test
+- `docs/MODULE_ARCHITECTURE_V1.3.52.md`
+- `docs/LOGGING_GUIDE_V1.3.52.md`
+- `test_modular_refactor_v1352.py`
+- Python compile: PASS.
+- Jinja parse toàn bộ module Room mới: PASS.
+- 4 kiểm tra cấu trúc V1.3.52: PASS.
+- Không thay schema Supabase, công thức RP, Series, Ban/Pick hoặc luật gameplay.
+
+---
+
 # V1.3.50 — Sửa lõi chọn chế độ + tối ưu tải phòng + audit Series
 
 **Ngày:** 08/08/2026 (Asia/Bangkok)
