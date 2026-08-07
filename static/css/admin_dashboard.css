@@ -55,3 +55,10 @@ body[data-page="admin"] .admin-module-frame{display:block;width:100%;min-height:
 .admin-mode-auto-note{margin:0;padding:0 15px 15px}
 @media(max-width:900px){.admin-mode-user-checks{grid-template-columns:repeat(2,minmax(0,1fr))}}
 @media(max-width:560px){.admin-mode-user-checks{grid-template-columns:1fr}.admin-mode-user-row>summary{align-items:flex-start;flex-direction:column}}
+
+/* V1.3.30 — phản hồi tức thời cho tab và bộ lọc báo cáo. */
+.admin-tab-button{touch-action:manipulation}
+.admin-report-filter a.is-loading{opacity:.7;pointer-events:none}
+.admin-report-filter a.is-loading::after{content:' …';animation:adminReportPulse .8s infinite alternate}
+@keyframes adminReportPulse{from{opacity:.35}to{opacity:1}}
+html.admin-report-loading .admin-tab-panel[data-admin-panel="match-report"]{opacity:.72}

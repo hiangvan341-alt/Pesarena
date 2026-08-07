@@ -1,4 +1,3 @@
-{% if room.has_guest %}
 <section class="panel room-session-h2h room-score-history-panel room-history-full" aria-label="Lịch sử tỷ số trong phòng">
     <div class="room-score-history-title">
         <h3>LỊCH SỬ ĐẤU</h3>
@@ -22,7 +21,6 @@
         </div>
     </div>
     {% else %}
-    <p class="room-session-empty">Chưa có tỷ số nào trong phòng này.</p>
+    <p class="room-session-empty">Chưa có trận nào trong lịch sử phòng.</p>
     {% endif %}
 </section>
-{% endif %}

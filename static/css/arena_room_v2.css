@@ -1354,3 +1354,55 @@
     scroll-behavior:auto !important;
   }
 }
+
+/* V1.3.30 — Cân cụm nút chờ đối thủ, tăng độ trong suốt và giữ lịch sử luôn hiển thị. */
+.arena-room-v2 .room-center-primary-actions-three{
+  width:min(calc(100% - 34px), 390px) !important;
+  gap:10px !important;
+  margin-left:auto;
+  margin-right:auto;
+}
+.arena-room-v2 .room-center-primary-actions-three .room-center-action-btn{
+  min-height:42px !important;
+  height:42px !important;
+  padding:7px 10px !important;
+  border-radius:12px !important;
+  font-size:11.5px !important;
+}
+.arena-room-v2 .room-center-primary-actions-three .arena-btn{
+  --room-btn-top:rgba(21,29,45,.58);
+  --room-btn-bottom:rgba(7,12,23,.68);
+  background-image:linear-gradient(180deg,rgba(255,255,255,.055),rgba(255,255,255,0) 38%),linear-gradient(180deg,var(--room-btn-top),var(--room-btn-bottom)) !important;
+  border-color:color-mix(in srgb,var(--room-btn-border) 62%,transparent) !important;
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.06),0 4px 10px rgba(0,0,0,.14) !important;
+}
+.arena-room-v2 .room-center-primary-actions-three .arena-btn.gold{
+  --room-btn-top:rgba(91,65,15,.54);
+  --room-btn-bottom:rgba(40,25,5,.62);
+}
+.arena-room-v2 .room-center-primary-actions-three .arena-action-quick{
+  --room-btn-top:rgba(6,74,48,.52);
+  --room-btn-bottom:rgba(3,35,24,.62);
+}
+.arena-room-v2 .room-center-primary-actions-three .arena-action-exit{
+  --room-btn-top:rgba(82,18,35,.50);
+  --room-btn-bottom:rgba(38,8,18,.62);
+}
+.arena-room-v2 .room-center-primary-actions-three .arena-btn:hover{
+  filter:brightness(1.08);
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.09),0 5px 12px rgba(0,0,0,.17) !important;
+}
+.arena-room-v2 .room-bottom-side:empty::before{
+  content:'Lịch sử phòng chưa có dữ liệu.';
+  display:block;
+  padding:14px;
+  border:1px solid rgba(216,165,60,.24);
+  border-radius:14px;
+  background:rgba(4,11,21,.82);
+  color:#aeb9c7;
+  font-size:12px;
+}
+@media(max-width:1450px){
+  .arena-room-v2 .room-center-primary-actions-three{width:min(calc(100% - 28px),360px)!important;gap:8px!important}
+  .arena-room-v2 .room-center-primary-actions-three .room-center-action-btn{font-size:10.5px!important;padding-inline:8px!important}
+}

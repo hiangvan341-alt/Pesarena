@@ -5,7 +5,18 @@
 
     function activateAdminTab(tabName) {
         const selected = allowedTabs.has(tabName) ? tabName : 'overview';
-        buttons.forEach(function (button) {
+    
+    // V1.3.30: phản hồi tab ngay từ pointerdown để không bị cảm giác click trễ
+    // khi trang Admin có nhiều bảng và các script nền đang hoạt động.
+    document.addEventListener('pointerdown', function (event) {
+        const button = event.target.closest('[data-admin-tab]');
+        if (!button) return;
+        const tabName = button.dataset.adminTab;
+        if (!allowedTabs.has(tabName)) return;
+        activateAdminTab(tabName);
+    }, { capture: true, passive: true });
+
+    buttons.forEach(function (button) {
             const active = button.dataset.adminTab === selected;
             button.classList.toggle('active', active);
             button.setAttribute('aria-selected', active ? 'true' : 'false');
@@ -83,6 +94,14 @@
     document.querySelectorAll('.temporary-password-input').forEach(function (input) {
         input.addEventListener('focus', function () { input.type = 'text'; });
         input.addEventListener('blur', function () { input.type = 'password'; });
+    });
+
+    document.querySelectorAll('.admin-report-filter a').forEach(function (link) {
+        link.addEventListener('click', function () {
+            document.documentElement.classList.add('admin-report-loading');
+            link.classList.add('is-loading');
+            link.setAttribute('aria-busy', 'true');
+        });
     });
 
     document.querySelectorAll('.admin-permission-form').forEach(function (form) {

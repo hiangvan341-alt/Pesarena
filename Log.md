@@ -1,3 +1,22 @@
+## V1.3.30 — Cân nút phòng, lịch sử luôn hiển thị, sắp xếp chế độ và sửa phản hồi tab báo cáo
+
+- Thu nhỏ và căn giữa cụm `Mời đấu / Tìm nhanh / Thoát phòng`.
+- Giảm độ đậm viền, giảm nền đặc và tăng độ trong suốt riêng cho ba nút chờ đối thủ.
+- Lịch sử phòng luôn hiển thị, kể cả khi chưa có khách hoặc chưa có trận; khi trống sẽ hiện thông báo rõ ràng.
+- Sắp xếp chế độ từ trái sang phải: `Random → 3 chọn 1 → Lượt đi/về → BO3 → Chiến thuật BO3 → Cấm chọn BO3`.
+- Thêm phản hồi tab Admin ngay từ `pointerdown` để thao tác chuyển tab có cảm giác tức thời hơn.
+- Thêm trạng thái đang tải khi chọn khoảng thời gian trong Báo cáo số trận, tránh cảm giác nút không nhận lệnh.
+- Cập nhật `APP_VERSION` thành `1.3.30`.
+
+### File đã sửa
+- `app.py`
+- `modules/rank_modes/catalog.py`
+- `templates/partials/room_history_panel.html`
+- `static/css/arena_room_v2.css`
+- `static/css/admin_dashboard.css`
+- `static/js/admin_dashboard.js`
+
+
 ## V1.3.29 — Tối ưu độ trễ click và giảm request nền
 
 - Loại bỏ việc gọi heartbeat và kiểm tra lời mời ngay trên mỗi `pointerdown`, `touchstart`, `keydown`; đây là nguyên nhân khiến một cú click đồng thời kích hoạt nhiều request nền.
