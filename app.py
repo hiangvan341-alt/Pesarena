@@ -68,7 +68,7 @@ from modules.win_streaks import (
 load_dotenv()
 
 APP_NAME = "PES Arena – Bản Lĩnh Sân Cỏ"
-APP_VERSION = "1.3.33"
+APP_VERSION = "1.3.34"
 DEFAULT_POINTS = 1000
 DEVICE_COOKIE_NAME = "rankzone_device_id"
 COOLDOWN_MINUTES = 3
@@ -2196,30 +2196,66 @@ list_user_devices.last_status = {"ok": None, "row_count": 0, "error": None, "sou
 
 
 def decorate_admin_users(users):
-    """Bổ sung toàn bộ IP và trạng thái trùng IP cho danh sách Admin.
-
-    Tài khoản tin cậy/cấu hình tắt cảnh báo chỉ ảnh hưởng màu cảnh báo, không được
-    loại khỏi dữ liệu đối chiếu. Nhờ vậy bộ lọc "Chỉ hiện IP trùng" luôn thấy đủ.
-    """
+    """Bổ sung IP/trùng IP cho Admin bằng read-model nếu đã cài V1.3.34."""
     rows = [dict(user) for user in users]
     for row in rows:
         row["admin_permissions"] = _admin_permissions(row)
 
-    devices = list_user_devices()
     config = get_duplicate_ip_warning_config()
     warnings_enabled = bool(config.get("enabled", True))
+    username_by_id = {str(user.get("id")): user.get("username", "-") for user in rows}
+
+    # Fast path: một SELECT nhỏ, không quét user_devices rồi group lại mỗi lần mở tab.
+    ip_cache = None
+    try:
+        loader = globals().get("load_user_ip_cache")
+        if callable(loader):
+            ip_cache = loader()
+    except Exception:
+        ip_cache = None
+
+    if ip_cache is not None:
+        list_user_devices.last_status = {
+            "ok": True, "row_count": len(ip_cache), "error": None, "source": "read_model_ip_cache"
+        }
+        ip_owners = {}
+        for user_id, item in ip_cache.items():
+            for ip in (item.get("known_ips") or []):
+                if ip:
+                    ip_owners.setdefault(str(ip), set()).add(str(user_id))
+        for user in rows:
+            user_id = str(user.get("id") or "")
+            item = ip_cache.get(user_id) or {}
+            known_ips = [str(ip) for ip in (item.get("known_ips") or []) if ip]
+            duplicate_ips = [str(ip) for ip in (item.get("duplicate_ips") or []) if ip]
+            duplicate_accounts = sorted({
+                username_by_id.get(owner_id, "-")
+                for ip in duplicate_ips
+                for owner_id in ip_owners.get(ip, set())
+                if owner_id != user_id
+            })
+            trusted = user_ignored_for_duplicate_ip(user, config)
+            detected = bool(duplicate_ips)
+            user["latest_ip"] = item.get("latest_ip") or user.get("register_ip") or "-"
+            user["known_ips"] = known_ips
+            user["duplicate_ips"] = duplicate_ips
+            user["duplicate_ip_count"] = int(item.get("duplicate_ip_count") or 0)
+            user["duplicate_ip_accounts"] = duplicate_accounts
+            user["duplicate_ip_detected"] = detected
+            user["duplicate_ip_trusted"] = trusted
+            user["duplicate_ip_warning_visible"] = detected and warnings_enabled and not trusted
+        return rows
+
+    # Compatibility fallback trước khi chạy migration V1.3.34.
+    devices = list_user_devices()
     known_ips_by_user = {str(user.get("id")): set() for user in rows}
     latest_ip_by_user = {}
     row_by_id = {str(user.get("id")): user for user in rows}
-
-    # Luôn thu thập IP đăng ký, kể cả tài khoản được tin cậy/được Admin tạo.
     for user in rows:
         user_id = str(user.get("id") or "")
         register_ip = str(user.get("register_ip") or "").strip()
         if user_id and register_ip and not register_ip.upper().startswith(("ADMIN_TEST", "ADMIN_CREATED")):
             known_ips_by_user.setdefault(user_id, set()).add(register_ip)
-
-    # Luôn thu thập IP thiết bị. Dòng đầu tiên là IP mới nhất do truy vấn đã sort desc.
     for device in devices:
         user_id = str(device.get("user_id") or "")
         ip = str(device.get("ip_address") or "").strip()
@@ -2227,26 +2263,17 @@ def decorate_admin_users(users):
             continue
         known_ips_by_user.setdefault(user_id, set()).add(ip)
         latest_ip_by_user.setdefault(user_id, ip)
-
     ip_owners = {}
     for user_id, ip_values in known_ips_by_user.items():
         for ip in ip_values:
             ip_owners.setdefault(ip, set()).add(user_id)
-
-    username_by_id = {str(user.get("id")): user.get("username", "-") for user in rows}
     for user in rows:
         user_id = str(user.get("id") or "")
         known_ips = sorted(known_ips_by_user.get(user_id, set()))
         duplicate_ips = [ip for ip in known_ips if len(ip_owners.get(ip, set())) > 1]
-        duplicate_accounts = sorted({
-            username_by_id.get(owner_id, "-")
-            for ip in duplicate_ips
-            for owner_id in ip_owners.get(ip, set())
-            if owner_id != user_id
-        })
+        duplicate_accounts = sorted({username_by_id.get(owner_id, "-") for ip in duplicate_ips for owner_id in ip_owners.get(ip, set()) if owner_id != user_id})
         trusted = user_ignored_for_duplicate_ip(user, config)
         detected = bool(duplicate_accounts)
-
         user["latest_ip"] = latest_ip_by_user.get(user_id) or user.get("register_ip") or "-"
         user["known_ips"] = known_ips
         user["duplicate_ips"] = duplicate_ips
@@ -2255,7 +2282,6 @@ def decorate_admin_users(users):
         user["duplicate_ip_detected"] = detected
         user["duplicate_ip_trusted"] = trusted
         user["duplicate_ip_warning_visible"] = detected and warnings_enabled and not trusted
-
     return rows
 
 def build_duplicate_ip_groups(users):
@@ -5248,7 +5274,8 @@ def dashboard():
     try:
         player_rows = list_players()
         presence_rows = list_players(include_admin=True)
-        matches = list_matches()
+        # V1.3.34: Dashboard chỉ lấy trận của chính user, không list_matches() toàn hệ thống.
+        matches = load_user_matches(user.get("id"), limit=30)
         rooms = list_rooms()
         invite_count = current_pending_invite_count()
     except Exception:
@@ -5278,7 +5305,7 @@ def dashboard():
         "disputed": len([m for m in matches if m.get("status") == "disputed" and user.get("id") in {m.get("player1_id"), m.get("player2_id")}]),
     }
 
-    activity_map = build_player_activity_map(rooms, matches)
+    activity_map = build_player_activity_map(rooms, [])
     online_players = [p for p in presence_rows if p.get("is_online") and p.get("id") != user.get("id")]
     solo_room_user_ids = {
         str(room.get("host_user_id"))
@@ -5480,17 +5507,8 @@ def ranking():
         filtered = [player for player in filtered if player.get("rank_info", {}).get("slug") == rank_filter]
 
     top_players = filtered[:100]
-    try:
-        confirmed_matches = list_matches(status="confirmed")
-    except Exception as exc:
-        print(f"ranking list_matches warning: {exc}")
-        confirmed_matches = []
-
-    recent_form_map = _build_recent_form_map(
-        confirmed_matches,
-        player_ids={player.get("id") for player in top_players},
-        limit=5,
-    )
+    # V1.3.34: phong độ 5 trận đã được trigger Supabase lưu sẵn. BXH chỉ SELECT cache.
+    recent_form_map = load_recent_form_map({player.get("id") for player in top_players})
 
     for player in top_players:
         total_matches = calculated_total_matches(player)
@@ -6246,6 +6264,7 @@ from modules import daily_checkin as _daily_checkin_module
 from modules.parsec_room import service as _parsec_room_service
 from modules import gift_codes as _gift_codes_module
 from modules import rank_modes as _rank_modes_module
+from modules import read_model_service as _read_model_service
 
 for _service_module in (
     _notification_service,
@@ -6267,6 +6286,14 @@ for _service_module in (
     _service_module.configure(globals())
     for _service_name in _service_module.EXPORTED_NAMES:
         globals()[_service_name] = getattr(_service_module, _service_name)
+
+# Read-model V1.3.34 không export route; chỉ cung cấp các SELECT nhanh.
+_read_model_service.configure(globals())
+for _read_model_name in (
+    "load_match_report", "load_recent_form_map", "load_player_profile_summary",
+    "load_user_matches", "load_h2h_matches", "load_pair_stats", "load_user_ip_cache",
+):
+    globals()[_read_model_name] = getattr(_read_model_service, _read_model_name)
 
 
 # Route phòng đấu.
@@ -6319,7 +6346,7 @@ for _route_registrar in (
 ):
     _route_registrar(globals())
 
-del _service_module, _service_name, _route_registrar
+del _service_module, _service_name, _route_registrar, _read_model_name
 
 
 if __name__ == "__main__":

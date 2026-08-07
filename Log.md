@@ -1,3 +1,31 @@
+## V1.3.34 — Read Model / Stats Cache, bỏ tính toán nặng khi click
+
+- Chuyển **Admin → Báo cáo số trận** sang mô hình read-model: tab chỉ SELECT dữ liệu tổng hợp có sẵn trong Supabase, không tải `matches / match_rooms / match_series / match_series_games` rồi tính lại trong Python.
+- Thêm các bảng cache thống kê theo ngày/chế độ/series/người tham gia và số user mở khóa mode.
+- Thêm trigger Supabase: dữ liệu cache được cập nhật khi trận/series/user/unlock/config thay đổi; có backfill cho dữ liệu cũ.
+- Thêm `mode_code` trực tiếp vào `matches` để báo cáo không phải đoán mode từ `note` hoặc `rp_details`.
+- BXH lấy phong độ 5 trận từ `player_recent_form_cache`, bỏ quét toàn bộ trận confirmed mỗi lần mở BXH.
+- Dashboard chỉ lấy trận của đúng user (`LIMIT 30`), không `list_matches()` toàn hệ thống.
+- Hồ sơ người chơi dùng cache đội yêu thích, đối thủ thường gặp và H2H; lịch sử gần đây query đúng user/cặp người chơi.
+- Admin IP trùng ưu tiên `admin_user_ip_summary_cache`, không group toàn bộ `user_devices` ở mỗi lần mở tab.
+- Nếu SQL V1.3.34 chưa được chạy, Báo cáo trận **không fallback quét lịch sử**; giao diện báo rõ cần chạy migration để tránh request bị treo.
+- Thêm `SUPABASE_UPDATE_V1.3.34.sql` ở thư mục gốc và tài liệu `docs/READ_MODEL_AUDIT_V1.3.34.md`.
+- Cập nhật `APP_VERSION` thành `1.3.34`.
+
+### File chính đã sửa/thêm
+- `app.py`
+- `modules/read_model_service.py`
+- `modules/admin_dashboard_routes.py`
+- `modules/profile/service.py`
+- `modules/room_team_routes.py`
+- `modules/forfeit_history_service.py`
+- `templates/admin/tabs/match-report.html`
+- `static/css/admin_dashboard.css`
+- `SUPABASE_UPDATE_V1.3.34.sql`
+- `docs/PES_ARENA_READ_MODEL_V1.3.34.sql`
+- `docs/READ_MODEL_AUDIT_V1.3.34.md`
+
+
 ## V1.3.33 — Tối ưu toàn bộ luồng Admin và sửa lỗi hủy phòng 500
 
 ### Nguyên nhân chính đã phát hiện

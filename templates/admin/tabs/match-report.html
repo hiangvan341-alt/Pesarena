@@ -9,6 +9,14 @@
             <span class="admin-count">{{ match_report.range_label }}</span>
         </div>
 
+
+        {% if match_report.source == 'migration_required' %}
+        <div class="admin-report-read-model-warning">
+            <strong>⚙️ Chưa kích hoạt Stats Cache V1.3.34</strong>
+            <span>Chạy file <code>docs/PES_ARENA_READ_MODEL_V1.3.34.sql</code> trong Supabase SQL Editor. Báo cáo không tự quét lịch sử để tránh làm treo web.</span>
+        </div>
+        {% endif %}
+
         <nav class="admin-report-filter" aria-label="Khoảng thời gian báo cáo">
             {% for key, label in match_report.range_labels.items() %}
             <a class="{% if match_report.range == key %}active{% endif %}" href="{{ url_for('admin', tab='match-report', match_report_range=key) }}#match-report">{{ label }}</a>
@@ -56,7 +64,7 @@
         <div class="table-wrap admin-table-wrap">
             <table>
                 <thead>
-                    <tr><th>Ngày</th><th>Tổng</th><th>Random</th><th>3 chọn 1</th><th>Chiến thuật BO3</th><th>BO3</th><th>Cấm chọn BO3</th><th>Lượt đi/về</th><th>Xác nhận</th><th>Đang đá</th><th>Chờ</th><th>Tranh chấp</th><th>Đã hủy</th><th>Người chơi</th></tr>
+                    <tr><th>Ngày</th><th>Tổng</th><th>Random</th><th>3 chọn 1</th><th>Lượt đi/về</th><th>BO3</th><th>Chiến thuật BO3</th><th>Cấm chọn BO3</th><th>Xác nhận</th><th>Đang đá</th><th>Chờ</th><th>Tranh chấp</th><th>Đã hủy</th><th>Người chơi</th></tr>
                 </thead>
                 <tbody>
                 {% for row in match_report_daily %}
@@ -65,7 +73,7 @@
                         <td>{{ row.total }}</td>
                         <td>{{ row.rank_random }}</td>
                         <td>{{ row.random3_pick1 }}</td>
-                        <td>{{ row.tactical_bo3 }}</td><td>{{ row.bo3 }}</td><td>{{ row.ban_pick_bo3 }}</td><td>{{ row.home_away }}</td>
+                        <td>{{ row.home_away }}</td><td>{{ row.bo3 }}</td><td>{{ row.tactical_bo3 }}</td><td>{{ row.ban_pick_bo3 }}</td>
                         <td>{{ row.confirmed }}</td>
                         <td>{{ row.playing }}</td>
                         <td>{{ row.waiting }}</td>

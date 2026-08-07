@@ -105,6 +105,7 @@ def register_routes(context):
                 db.table("matches").insert({
                     "player1_id": room["host_user_id"],
                     "player2_id": room["guest_user_id"],
+                    "mode_code": normalize_rank_mode_code(room.get("team_tier")),
                     "team1": result["team_a"],
                     "team2": result["team_b"],
                     "team1_overall": result["overall_a"],
@@ -256,6 +257,7 @@ def register_routes(context):
                 db.table("matches").insert({
                     "player1_id": room["host_user_id"],
                     "player2_id": room["guest_user_id"],
+                    "mode_code": "random3_pick1",
                     "team1": h["name"],
                     "team2": g["name"],
                     "team1_overall": h["overall"],

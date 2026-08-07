@@ -110,6 +110,8 @@ def _existing_match_payload(room, offender_role, penalty_delta, reason):
         room, offender_role, penalty_delta, reason,
     )
 
+    payload["mode_code"] = str(room.get("team_tier") or "rank_random").replace("smart_random", "rank_random")
+
     optional_room_fields = {
         "team1": "host_team",
         "team2": "guest_team",
@@ -145,6 +147,7 @@ def _new_match_payload(room, offender_role, penalty_delta, reason):
     payload = {
         "player1_id": room.get("host_user_id"),
         "player2_id": room.get("guest_user_id"),
+        "mode_code": str(room.get("team_tier") or "rank_random").replace("smart_random", "rank_random"),
         "team1": host_team,
         "team2": guest_team,
         "team1_overall": _safe_overall(room.get("host_team_overall")),
