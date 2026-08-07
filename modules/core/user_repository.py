@@ -435,6 +435,8 @@ def list_user_devices():
         return []
 
 
+list_user_devices.last_status = {"ok": None, "row_count": 0, "error": None, "source": "not_loaded"}
+
 def decorate_admin_users(users):
     """Bổ sung IP/trùng IP cho Admin bằng read-model nếu đã cài V1.3.34."""
     rows = [dict(user) for user in users]

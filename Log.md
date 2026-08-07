@@ -1,3 +1,11 @@
+# V1.3.56 — Core Startup Binding Fix
+
+- Sửa `NameError: list_user_devices is not defined` khi Vercel import `app.py`.
+- Nguyên nhân: V1.3.52 đã tách `list_user_devices()` sang `modules/core/user_repository.py` nhưng để sót dòng khởi tạo `.last_status` trong `app.py` trước block bind core.
+- Chuyển dòng khởi tạo về đúng module sở hữu hàm.
+- Không thay logic Room / RP / Match / Invite / Presence.
+- Thêm `test_core_startup_binding_regression.py` để phát hiện core symbol bị dùng trước khi bind.
+
 # V1.3.54 — Black Box Safety Lab / Kill Switch / Automated Audit
 
 **Ngày:** 08/08/2026 (Asia/Bangkok)

@@ -71,7 +71,7 @@ from modules.win_streaks import (
 load_dotenv()
 
 APP_NAME = "PES Arena – Bản Lĩnh Sân Cỏ"
-APP_VERSION = "1.3.55"
+APP_VERSION = "1.3.56"
 DEFAULT_POINTS = 1000
 DEVICE_COOKIE_NAME = "rankzone_device_id"
 COOLDOWN_MINUTES = 3
@@ -983,7 +983,6 @@ _ip_warning_config_cache = {"value": None, "expires_at": 0.0}
 
 
 
-list_user_devices.last_status = {"ok": None, "row_count": 0, "error": None, "source": "not_loaded"}
 
 
 
