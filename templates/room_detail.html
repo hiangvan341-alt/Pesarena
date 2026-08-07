@@ -9,6 +9,7 @@
 <link rel="stylesheet" href="{{ static_asset('css/room/05-action-states.css') }}">
 <link rel="stylesheet" href="{{ static_asset('css/room/06-responsive-performance.css') }}">
 <link rel="stylesheet" href="{{ static_asset('css/room/07-parsec-history-polish.css') }}">
+<link rel="stylesheet" href="{{ static_asset('css/room/08-action-layout-guard.css') }}">
 <style>
 .arena-room-v2 {
   --arena-stadium-blue: url("{{ room_asset('stadium-blue.webp') }}");
@@ -90,7 +91,7 @@
             </div>
         </section>
 
-        <section class="room-center-stage-plain" aria-label="Khu vực điều khiển trận đấu">
+        <section class="room-center-stage-plain room-state-{{ room.status }}" aria-label="Khu vực điều khiển trận đấu">
             {% set active_rank_mode = (rank_mode_catalog | selectattr('code', 'equalto', selected_rank_mode) | first) %}
             <div class="room-master-active-mode" data-active-mode="{{ selected_rank_mode }}">
                 <span class="room-master-mode-number">{{ loop.index if false else ({'rank_random':1,'random3_pick1':2,'home_away':3,'bo3':4,'tactical_bo3':5,'ban_pick_bo3':6}.get(selected_rank_mode,1)) }}</span>

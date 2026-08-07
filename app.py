@@ -70,7 +70,7 @@ from modules.win_streaks import (
 load_dotenv()
 
 APP_NAME = "PES Arena – Bản Lĩnh Sân Cỏ"
-APP_VERSION = "1.3.46"
+APP_VERSION = "1.3.47"
 DEFAULT_POINTS = 1000
 DEVICE_COOKIE_NAME = "rankzone_device_id"
 COOLDOWN_MINUTES = 3
@@ -3409,8 +3409,21 @@ def enrich_room(room):
     else:
         room["timeout_label"] = ""
 
-    room["match_mode_label"] = ("Random 3 chọn 1" if room.get("team_tier") == FRIENDLY_RANDOM3_MODE else ("Xếp hạng (Rank)" if room.get("match_mode") != MATCH_MODE_FRIENDLY else f"Giao hữu Tier {room.get('friendly_tier') or ''}".strip()))
-    room["battle_label"] = "Trận đấu xếp hạng" if room.get("match_mode") != MATCH_MODE_FRIENDLY else "Trận đấu giao hữu"
+    # V1.3.47: nhãn hiển thị phải lấy từ đúng mã chế độ Rank đang lưu trong phòng.
+    # Trước đây mọi mode ngoài random3 đều bị rút gọn thành "Xếp hạng (Rank)",
+    # khiến Lượt đi/về, BO3, Chiến thuật BO3 và Cấm chọn BO3 trông như Rank thường.
+    selected_rank_mode = normalize_rank_mode_code(room.get("team_tier") or RANK_RANDOM)
+    room["rank_mode_code"] = selected_rank_mode
+    if room.get("match_mode") == MATCH_MODE_FRIENDLY:
+        room["match_mode_label"] = f"Giao hữu Tier {room.get('friendly_tier') or ''}".strip()
+        room["battle_label"] = "Trận đấu giao hữu"
+    else:
+        try:
+            selected_mode_config = get_rank_mode(selected_rank_mode) or {}
+        except Exception:
+            selected_mode_config = {}
+        room["match_mode_label"] = selected_mode_config.get("label") or "Rank thường Random"
+        room["battle_label"] = f"Trận đấu {room['match_mode_label']}"
     room["start_countdown_seconds"] = 0
     room["match_elapsed_seconds"] = 0
     if room.get("guest_user_id"):

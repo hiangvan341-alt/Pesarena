@@ -1,3 +1,13 @@
+## V1.3.47 - 2026-08-07 22:58 (Asia/Bangkok)
+
+### Sửa luồng hiển thị 6 chế độ Rank + chống CSS chồng nút
+- Sửa `enrich_room()` để `match_mode_label` lấy trực tiếp từ `rank_mode_configs_v1` theo `team_tier`; Lượt đi/về, BO3, Chiến thuật BO3 và Cấm chọn BO3 không còn bị hiển thị thành Rank thường.
+- Khóa `room_random_teams()` chỉ cho `rank_random`; ngăn các mode Series rơi nhầm vào smart random rồi ghi đè `team_tier`.
+- Đồng bộ `room_detail.html` và `_room_live_content.html` cùng dùng `selected_rank_mode`.
+- Thêm module CSS `08-action-layout-guard.css`: bỏ offset `left/bottom/transform` gây chồng `QUAY QUÂN` với `THOÁT PHÒNG`, đồng thời nén riêng trạng thái `waiting_ready`.
+- Kiểm tra kiến trúc: Admin là nguồn bật/tắt mode; phòng chỉ lưu/chọn `mode_code`; giao diện đọc đúng mode hiện tại. 4 mode Series hiện có lõi cấu hình/RP nhưng chưa có bộ điều phối trận con hoàn chỉnh nên được chặn không cho chạy nhầm luồng Rank thường.
+- Thêm `test_room_mode_display_v147.py`.
+
 ## V1.3.37 — Module hóa luồng dữ liệu + CSS Flow Audit
 
 **Ngày giờ:** 2026-08-07 13:28 (Asia/Bangkok)

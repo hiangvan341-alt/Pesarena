@@ -64,14 +64,17 @@ def register_routes(context):
         if match_mode == MATCH_MODE_RANKED:
             try:
                 selected_rank_mode = normalize_rank_mode_code(room.get("team_tier") or RANK_RANDOM)
+                selected_mode_config = get_rank_mode(selected_rank_mode) or {}
                 continuing_series = "__RANK_MODE_LOCKED__" in (room.get("note") or "") and is_series_mode(selected_rank_mode)
-                # V1.3.46: lúc bắt đầu Series lần đầu phải còn đủ quota tối đa của mode.
-                # Khi Series đã chạy, mỗi trận con tiếp theo chỉ cần 1 lượt thực tế;
-                # điều kiện RP không được kiểm tra lại giữa Series.
+                if not selected_mode_config.get("enabled", True):
+                    raise ValueError(f"Chế độ {selected_mode_config.get('label') or selected_rank_mode} đang tạm tắt.")
+                # Route random-teams chỉ được phép chạy Rank thường. Random 3 có route riêng;
+                # các Series chưa được nối bộ điều phối trận con nên tuyệt đối không được rơi
+                # xuống smart_random rồi ghi đè team_tier thành Rank thường.
+                if selected_rank_mode != RANK_RANDOM:
+                    raise ValueError(f"Chế độ {selected_mode_config.get('label') or selected_rank_mode} không dùng luồng Quay quân Rank thường.")
                 assert_rank_mode_daily_quota(
-                    selected_rank_mode,
-                    host.get("id"), guest.get("id"),
-                    continuation=continuing_series,
+                    selected_rank_mode, host.get("id"), guest.get("id"), continuation=continuing_series
                 )
             except ValueError as exc:
                 flash(str(exc), "warning")
@@ -145,7 +148,7 @@ def register_routes(context):
                     "guest_team_logo_url": result.get("logo_b") or None,
                     "host_team_league": result.get("league_a") or None,
                     "guest_team_league": result.get("league_b") or None,
-                    "team_tier": SMART_RANDOM_MODE,
+                    "team_tier": selected_rank_mode,
                     "match_mode": MATCH_MODE_RANKED,
                     "status": "playing",
                     "match_id": match["id"],
