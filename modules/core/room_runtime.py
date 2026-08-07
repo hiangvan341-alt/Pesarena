@@ -82,10 +82,12 @@ def room_expiry_dt(room):
     return min(candidates) if candidates else None
 
 
-def apply_room_abandon_penalty(user_id, amount=ROOM_ABANDON_PENALTY):
+def apply_room_abandon_penalty(user_id, amount=None):
     """Trừ RP và tính một trận thua do bỏ trận, không cộng thắng cho đối thủ."""
     if not user_id:
         return None
+    if amount is None:
+        amount = ROOM_ABANDON_PENALTY
     player = get_user(user_id)
     if not player:
         return None
@@ -116,10 +118,12 @@ def room_uses_series_rank_mode(room):
         return False
 
 
-def apply_series_forfeit_win_reward(room, winner_id, amount=SERIES_FORFEIT_RP):
+def apply_series_forfeit_win_reward(room, winner_id, amount=None):
     """Cộng đúng +20 RP cho người còn lại khi đối thủ bỏ cuộc trong một Series."""
     if not winner_id or not room_uses_series_rank_mode(room):
         return 0
+    if amount is None:
+        amount = SERIES_FORFEIT_RP
     player = get_user(winner_id)
     if not player:
         return 0

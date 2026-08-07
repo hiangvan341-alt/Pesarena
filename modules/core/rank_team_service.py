@@ -631,7 +631,7 @@ def _is_random3_match(match):
     return "random 3 chọn 1" in note or FRIENDLY_RANDOM3_MODE in note
 
 
-def _recent_pair_team_names(user_id, opponent_id, limit=RECENT_TEAM_EXCLUSION_COUNT):
+def _recent_pair_team_names(user_id, opponent_id, limit=None):
     """CLB người chơi đã dùng trong N trận confirmed gần nhất với đúng đối thủ.
 
     Lịch sử dùng chung cho Rank thường và Random 3 chọn 1. Khi đổi đối thủ,
@@ -639,6 +639,8 @@ def _recent_pair_team_names(user_id, opponent_id, limit=RECENT_TEAM_EXCLUSION_CO
     """
     if not user_id or not opponent_id:
         return []
+    if limit is None:
+        limit = RECENT_TEAM_EXCLUSION_COUNT
     names = []
     try:
         matches = sorted(
@@ -897,7 +899,7 @@ def friendly_random_team_pair(tier, excluded_names=None):
     }
 
 
-def apply_host_xp_factor(delta, factor=HOST_XP_FACTOR):
+def apply_host_xp_factor(delta, factor=None):
     """Apply the room-host coefficient to the absolute RP change."""
     try:
         safe_factor = float(factor or HOST_XP_FACTOR)

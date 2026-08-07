@@ -1,3 +1,15 @@
+# V1.3.57 — Modular Import-Time Dependency Fix
+
+- Sửa startup crash `RECENT_TEAM_EXCLUSION_COUNT is not defined` trong `rank_team_service.py`.
+- Rà toàn bộ `modules/core` và sửa cùng lúc 4 dependency bị đánh giá quá sớm khi import:
+  - `RECENT_TEAM_EXCLUSION_COUNT`
+  - `HOST_XP_FACTOR`
+  - `ROOM_ABANDON_PENALTY`
+  - `SERIES_FORFEIT_RP`
+- Không copy/nhân đôi giá trị config sang module; default argument đổi thành `None`, constant được đọc khi hàm chạy sau `configure(context)`.
+- Thêm `test_core_import_time_dependencies.py` để chặn lỗi tương tự trước deploy.
+- Không thay đổi công thức RP, Room, Match, Invite hay Presence.
+
 # V1.3.56 — Core Startup Binding Fix
 
 - Sửa `NameError: list_user_devices is not defined` khi Vercel import `app.py`.
