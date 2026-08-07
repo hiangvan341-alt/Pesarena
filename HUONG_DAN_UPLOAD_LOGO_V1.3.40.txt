@@ -1,0 +1,22 @@
+PES Arena V1.3.40 - Upload 6 logo che do
+
+1) Dat 6 file cua ban vao:
+   pes-assets/room-assets/v1.3.40/modes/
+
+2) GIU NGUYEN TEN FILE:
+   1.webp = Dau chien thuat BO3
+   2.webp = Cam chon CLB BO3
+   3.webp = Rank thuong Random
+   4.webp = Random 3 chon 1
+   5.webp = Luot di - luot ve
+   6.webp = BO3
+
+3) Tren Supabase Storage:
+   Bucket: pes-assets
+   Upload de duong dan cuoi cung la:
+   room-assets/v1.3.40/modes/1.webp
+   ...
+   room-assets/v1.3.40/modes/6.webp
+
+4) Khong can upload lai room-assets/v1.3.18.
+   Nen web/VS/Parsec/room texture van dung bo cu; chi 6 logo mode dung v1.3.40.

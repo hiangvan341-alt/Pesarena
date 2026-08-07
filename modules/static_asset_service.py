@@ -55,6 +55,41 @@ def room_asset_url(filename: str) -> str:
         return f"{base}/{encoded}"
     return url_for("static", filename=f"assets/room_v2/{clean}")
 
+
+# V1.3.40: 6 logo chế độ được tách riêng khỏi bộ Room asset cũ.
+# Người quản trị chỉ cần upload 1.webp -> 6.webp vào đúng thư mục này.
+DEFAULT_MODE_ASSET_BASE_URL = (
+    "https://wlnvdfghatgeygecwrqb.supabase.co/storage/v1/object/public/"
+    "pes-assets/room-assets/v1.3.40/modes"
+)
+
+MODE_LOGO_FILE_BY_CODE = {
+    "tactical_bo3": "1.webp",
+    "ban_pick_bo3": "2.webp",
+    "rank_random": "3.webp",
+    "random3_pick1": "4.webp",
+    "home_away": "5.webp",
+    "bo3": "6.webp",
+}
+
+
+def mode_asset_base_url() -> str:
+    """Public base URL dành riêng cho 6 logo chế độ Rank."""
+    return _clean_base(os.getenv("MODE_ASSET_BASE_URL") or DEFAULT_MODE_ASSET_BASE_URL)
+
+
+def mode_asset_url(mode_code: str) -> str:
+    """Return URL logo cho một mã chế độ, map sang file 1.webp -> 6.webp."""
+    code = str(mode_code or "").strip()
+    filename = MODE_LOGO_FILE_BY_CODE.get(code)
+    if not filename:
+        # Giữ fallback dễ chẩn đoán nếu sau này thêm mode mới mà quên map logo.
+        filename = f"{quote(code, safe='')}.webp" if code else "3.webp"
+    base = mode_asset_base_url()
+    if base:
+        return f"{base}/{filename}"
+    return url_for("static", filename=f"assets/room_v2/modes/{filename}")
+
 def asset_url(filename: str) -> str:
     clean = str(filename or "").strip().lstrip("/")
     encoded = quote(clean, safe="/")

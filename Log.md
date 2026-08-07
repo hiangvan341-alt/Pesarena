@@ -787,3 +787,13 @@
 - Xóa các rule CSS riêng từng mode từng làm Random 3 chọn 1 / Lượt đi-về có kích thước khác.
 - Thêm `?v=1.3.39` cho URL mode/emblem để phá cache ảnh cũ trên trình duyệt/CDN.
 - Tạo `UPLOAD_SUPABASE_MODE_LOGOS_V1.3.39/` và manifest SHA-256 cho đúng 12 object cần overwrite trong bucket `pes-assets`.
+
+
+## V1.3.40 - 2026-08-07 17:16 (Asia/Bangkok)
+
+- Tách 6 logo chế độ Rank sang đường dẫn Supabase riêng `pes-assets/room-assets/v1.3.40/modes/`.
+- Web đọc trực tiếp file `1.webp` -> `6.webp`; người dùng không cần đổi tên ảnh sang mã mode.
+- Map: 1 Tactical BO3, 2 Ban Pick BO3, 3 Rank Random, 4 Random 3 chọn 1, 5 Lượt đi/về, 6 BO3.
+- Cả logo thẻ chọn mode và logo mode đang chọn dùng chung helper `mode_asset()`, bỏ nhu cầu upload trùng vào `emblems/`.
+- Giữ toàn bộ asset phòng khác ở `room-assets/v1.3.18` để không phải upload lại nền/VS/Parsec.
+- Thêm sẵn cây thư mục rỗng `pes-assets/room-assets/v1.3.40/modes/` trong gói release để người dùng tự đặt 6 WebP rồi upload Supabase.
