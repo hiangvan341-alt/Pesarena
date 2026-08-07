@@ -1,9 +1,11 @@
 import json
 import random
+import time
 from copy import deepcopy
 from .catalog import DEFAULT_MODE_CONFIGS, MODE_ORDER, RANK_RANDOM, RANDOM3_PICK1
 _CONTEXT={}; SETTING_KEY='rank_mode_configs_v1'
-EXPORTED_NAMES=('save_rank_mode_configs','get_rank_mode_configs','get_rank_mode','rank_mode_catalog_for_players','check_rank_mode_eligibility','rank_mode_eligibility_for_room','get_user_rank_mode_unlocks','list_rank_mode_user_unlocks','save_user_rank_mode_unlocks','resolve_series_result','calculate_mode_rp','mode_rp_audit_payload','mode_series_rp_audit_payload','is_series_mode','legacy_team_tier_for_mode','normalize_rank_mode_code','required_daily_games_for_mode','rank_mode_daily_quota_status','assert_rank_mode_daily_quota','MODE_ORDER','RANK_RANDOM','RANDOM3_PICK1')
+_CONFIG_CACHE={'value':None,'expires_at':0.0}; CONFIG_CACHE_TTL_SECONDS=8.0
+EXPORTED_NAMES=('save_rank_mode_configs','get_rank_mode_configs','get_rank_mode','rank_mode_catalog_for_players','check_rank_mode_eligibility','rank_mode_eligibility_for_room','get_user_rank_mode_unlocks','list_rank_mode_user_unlocks','save_user_rank_mode_unlocks','resolve_series_result','calculate_mode_rp','mode_rp_audit_payload','mode_series_rp_audit_payload','is_series_mode','legacy_team_tier_for_mode','normalize_rank_mode_code','resolve_enabled_rank_mode','default_rank_mode_code','default_rank_room_team_tier','required_daily_games_for_mode','rank_mode_daily_quota_status','assert_rank_mode_daily_quota','MODE_ORDER','RANK_RANDOM','RANDOM3_PICK1')
 def configure(context):
  global _CONTEXT; _CONTEXT=context
 def _deep_merge(base, override):
@@ -12,6 +14,12 @@ def _deep_merge(base, override):
  return r
 def normalize_rank_mode_code(value):
  value=str(value or '').strip().lower(); return {'smart_random':RANK_RANDOM,'random':RANK_RANDOM}.get(value,value if value in DEFAULT_MODE_CONFIGS else RANK_RANDOM)
+
+def _request_cache():
+ has_request_context=_CONTEXT.get('has_request_context'); g=_CONTEXT.get('g')
+ if callable(has_request_context) and has_request_context() and g is not None:
+  return g
+ return None
 
 def save_rank_mode_configs(configs):
  clean={}
@@ -22,27 +30,55 @@ def save_rank_mode_configs(configs):
  if not execute_query or db is None: raise RuntimeError('Database chưa sẵn sàng')
  payload={'setting_key':SETTING_KEY,'setting_value':json.dumps(clean,ensure_ascii=False)}
  execute_query(db.table('system_settings').upsert(payload,on_conflict='setting_key'),'save_rank_mode_configs',attempts=2)
+ _CONFIG_CACHE['value']=deepcopy(clean); _CONFIG_CACHE['expires_at']=time.monotonic()+CONFIG_CACHE_TTL_SECONDS
+ req=_request_cache()
+ if req is not None: setattr(req,'_rank_mode_configs_cache',deepcopy(clean))
  return clean
 
 def get_rank_mode_configs():
+ req=_request_cache()
+ if req is not None:
+  cached=getattr(req,'_rank_mode_configs_cache',None)
+  if isinstance(cached,dict): return deepcopy(cached)
+ now=time.monotonic()
+ if isinstance(_CONFIG_CACHE.get('value'),dict) and now < float(_CONFIG_CACHE.get('expires_at') or 0):
+  configs=deepcopy(_CONFIG_CACHE['value'])
+  if req is not None: setattr(req,'_rank_mode_configs_cache',deepcopy(configs))
+  return configs
  configs=deepcopy(DEFAULT_MODE_CONFIGS); execute_query=_CONTEXT.get('execute_query'); db=_CONTEXT.get('db')
- if not execute_query or db is None: return configs
- try:
-  result=execute_query(db.table('system_settings').select('setting_value').eq('setting_key',SETTING_KEY).limit(1),'get_rank_mode_configs',attempts=1)
-  raw=((result.data or [{}])[0]).get('setting_value'); raw=json.loads(raw) if isinstance(raw,str) else raw
-  if isinstance(raw,dict):
-   for code in MODE_ORDER:
-    if isinstance(raw.get(code),dict):
-     configs[code]=_deep_merge(configs[code],raw[code])
-     # Công thức Series V1.3.35 được chốt lại. Nếu Supabase còn cấu hình RP
-     # từ bản cũ, chỉ thay phần RP bằng bộ mặc định mới; các điều kiện mở khóa,
-     # enabled, pool... vẫn được giữ nguyên.
-     canonical_rp=(DEFAULT_MODE_CONFIGS.get(code) or {}).get('rp') or {}
-     if canonical_rp.get('formula_version') and ((raw.get(code) or {}).get('rp') or {}).get('formula_version')!=canonical_rp.get('formula_version'):
-      configs[code]['rp']=deepcopy(canonical_rp)
- except Exception: pass
+ if execute_query and db is not None:
+  try:
+   result=execute_query(db.table('system_settings').select('setting_value').eq('setting_key',SETTING_KEY).limit(1),'get_rank_mode_configs',attempts=1)
+   raw=((result.data or [{}])[0]).get('setting_value'); raw=json.loads(raw) if isinstance(raw,str) else raw
+   if isinstance(raw,dict):
+    for code in MODE_ORDER:
+     if isinstance(raw.get(code),dict):
+      configs[code]=_deep_merge(configs[code],raw[code])
+      canonical_rp=(DEFAULT_MODE_CONFIGS.get(code) or {}).get('rp') or {}
+      if canonical_rp.get('formula_version') and ((raw.get(code) or {}).get('rp') or {}).get('formula_version')!=canonical_rp.get('formula_version'):
+       configs[code]['rp']=deepcopy(canonical_rp)
+  except Exception: pass
+ _CONFIG_CACHE['value']=deepcopy(configs); _CONFIG_CACHE['expires_at']=now+CONFIG_CACHE_TTL_SECONDS
+ if req is not None: setattr(req,'_rank_mode_configs_cache',deepcopy(configs))
  return configs
 def get_rank_mode(code): return get_rank_mode_configs()[normalize_rank_mode_code(code)]
+
+def default_rank_mode_code():
+ configs=get_rank_mode_configs()
+ for code in MODE_ORDER:
+  if bool((configs.get(code) or {}).get('enabled',True)):
+   return code
+ return RANK_RANDOM
+
+def resolve_enabled_rank_mode(value):
+ code=normalize_rank_mode_code(value)
+ configs=get_rank_mode_configs()
+ if bool((configs.get(code) or {}).get('enabled',False)):
+  return code
+ return default_rank_mode_code()
+
+def default_rank_room_team_tier():
+ return legacy_team_tier_for_mode(default_rank_mode_code())
 
 
 def _is_admin_account(user):
@@ -164,14 +200,24 @@ def assert_rank_mode_daily_quota(mode_code,*user_ids,continuation=False):
  return result
 
 def rank_mode_catalog_for_players(host,guest=None):
+ # Daily status does not depend on the mode; only required_games does. Load it
+ # once per player instead of 6 modes x 2 players. This removes the largest
+ # Supabase N+1 chain from room rendering.
+ status_fn=_CONTEXT.get('rank_daily_status')
+ host_status=status_fn((host or {}).get('id')) if callable(status_fn) and (host or {}).get('id') else None
+ guest_status=status_fn((guest or {}).get('id')) if callable(status_fn) and (guest or {}).get('id') else None
  output=[]
  for c in MODE_ORDER:
   base=rank_mode_eligibility_for_room(c,host,guest)
-  quota=rank_mode_daily_quota_status(c,(host or {}).get('id'),(guest or {}).get('id') if guest else None)
+  required=required_daily_games_for_mode(c)
   reasons=list(base.get('reasons') or [])
-  for reason in quota.get('reasons') or []:
-   if reason not in reasons: reasons.append(reason)
-  output.append({**get_rank_mode(c),**{'eligible':bool(base.get('eligible')) and bool(quota.get('eligible')),'lock_reasons':reasons,'required_daily_games':quota.get('required_games')}})
+  for status in (host_status,guest_status):
+   if not status or not status.get('enabled',True): continue
+   remaining=int(status.get('games_remaining') or 0)
+   if remaining < required:
+    reason=f'Cần còn ít nhất {required} lượt trận trong ngày để bắt đầu chế độ này (hiện còn {remaining})'
+    if reason not in reasons: reasons.append(reason)
+  output.append({**get_rank_mode(c),**{'eligible':not reasons,'lock_reasons':reasons,'required_daily_games':required}})
  return output
 def is_series_mode(mode_code): return get_rank_mode(mode_code).get('series_type')!='single'
 def legacy_team_tier_for_mode(mode_code): return 'smart_random' if normalize_rank_mode_code(mode_code)==RANK_RANDOM else normalize_rank_mode_code(mode_code)

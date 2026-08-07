@@ -34,7 +34,7 @@ def test_second_game_reset_keeps_series_mode_and_clears_match():
     assert 'guest_ready = True' in src
 
 def test_version_bumped():
-    assert 'APP_VERSION = "1.3.49"' in text("app.py")
+    assert 'APP_VERSION = "1.3.50"' in text("app.py")
 
 if __name__ == "__main__":
     for name, fn in sorted(globals().items()):

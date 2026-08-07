@@ -1,3 +1,32 @@
+# V1.3.50 — Sửa lõi chọn chế độ + tối ưu tải phòng + audit Series
+
+**Ngày:** 08/08/2026 (Asia/Bangkok)
+
+## Sửa lỗi
+- Sửa nguồn chọn mode mặc định: không còn dùng `rank_standard_enabled` để suy ra Rank thường. Nếu Admin chỉ bật Lượt đi/về, phòng mới lưu đúng `home_away`.
+- Xóa fallback trong `enrich_room()` từng ép room về Random 3; thêm reconcile có điều kiện cho waiting room cũ có mode đã bị khóa.
+- Thêm `team_tier`, `match_mode`, `updated_at`, `series_version` vào state key để mode/Series thay đổi được realtime refresh.
+- API state dùng `get_room_poll_snapshot()` thay `get_room()` để không hydrate users/team/cosmetics trên mỗi poll.
+- Gỡ N+1 ở catalog 6 chế độ: daily status chỉ tải 1 lần/player; cache config Rank/Daily trong request + TTL ngắn.
+- Sửa auto-confirm child Series: dùng `confirm_series_child_match()` thay vì engine RP trận đơn.
+- Sửa tranh chấp child Series: hủy Series và đóng child game đang mở, tránh Series mồ côi/duplicate game.
+
+## File chính
+- `app.py`
+- `modules/rank_modes/service.py`
+- `modules/daily_rank_limit_service.py`
+- `modules/room_access_routes.py`
+- `modules/room_result_routes.py`
+- `modules/rank_series/service.py`
+- `test_room_architecture_v1350.py`
+- `docs/ROOM_SERIES_ARCHITECTURE_AUDIT_V1.3.50.md`
+
+## Test
+- 45 test tập trung phòng/Series PASS.
+- Không cần SQL mới so với V1.3.49/V1.3.48.
+
+---
+
 # V1.3.49 — Sửa quay quân trận con thứ 2 của Series
 
 - Ngày: 2026-08-07 (Asia/Bangkok)

@@ -419,7 +419,7 @@ def get_room_series_context(room):
     games = repository.list_games(series["id"]); p1, p2, draws = _game_counts(series, games); meta = metadata(series)
     game_no = len([g for g in games if g.get("status") == "completed"]) + (0 if series.get("status") == "completed" else 1)
     ctx = {"mode_code": mode_code, "active": True, "series_id": series.get("id"), "status": series.get("status"), "phase": meta.get("phase") or "ready",
-           "game_no": game_no, "games": games, "p1_wins": p1, "p2_wins": p2, "draws": draws, "score": f"{p1} - {p2}", "metadata": meta, "can_start": bool(room.get("guest_ready"))}
+           "updated_at": series.get("updated_at"), "game_no": game_no, "games": games, "p1_wins": p1, "p2_wins": p2, "draws": draws, "score": f"{p1} - {p2}", "metadata": meta, "can_start": bool(room.get("guest_ready"))}
     if mode_code == "home_away": ctx["score"] = f"{int(series.get('aggregate_player1') or 0)} - {int(series.get('aggregate_player2') or 0)}"
     if meta.get("pending_choices"): ctx["choices"] = meta["pending_choices"]
     if meta.get("ban_pick"): ctx["ban_pick"] = meta["ban_pick"]
@@ -429,7 +429,20 @@ def get_room_series_context(room):
 def cancel_active_series_for_room(room_id, reason="cancelled"):
     series = repository.get_active_series(room_id)
     if not series: return False
-    repository.update_series(series["id"], {"status": "cancelled", "result_code": reason, "completed_at": _g("now_iso")()})
+    # Close any unfinished child-game row as well, otherwise a new Series can
+    # inherit an orphaned "playing" child after a dispute/cancel.
+    try:
+        _g("execute_query")(
+            _g("db").table("match_series_games").update({
+                "status": "cancelled",
+                "completed_at": _g("now_iso")(),
+            }).eq("series_id", series["id"]).eq("status", "playing"),
+            "rank_series_cancel_open_games", attempts=2,
+        )
+    except Exception:
+        pass
+    repository.update_series(series["id"], {"status": "cancelled", "result_code": reason, "completed_at": _g("now_iso")(),
+        "metadata": {**metadata(series), "phase": "cancelled", "cancel_reason": reason}})
     return True
 
 

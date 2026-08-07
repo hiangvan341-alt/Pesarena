@@ -70,7 +70,7 @@ from modules.win_streaks import (
 load_dotenv()
 
 APP_NAME = "PES Arena – Bản Lĩnh Sân Cỏ"
-APP_VERSION = "1.3.49"
+APP_VERSION = "1.3.50"
 DEFAULT_POINTS = 1000
 DEVICE_COOKIE_NAME = "rankzone_device_id"
 COOLDOWN_MINUTES = 3
@@ -2395,12 +2395,22 @@ def auto_confirm_expired_match_if_needed(match):
                 f"{type(room_exc).__name__}: {room_exc}"
             )
 
-        apply_match_result(dict(match))
-        streak_event = build_win_streak_event(
-            match, room_before_result, users_before_streak_event
-        )
-        if streak_event:
-            publish_global_streak_event(streak_event)
+        # Series child matches must never pass through the single-match RP engine.
+        # V1.3.49 auto-confirmed an expired child with apply_match_result(), which
+        # could award per-game RP and leave match_series_games out of sync.
+        if is_series_child_match(match):
+            if not room_before_result:
+                raise ValueError("Không tìm thấy phòng của trận con Series để tự xác nhận.")
+            auto_confirmer = room_before_result.get("guest_user_id") or room_before_result.get("host_user_id")
+            confirm_series_child_match(room_before_result, dict(match), auto_confirmer)
+            streak_event = None
+        else:
+            apply_match_result(dict(match))
+            streak_event = build_win_streak_event(
+                match, room_before_result, users_before_streak_event
+            )
+            if streak_event:
+                publish_global_streak_event(streak_event)
 
         fresh_result = execute_query(
             db.table("matches").select("*").eq("id", match.get("id")).limit(1),
@@ -2417,7 +2427,7 @@ def auto_confirm_expired_match_if_needed(match):
             attempts=2,
         )
         linked_room = (room_result.data or [None])[0]
-        if linked_room and linked_room.get("status") == "waiting_result_confirm":
+        if linked_room and linked_room.get("status") == "waiting_result_confirm" and not is_series_child_match(fresh):
             execute_query(
                 db.table("match_rooms").update({
                     "status": "waiting_ready",
@@ -3299,6 +3309,52 @@ def expire_room_if_needed(room):
     return room
 
 
+def _reconcile_waiting_rank_room_mode(room):
+    """Keep a waiting ranked room on an enabled Admin mode.
+
+    V1.3.49 used the legacy flag ``rank_standard_enabled`` as if it meant
+    "Rank Random is enabled". In reality that flag means "at least one ranked
+    mode is enabled", so a Home/Away-only setup still created smart_random rooms.
+    This conditional migration repairs old waiting rooms once and preserves an
+    active Series/match without changing its mode mid-flight.
+    """
+    if not room or room.get("status") != "waiting_ready":
+        return room
+    if (room.get("match_mode") or MATCH_MODE_RANKED) != MATCH_MODE_RANKED:
+        return room
+    note = str(room.get("note") or "")
+    if room.get("match_id") or decode_friendly_random3_state(note) or note.startswith("__SERIES_ACTIVE__"):
+        return room
+    try:
+        current = normalize_rank_mode_code(room.get("team_tier"))
+        resolved = resolve_enabled_rank_mode(current)
+    except Exception:
+        return room
+    if resolved == current:
+        return room
+    storage_mode = legacy_team_tier_for_mode(resolved)
+    try:
+        changed = execute_query(
+            db.table("match_rooms").update({
+                "team_tier": storage_mode,
+                "friendly_tier": None,
+                "note": f"Chế độ cũ đã bị Admin khóa. Phòng chuyển sang {get_rank_mode(resolved).get('label') or resolved}.",
+                "updated_at": now_iso(),
+            }).eq("id", room.get("id")).eq("status", "waiting_ready"),
+            "reconcile_waiting_rank_room_mode",
+            attempts=2,
+        )
+        if changed.data or []:
+            room.update(dict((changed.data or [{}])[0]))
+            cache_delete("_rz_rooms_all")
+            ttl_cache_delete("rooms_raw")
+        else:
+            room["team_tier"] = storage_mode
+    except Exception as exc:
+        app.logger.debug("Room mode reconcile skipped room=%s: %s", room.get("id"), exc)
+    return room
+
+
 def get_room(room_id):
     result = execute_query(
         db.table("match_rooms").select("*").eq("id", room_id).limit(1),
@@ -3307,14 +3363,72 @@ def get_room(room_id):
     room = dict(result.data[0]) if result.data else None
     if room:
         expire_room_if_needed(room)
+        _reconcile_waiting_rank_room_mode(room)
         enrich_room(room)
     return room
+
+
+def get_room_poll_snapshot(room_id):
+    """Lightweight room read for polling: no users_map, team hydration or cosmetics."""
+    result = execute_query(
+        db.table("match_rooms").select("*").eq("id", room_id).limit(1),
+        "get_room_poll_snapshot",
+        attempts=1,
+    )
+    room = dict(result.data[0]) if result.data else None
+    if not room:
+        return None
+    expire_room_if_needed(room)
+    _reconcile_waiting_rank_room_mode(room)
+    note = room.get("note") or ""
+    room["rematch_host_ready"] = note == REMATCH_HOST_READY_NOTE
+    room["rematch_guest_ready"] = note == REMATCH_GUEST_READY_NOTE
+    room["rematch_host_declined"] = note == REMATCH_HOST_DECLINED_NOTE
+    room["rematch_guest_declined"] = note == REMATCH_GUEST_DECLINED_NOTE
+    room["rematch_declined"] = room["rematch_host_declined"] or room["rematch_guest_declined"]
+    room["rematch_expired"] = note == REMATCH_EXPIRED_NOTE
+    room["timeout_seconds"] = seconds_until(room.get("state_expires_at"))
+    room["dispute"] = None
+    if room.get("status") == "disputed" and room.get("match_id"):
+        try:
+            dispute = get_match_dispute_by_match(room.get("match_id"), DISPUTE_PENDING_STATUSES)
+            if dispute:
+                room["dispute"] = decorate_match_dispute(dispute)
+        except Exception:
+            pass
+    return room
+
+
+def get_series_poll_version(room):
+    """Return one tiny version token for active Series so the opponent refreshes on picks/bans."""
+    if not room:
+        return ""
+    try:
+        mode = normalize_rank_mode_code(room.get("team_tier"))
+        if mode not in SERIES_MODES:
+            return ""
+        result = execute_query(
+            db.table("match_series").select("id,status,updated_at").eq("room_id", room.get("id"))
+              .in_("status", ["waiting", "playing", "processing_result"]).order("created_at", desc=True).limit(1),
+            "rank_series_poll_version",
+            attempts=1,
+        )
+        series = (result.data or [None])[0]
+        if not series:
+            return ""
+        return f"{series.get('id')}:{series.get('status')}:{series.get('updated_at')}"
+    except Exception:
+        return ""
 
 
 def enrich_room(room):
     users = users_map()
     host = users.get(room.get("host_user_id"), {})
     guest = users.get(room.get("guest_user_id"), {})
+    # Reuse these objects in the room template context. Previously the room page
+    # queried host/guest again after users_map() had already loaded them.
+    room["_host_player"] = host
+    room["_guest_player"] = guest if room.get("guest_user_id") else None
 
     raw_room_id = str(room.get("id") or "")
     compact_room_id = "".join(ch for ch in raw_room_id.upper() if ch.isalnum())
@@ -3371,9 +3485,6 @@ def enrich_room(room):
     room["rematch_guest_declined"] = room.get("note") == REMATCH_GUEST_DECLINED_NOTE
     room["rematch_declined"] = room["rematch_host_declined"] or room["rematch_guest_declined"]
     room["match_mode"] = room.get("match_mode") or MATCH_MODE_RANKED
-    if (not system_feature_enabled("rank_standard_enabled") and room.get("status") == "waiting_ready"
-            and room.get("match_mode") == MATCH_MODE_RANKED and not decode_friendly_random3_state(room.get("note"))):
-        room["team_tier"] = FRIENDLY_RANDOM3_MODE
     room["friendly_tier"] = room.get("friendly_tier") or "A"
     random3_state = decode_friendly_random3_state(room.get("note"))
     room["friendly_random3"] = random3_state
@@ -4701,8 +4812,13 @@ def api_active_room():
         "auto_redirect": auto_redirect,
     })
 
-def build_room_state_key(room):
-    """Tạo khóa trạng thái ổn định dùng chung cho HTML và API phòng đấu."""
+def build_room_state_key(room, series_version=None):
+    """Tạo khóa trạng thái nhẹ dùng chung cho HTML và API phòng đấu.
+
+    team_tier + updated_at fix the stale-mode bug. ``series_version`` lets the
+    opponent see Tactical/Ban-Pick actions even when the match_rooms row itself
+    did not change.
+    """
     return "|".join([
         # Thành viên phòng phải nằm trong state key. Nếu khách vừa tham gia
         # nhưng status vẫn là waiting_ready và guest_ready vẫn False, thiếu
@@ -4710,6 +4826,10 @@ def build_room_state_key(room):
         str(room.get("host_user_id")),
         str(room.get("guest_user_id")),
         str(room.get("status")),
+        str(room.get("match_mode")),
+        str(room.get("team_tier")),
+        str(room.get("updated_at")),
+        str(series_version or ""),
         str(room.get("host_team")),
         str(room.get("guest_team")),
         str(room.get("guest_ready")),
@@ -4746,7 +4866,7 @@ def api_room_state(room_id):
     user = current_user()
 
     try:
-        room = get_room(room_id)
+        room = get_room_poll_snapshot(room_id)
     except Exception:
         return jsonify({"ok": False, "error": "temporary_db_error"}), 503
 
@@ -4759,7 +4879,8 @@ def api_room_state(room_id):
     if user["id"] not in [room["host_user_id"], room["guest_user_id"]] and not is_admin_user(user):
         return polling_stop_response("room_access_ended")
 
-    state_key = build_room_state_key(room)
+    series_version = get_series_poll_version(room)
+    state_key = build_room_state_key(room, series_version)
 
     # V4.1: nếu trạng thái chưa đổi, trả response rỗng để giảm dữ liệu truyền.
     # Client vẫn giữ polling nhưng không phải nhận/phân tích JSON lặp lại.
@@ -5445,7 +5566,7 @@ def create_open_room():
             "invite_id": None,
             "host_user_id": user["id"],
             "guest_user_id": None,
-            "team_tier": (SMART_RANDOM_MODE if system_feature_enabled("rank_standard_enabled") else FRIENDLY_RANDOM3_MODE),
+            "team_tier": default_rank_room_team_tier(),
             "match_mode": MATCH_MODE_RANKED,
             "friendly_tier": "A",
             "status": "waiting_ready",
@@ -5735,7 +5856,7 @@ def send_invite():
                 "invite_id": invite["id"],
                 "host_user_id": user["id"],
                 "guest_user_id": None,
-                "team_tier": (SMART_RANDOM_MODE if system_feature_enabled("rank_standard_enabled") else FRIENDLY_RANDOM3_MODE),
+                "team_tier": default_rank_room_team_tier(),
                 "match_mode": MATCH_MODE_RANKED,
                 "friendly_tier": "A",
                 "status": "waiting_ready",
@@ -6178,7 +6299,7 @@ def respond_invite(invite_id):
                     "invite_id": invite_id,
                     "host_user_id": invite["from_user_id"],
                     "guest_user_id": invite["to_user_id"],
-                    "team_tier": (SMART_RANDOM_MODE if system_feature_enabled("rank_standard_enabled") else FRIENDLY_RANDOM3_MODE),
+                    "team_tier": default_rank_room_team_tier(),
                     "match_mode": MATCH_MODE_RANKED,
                     "friendly_tier": "A",
                     "status": "waiting_ready",
