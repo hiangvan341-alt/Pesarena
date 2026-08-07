@@ -1,3 +1,29 @@
+# V1.3.73 — Profile + Match History Repository Binding Hotfix
+
+**Ngày:** 2026-08-08 (Asia/Bangkok)
+
+## Chế độ
+- FIX NHANH — Hồ sơ cá nhân / Lịch sử trận đấu.
+
+## Lỗi
+- `/matches` trả 500 tại `decorate_match_for_view()` vì `modules/core/match_repository.py` không có `is_forfeit_match` trong runtime globals.
+- Hồ sơ cá nhân dùng cùng `decorate_match_for_view()` nên có thể lỗi cùng nguyên nhân khi dựng lịch sử/form/H2H.
+- Supabase trả 200; lỗi nằm ở thứ tự binding Python, không phải dữ liệu.
+
+## Nguyên nhân
+- `match_repository` được configure trong core pass trước khi `forfeit_history_service` và các service sau đó export helper.
+- Sau service registration chỉ `room_runtime` được refresh; `match_repository` không được refresh nên giữ context thiếu `is_forfeit_match`.
+
+## Sửa
+- `app.py`: refresh `_core_match_repository.configure(globals())` ngay sau khi toàn bộ service exports đã sẵn sàng.
+- Giữ nguyên `decorate_match_for_view`, dữ liệu trận, RP và schema Supabase.
+- `APP_VERSION`: 1.3.72 → 1.3.73.
+
+## Không thay đổi
+- Không sửa UI, RP, kết quả trận, database, Supabase, Room hoặc Admin.
+
+---
+
 # V1.3.72 — Room Host/Guest Action Visibility Hotfix
 
 **Ngày:** 2026-08-08 (Asia/Bangkok)
