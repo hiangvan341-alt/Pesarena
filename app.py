@@ -70,7 +70,7 @@ from modules.win_streaks import (
 load_dotenv()
 
 APP_NAME = "PES Arena – Bản Lĩnh Sân Cỏ"
-APP_VERSION = "1.3.41"
+APP_VERSION = "1.3.42"
 DEFAULT_POINTS = 1000
 DEVICE_COOKIE_NAME = "rankzone_device_id"
 COOLDOWN_MINUTES = 3
@@ -2442,6 +2442,41 @@ def auto_confirm_expired_match_if_needed(match):
         return match
 
 
+def _safe_player_display_name(player):
+    """Return a render-safe player name; never leak Python None into HTML."""
+    player = player or {}
+    value = player.get("display_name") or player.get("username") or "Unknown"
+    value = str(value).strip()
+    return value if value and value.lower() != "none" else "Unknown"
+
+
+def hydrate_match_player_fields(match):
+    """Attach player display/avatar fields to a raw matches row.
+
+    V1.3.34 introduced targeted read-model queries that return raw match rows.
+    This helper makes those rows safe for Dashboard/Profile/History without
+    reverting to a full-table match query or causing per-match user queries.
+    users_map() is request-cached, so multiple matches reuse one user snapshot.
+    """
+    item = match if isinstance(match, dict) else dict(match or {})
+    users = users_map()
+    for prefix in ("player1", "player2"):
+        user_id = item.get(f"{prefix}_id")
+        player = users.get(user_id) or users.get(str(user_id)) or {}
+        current_name = item.get(f"{prefix}_name")
+        if current_name is None or not str(current_name).strip() or str(current_name).strip().lower() == "none":
+            item[f"{prefix}_name"] = _safe_player_display_name(player)
+        for field, source in (
+            ("avatar_url", "avatar_url"),
+            ("avatar_frame", "avatar_frame"),
+            ("achievement", "featured_achievement"),
+        ):
+            key = f"{prefix}_{field}"
+            if not item.get(key):
+                item[key] = player.get(source)
+    return item
+
+
 def list_matches(status=None):
     require_db()
 
@@ -2457,19 +2492,10 @@ def list_matches(status=None):
     users = users_map()
 
     for match in matches:
-        player1 = users.get(match.get("player1_id"), {})
-        player2 = users.get(match.get("player2_id"), {})
-        match["player1_name"] = player1.get("display_name", "Unknown")
-        match["player2_name"] = player2.get("display_name", "Unknown")
-        match["player1_avatar_url"] = player1.get("avatar_url")
-        match["player2_avatar_url"] = player2.get("avatar_url")
-        match["player1_avatar_frame"] = player1.get("avatar_frame")
-        match["player2_avatar_frame"] = player2.get("avatar_frame")
-        match["player1_achievement"] = player1.get("featured_achievement")
-        match["player2_achievement"] = player2.get("featured_achievement")
-        match["submitted_by_name"] = users.get(match.get("submitted_by_id"), {}).get("display_name", "")
-        match["winner_name"] = users.get(match.get("winner_id"), {}).get("display_name", "")
-        match["loser_name"] = users.get(match.get("loser_id"), {}).get("display_name", "")
+        hydrate_match_player_fields(match)
+        match["submitted_by_name"] = _safe_player_display_name(users.get(match.get("submitted_by_id"), {})) if match.get("submitted_by_id") else ""
+        match["winner_name"] = _safe_player_display_name(users.get(match.get("winner_id"), {})) if match.get("winner_id") else ""
+        match["loser_name"] = _safe_player_display_name(users.get(match.get("loser_id"), {})) if match.get("loser_id") else ""
 
     return matches
 
@@ -2512,6 +2538,7 @@ def decorate_match_for_view(match, viewer_id=None):
     cannot make the UI show the wrong side.
     """
     item = dict(match or {})
+    hydrate_match_player_fields(item)
     item["is_forfeit"] = is_forfeit_match(item)
     item["forfeit_loser_id"] = forfeit_loser_id(item) if item["is_forfeit"] else None
     if item["is_forfeit"]:
