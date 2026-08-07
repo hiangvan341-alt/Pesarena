@@ -1,7 +1,8 @@
 # PES ARENA — PROJECT MAP
 
+> **BẮT BUỘC:** trước khi dùng file map này, đọc `AGENTS.md` ở thư mục gốc để tự chọn chế độ **FIX NHANH / NÂNG CẤP MODULE / AUDIT TOÀN HỆ THỐNG**.
 > Mục đích: tra nhanh **lỗi nào → đọc file nào**, tránh phải quét toàn bộ dự án mỗi lần sửa.
-> Cập nhật: V1.3.61 — 08/08/2026 (Asia/Bangkok)
+> Cập nhật: V1.3.64 — 08/08/2026 (Asia/Bangkok)
 
 ## 1. Quy tắc FIX NHANH
 

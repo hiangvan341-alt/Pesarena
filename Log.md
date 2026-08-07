@@ -1,3 +1,27 @@
+# V1.3.64 — Persistent AI Workflow Rules
+
+**Ngày:** 2026-08-08 (Asia/Bangkok)
+
+## Mục tiêu
+- Lưu quy tắc làm việc trực tiếp trong dự án để các phiên/đoạn chat mới không phụ thuộc vào lịch sử chat cũ.
+- Tự động phân loại yêu cầu thành: **FIX NHANH**, **NÂNG CẤP MODULE**, hoặc **AUDIT TOÀN HỆ THỐNG**.
+
+## Thay đổi
+- Tạo `AGENTS.md` ở root: quy tắc khởi động, điều kiện chọn 3 chế độ, luồng xử lý, quy tắc tự chuyển chế độ và safety guard.
+- `PROJECT_MAP.md`: thêm chỉ dẫn bắt buộc đọc `AGENTS.md` trước khi định tuyến file/module; cập nhật mốc V1.3.64.
+- `docs/FIX_NHANH_PES_ARENA.md`: liên kết về workflow 3 chế độ trong `AGENTS.md`.
+- `app.py`: tăng phiên bản 1.3.63 → 1.3.64.
+
+## Không thay đổi
+- Không thay route/API/gameplay/RP/Admin/Supabase/CSS.
+- Không thay cấu trúc runtime ngoài tài liệu workflow.
+
+## Kiểm tra
+- Python compile `app.py`: PASS.
+- Xác minh `AGENTS.md`, `PROJECT_MAP.md`, `docs/FIX_NHANH_PES_ARENA.md` có liên kết chéo: PASS.
+
+---
+
 # V1.3.63 — Admin 500 Safety Hotfix
 
 **Ngày:** 2026-08-08 (Asia/Bangkok)

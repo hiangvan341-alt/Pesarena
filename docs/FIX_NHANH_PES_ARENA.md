@@ -1,5 +1,7 @@
 # CHẾ ĐỘ FIX NHANH PES ARENA
 
+> **Quy tắc cấp dự án:** `AGENTS.md` tự phân loại mọi yêu cầu thành FIX NHANH / NÂNG CẤP MODULE / AUDIT TOÀN HỆ THỐNG. File này chỉ mô tả chi tiết chế độ FIX NHANH.
+
 > Dùng nguyên prompt này cho các lần sửa lỗi nhỏ / nâng cấp có phạm vi rõ ràng.
 
 ```text
