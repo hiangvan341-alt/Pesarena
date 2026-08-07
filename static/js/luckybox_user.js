@@ -174,7 +174,8 @@
     if(!openButton||openButton.disabled||animationRunning) return;
     if(!previewMode){
       const price=Number(page.dataset.openPrice||0);
-      if(!window.confirm(`Mở Lucky Box với ${formatter.format(price)} Zcoin?`)) return;
+      const confirmed=window.PESDialog ? await PESDialog.confirm(`Mở Lucky Box với ${formatter.format(price)} Zcoin?`,{title:'Mở Lucky Box',icon:'🎁',confirmLabel:'Mở hộp',tone:'warning'}) : window.confirm(`Mở Lucky Box với ${formatter.format(price)} Zcoin?`);
+      if(!confirmed) return;
     }
 
     openButton.disabled=true;

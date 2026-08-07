@@ -1,3 +1,29 @@
+## V1.3.31 — Sửa lag tab Admin, gom quản lý chế độ và chuẩn hóa thông báo
+
+- Sửa lỗi nghiêm trọng trong `admin_dashboard.js`: listener `pointerdown` từng được tạo lại bên trong hàm đổi tab, khiến số listener tăng sau mỗi lần click và tab Admin ngày càng lag.
+- Viết lại luồng tab Admin bằng một listener duy nhất, lazy-load iframe đúng lúc và lọc user bằng `requestAnimationFrame`.
+- Trình bày lại tab **Quản lý chế độ Rank**: bỏ công tắc trùng, thu gọn thẻ và đóng phần công thức RP mặc định.
+- Chuyển **Mở khóa chế độ theo tài khoản** vào phần Quản lý của từng người dùng.
+- Chuyển công tắc bật/tắt cả 6 chế độ Rank về **Bật/tắt tính năng hệ thống**.
+- Route lưu cấu hình Rank không còn tự tắt mode khi form không gửi trường `enabled`.
+- Thêm module dùng chung `ui_dialog.js/css` để thay các hộp xác nhận trình duyệt bằng modal phù hợp giao diện PES Arena; `window.alert` chuyển thành toast.
+- Tách rõ Core / CSS / JS và bổ sung `docs/MODULE_AUDIT_V1.3.31.md` báo cáo phần còn chồng chéo.
+- Cập nhật `APP_VERSION` thành `1.3.31`.
+
+### File chính đã sửa
+- `app.py`
+- `modules/admin_dashboard_routes.py`
+- `modules/admin_system_routes.py`
+- `templates/admin.html`
+- `templates/base.html`
+- `static/js/admin_dashboard.js`
+- `static/js/ui_dialog.js`
+- `static/js/luckybox_user.js`
+- `static/css/admin_dashboard.css`
+- `static/css/ui_dialog.css`
+- `docs/MODULE_AUDIT_V1.3.31.md`
+
+
 ## V1.3.30 — Cân nút phòng, lịch sử luôn hiển thị, sắp xếp chế độ và sửa phản hồi tab báo cáo
 
 - Thu nhỏ và căn giữa cụm `Mời đấu / Tìm nhanh / Thoát phòng`.

@@ -60,6 +60,7 @@ function toggleTheme(){
 <style>:root{--pes-login-background:url("{{ asset_url('login-background.webp') }}")}</style>
 <script>window.PES_ASSET_BASE_URL={{ asset_base_url()|tojson }};</script>
 {% block head_extra %}{% endblock %}
+<link rel="stylesheet" href="{{ static_asset('css/ui_dialog.css') }}">
 {% block page_styles %}{% endblock %}
 </head>
 <body data-page="{{ request.endpoint|default('unknown') }}">
@@ -1172,6 +1173,7 @@ document.addEventListener('click', async function(event){
   catch(e){ const area=document.createElement('textarea'); area.value=text; document.body.appendChild(area); area.select(); document.execCommand('copy'); area.remove(); }
 }, true);
 </script>
+<script src="{{ static_asset('js/ui_dialog.js') }}" defer></script>
 {% block page_scripts %}{% endblock %}
 </body>
 </html>

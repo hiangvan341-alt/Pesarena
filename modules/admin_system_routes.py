@@ -209,9 +209,23 @@ def register_routes(context):
     def admin_update_system_features():
         previous_features = get_system_features()
         features = {key: request.form.get(key) == "1" for key in SYSTEM_FEATURE_DEFAULTS}
-        # Luôn phải còn ít nhất một chế độ Rank để phòng không bị kẹt.
-        if not features.get("rank_standard_enabled", True):
-            features["friendly_random3_enabled"] = True
+
+        # Công tắc 6 chế độ Rank được quản lý tại cùng khu vực Tính năng hệ thống.
+        # Chỉ cập nhật trường enabled, giữ nguyên điều kiện mở khóa và công thức RP.
+        rank_mode_configs = get_rank_mode_configs()
+        for mode_code, mode_config in rank_mode_configs.items():
+            mode_config["enabled"] = request.form.get(f"rank_mode__{mode_code}") == "1"
+        # Luôn giữ ít nhất một chế độ Rank hoạt động.
+        if not any(bool(mode.get("enabled")) for mode in rank_mode_configs.values()):
+            first_mode = next(iter(rank_mode_configs.values()), None)
+            if first_mode is not None:
+                first_mode["enabled"] = True
+        save_rank_mode_configs(rank_mode_configs)
+        # Hai cờ cũ vẫn được giữ làm lớp tương thích cho route phòng hiện tại.
+        # rank_standard_enabled đại diện việc còn ít nhất một mode Rank hoạt động;
+        # friendly_random3_enabled phản ánh riêng mode Random 3 chọn 1.
+        features["rank_standard_enabled"] = any(bool(mode.get("enabled")) for mode in rank_mode_configs.values())
+        features["friendly_random3_enabled"] = bool((rank_mode_configs.get("random3_pick1") or {}).get("enabled"))
 
         execute_query(
             db.table("system_settings").upsert(

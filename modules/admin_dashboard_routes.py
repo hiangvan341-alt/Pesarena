@@ -16,7 +16,9 @@ def register_routes(context):
         int_fields = ("min_rp", "min_matches", "max_rp_gap", "pool_size", "bans_per_player", "ban_seconds", "pick_seconds")
         rp_fields = ("win_2_0", "lose_0_2", "win_2_1", "lose_1_2", "forfeit_win", "forfeit_loss", "draw_1_1", "draw_all", "one_win_one_draw_win", "one_win_one_draw_loss", "win_both", "lose_both", "draw")
         for code, mode in configs.items():
-            mode["enabled"] = request.form.get(f"{code}__enabled") == "1"
+            enabled_key = f"{code}__enabled"
+            if enabled_key in request.form:
+                mode["enabled"] = request.form.get(enabled_key) == "1"
             for field in int_fields:
                 key = f"{code}__{field}"
                 if key in request.form:
@@ -46,7 +48,7 @@ def register_routes(context):
         save_user_rank_mode_unlocks(user_id, selected, actor.get("id"))
         display_name = user.get("display_name") or user.get("username") or user_id
         flash(f"Đã cập nhật quyền chế độ Rank cho {display_name}.", "success")
-        return redirect(url_for("admin") + "#rank-modes-user-unlocks")
+        return redirect(url_for("admin") + "#users")
 
     @app.route("/admin")
     @login_required

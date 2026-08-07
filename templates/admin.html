@@ -276,6 +276,7 @@
                     </tr>
                     <tr id="admin-user-detail-{{ p.id }}" class="admin-user-detail-row" data-user-detail hidden>
                         <td colspan="9">
+                            <form id="rank-unlock-form-{{ p.id }}" method="post" action="{{ url_for('admin_save_user_rank_mode_unlocks', user_id=p.id) }}"></form>
                             <form method="post" action="{{ url_for('admin_update_player', user_id=p.id) }}" class="admin-user-compact-form">
                                 <div class="admin-user-edit-group">
                                     <h3>Thông tin tài khoản</h3>
@@ -313,6 +314,27 @@
                                     </label>
                                     <p class="small">Chỉ bắt buộc nhập khi thay đổi điểm RP. Người chơi sẽ nhận thông báo ngay trên tài khoản.</p>
                                     <p class="small">Ngày tạo: {{ format_vn_datetime(p.created_at) }}</p>
+                                </div>
+
+                                {% set account_id = p.id|string %}
+                                {% set unlocked_modes = rank_mode_user_unlocks.get(account_id, []) %}
+                                <div class="admin-user-edit-group admin-user-rank-unlocks">
+                                    <h3>🔓 Mở khóa chế độ Rank</h3>
+                                    {% if p.role == 'admin' or p.admin_level in ['owner', 'admin'] %}
+                                    <p class="small admin-mode-auto-note">Tài khoản Admin tự động được mở toàn bộ chế độ.</p>
+                                    {% else %}
+                                    <p class="small">Tích chế độ cần mở riêng cho người chơi này. Quyền riêng sẽ bỏ qua yêu cầu RP và số trận.</p>
+                                    <div class="admin-user-mode-checks">
+                                        {% for code in rank_mode_order %}
+                                        {% set mode = rank_mode_configs.get(code, {}) %}
+                                        <label class="admin-user-mode-option">
+                                            <input type="checkbox" name="mode__{{ code }}" value="1" form="rank-unlock-form-{{ p.id }}" {% if code in unlocked_modes %}checked{% endif %}>
+                                            <span>{{ mode.short_label or mode.label }}</span>
+                                        </label>
+                                        {% endfor %}
+                                    </div>
+                                    <button class="btn gold small" type="submit" form="rank-unlock-form-{{ p.id }}">Lưu mở khóa chế độ</button>
+                                    {% endif %}
                                 </div>
 
                                 <div class="admin-user-edit-save">
@@ -428,7 +450,7 @@
 <section class="admin-tab-panel" data-admin-panel="rank-modes">
     <div class="panel">
         <div class="admin-section-heading">
-            <div><h2>🏆 Quản lý chế độ Rank</h2><p class="small">Bật/tắt, điều kiện mở khóa và RP được lưu chung trong hệ thống. RP là điểm xếp hạng do hệ thống tự cộng/trừ, không phải đặt cược.</p></div>
+            <div><h2>🏆 Quản lý chế độ Rank</h2><p class="small">Thiết lập điều kiện mở khóa và công thức RP. Công tắc bật/tắt từng chế độ đã được chuyển sang tab Hệ thống để tránh cấu hình trùng lặp.</p></div>
             <span class="admin-count">6 chế độ</span>
         </div>
         <form method="post" action="{{ url_for('admin_save_rank_modes') }}">
@@ -438,7 +460,6 @@
                 <article class="admin-rank-mode-card">
                     <div class="admin-rank-mode-head">
                         <div><h3>{{ mode.label }}</h3><small>{{ code }}</small></div>
-                        <label class="admin-mode-switch"><input type="checkbox" name="{{ code }}__enabled" value="1" {% if mode.enabled %}checked{% endif %}> <span>Bật chế độ</span></label>
                     </div>
                     <div class="admin-rank-mode-fields">
                         <label>RP mở khóa<input type="number" min="0" name="{{ code }}__min_rp" value="{{ mode.min_rp or 0 }}"></label>
@@ -452,7 +473,7 @@
                         {% endif %}
                     </div>
                     {% if mode.series_type != 'single' %}
-                    <details class="admin-rp-details" open>
+                    <details class="admin-rp-details">
                         <summary>Công thức RP Series</summary>
                         <div class="admin-rank-mode-fields">
                         {% if code == 'home_away' %}
@@ -479,52 +500,6 @@
             </div>
             <div class="admin-rank-mode-save"><button class="btn gold" type="submit">💾 Lưu cấu hình 6 chế độ</button></div>
         </form>
-
-        <div class="admin-mode-user-unlocks" id="rank-modes-user-unlocks">
-            <div class="admin-section-heading">
-                <div>
-                    <h3>🔓 Mở khóa chế độ theo tài khoản</h3>
-                    <p class="small">Tài khoản Admin tự động mở đủ 6 chế độ. Với người chơi thường, quyền mở riêng sẽ bỏ qua yêu cầu RP và số trận; giới hạn chênh RP và công tắc tắt toàn hệ thống vẫn được áp dụng.</p>
-                </div>
-                <span class="admin-count">{{ admin_users|length }} tài khoản</span>
-            </div>
-            <div class="admin-mode-user-list">
-            {% for account in admin_users %}
-                {% set account_id = account.id|string %}
-                {% set unlocked = rank_mode_user_unlocks.get(account_id, []) %}
-                <details class="admin-mode-user-row" {% if loop.first %}open{% endif %}>
-                    <summary>
-                        <span><strong>{{ account.display_name or account.username }}</strong><small>@{{ account.username }} · {{ account.rank_points or 0 }} RP</small></span>
-                        {% if account.role == 'admin' or account.admin_level %}
-                            <span class="badge success">Admin · Mở đủ 6</span>
-                        {% else %}
-                            <span class="badge pending">Đã mở riêng {{ unlocked|length }}/6</span>
-                        {% endif %}
-                    </summary>
-                    {% if account.role == 'admin' or account.admin_level %}
-                        <p class="small admin-mode-auto-note">Tài khoản Admin không cần cấu hình riêng và luôn vượt qua điều kiện RP/số trận của cả 6 chế độ.</p>
-                    {% else %}
-                    <form method="post" action="{{ url_for('admin_save_user_rank_mode_unlocks', user_id=account.id) }}" class="admin-mode-user-form">
-                        <div class="admin-mode-user-checks">
-                        {% for code in rank_mode_order %}
-                            {% set mode = rank_mode_configs.get(code, {}) %}
-                            <label>
-                                <input type="checkbox" name="mode__{{ code }}" value="1" {% if code in unlocked %}checked{% endif %}>
-                                <span><strong>{{ mode.short_label or mode.label }}</strong><small>{{ code }}</small></span>
-                            </label>
-                        {% endfor %}
-                        </div>
-                        <div class="admin-mode-user-actions">
-                            <button class="btn gold" type="submit">Lưu quyền mở khóa</button>
-                        </div>
-                    </form>
-                    {% endif %}
-                </details>
-            {% else %}
-                <p class="small">Chưa có tài khoản để cấu hình.</p>
-            {% endfor %}
-            </div>
-        </div>
     </div>
 </section>
 
@@ -761,7 +736,31 @@
     {% endif %}
 
     {% if can_admin('system_features_manage') %}
-    <div class="panel admin-system-features-panel"><h2>🎛️ Bật/tắt tính năng hệ thống</h2><p class="admin-feature-help"><strong>Rank thường</strong> và <strong>Random 3 chọn 1</strong> là hai chế độ thi đấu Rank riêng. Khi tắt Rank thường, Random 3 chọn 1 được bắt buộc bật để người chơi vẫn có thể thi đấu Rank. Công tắc BXH công khai không ảnh hưởng đến hai chế độ này. Trận đang thi đấu không bị can thiệp.</p><form method="post" action="{{ url_for('admin_update_system_features') }}" class="system-toggle-grid">{% for key,label in {'friendly_enabled':'Giao hữu thường','rank_standard_enabled':'Rank thường','friendly_random3_enabled':'Random 3 chọn 1','lobby_chat_enabled':'Chat Sảnh','room_chat_enabled':'Chat Phòng','registration_codes_enabled':'Mã đăng ký','announcements_enabled':'Thông báo','quick_match_enabled':'Tìm Nhanh','repeat_opponent_rp_enabled':'Giảm RP khi gặp lại cùng đối thủ','match_history_all_enabled':'Xem lịch sử toàn hệ thống'}.items() %}<label class="admin-permission-option"><span>{{ label }}</span><span class="admin-switch"><input type="checkbox" name="{{ key }}" value="1" {% if system_features.get(key) %}checked{% endif %}><span class="admin-switch-track"></span></span></label>{% endfor %}
+    <div class="panel admin-system-features-panel">
+        <div class="admin-section-heading">
+            <div><h2>🎛️ Bật/tắt tính năng hệ thống</h2><p class="small">Một nơi duy nhất để bật/tắt module và 6 chế độ Rank. Điều kiện mở khóa và RP vẫn chỉnh trong tab Quản lý chế độ Rank.</p></div>
+        </div>
+        <form method="post" action="{{ url_for('admin_update_system_features') }}" class="admin-feature-form">
+            <section class="admin-feature-group">
+                <h3>Chế độ Rank</h3>
+                <div class="system-toggle-grid compact">
+                {% for code in rank_mode_order %}
+                    {% set mode = rank_mode_configs.get(code, {}) %}
+                    <label class="admin-permission-option"><span>{{ mode.short_label or mode.label }}</span><span class="admin-switch"><input type="checkbox" name="rank_mode__{{ code }}" value="1" {% if mode.enabled %}checked{% endif %}><span class="admin-switch-track"></span></span></label>
+                {% endfor %}
+                </div>
+            </section>
+            <section class="admin-feature-group">
+                <h3>Tính năng phòng đấu và hệ thống</h3>
+                <div class="system-toggle-grid compact">
+                {% for key,label in {'friendly_enabled':'Giao hữu thường','lobby_chat_enabled':'Chat Sảnh','room_chat_enabled':'Chat Phòng','registration_codes_enabled':'Mã đăng ký','announcements_enabled':'Thông báo','quick_match_enabled':'Tìm Nhanh','repeat_opponent_rp_enabled':'Giảm RP khi gặp lại cùng đối thủ','match_history_all_enabled':'Xem lịch sử toàn hệ thống'}.items() %}
+                    <label class="admin-permission-option"><span>{{ label }}</span><span class="admin-switch"><input type="checkbox" name="{{ key }}" value="1" {% if system_features.get(key) %}checked{% endif %}><span class="admin-switch-track"></span></span></label>
+                {% endfor %}
+                </div>
+            </section>
+            <section class="admin-feature-group">
+                <h3>Hiển thị công khai</h3>
+                <div class="system-toggle-grid compact">
 <label class="admin-permission-option admin-public-ranking-option">
     <span>BXH công khai (không cần đăng nhập)</span>
     <span class="admin-switch">
@@ -769,7 +768,11 @@
         <span class="admin-switch-track"></span>
     </span>
 </label>
-<button class="btn green" type="submit">Lưu cài đặt</button></form></div>
+                </div>
+            </section>
+            <div class="admin-feature-save"><button class="btn green" type="submit">Lưu toàn bộ công tắc</button></div>
+        </form>
+    </div>
     <div class="panel">
         <h2>🎯 Hệ số RP khi gặp lại đối thủ</h2>
         <p class="muted">Điều chỉnh riêng phần RP người thắng được cộng và RP người thua bị trừ ở từng lần một người đánh bại cùng đối thủ trong ngày. Mỗi dãy hệ số phải giảm dần từ lần 1 đến lần 4.</p>
