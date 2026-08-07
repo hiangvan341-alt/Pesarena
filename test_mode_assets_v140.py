@@ -4,14 +4,14 @@ ROOT = Path(__file__).resolve().parent
 def read(rel): return (ROOT/rel).read_text(encoding='utf-8')
 
 def test_version():
-    assert 'APP_VERSION = "1.3.41"' in read('app.py')
+    assert 'APP_VERSION = "1.3.43"' in read('app.py')
 
 def test_mode_base_and_mapping():
     s=read('modules/static_asset_service.py')
     assert 'pes-assets/room-assets/v1.3.40/modes' in s
     expected={
-        'tactical_bo3':'1.webp','ban_pick_bo3':'2.webp','rank_random':'3.webp',
-        'random3_pick1':'4.webp','home_away':'5.webp','bo3':'6.webp'}
+        'rank_random':'1.webp','random3_pick1':'2.webp','home_away':'3.webp',
+        'bo3':'4.webp','tactical_bo3':'5.webp','ban_pick_bo3':'6.webp'}
     for code,name in expected.items():
         assert f'"{code}": "{name}"' in s
 

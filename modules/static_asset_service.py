@@ -63,13 +63,15 @@ DEFAULT_MODE_ASSET_BASE_URL = (
     "pes-assets/room-assets/v1.3.40/modes"
 )
 
+# Người dùng đặt tên file 1 -> 6 theo thứ tự hiển thị từ trái sang phải trên giao diện.
+# 1 Random | 2 Random 3 chọn 1 | 3 Lượt đi/về | 4 BO3 | 5 Chiến thuật BO3 | 6 Cấm chọn BO3
 MODE_LOGO_FILE_BY_CODE = {
-    "tactical_bo3": "1.webp",
-    "ban_pick_bo3": "2.webp",
-    "rank_random": "3.webp",
-    "random3_pick1": "4.webp",
-    "home_away": "5.webp",
-    "bo3": "6.webp",
+    "rank_random": "1.webp",
+    "random3_pick1": "2.webp",
+    "home_away": "3.webp",
+    "bo3": "4.webp",
+    "tactical_bo3": "5.webp",
+    "ban_pick_bo3": "6.webp",
 }
 
 

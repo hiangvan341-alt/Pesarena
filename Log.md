@@ -1,13 +1,3 @@
-# V1.3.42 — 2026-08-07 17:23 (Asia/Bangkok)
-
-- Sửa lỗi Lịch sử đấu/Profile hiển thị tên người chơi thành `None`.
-- Nguyên nhân: read-model V1.3.34 (`load_user_matches` / `load_h2h_matches`) trả raw match rows nhưng `decorate_match_for_view()` vẫn giả định đã có `player1_name/player2_name`.
-- Thêm `hydrate_match_player_fields()` ở Backend để tự gắn tên/avatar/achievement từ user snapshot trước khi render.
-- Tên hiển thị dùng fallback an toàn: `display_name -> username -> Unknown`; không để Python `None` lọt ra HTML.
-- Giữ nguyên tối ưu read-model, không quay lại SELECT toàn bộ bảng matches và không tạo N+1 query theo từng trận.
-- CSS History đã rà: không có selector/content nào tạo chuỗi `None`; lỗi nằm ở dữ liệu Backend, không phải CSS.
-- Thêm `test_match_history_hydration_v142.py`; 4/4 test History mới PASS, app.py compile PASS.
-
 ## V1.3.37 — Module hóa luồng dữ liệu + CSS Flow Audit
 
 **Ngày giờ:** 2026-08-07 13:28 (Asia/Bangkok)

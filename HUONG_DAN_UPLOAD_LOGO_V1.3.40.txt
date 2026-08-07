@@ -20,3 +20,6 @@ PES Arena V1.3.40 - Upload 6 logo che do
 
 4) Khong can upload lai room-assets/v1.3.18.
    Nen web/VS/Parsec/room texture van dung bo cu; chi 6 logo mode dung v1.3.40.
+
+
+V1.3.43 note: Tên file 1.webp -> 6.webp được map theo đúng thứ tự hiển thị từ trái sang phải: Random, 3 chọn 1, Lượt đi/về, BO3, Chiến thuật BO3, Cấm chọn BO3.
