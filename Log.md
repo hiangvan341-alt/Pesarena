@@ -1518,3 +1518,11 @@
 - Hai nút chỉ còn inline reset `all: unset !important` + chữ + 1 border + padding cơ bản; background/shadow/filter/transform/text-shadow đều bị reset về không.
 - Quick Match JS đổi hook icon/label từ class sang `data-quick-match-icon` / `data-quick-match-label`, không phụ thuộc CSS.
 - Không thay endpoint, route, RP, trạng thái, polling hay luồng submit/click.
+
+
+## V1.3.95 - Can_doi_nut_Tim_nhanh_va_tang_nen_Bat_dau_tran (2026-08-08)
+- Bắt đầu từ V1.3.94.
+- Không thêm CSS module mới, không sửa backend/route/JS/RP.
+- Nút `BẮT ĐẦU TRẬN 1`: giữ tách khỏi CSS cũ, tăng nền xanh đậm rõ ràng; cao 52px để cân với `Thoát Phòng`.
+- Nút `Tìm nhanh`: sửa kích thước flex trực tiếp, bỏ `width:100%` gây lệch trong hàng 3 nút; cao 48px, chữ/icon cân giữa.
+- Cả hai nút vẫn dùng `data-*`/form action cũ nên luồng xử lý không thay đổi.

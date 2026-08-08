@@ -26,8 +26,8 @@ def test_series_start_button_has_no_visual_classes_and_only_inline_bare_skin():
         assert 'room-center-action-btn' not in chunk
         assert 'room-center-random-trigger' not in chunk
         assert 'all:unset!important' in chunk
-        assert 'background:transparent!important' in chunk
-        assert 'box-shadow:none!important' in chunk
+        assert 'background:linear-gradient(180deg,#0d542f' in chunk
+        assert 'box-shadow:inset 0 1px 0' in chunk
         assert 'border:1px solid #20d889!important' in chunk
 
 
@@ -47,8 +47,8 @@ def test_quick_match_button_has_no_visual_classes_and_only_inline_bare_skin():
         assert 'gaming-quick-action' not in chunk
         assert 'arena-action-quick' not in chunk
         assert 'all:unset!important' in chunk
-        assert 'background:transparent!important' in chunk
-        assert 'box-shadow:none!important' in chunk
+        assert 'background:linear-gradient(180deg,#0d542f' in chunk
+        assert 'box-shadow:inset 0 1px 0' in chunk
         assert 'border:1px solid #20d889!important' in chunk
 
 
