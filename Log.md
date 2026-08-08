@@ -1560,3 +1560,12 @@
 - Nút Tìm nhanh hiện dùng cùng class giao diện: `btn arena-btn green room-center-action-btn`, nhưng vẫn giữ `room-quick-flat` làm hook nhận diện không có CSS riêng.
 - Không đổi `data-quick-match-url`, JavaScript, route hay luồng Quick Match.
 - Cập nhật `APP_VERSION` từ 1.3.92 lên 1.3.100 nên sidebar hiển thị `V1.3.100`.
+
+
+## V1.3.101 - Xoa_lop_nen_duoi_chu_Tim_nhanh (2026-08-08)
+- Phạm vi: frontend Room / Quick Match; không đổi route, backend, RP hay luồng mời đấu.
+- Nguyên nhân lớp nền dưới chữ `Tìm nhanh`: nội dung nút vẫn bọc trong một thẻ `<span data-quick-match-label>`, nên phần tử con có thể nhận CSS/global style riêng dù CSS nút đã dọn.
+- Xóa hoàn toàn thẻ `<span>` bên trong nút Tìm nhanh ở cả render chính và live polling; nút chỉ còn text node thuần.
+- `quick_match.js` đổi sang cập nhật trực tiếp `button.textContent`, không còn query hay thao tác `data-quick-match-label`.
+- Giữ nguyên các class chuẩn `btn arena-btn green room-center-action-btn` để giao diện Tìm nhanh dùng đúng cùng hệ nút với Mời đấu / Sẵn Sàng.
+- Cập nhật APP_VERSION thành 1.3.101.
