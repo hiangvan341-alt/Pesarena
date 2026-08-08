@@ -96,8 +96,9 @@ function toggleTheme(){
 {% block head_extra %}{% endblock %}
 <link rel="stylesheet" href="{{ static_asset('css/ui_dialog.css') }}">
 {% block page_styles %}{% endblock %}
+<link rel="stylesheet" href="{{ static_asset('css/gaming_neon_buttons.css') }}">
 </head>
-<body data-page="{{ request.endpoint|default('unknown') }}">
+<body data-page="{{ request.endpoint|default('unknown') }}" data-ui-scope="{{ 'admin' if (request.endpoint and (request.endpoint == 'admin' or request.endpoint.startswith('admin_') or request.endpoint == 'backup_preview')) else 'player' }}">
 {% if is_test_mode %}<div style="position:fixed;z-index:99999;left:0;right:0;top:0;text-align:center;background:#ffcc00;color:#111;font-weight:800;padding:6px">🧪 PES ARENA TEST MODE — KHÔNG DÙNG DATABASE PRODUCTION</div><div style="height:34px"></div>{% endif %}
 {% if maintenance_status and maintenance_status.countdown %}
 <div class="server-transition-banner {{ 'server-closing' if maintenance_status.countdown.kind == 'close' else 'server-opening' }}">

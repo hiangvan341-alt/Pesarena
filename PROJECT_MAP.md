@@ -268,3 +268,8 @@ Không chạy SQL thay đổi dữ liệu thật trong test nếu chưa có guar
 - Room waiting/Series orchestration: readiness state belongs to player card; center stage no longer renders duplicate fake disabled status buttons.
 - Final pre-start cascade is owned by `static/css/room/10-prestart-flow.css` loaded after Series CSS. Host start control uses a dedicated lane above the bottom action dock; guest Ready state uses only a compact flow line when waiting for Host.
 - Applies to `home_away`, `bo3`, `tactical_bo3`, `ban_pick_bo3` as well as single-match modes.
+
+## V1.3.77 — Global Gaming Neon 3D Buttons
+- `static/css/gaming_neon_buttons.css`: lớp visual cuối cho nút giao diện người chơi.
+- `templates/base.html`: gắn `data-ui-scope=player/admin` và nạp Gaming Neon CSS sau page CSS.
+- Quy tắc: không áp dụng cho Admin và mọi control trong khu Parsec; không sửa logic/ID/route/kích thước layout.

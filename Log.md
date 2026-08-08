@@ -1,3 +1,14 @@
+# V1.3.77 — Global Gaming Neon 3D Button Sync
+
+- Ngày: 2026-08-08 (Asia/Bangkok)
+- Chế độ: NÂNG CẤP MODULE — UI toàn giao diện người chơi.
+- Lấy trực tiếp mẫu `Gaming Neon 3D Button Demo` làm chuẩn: gradient 3 tầng có chiều sâu, viền neon, glow ngoài + inset, highlight mặt trên, chữ trắng đậm, hover sáng và active nhấn xuống.
+- Thêm `static/css/gaming_neon_buttons.css` và nạp SAU toàn bộ page-specific CSS để trở thành lớp visual cuối, tránh CSS cũ ghi đè.
+- Chỉ thay visual CSS; không đổi ID, route, JS handler, form action, vị trí hay kích thước layout.
+- Giữ màu semantic: xanh lá = xác nhận/sẵn sàng; đỏ = thoát/nguy hiểm/từ chối; vàng = mời/đá tiếp/CTA; xám-xanh = phụ/hủy; xanh dương = mặc định; tím = Lucky Box/Random3.
+- Loại trừ toàn bộ Admin bằng `data-ui-scope="admin"` và loại trừ Parsec tại `.parsec-room-panel` + `#parsec-profile`.
+- `APP_VERSION`: 1.3.76 → 1.3.77.
+
 # V1.3.76 — Room Pre-start Hierarchy + Invite Buttons
 
 - Ngày: 2026-08-08 (Asia/Bangkok)
