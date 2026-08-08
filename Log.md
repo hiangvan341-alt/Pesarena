@@ -1526,3 +1526,12 @@
 - Nút `BẮT ĐẦU TRẬN 1`: giữ tách khỏi CSS cũ, tăng nền xanh đậm rõ ràng; cao 52px để cân với `Thoát Phòng`.
 - Nút `Tìm nhanh`: sửa kích thước flex trực tiếp, bỏ `width:100%` gây lệch trong hàng 3 nút; cao 48px, chữ/icon cân giữa.
 - Cả hai nút vẫn dùng `data-*`/form action cũ nên luồng xử lý không thay đổi.
+
+
+## V1.3.96 - Can_doi_3_nut_Moi_dau_Tim_nhanh_Thoat_phong_va_bo_icon_Bat_dau_tran (2026-08-08)
+- Cân lại cụm 3 nút khi phòng chưa có đối thủ thành grid 3 cột bằng nhau: Mời đấu / ⚡ Tìm nhanh / Thoát phòng.
+- Đồng bộ chiều cao 52px, khoảng cách 10px và chiều rộng mỗi nút bằng nhau trên desktop.
+- Giữ nguyên màu và chức năng hiện tại của từng nút.
+- Bỏ icon `▶` khỏi nút `BẮT ĐẦU TRẬN`, chỉ giữ chữ.
+- Sửa trực tiếp rule CSS hiện có trong `01-shell-layout.css` và `06-responsive-performance.css`, không thêm file CSS vá mới.
+- Đồng bộ template render ban đầu và template polling.

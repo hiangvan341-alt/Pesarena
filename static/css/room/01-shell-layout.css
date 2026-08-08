@@ -51,7 +51,7 @@
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
   align-items: stretch;
-  gap: 8px;
+  gap: 10px;
   width: calc(100% - 16px);
   box-sizing: border-box;
 }
@@ -75,10 +75,10 @@
   justify-content: center;
   width: 100%;
   min-width: 0;
-  height: 42px;
-  min-height: 42px;
+  height: 52px;
+  min-height: 52px;
   margin: 0;
-  padding: 7px 6px;
+  padding: 9px 8px;
   box-sizing: border-box;
   border-radius: 9px;
   white-space: nowrap;
