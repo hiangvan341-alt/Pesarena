@@ -13,6 +13,7 @@
 <link rel="stylesheet" href="{{ static_asset('css/room/09-series-orchestrator.css') }}">
 <link rel="stylesheet" href="{{ static_asset('css/room/10-prestart-flow.css') }}">
 <link rel="stylesheet" href="{{ static_asset('css/room/11-index-layout-reconnect.css') }}">
+<link rel="stylesheet" href="{{ static_asset('css/room/12-mockup-layout-lock.css') }}">
 <style>
 .arena-room-v2 {
   --arena-stadium-blue: url("{{ room_asset('stadium-blue.webp') }}");
@@ -37,6 +38,7 @@
         {% include "room/_center_stage.html" %}
         {% include "room/_guest_card.html" %}
         {% include "room/_side_rail.html" %}
+    </div>{# /.room-arena-frame #}
 
     {% include "room/_bottom_modes_history.html" %}
     {% include "room/_extra_controls.html" %}

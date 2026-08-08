@@ -1418,3 +1418,10 @@
 - Đồng bộ logic trên cả template lần đầu và `_room_live_content.html` dùng cho polling.
 - Sửa số thứ tự 6 chế độ: 1 Rank Random, 2 Random 3 chọn 1, 3 Đấu chiến thuật BO3, 4 BO3, 5 Cấm chọn CLB, 6 Lượt đi–lượt về.
 - Tăng độ giống mockup: PES ARENA lớn hơn, logo chế độ trung tâm đúng kích thước, cân lại 4 cột, VS lớn hơn, panel phải cân đối hơn, Tổng điểm ép màu trắng.
+
+## 2026-08-08 — Room UI mockup layout lock (frontend-only)
+- Phạm vi: Room frontend, không thay route/service/RP/backend.
+- Sửa cấu trúc `room_detail.html`: main battle grid chỉ chứa Host → Center → Guest → Side rail; mode/history chuyển ra dưới grid đúng bố cục mockup.
+- `room/_bottom_modes_history.html`: giữ 6 mode cards luôn hiện để layout không nhảy giữa các trạng thái; khi trận/series đang chạy card chỉ xem, không gửi form đổi mode.
+- Thêm `static/css/room/12-mockup-layout-lock.css` tải cuối để khóa tỷ lệ desktop, logo PES ARENA, VS, player cards, center mode, sidebar, action buttons và mode strip theo ảnh đã chốt.
+- Giữ nguyên toàn bộ endpoint/form action hiện tại, gồm ready/start/result/confirm/rematch/forfeit/leave/Parsec.

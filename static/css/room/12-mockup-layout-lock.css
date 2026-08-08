@@ -1,0 +1,187 @@
+/* PES Arena — approved room mockup layout lock
+   Frontend only. Loaded LAST intentionally so legacy room CSS cannot pull the room back
+   to the older compact layout. Backend/Jinja actions and JS hooks are untouched. */
+
+.arena-room-v2{
+  --ui-gold:#f1b722;
+  --ui-blue:#168dff;
+  --ui-red:#ff2d25;
+  --ui-purple:#b653ff;
+  --ui-green:#27e96d;
+  width:100%;
+  max-width:1600px;
+  margin:0 auto;
+  gap:10px!important;
+}
+
+/* Header: match the approved screenshot proportions. */
+.arena-room-v2 .room-stage-topbar{
+  min-height:96px!important;
+  grid-template-columns:minmax(320px,1fr) minmax(430px,500px) minmax(260px,1fr)!important;
+  padding:10px 26px!important;
+  border-radius:16px!important;
+  background:linear-gradient(180deg,rgba(4,10,18,.98),rgba(2,7,13,.98))!important;
+}
+.arena-room-v2 .room-stage-title{font-size:28px!important;line-height:1.05!important;color:#fff!important}
+.arena-room-v2 .room-code-badge{font-size:16px!important;padding:8px 14px!important}
+.arena-room-v2 .room-stage-subtitle{font-size:14px!important;color:#fff!important}
+.arena-room-v2 .room-master-brand{
+  width:500px!important;max-width:500px!important;height:74px!important;
+  display:flex!important;align-items:center!important;justify-content:center!important;overflow:visible!important;
+}
+.arena-room-v2 .room-master-brand img{
+  width:500px!important;height:74px!important;max-width:none!important;max-height:none!important;
+  object-fit:contain!important;transform:scale(1.14)!important;transform-origin:center!important;
+  filter:drop-shadow(0 0 14px rgba(255,183,34,.32))!important;
+}
+.arena-room-v2 .room-stage-share-wrap{min-width:220px!important}
+.arena-room-v2 .room-share-button{min-width:210px!important;min-height:62px!important}
+
+/* One fixed four-column battle layout. */
+.arena-room-v2 .room-arena-frame{
+  display:grid!important;
+  grid-template-columns:minmax(350px,31fr) minmax(300px,23fr) minmax(350px,23fr) minmax(250px,20fr)!important;
+  grid-template-areas:'home center away rail'!important;
+  gap:10px!important;
+  width:100%!important;
+  height:578px!important;
+  min-height:578px!important;
+  overflow:visible!important;
+}
+.arena-room-v2 .room-side-card,
+.arena-room-v2 .room-center-stage-plain,
+.arena-room-v2 .room-arena-right-rail{height:578px!important;min-height:578px!important}
+
+/* Host / opponent panels. */
+.arena-room-v2 .room-side-card{border-radius:16px!important;padding:8px 12px 12px!important}
+.arena-room-v2 .room-team-card.home{border-color:var(--ui-blue)!important;box-shadow:0 0 14px rgba(22,141,255,.22),inset 0 0 36px rgba(22,141,255,.16)!important}
+.arena-room-v2 .room-team-card.away{border-color:var(--ui-red)!important;box-shadow:0 0 14px rgba(255,45,37,.20),inset 0 0 36px rgba(255,45,37,.14)!important}
+.arena-room-v2 .room-player-heading-plain{min-height:245px!important;padding-bottom:8px!important}
+.arena-room-v2 .room-player-heading-plain::before{font-size:14px!important;padding:4px 34px 7px!important;margin:-4px 0 8px!important}
+.arena-room-v2 .room-player-heading-plain .player-avatar{width:94px!important;height:94px!important}
+.arena-room-v2 .room-player-name{font-size:27px!important;color:#fff!important}
+.arena-room-v2 .room-player-rankline{font-size:14px!important;color:#fff!important}
+.arena-room-v2 .win-streak-badge{font-size:13px!important;padding:8px 16px!important;border-radius:12px!important}
+.arena-room-v2 .club-selection-title{font-size:16px!important;color:var(--ui-gold)!important;margin:0 0 3px!important}
+.arena-room-v2 .room-card-club-area{padding:8px 6px 5px!important}
+.arena-room-v2 .room-club-logo-large{width:126px!important;height:126px!important}
+.arena-room-v2 .room-team-name-lg{font-size:17px!important;color:#fff!important;margin-top:8px!important}
+.arena-room-v2 .room-team-points-block{margin-top:9px!important;padding:7px 15px!important;background:rgba(2,8,16,.82)!important}
+.arena-room-v2 .room-team-points-value,
+.arena-room-v2 .room-team-points-value::before{color:#fff!important;text-shadow:none!important}
+.arena-room-v2 .room-team-points-value{font-size:18px!important;font-weight:850!important}
+.arena-room-v2 .room-team-points-value::before{font-size:13px!important;font-weight:500!important}
+
+/* Center card + VS, sized like the approved composition. */
+.arena-room-v2 .room-center-stage-plain{border-radius:16px!important;padding:0 0 70px!important}
+.arena-room-v2 .room-master-active-mode{
+  width:calc(100% - 12px)!important;min-height:335px!important;margin:6px 6px 0!important;
+  padding:16px 14px 10px!important;border-radius:14px!important;border-color:var(--ui-purple)!important;
+}
+.arena-room-v2 .room-master-mode-number{width:52px!important;height:52px!important;font-size:20px!important}
+.arena-room-v2 .room-master-mode-heading strong{font-size:18px!important;color:#fff!important;margin:4px 42px 6px!important}
+.arena-room-v2 .room-master-mode-heading small{font-size:11px!important;line-height:1.4!important;color:#fff!important;min-height:32px!important}
+.arena-room-v2 .room-master-mode-emblem{width:150px!important;height:136px!important;margin:5px auto 4px!important}
+.arena-room-v2 .room-master-mode-emblem img{width:134px!important;height:134px!important;object-fit:contain!important;filter:drop-shadow(0 0 12px rgba(241,183,34,.32))!important}
+.arena-room-v2 .room-master-unlock-pill{min-width:205px!important;padding:8px 14px!important;font-size:13px!important}
+.arena-room-v2 .room-master-room-ready{min-height:41px!important;margin-top:10px!important;padding:9px 12px!important;font-size:12px!important}
+.arena-room-v2 .room-master-room-ready strong{font-size:14px!important}
+.arena-room-v2 .room-center-vs-image{width:230px!important;height:160px!important;max-width:none!important;max-height:none!important;object-fit:contain!important;margin:auto 0 2px!important}
+.arena-room-v2 .room-center-countdown{font-size:42px!important;line-height:1!important;color:#fff!important}
+.arena-room-v2 .room-center-countdown-label{font-size:11px!important;color:#fff!important}
+
+/* Series HUD must not balloon and destroy the common layout. */
+.arena-room-v2 .room-series-hud-slot{width:calc(100% - 16px)!important;max-height:108px!important;overflow:auto!important;position:relative!important;z-index:3!important}
+.arena-room-v2 .series-room-panel{margin:4px 0!important}
+
+/* Result / confirm states stay in the exact same center column. */
+.arena-room-v2 .room-result-review,
+.arena-room-v2 .room-center-score-panel,
+.arena-room-v2 .room-score-form{width:calc(100% - 18px)!important;max-width:100%!important}
+.arena-room-v2 .room-result-score{font-size:44px!important;color:#fff!important}
+.arena-room-v2 .room-score-fields input{font-size:36px!important;color:#fff!important}
+
+/* Action dock: visible, balanced and consistent through all six states. */
+.arena-room-v2 .room-center-primary-actions,
+.arena-room-v2 .room-action-zone,
+.arena-room-v2 .room-prestart-action-row{
+  gap:10px!important;width:calc(100% - 16px)!important;max-width:none!important;
+  margin-left:auto!important;margin-right:auto!important;
+}
+.arena-room-v2 .room-center-primary-actions .arena-btn,
+.arena-room-v2 .room-action-zone .arena-btn,
+.arena-room-v2 .room-prestart-action-row .arena-btn{
+  min-height:52px!important;border-radius:10px!important;font-size:14px!important;font-weight:850!important;color:#fff!important;
+}
+.arena-room-v2 .room-prestart-launch{width:calc(100% - 16px)!important;margin-top:auto!important}
+.arena-room-v2 .room-prestart-mainform{flex:1 1 auto!important}
+.arena-room-v2 .room-prestart-exit-form{flex:0 0 126px!important}
+.arena-room-v2 .room-prestart-note{font-size:11px!important;color:#fff!important}
+
+/* Right rail aligned with mockup. */
+.arena-room-v2 .room-arena-right-rail{display:flex!important;flex-direction:column!important;gap:10px!important;overflow:auto!important}
+.arena-room-v2 .room-side-info-panel,
+.arena-room-v2 .parsec-room-panel,
+.arena-room-v2 .room-chat-side{
+  border:1px solid rgba(185,119,22,.72)!important;border-radius:14px!important;
+  background:linear-gradient(180deg,rgba(4,13,23,.98),rgba(3,10,18,.98))!important;
+}
+.arena-room-v2 .room-side-info-panel{padding:12px 14px!important}
+.arena-room-v2 .room-side-info-panel h3,
+.arena-room-v2 .parsec-room-panel h2,
+.arena-room-v2 .parsec-room-panel h3{font-size:16px!important;color:#fff!important;text-transform:uppercase!important}
+.arena-room-v2 .room-side-info-list{gap:7px!important}
+.arena-room-v2 .room-side-info-list>div{padding:10px 12px!important;border-radius:10px!important;border:1px solid #303b49!important;background:#07111b!important}
+.arena-room-v2 .room-side-info-list span{font-size:10px!important;color:#b8bec7!important}
+.arena-room-v2 .room-side-info-list strong{font-size:14px!important;color:#fff!important}
+.arena-room-v2 .parsec-room-panel{padding:12px 14px!important;color:#fff!important}
+.arena-room-v2 .parsec-room-panel input{color:#fff!important;background:#07101a!important}
+
+/* Bottom strip is OUTSIDE the battle grid now, exactly like the approved mockup. */
+.arena-room-v2 .room-bottom-shell{
+  display:grid!important;grid-template-columns:minmax(0,1fr) 250px!important;gap:10px!important;
+  width:100%!important;margin-top:10px!important;align-items:start!important;
+}
+.arena-room-v2 .room-master-mode-switcher{
+  display:block!important;padding:30px 18px 16px!important;border:1px solid rgba(31,43,58,.84)!important;
+  border-radius:16px!important;background:rgba(2,8,15,.74)!important;overflow:visible!important;
+}
+.arena-room-v2 .room-master-mode-switcher h2{top:6px!important;color:var(--ui-gold)!important;font-size:17px!important}
+.arena-room-v2 .room-master-mode-grid{display:grid!important;grid-template-columns:repeat(6,minmax(0,1fr))!important;gap:12px!important}
+.arena-room-v2 .room-master-mode-card{
+  min-height:182px!important;padding:18px 10px 12px!important;border-radius:12px!important;
+  grid-template-columns:72px 1fr!important;grid-template-rows:1fr auto!important;color:#fff!important;
+}
+.arena-room-v2 .room-master-card-number{width:42px!important;height:42px!important;font-size:21px!important}
+.arena-room-v2 .room-master-card-icon{width:78px!important;height:88px!important}
+.arena-room-v2 .room-master-card-icon img{width:100%!important;height:100%!important;object-fit:contain!important}
+.arena-room-v2 .room-master-mode-card>strong{font-size:14px!important;color:#fff!important;line-height:1.35!important}
+.arena-room-v2 .room-master-mode-card>small{grid-column:1/-1!important;width:142px!important;justify-self:center!important;color:#43f17c!important}
+.arena-room-v2 .room-master-mode-switcher.is-view-only .room-master-mode-card{cursor:default!important;opacity:1!important}
+.arena-room-v2 .room-master-mode-switcher.is-view-only .room-master-mode-card:disabled{opacity:1!important;filter:none!important}
+.arena-room-v2 .room-bottom-side{margin-top:0!important;min-width:0!important}
+
+/* Do not let legacy helper blocks sit on top of the approved core layout. */
+.arena-room-v2 .guest-forfeit-box,
+.arena-room-v2 .host-forfeit-box,
+.arena-room-v2 .room-finished-summary{position:relative!important;z-index:4!important;margin:8px auto!important;max-width:820px!important}
+
+@media (max-width:1280px){
+  .arena-room-v2 .room-stage-topbar{grid-template-columns:1fr 360px 1fr!important}
+  .arena-room-v2 .room-master-brand,.arena-room-v2 .room-master-brand img{width:360px!important}
+  .arena-room-v2 .room-arena-frame{
+    grid-template-columns:minmax(300px,1fr) minmax(270px,.78fr) minmax(300px,1fr)!important;
+    grid-template-areas:'home center away' 'rail rail rail'!important;height:auto!important;min-height:0!important;
+  }
+  .arena-room-v2 .room-side-card,.arena-room-v2 .room-center-stage-plain{height:560px!important;min-height:560px!important}
+  .arena-room-v2 .room-arena-right-rail{height:auto!important;min-height:0!important;display:grid!important;grid-template-columns:repeat(2,minmax(0,1fr))!important}
+  .arena-room-v2 .room-bottom-shell{grid-template-columns:1fr!important}
+  .arena-room-v2 .room-master-mode-grid{grid-template-columns:repeat(3,minmax(0,1fr))!important}
+}
+@media (max-width:820px){
+  .arena-room-v2 .room-stage-topbar{grid-template-columns:1fr!important;text-align:center!important}
+  .arena-room-v2 .room-stage-title-wrap,.arena-room-v2 .room-stage-share-wrap,.arena-room-v2 .room-master-brand{justify-self:center!important}
+  .arena-room-v2 .room-arena-frame{display:flex!important;flex-direction:column!important}
+  .arena-room-v2 .room-side-card,.arena-room-v2 .room-center-stage-plain,.arena-room-v2 .room-arena-right-rail{height:auto!important;min-height:520px!important}
+  .arena-room-v2 .room-master-mode-grid{grid-template-columns:repeat(2,minmax(0,1fr))!important}
+}
