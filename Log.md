@@ -1,3 +1,12 @@
+# V1.3.75 — Room Action Button Visual Sync
+
+- Chế độ: NÂNG CẤP MODULE giao diện phòng đấu.
+- Dùng đúng ngôn ngữ visual glass/neon đã chốt ở V1.3.71 làm chuẩn cho toàn bộ nút chức năng của người chơi.
+- Đồng bộ: Sẵn Sàng, Hủy Sẵn Sàng, Thoát Phòng/Bỏ cuộc, Gửi Kết Quả, Đá Tiếp, Về sảnh, Thoát an toàn, Đưa khỏi phòng và nút xác nhận kết quả.
+- Màu semantic giữ nguyên: xanh = tích cực; xanh lam = phụ/huỷ; vàng = đá tiếp; đỏ = thoát/nguy hiểm.
+- Giảm nền đặc/tối, tăng độ trong kính, viền neon và độ sáng chữ; hover tăng glow vừa phải.
+- Chỉ scope trong Room action/result/kick; không tác động Parsec, gameplay, RP, backend hay Supabase.
+
 # V1.3.74 — Room Action Visibility Guard
 
 - Chế độ: FIX NHANH giao diện phòng đấu.
