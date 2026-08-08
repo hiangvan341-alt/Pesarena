@@ -71,6 +71,8 @@ Không sửa module khác nếu chưa chứng minh dependency liên quan.
 | CSS room | `static/css/room/` |
 | Logo chế độ + 6 thẻ chế độ | `static/css/room/13-mode-stability.css` |
 | Bố cục khung phòng + Chủ phòng/Đối thủ + topbar/chia sẻ | `static/css/room/14-shell-player-stability.css` |
+| Nút/trạng thái hành động trong Room (Mời đấu/Sẵn sàng/Thoát/Quay/Gửi-Xác nhận kết quả/pre-start) | `static/css/room/15-room-actions-stability.css` |
+| Màu/skin Gaming Neon dùng chung cho nút Player | `static/css/gaming_neon_buttons.css` |
 
 ### Backend
 
@@ -313,3 +315,10 @@ Không chạy SQL thay đổi dữ liệu thật trong test nếu chưa có guar
 ## V1.3.84 Room template safety
 - Pre-start action markup phải được cập nhật đồng thời ở `templates/room/_center_stage.html` và `templates/_room_live_content.html`.
 - Sau mọi thay đổi Jinja Room, bắt buộc parse toàn bộ `templates/**/*.html` trước khi đóng ZIP.
+## V1.3.104 — Room action CSS ownership
+
+- `static/css/room/15-room-actions-stability.css` là nơi duy nhất quản lý **bố cục/trạng thái riêng của nút hành động trong Room**.
+- `static/css/gaming_neon_buttons.css` tiếp tục là nơi quản lý **màu/skin nút dùng chung** cho giao diện Player và được nạp sau CSS Room.
+- Không thêm lại rule Mời đấu/Sẵn sàng/Thoát/Quay/Gửi kết quả/Xác nhận/pre-start vào các file Room 01–12; nếu cần sửa giao diện của các nút này, sửa `15-room-actions-stability.css`.
+- Các rule action cũ đã được chuyển khỏi 11 module Room để giảm tranh chấp cascade; visual regression phải giữ nguyên trước/sau.
+

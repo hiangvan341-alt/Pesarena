@@ -1,3 +1,7 @@
+/* PES Arena V1.3.104 — 07-parsec-history-polish.css
+ * Room action-control rules moved to 15-room-actions-stability.css.
+ * Remaining rules keep this module's non-action responsibility.
+ */
 /* PES Arena V1.3.38 — Room CSS module: 07-parsec-history-polish.css
    Scope: Parsec/history sizing and final room visual polish.
    IMPORTANT: load order is defined in templates/room_detail.html. */
@@ -62,27 +66,12 @@
 }
 
 /* Nút chính: sáng hơn nhưng nền kính trong hơn, tránh đè màu và tránh viền gắt. */
-.arena-room-v2 .arena-action-invite,
-.arena-room-v2 .arena-action-exit{
-  border-color:rgba(255,255,255,.22) !important;
-  color:#fff !important;
-  text-shadow:0 1px 2px rgba(0,0,0,.55);
-  backdrop-filter:none;
-  box-shadow:inset 0 1px 0 rgba(255,255,255,.16),0 5px 12px rgba(0,0,0,.14) !important;
-}
-.arena-room-v2 .arena-action-invite{
-  background:linear-gradient(180deg,rgba(244,190,70,.52),rgba(157,98,12,.38)) !important;
-}
-.arena-room-v2 .arena-action-exit{
-  background:linear-gradient(180deg,rgba(241,83,111,.50),rgba(128,22,48,.36)) !important;
-}
-.arena-room-v2 .arena-action-invite:hover,
-.arena-room-v2 .arena-action-exit:hover{
-  filter:brightness(1.13) saturate(1.08);
-  border-color:rgba(255,255,255,.34) !important;
-}
 
-@media(max-width:1450px){
+
+
+
+
+@media (max-width:1450px){
   .arena-room-v2 .parsec-room-panel .parsec-room-link-inline{
     grid-template-columns:minmax(0,1fr) auto;
   }

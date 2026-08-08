@@ -1,3 +1,15 @@
+# V1.3.104 — On dinh CSS nut va trang thai phong dau
+
+- Mục tiêu: tiếp tục dọn CSS, **không đổi giao diện**.
+- Tạo `static/css/room/15-room-actions-stability.css` làm nơi duy nhất quản lý bố cục/trạng thái riêng của các nút Room: Mời đấu, Sẵn sàng, Thoát, Quay quân, Gửi kết quả, Xác nhận kết quả, pre-start và action modal.
+- Chuyển các rule action cũ ra khỏi 11 module Room: `01`, `03`, `04`, `05`, `06`, `07`, `08`, `09`, `10`, `11`, `12`; các file này chỉ giữ phần trách nhiệm còn lại.
+- Giữ `static/css/gaming_neon_buttons.css` làm nơi quản lý màu/skin Gaming Neon dùng chung; không tạo lớp màu mới để đè lên nó.
+- Cập nhật `PROJECT_MAP.md` với quyền sở hữu CSS mới.
+- APP_VERSION: 1.3.103 → 1.3.104.
+- Kiểm tra hiển thị trước/sau bằng Chromium tại 1920 / 1280 / 820 / 600: **0 khác biệt computed-style** cho các nút/trạng thái đã dọn.
+- CSS audit: selector trùng giữa các file chạm Room giảm **104 → 58**; tổng selector trùng giữa file giảm **241 → 195**.
+- Không thay backend, JS, RP, gameplay, Parsec, logo, kích thước logo hay bố cục player card.
+
 # V1.3.103 — On dinh CSS bo cuc phong va the nguoi choi
 
 - Ngay: 2026-08-08

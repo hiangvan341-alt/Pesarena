@@ -1,3 +1,7 @@
+/* PES Arena V1.3.104 — 01-shell-layout.css
+ * Room action-control rules moved to 15-room-actions-stability.css.
+ * Remaining rules keep this module's non-action responsibility.
+ */
 /* PES Arena V1.3.38 — Room CSS module: 01-shell-layout.css
    Scope: Room shell, player cards, center stage, core responsive/layout foundations.
    IMPORTANT: load order is defined in templates/room_detail.html. */
@@ -23,46 +27,12 @@
 
 .arena-room-v2 .room-center-stage-plain{position:relative;display:flex;flex-direction:column;align-items:center;height:535px;min-width:0;min-height:0;padding:0 0 64px;border:1px solid rgba(216,165,60,.3);border-radius:20px;background-image:linear-gradient(180deg,rgba(2,8,18,.46),rgba(2,8,18,.86)),var(--arena-center-stadium,url("https://wlnvdfghatgeygecwrqb.supabase.co/storage/v1/object/public/pes-assets/room-assets/v1.3.18/center-stadium.webp"));background-size:cover;background-position:center center;background-repeat:no-repeat;overflow:hidden}.arena-room-v2 .room-center-stage-plain::before{content:"";position:absolute;inset:0;pointer-events:none;background:radial-gradient(circle at 50% 58%,rgba(216,165,60,.10),transparent 38%);opacity:.8}.arena-room-v2 .room-center-mode-zone{display:none}
 .arena-room-v2 .room-master-active-mode{position:relative;z-index:1;width:calc(100% - 14px);min-height:245px;margin:7px 7px 0;padding:19px 13px 11px;border:1px solid rgba(155,79,224,.8);border-radius:16px;background:radial-gradient(circle at 8% 0,rgba(109,41,178,.37),transparent 36%),linear-gradient(180deg,rgba(20,11,35,.98),rgba(4,9,18,.99));text-align:center;box-shadow:inset 0 0 24px rgba(111,43,177,.12),0 0 10px rgba(155,79,224,.11)}.arena-room-v2 .room-master-mode-number{position:absolute;top:0;left:0;display:grid;place-items:center;width:47px;height:47px;border-radius:15px 0 15px 0;background:linear-gradient(135deg,#7135b4,#341257);font-size:20px;font-weight:900}.arena-room-v2 .room-master-mode-heading strong{display:block;margin:0 34px 6px;color:#f7f7f9;font-size:17px;line-height:1.2;text-transform:uppercase}.arena-room-v2 .room-master-mode-heading small{display:block;min-height:32px;color:#d0d7e1;font-size:10px;line-height:1.45}.arena-room-v2 .room-master-unlock-pill{display:inline-flex;justify-content:center;min-width:166px;padding:7px 12px;border:1px solid rgba(24,200,120,.6);border-radius:8px;background:rgba(3,82,45,.3);color:#32e992;font-size:11px;font-weight:850}.arena-room-v2 .room-master-room-ready{display:flex;align-items:center;justify-content:space-between;margin-top:9px;padding:8px 9px;border:1px solid rgba(255,255,255,.095);border-radius:8px;background:rgba(2,8,16,.74);font-size:10px}.arena-room-v2 .room-master-room-ready span{color:#2bdd88}.arena-room-v2 .room-master-room-ready strong{color:#f2bd54;font-size:12px}
-.arena-room-v2 .room-center-vs-image{position:relative;z-index:1;width:135px;height:135px;margin:auto 0 5px;object-fit:contain;filter:drop-shadow(0 0 14px rgba(216,165,60,.18))}.arena-room-v2 .room-center-countdown-label, .arena-room-v2 .room-center-countdown{position:relative;z-index:1}.arena-room-v2 .room-center-primary-actions, .arena-room-v2 .room-action-zone{z-index:2;max-width:none}.arena-room-v2 .room-center-primary-actions .btn{min-height:42px;padding:9px 10px;border-radius:9px;font-size:11px;font-weight:850}.arena-room-v2 .room-center-primary-actions{position:relative;z-index:2;display:flex;flex-wrap:wrap;justify-content:center;gap:7px;width:calc(100% - 16px);margin-top:auto;padding:0 0 10px}.arena-room-v2 .room-center-primary-actions:not(.room-center-primary-actions-three)>*{flex:1 1 30%;min-width:0}.arena-room-v2 .room-center-random-form, .arena-room-v2 .room-center-random-trigger{position:relative;z-index:1;width:calc(100% - 16px)}
-.arena-room-v2 .room-center-primary-actions-three{
-  display:grid!important;
-  grid-template-columns:repeat(3,minmax(0,1fr))!important;
-  align-items:stretch!important;
-  gap:10px!important;
-  width:calc(100% - 20px)!important;
-  margin-top:auto!important;
-  padding:8px!important;
-  box-sizing:border-box!important;
-}
-.arena-room-v2 .room-center-primary-actions-three > a, .arena-room-v2 .room-center-primary-actions-three > button, .arena-room-v2 .room-center-primary-actions-three > form{
-  display:block!important;
-  width:100%!important;
-  min-width:0!important;
-  margin:0!important;
-  padding:0!important;
-  box-sizing:border-box!important;
-}
-.arena-room-v2 .room-center-primary-actions-three > form > .room-center-action-btn, .arena-room-v2 .room-center-primary-actions-three > .room-center-action-btn{
-  display:flex!important;
-  align-items:center!important;
-  justify-content:center!important;
-  gap:6px!important;
-  width:100%!important;
-  min-width:0!important;
-  height:52px!important;
-  min-height:52px!important;
-  margin:0!important;
-  padding:9px 8px!important;
-  box-sizing:border-box!important;
-  border-radius:10px!important;
-  font-size:13px!important;
-  line-height:1.1!important;
-  white-space:nowrap!important;
-  overflow:hidden!important;
-  text-overflow:ellipsis!important;
-}
+.arena-room-v2 .room-center-vs-image{position:relative;z-index:1;width:135px;height:135px;margin:auto 0 5px;object-fit:contain;filter:drop-shadow(0 0 14px rgba(216,165,60,.18))}.arena-room-v2 .room-center-countdown-label, .arena-room-v2 .room-center-countdown{position:relative;z-index:1}
 
-.arena-room-v2 .room-center-primary-actions .btn.gold, .arena-room-v2 .room-center-primary-actions .btn.yellow{border:1px solid rgba(241,189,88,.78);background:linear-gradient(180deg,#72500d,#3d2907);color:#fff;box-shadow:inset 0 0 12px rgba(255,205,88,.12),0 0 8px rgba(216,165,60,.13)}.arena-room-v2 .room-center-primary-actions .btn.green{border:1px solid rgba(42,225,137,.75);background:linear-gradient(180deg,#0f7d4b,#07512f);color:#fff;box-shadow:inset 0 0 12px rgba(46,232,146,.13),0 0 8px rgba(24,200,120,.12)}.arena-room-v2 .room-center-primary-actions .btn.red{border:1px solid rgba(255,75,94,.76);background:linear-gradient(180deg,#8b1e30,#53101d);color:#fff;box-shadow:inset 0 0 12px rgba(255,75,94,.11),0 0 8px rgba(239,48,71,.11)}
+
+
+
+
 .arena-room-v2 .room-arena-right-rail{display:flex;flex-direction:column;gap:10px;height:535px;min-width:0;overflow:hidden}.arena-room-v2 .room-arena-right-rail>.panel{margin:0;padding:13px;border:1px solid rgba(216,165,60,.43);border-radius:15px;background:linear-gradient(180deg,rgba(7,18,32,.99),rgba(4,12,22,.99));box-shadow:inset 0 0 18px rgba(0,0,0,.18)}.arena-room-v2 .room-side-info-panel{flex:0 0 auto}.arena-room-v2 .room-side-info-panel h3, .arena-room-v2 .parsec-room-panel h3{margin:0 0 11px;color:#edf0f4;font-size:14px;text-transform:uppercase}.arena-room-v2 .room-side-info-list{display:grid;gap:7px}.arena-room-v2 .room-side-info-list>div{padding:9px 10px;border:1px solid rgba(255,255,255,.095);border-radius:8px;background:rgba(2,9,17,.75)}.arena-room-v2 .room-side-info-list span{display:block;margin-bottom:3px;color:#adb8c7;font-size:8px;text-transform:uppercase}.arena-room-v2 .room-side-info-list strong{display:block;color:#f2f4f7;font-size:11px;line-height:1.25}.arena-room-v2 .parsec-room-panel{flex:1 1 auto;min-height:0;font-size:10px}.arena-room-v2 .parsec-room-panel label{font-size:10px}.arena-room-v2 .parsec-room-panel input{min-height:35px;padding:7px 8px;font-size:10px}.arena-room-v2 .parsec-room-panel .btn{min-height:35px;padding:7px 11px;font-size:10px}.arena-room-v2 .room-chat-side{display:none}
 .arena-room-v2 .room-extra-controls{margin-top:0}
 
@@ -82,7 +52,7 @@
 /* V1.3.12 — UI MASTER proportion pass.
    This block owns only the room-detail namespace and refines scale, rhythm,
    neon hierarchy and desktop proportions without changing room logic. */
-@media (min-width: 1181px) {
+@media (min-width: 1181px){
   .arena-room-v2{
     --arena-gap: 12px;
     --arena-main-height: 548px;
@@ -180,7 +150,7 @@
   
 }
 
-@media (min-width: 1181px) and (max-width: 1450px) {
+@media (min-width: 1181px) and (max-width: 1450px){
   .arena-room-v2{ --arena-gap: 9px; --arena-main-height: 526px; }
   
   

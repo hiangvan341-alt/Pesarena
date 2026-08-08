@@ -1,3 +1,7 @@
+/* PES Arena V1.3.104 — 10-prestart-flow.css
+ * Room action-control rules moved to 15-room-actions-stability.css.
+ * Remaining rules keep this module's non-action responsibility.
+ */
 /* V1.3.76 — pre-start hierarchy cleanup for every ranked mode / Series mode.
    Readiness belongs to the player card; center stage owns only match orchestration.
    A solid glass action dock prevents translucent buttons from visually colliding with status text. */
@@ -6,33 +10,11 @@
   --room-prestart-gap:10px;
   padding-bottom:calc(var(--room-prestart-dock-h) + 18px)!important;
 }
-.arena-room-v2 .room-center-stage-plain.room-state-waiting_ready > .room-center-primary-actions:not(.room-center-primary-actions-three),
-.arena-room-v2 .room-center-stage-plain.room-state-waiting_ready > .room-action-zone:not(.room-center-primary-actions-three){
-  bottom:10px!important;
-  min-height:var(--room-prestart-dock-h);
-  padding:10px!important;
-  background:linear-gradient(180deg,rgba(5,13,25,.88),rgba(3,8,17,.94))!important;
-  border-color:rgba(99,137,194,.44)!important;
-  box-shadow:0 12px 24px rgba(0,0,0,.38),inset 0 1px 0 rgba(255,255,255,.055)!important;
-  backdrop-filter:blur(12px) saturate(1.05)!important;
-  -webkit-backdrop-filter:blur(12px) saturate(1.05)!important;
-}
+
 /* Host start control gets its own lane above the exit dock instead of sharing its pixels. */
 @media (min-width:821px){
-  .arena-room-v2 .room-center-stage-plain.room-state-waiting_ready > .room-center-random-form,
-  .arena-room-v2 .room-center-stage-plain.room-state-waiting_ready > .series-primary-form{
-    position:absolute!important;
-    left:50%!important;
-    right:auto!important;
-    bottom:calc(var(--room-prestart-dock-h) + 22px)!important;
-    transform:translateX(-50%)!important;
-    z-index:29!important;
-    width:min(calc(100% - 28px),320px)!important;
-    margin:0!important;
-  }
-  .arena-room-v2 .room-center-stage-plain.room-state-waiting_ready:has(> .room-center-random-form) {
-    padding-bottom:184px!important;
-  }
+  
+  
 }
 /* Series waiting screen: reduce decorative VS footprint so orchestration and actions never compete for vertical space. */
 .arena-room-v2 .room-center-stage-plain.room-state-waiting_ready .room-center-vs-image{
@@ -46,92 +28,27 @@
 .arena-room-v2 .room-master-room-ready span{white-space:nowrap}
 @media (max-width:820px){
   .arena-room-v2 .room-center-stage-plain.room-state-waiting_ready{padding-bottom:12px!important}
-  .arena-room-v2 .room-center-stage-plain.room-state-waiting_ready > .room-center-primary-actions:not(.room-center-primary-actions-three),
-  .arena-room-v2 .room-center-stage-plain.room-state-waiting_ready > .room-action-zone:not(.room-center-primary-actions-three){
-    min-height:0;
-    background:linear-gradient(180deg,rgba(5,13,25,.86),rgba(3,8,17,.92))!important;
-  }
-  .arena-room-v2 .room-center-stage-plain.room-state-waiting_ready > .room-center-random-form,
-  .arena-room-v2 .room-center-stage-plain.room-state-waiting_ready > .series-primary-form{
-    position:relative!important;left:auto!important;bottom:auto!important;transform:none!important;width:calc(100% - 20px)!important;margin:8px auto!important;
-  }
+  
+  
 }
 
 
 /* V1.3.83 — prestart orchestration cleanup: keep only one primary CTA lane,
    move helper description out of the button, and align exit CTA cleanly. */
 @media (min-width:821px){
-  .arena-room-v2 .room-center-stage-plain.room-state-waiting_ready > .room-prestart-launch{
-    position:absolute!important;
-    left:50%!important;
-    bottom:calc(var(--room-prestart-dock-h) + 18px)!important;
-    transform:translateX(-50%)!important;
-    z-index:29!important;
-    width:min(calc(100% - 28px), 356px)!important;
-    margin:0!important;
-    display:flex;
-    flex-direction:column;
-    align-items:center;
-    gap:8px;
-  }
-  .arena-room-v2 .room-center-stage-plain.room-state-waiting_ready:has(> .room-prestart-launch){
-    padding-bottom:186px!important;
-  }
+  
+  
 }
-.arena-room-v2 .room-prestart-launch .room-center-random-form,
-.arena-room-v2 .room-prestart-launch .room-prestart-exit-form{
-  margin:0!important;
-  padding:0!important;
-  border:0!important;
-  border-radius:0!important;
-  background:transparent!important;
-  box-shadow:none!important;
-}
-.arena-room-v2 .room-prestart-action-row{
-  width:100%;
-  display:flex;
-  align-items:stretch;
-  justify-content:center;
-  gap:10px;
-}
-.arena-room-v2 .room-prestart-mainform{flex:1 1 0; min-width:0;}
-.arena-room-v2 .room-prestart-mainform .room-random-button-label{
-  font-size:14px!important;
-  line-height:1.08!important;
-  letter-spacing:.01em!important;
-  white-space:nowrap!important;
-}
-.arena-room-v2 .room-prestart-mainform .room-center-random-sub{display:none!important;}
-.arena-room-v2 .room-prestart-exit-form{flex:1 1 0; min-width:0;}
-.arena-room-v2 .room-prestart-exit-btn{
-  width:100%!important;
-  min-height:52px!important;
-  height:52px!important;
-  border-radius:12px!important;
-  padding:9px 12px!important;
-}
-.arena-room-v2 .room-prestart-note{
-  width:100%;
-  text-align:center;
-  color:rgba(235,243,255,.80);
-  font-size:12px;
-  line-height:1.35;
-  letter-spacing:.01em;
-  text-shadow:0 1px 1px rgba(0,0,0,.55);
-  padding:0 14px;
-}
+
+
+
+
+
+
+
+
 @media (max-width:820px){
-  .arena-room-v2 .room-center-stage-plain.room-state-waiting_ready > .room-prestart-launch{
-    position:relative!important;
-    left:auto!important;
-    bottom:auto!important;
-    transform:none!important;
-    width:calc(100% - 20px)!important;
-    margin:8px auto!important;
-    display:flex;
-    flex-direction:column;
-    gap:8px;
-  }
-  .arena-room-v2 .room-prestart-action-row{flex-direction:column; gap:8px;}
-  .arena-room-v2 .room-prestart-exit-form{flex:1 1 auto;}
+  
+  
+  
 }

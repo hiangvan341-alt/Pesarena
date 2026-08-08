@@ -1,3 +1,7 @@
+/* PES Arena V1.3.104 — 11-index-layout-reconnect.css
+ * Room action-control rules moved to 15-room-actions-stability.css.
+ * Remaining rules keep this module's non-action responsibility.
+ */
 /* PES Arena — Room UI reconnect layer
    Source: user-approved index.html + styles.css mockup.
    Frontend-only: keeps existing Jinja data, form actions, IDs and JS hooks intact. */
@@ -99,23 +103,13 @@
 .arena-room-v2 .room-score-fields input{color:#fff!important;background:#050d17!important}
 
 /* ACTION DOCK — same gold / green / red hierarchy as index.html. */
-.arena-room-v2 .room-center-primary-actions, .arena-room-v2 .room-action-zone{
-  gap:10px!important;padding:8px!important;background:rgba(2,7,14,.80)!important;border:1px solid rgba(42,55,72,.72)!important;border-radius:13px!important
-}
-.arena-room-v2 .room-center-primary-actions .btn, .arena-room-v2 .room-center-primary-actions .arena-btn, .arena-room-v2 .room-action-zone .btn, .arena-room-v2 .room-prestart-action-row .arena-btn{
-  min-height:50px!important;border-radius:10px!important;color:#fff!important;font-size:14px!important;font-weight:800!important;text-transform:none!important
-}
-.arena-room-v2 .arena-action-invite, .arena-room-v2 .arena-btn.gold, .arena-room-v2 .arena-btn.is-gold{
-  border-color:#cf9208!important;background:linear-gradient(180deg,#4a3503,#111007)!important;box-shadow:0 0 17px rgba(240,174,21,.26)!important;color:#fff!important
-}
-.arena-room-v2 .arena-btn.green, .arena-room-v2 .arena-btn.is-success{
-  border-color:#20d852!important;background:linear-gradient(180deg,#0d672a,#06160c)!important;box-shadow:0 0 17px rgba(32,216,82,.24)!important;color:#fff!important
-}
-.arena-room-v2 .arena-btn.red{
-  border-color:#ed2d1c!important;background:linear-gradient(180deg,#6d180d,#190806)!important;box-shadow:0 0 17px rgba(237,45,28,.24)!important;color:#fff!important
-}
-.arena-room-v2 .arena-btn.gray, .arena-room-v2 .arena-btn.is-secondary{color:#fff!important}
-.arena-room-v2 .room-prestart-note{color:#fff}
+
+
+
+
+
+
+
 
 /* RIGHT RAIL */
 .arena-room-v2 .room-side-rail{gap:10px}
@@ -227,13 +221,11 @@
 .arena-room-v2 .room-side-info-panel h3, .arena-room-v2 .parsec-room-panel h2, .arena-room-v2 .parsec-room-panel h3{font-size:17px!important;color:#fff!important}
 
 /* Keep action buttons visually explicit and readable. */
-.arena-room-v2 .room-prestart-action-row, .arena-room-v2 .room-center-primary-actions{align-items:stretch!important}
-.arena-room-v2 .room-prestart-action-row .arena-btn, .arena-room-v2 .room-center-primary-actions .arena-btn{min-height:54px!important}
-.arena-room-v2 .room-prestart-mainform{flex:1 1 auto!important}
-.arena-room-v2 .room-prestart-exit-form{flex:0 0 128px!important}
+
+
+
+
 
 /* Ensure modal is always above the room and visibly communicates RP penalty. */
-.room-action-modal{z-index:200000!important}
-.room-action-modal[data-tone="danger"] .room-action-modal-note{
-  font-size:20px!important;font-weight:950!important;letter-spacing:.04em!important;
-}
+
+

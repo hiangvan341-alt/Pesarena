@@ -1,32 +1,16 @@
+/* PES Arena V1.3.104 — 06-responsive-performance.css
+ * Room action-control rules moved to 15-room-actions-stability.css.
+ * Remaining rules keep this module's non-action responsibility.
+ */
 /* PES Arena V1.3.38 — Room CSS module: 06-responsive-performance.css
    Scope: Compact responsive behavior and performance/repaint reductions.
    IMPORTANT: load order is defined in templates/room_detail.html. */
 /* V1.3.28 — Tinh gọn luồng thao tác, giữ lịch sử phòng và làm viền nút nhẹ hơn. */
-.arena-room-v2 .arena-btn{
-  border-width:1px !important;
-  box-shadow:
-    inset 0 1px 0 rgba(255,255,255,.11),
-    inset 0 -8px 14px rgba(0,0,0,.18),
-    0 0 0 1px rgba(255,255,255,.02),
-    0 0 10px rgba(0,0,0,.06),
-    0 6px 12px rgba(0,0,0,.18) !important;
-}
-.arena-room-v2 .arena-btn.gold, .arena-room-v2 .arena-btn.yellow, .arena-room-v2 .arena-btn.is-gold, .arena-room-v2 .arena-action-invite, .arena-room-v2 .room-center-random-trigger{
-  --room-btn-border:rgba(220,174,74,.78);
-  --room-btn-glow:rgba(216,167,59,.14);
-}
-.arena-room-v2 .arena-btn.green, .arena-room-v2 .arena-btn.is-success, .arena-room-v2 .room-submit-result-btn, .arena-room-v2 .room-result-btn.confirm{
-  --room-btn-border:rgba(29,214,147,.78);
-  --room-btn-glow:rgba(20,216,146,.13);
-}
-.arena-room-v2 .arena-btn.red, .arena-room-v2 .arena-btn.is-danger, .arena-room-v2 .arena-action-exit, .arena-room-v2 .room-guest-card-kick-btn{
-  --room-btn-border:rgba(216,78,108,.76);
-  --room-btn-glow:rgba(217,67,98,.12);
-}
-.arena-room-v2 .arena-btn.gray, .arena-room-v2 .arena-btn.is-secondary, .arena-room-v2 .room-result-btn.disagree{
-  --room-btn-border:rgba(116,134,208,.74);
-  --room-btn-glow:rgba(102,125,209,.11);
-}
+
+
+
+
+
 
 .arena-room-v2 .room-master-unlock-pill{
   min-width:190px;
@@ -64,13 +48,7 @@
   font-size:14px;
 }
 
-.arena-room-v2 .room-guest-card-kick-btn{
-  min-height:36px;
-  padding:6px 12px;
-  border-radius:11px;
-  font-size:11px;
-  opacity:.92;
-}
+
 
 @media (max-width:1450px){
   .arena-room-v2 .room-master-unlock-pill{min-width:176px;padding:7px 12px;font-size:10.5px}
@@ -83,12 +61,8 @@
   -webkit-backdrop-filter:none !important;
   backdrop-filter:none !important;
 }
-.arena-room-v2 .arena-btn, .arena-room-v2 .room-share-button{
-  transition:transform .12s ease, filter .12s ease, border-color .12s ease !important;
-}
-.arena-room-v2 .arena-btn:hover:not(:disabled):not(.disabled){
-  box-shadow:inset 0 1px 0 rgba(255,255,255,.08),0 5px 10px rgba(0,0,0,.16) !important;
-}
+
+
 @media (prefers-reduced-motion: reduce){
   .arena-room-v2 *, .arena-room-v2 *::before, .arena-room-v2 *::after{
     animation:none !important;
