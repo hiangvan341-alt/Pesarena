@@ -1,3 +1,20 @@
+# V1.3.88 – Sửa logo chế độ hiển thị đúng kích thước
+
+- Xác định nguyên nhân logo vẫn bé: file logo nguồn 1536×1024 có khoảng trống trong suốt rất lớn quanh artwork.
+- Không tiếp tục tăng `width/height` vô nghĩa; dùng viewport 104×100 px + zoom artwork `scale(2.20)` để phần logo nhìn thấy lớn đúng tỷ lệ.
+- Giữ nền khu vực chế độ tối/trong suốt, không nền xám mặc định.
+- Sửa thứ tự asset đúng quy ước giao diện:
+  1. Rank thường Random
+  2. Random 3 chọn 1
+  3. Chiến thuật BO3
+  4. BO3
+  5. Cấm chọn BO3
+  6. Lượt đi/về
+- Web chỉ hiển thị số phiên bản **V1.3.88**, không hiển thị nội dung sửa chữa.
+- Không thay đổi route, RP, trạng thái phòng hay luồng thi đấu.
+- `app.py` chỉ đổi `APP_VERSION` từ 1.3.87 → 1.3.88.
+- `modules/static_asset_service.py` chỉ sửa map logo mode 1→6, không thay xử lý backend.
+
 # V1.3.87 – Điều chỉnh kích thước logo chế độ
 
 - Không hiển thị nội dung sửa chữa trên giao diện web; web chỉ hiển thị số phiên bản.

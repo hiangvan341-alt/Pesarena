@@ -402,3 +402,48 @@
   font-size:10px !important;
 }
 
+/* =========================================================
+   V1.3.88 – Sửa logo chế độ hiển thị đúng kích thước
+   Ảnh nguồn 1536x1024 có khoảng trống lớn quanh logo.
+   Vì vậy tăng width/height ảnh đơn thuần chỉ làm to "khung ảnh",
+   không làm phần logo nhìn thấy to lên. Bản này zoom phần artwork
+   trong một viewport cố định để logo nhìn đúng cỡ như mockup.
+   ========================================================= */
+.room-master-mode-card,
+.room-master-mode-card:disabled{
+  min-height:166px !important;
+  grid-template-columns:104px minmax(0,1fr) !important;
+  padding:14px 10px 10px !important;
+}
+.room-master-mode-switcher .room-master-card-icon{
+  display:grid !important;
+  place-items:center !important;
+  width:104px !important;
+  height:100px !important;
+  min-width:104px !important;
+  min-height:100px !important;
+  overflow:hidden !important;
+  background:transparent !important;
+}
+.room-master-mode-switcher .room-master-card-icon img{
+  width:100px !important;
+  height:100px !important;
+  min-width:100px !important;
+  min-height:100px !important;
+  max-width:none !important;
+  max-height:none !important;
+  object-fit:contain !important;
+  object-position:center !important;
+  transform:scale(2.20) !important;
+  transform-origin:center center !important;
+  background:transparent !important;
+}
+.room-master-mode-card > strong{
+  font-size:13px !important;
+  line-height:1.28 !important;
+}
+.room-master-mode-card > small{
+  width:132px !important;
+  font-size:10px !important;
+}
+
