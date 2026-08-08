@@ -1553,10 +1553,10 @@
 - Bỏ icon ⚡ khỏi nút `Tìm nhanh` ở template render chính và template polling.
 - Không sửa CSS, không thay route, JS gọi Quick Match, backend hay luồng xử lý.
 
-
-## V1.3.99 - Bo_hoan_toan_hieu_ung_CSS_nut_Tim_nhanh (2026-08-08)
-- Chỉ xử lý giao diện nút Tìm nhanh; giữ nguyên Quick Match JS/route/backend.
-- Bỏ các class chung `btn`, `arena-btn`, `green`, `room-center-action-btn` khỏi trigger Tìm nhanh để tránh mọi skin CSS toàn cục.
-- Nút Tìm nhanh chỉ còn một class riêng `room-quick-flat` dùng cho kích thước + nền xanh phẳng + viền + chữ.
-- Ép `box-shadow:none`, `text-shadow:none`, `filter:none`, `transform:none`, `transition:none`; không gradient, không glow, không hiệu ứng 3D, không hover dịch chuyển.
-- Giữ kích thước 52px và cột 1/3 trong cụm Mời đấu / Tìm nhanh / Thoát phòng.
+## V1.3.100 - Dong_bo_giao_dien_Tim_nhanh_va_cap_nhat_version (2026-08-08)
+- Đồng bộ nút `Tìm nhanh` theo đúng hệ nút chung đang dùng cho `Mời đấu` và `Sẵn Sàng`.
+- Giữ nguyên màu xanh và kích thước 52px trong cụm 3 nút.
+- Xóa block CSS riêng `room-quick-flat` của V1.3.99 để không còn một skin riêng cạnh tranh với `.arena-btn.green`.
+- Nút Tìm nhanh hiện dùng cùng class giao diện: `btn arena-btn green room-center-action-btn`, nhưng vẫn giữ `room-quick-flat` làm hook nhận diện không có CSS riêng.
+- Không đổi `data-quick-match-url`, JavaScript, route hay luồng Quick Match.
+- Cập nhật `APP_VERSION` từ 1.3.92 lên 1.3.100 nên sidebar hiển thị `V1.3.100`.
