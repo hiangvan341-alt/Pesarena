@@ -118,32 +118,7 @@
 }
 
 
-/* V1.3.71 — Center waiting-room action buttons: lighter glass, clearer neon hierarchy.
-   Only Mời đấu / Thoát phòng are affected; Parsec and other controls stay unchanged. */
-.arena-room-v2 .room-center-primary-actions-three .arena-action-invite,
-.arena-room-v2 .room-center-primary-actions-three .arena-action-exit{
-  color:#fff !important;
-  font-weight:900 !important;
-  letter-spacing:.015em;
-  text-shadow:0 1px 2px rgba(0,0,0,.72),0 0 9px rgba(255,255,255,.08);
-  box-shadow:inset 0 1px 0 rgba(255,255,255,.12),inset 0 -8px 16px rgba(0,0,0,.10),0 0 13px var(--room-btn-glow),0 5px 12px rgba(0,0,0,.16) !important;
-}
-.arena-room-v2 .room-center-primary-actions-three .arena-action-invite{
-  --room-btn-border:rgba(247,201,91,.96);--room-btn-glow:rgba(239,184,51,.24);
-  background:linear-gradient(180deg,rgba(121,84,16,.34),rgba(54,35,6,.46)) !important;
-  border-color:rgba(247,201,91,.88) !important;color:#fff7d4 !important;
-}
-.arena-room-v2 .room-center-primary-actions-three .arena-action-exit{
-  --room-btn-border:rgba(255,94,121,.94);--room-btn-glow:rgba(244,71,104,.22);
-  background:linear-gradient(180deg,rgba(116,23,43,.33),rgba(54,10,23,.46)) !important;
-  border-color:rgba(255,94,121,.86) !important;color:#fff1f4 !important;
-}
-.arena-room-v2 .room-center-primary-actions-three .arena-action-invite:hover,
-.arena-room-v2 .room-center-primary-actions-three .arena-action-exit:hover{
-  filter:brightness(1.18) saturate(1.08) !important;
-  box-shadow:inset 0 1px 0 rgba(255,255,255,.18),0 0 18px var(--room-btn-glow),0 6px 14px rgba(0,0,0,.18) !important;
-}
-
+/* V1.3.97 — removed old room-specific Mời đấu/Thoát styling; trio uses standard gold/green/red button variants. */
 
 /* V1.3.72 — Host/guest action visibility guard.
    The center stage is fixed-height on desktop. Series HUD + countdown + VS can otherwise push

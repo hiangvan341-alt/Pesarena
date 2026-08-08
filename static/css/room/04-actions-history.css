@@ -220,13 +220,9 @@
   box-shadow:0 10px 18px rgba(0,0,0,.22),inset 0 0 16px rgba(255,210,102,.07);
   backdrop-filter:blur(8px);
 }
-.arena-room-v2 .room-center-stage-plain > .room-action-zone:has(> :nth-child(3)),
-.arena-room-v2 .room-center-stage-plain > .room-center-primary-actions.room-center-primary-actions-three{
-  width:min(calc(100% - 26px), 392px);
-}
 .arena-room-v2 .room-center-stage-plain > .room-action-zone:has(> :only-child){width:min(calc(100% - 26px), 220px)}
-.arena-room-v2 .room-center-stage-plain > .room-center-primary-actions > *,
-.arena-room-v2 .room-center-stage-plain > .room-action-zone > *{flex:1 1 0;min-width:0}
+.arena-room-v2 .room-center-stage-plain > .room-center-primary-actions:not(.room-center-primary-actions-three) > *,
+.arena-room-v2 .room-center-stage-plain > .room-action-zone:not(.room-center-primary-actions-three) > *{flex:1 1 0;min-width:0}
 .arena-room-v2 .room-center-stage-plain > .room-center-primary-actions .room-center-action-btn,
 .arena-room-v2 .room-center-stage-plain > .room-action-zone .room-center-action-btn{
   min-height:41px;

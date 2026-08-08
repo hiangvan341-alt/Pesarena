@@ -1535,3 +1535,14 @@
 - Bỏ icon `▶` khỏi nút `BẮT ĐẦU TRẬN`, chỉ giữ chữ.
 - Sửa trực tiếp rule CSS hiện có trong `01-shell-layout.css` và `06-responsive-performance.css`, không thêm file CSS vá mới.
 - Đồng bộ template render ban đầu và template polling.
+
+## V1.3.97 - Sua_cum_3_nut_can_deu_va_loai_bo_CSS_xung_dot (2026-08-08)
+- Rà soát lại toàn bộ CSS của cụm 3 nút `Mời đấu / Tìm nhanh / Thoát phòng`.
+- Nguyên nhân lỗi: `Tìm nhanh` dùng inline `all:unset + width:100%!important` trong khi hai nút còn lại dùng hệ `.arena-btn`; đồng thời layout cụm 3 nút bị khai báo lặp ở nhiều module 01/04/05/06/08/11/12, gây flex/grid tranh nhau kích thước.
+- Bỏ toàn bộ inline style riêng của `Tìm nhanh`; chuyển về cùng hệ nút chuẩn `btn arena-btn green room-center-action-btn`.
+- Cụm 3 nút chỉ còn một nơi sở hữu kích thước/layout trong `static/css/room/01-shell-layout.css`: grid 3 cột bằng nhau, cao 52px, cùng padding và gap.
+- Loại các rule kích thước trùng của cụm 3 nút trong `04-actions-history.css`, `05-action-states.css`, `06-responsive-performance.css`.
+- Loại block màu riêng V1.3.71 trong `08-action-layout-guard.css`; ba nút dùng chung hệ màu chuẩn gold/green/red.
+- Gỡ class riêng `arena-action-invite`, `arena-action-exit`, `gaming-invite-action` khỏi cụm Room để tránh cascade từ nhiều file CSS khác.
+- Giữ nguyên route/JS/Quick Match/modal/luồng xử lý.
+- Test liên quan Room/Quick Match: 32 PASS. `app.py` compile PASS.

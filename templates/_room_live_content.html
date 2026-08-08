@@ -262,10 +262,9 @@
                 <img class="room-center-vs-image" src="{{ asset_url('vs.webp') }}?v={{ APP_VERSION }}" alt="VS" loading="eager">
                 {% if room_room_viewer_is_host or current_user.role == 'admin' %}
                 <div class="room-center-primary-actions room-action-zone room-center-primary-actions-three">
-                    <a class="btn arena-btn gold room-center-action-btn arena-action-invite gaming-invite-action" href="{{ url_for('players') }}">Mời đấu</a>
+                    <a class="btn arena-btn gold room-center-action-btn" href="{{ url_for('players') }}">Mời đấu</a>
                     {% if system_features.get('quick_match_enabled', true) %}
-                    <button type="button" data-bare-action="quick-match"
-                            style="all:unset!important;box-sizing:border-box!important;display:inline-flex!important;align-items:center!important;justify-content:center!important;gap:6px!important;width:100%!important;height:52px!important;min-height:52px!important;padding:9px 12px!important;border:1px solid #20d889!important;border-radius:12px!important;background:linear-gradient(180deg,#0d542f 0%,#07351e 52%,#04130c 100%)!important;color:#ffffff!important;font:inherit!important;font-size:13px!important;font-weight:850!important;line-height:1.15!important;text-align:center!important;white-space:nowrap!important;cursor:pointer!important;box-shadow:inset 0 1px 0 rgba(255,255,255,.16),0 0 10px rgba(31,240,124,.20)!important;filter:none!important;transform:none!important;text-shadow:0 1px 2px rgba(0,0,0,.75)!important;outline:none!important;"
+                    <button type="button" class="btn arena-btn green room-center-action-btn"
                             data-quick-match-url="{{ url_for('quick_match_invite') }}">
                         <span data-quick-match-icon aria-hidden="true">⚡</span><span data-quick-match-label>Tìm nhanh</span>
                     </button>
@@ -277,7 +276,7 @@
                           data-modal-message="Phòng hiện chưa có đối thủ. Khi bạn thoát, phòng này sẽ được đóng."
                           data-modal-note="ĐÓNG PHÒNG"
                           data-modal-confirm-label="Thoát và đóng phòng">
-                        <button class="btn arena-btn red room-center-action-btn arena-action-exit" type="submit">Thoát phòng</button>
+                        <button class="btn arena-btn red room-center-action-btn" type="submit">Thoát phòng</button>
                     </form>
                 </div>
                 {% endif %}
