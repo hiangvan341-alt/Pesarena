@@ -1,3 +1,11 @@
+# V1.3.87 – Điều chỉnh kích thước logo chế độ
+
+- Không hiển thị nội dung sửa chữa trên giao diện web; web chỉ hiển thị số phiên bản.
+- Tăng logo 6 chế độ từ 52 × 52 px lên 76 × 76 px để chỉ thu nhỏ vừa phải.
+- Giữ nền khu vực chế độ trong suốt/tối, không quay lại nền xám mặc định.
+- Không thay đổi route, RP, trạng thái phòng hoặc logic backend.
+- `app.py` chỉ đổi `APP_VERSION` từ 1.3.86 → 1.3.87.
+
 # V1.3.86 – Sửa logo chế độ và nền đục
 
 - Sửa lỗi khu vực **CÁC CHẾ ĐỘ KHÁC** rơi về giao diện button mặc định của trình duyệt.

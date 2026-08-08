@@ -372,3 +372,33 @@
   .room-master-mode-grid{grid-template-columns:repeat(2,minmax(0,1fr)) !important}
 }
 
+/* =========================================================
+   V1.3.87 – Điều chỉnh kích thước logo chế độ
+   Logo chỉ co vừa phải, không bé như V1.3.86.
+   ========================================================= */
+.room-master-mode-card,
+.room-master-mode-card:disabled{
+  min-height:150px !important;
+  grid-template-columns:82px minmax(0,1fr) !important;
+  padding:13px 9px 10px !important;
+}
+.room-master-mode-switcher .room-master-card-icon{
+  width:82px !important;
+  height:82px !important;
+  min-width:82px !important;
+  min-height:82px !important;
+}
+.room-master-mode-switcher .room-master-card-icon img{
+  width:76px !important;
+  height:76px !important;
+  max-width:76px !important;
+  max-height:76px !important;
+}
+.room-master-mode-card > strong{
+  font-size:13px !important;
+}
+.room-master-mode-card > small{
+  width:124px !important;
+  font-size:10px !important;
+}
+
