@@ -183,6 +183,7 @@
                                 <button class="btn arena-btn red room-center-action-btn" type="submit">Thoát Phòng</button>
                             </form>
                         </div>
+                        {% endif %}
                     {% else %}
                         {% if room.status in ['waiting_result_confirm', 'disputed'] and room_room_viewer_is_host %}
                         <div class="room-center-primary-actions room-action-zone">

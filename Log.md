@@ -1,3 +1,13 @@
+# V1.3.84 — Room Jinja Nesting Hotfix
+
+- Date: 2026-08-08 Asia/Bangkok
+- FIX NHANH: sửa TemplateSyntaxError khi vào `/room/<id>` sau V1.3.83.
+- Nguyên nhân: khi gom nút host pre-start, nhánh host cũ bị bỏ nhưng thiếu `{% endif %}` đóng `if room_viewer_is_guest`, làm Jinja gặp `else` sai nesting.
+- Sửa đồng thời `templates/room/_center_stage.html` và `templates/_room_live_content.html`.
+- Giữ nguyên bố cục mới: BẮT ĐẦU TRẬN + Thoát Phòng cùng hàng, mô tả riêng phía dưới.
+- Không thay backend, RP, Supabase, matchmaking hay logic Series.
+- Validation: parse toàn bộ Jinja templates = 0 syntax errors.
+
 # V1.3.82 — Gaming Neon Semantic Color Admin
 
 - Mời đấu được đồng bộ role riêng, mặc định **Vàng** trên Room / Player list / Profile / Dashboard.

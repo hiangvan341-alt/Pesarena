@@ -307,3 +307,7 @@ Không chạy SQL thay đổi dữ liệu thật trong test nếu chưa có guar
 - `static/css/gaming_neon_buttons.css`: Gaming Neon 3D dùng màu semantic do Admin cấu hình.
 - `.gaming-invite-action`: mọi nút Mời đấu phải dùng role `invite` (mặc định vàng).
 - `.gaming-quick-action`: nút Tìm nhanh dùng role `quick` (mặc định xanh lá).
+
+## V1.3.84 Room template safety
+- Pre-start action markup phải được cập nhật đồng thời ở `templates/room/_center_stage.html` và `templates/_room_live_content.html`.
+- Sau mọi thay đổi Jinja Room, bắt buộc parse toàn bộ `templates/**/*.html` trước khi đóng ZIP.
