@@ -454,3 +454,29 @@
   border-color:#3be878 !important;
   box-shadow:0 0 8px rgba(59,232,120,.92),0 0 22px rgba(32,189,91,.62),inset 0 0 14px rgba(59,232,120,.12) !important;
 }
+
+/* V1.3.113 — Phóng lớn logo của CHẾ ĐỘ ĐANG CHỌN ở khung trung tâm.
+ * Logo trung tâm phải nổi bật hơn logo ở danh sách chế độ, nhưng không làm đổi chiều cao khung.
+ * Chỉ áp dụng trạng thái chờ sẵn sàng để giữ các trạng thái đang thi đấu/kết quả gọn như cũ. */
+@media (min-width:821px){
+  .arena-room-v2 .room-center-stage-plain.room-state-waiting_ready .room-master-mode-emblem{
+    width:148px !important;
+    height:124px !important;
+    margin:4px auto 5px !important;
+    overflow:hidden !important;
+    display:grid !important;
+    place-items:center !important;
+  }
+  .arena-room-v2 .room-center-stage-plain.room-state-waiting_ready .room-master-mode-emblem img{
+    width:122px !important;
+    height:122px !important;
+    max-width:122px !important;
+    max-height:122px !important;
+    object-fit:contain !important;
+    object-position:center !important;
+    transform:scale(2.45) !important;
+    transform-origin:center center !important;
+    filter:drop-shadow(0 0 14px rgba(241,183,34,.40)) drop-shadow(0 8px 12px rgba(0,0,0,.46)) !important;
+  }
+}
+

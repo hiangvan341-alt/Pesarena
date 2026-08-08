@@ -1676,3 +1676,13 @@
 - `quick_match.js` đổi sang cập nhật trực tiếp `button.textContent`, không còn query hay thao tác `data-quick-match-label`.
 - Giữ nguyên các class chuẩn `btn arena-btn green room-center-action-btn` để giao diện Tìm nhanh dùng đúng cùng hệ nút với Mời đấu / Sẵn Sàng.
 - Cập nhật APP_VERSION thành 1.3.101.
+
+
+## V1.3.113 - Phong_lon_logo_che_do_dang_chon_va_can_doi_khung_trung_tam (2026-08-08)
+- Tăng rõ kích thước logo của chế độ đang được chọn trong khung trung tâm phòng đấu.
+- Logo trung tâm được phóng lớn hơn logo ở danh sách 6 chế độ để đúng thứ bậc thị giác.
+- Giữ nguyên chiều cao tổng thể khung chế độ; chỉ dùng vùng trống hiện có nên không đẩy lệch VS, nút Sẵn Sàng/Thoát Phòng hoặc hai cột người chơi.
+- Tăng nhẹ đổ bóng vàng của logo để logo rõ trên nền tối.
+- Chỉ áp dụng ở trạng thái `waiting_ready`; các trạng thái đang thi đấu/gửi kết quả giữ kích thước gọn như trước.
+- Không đổi backend, route, RP, Series, Parsec hay luồng chọn chế độ.
+- Cập nhật APP_VERSION thành 1.3.113.
