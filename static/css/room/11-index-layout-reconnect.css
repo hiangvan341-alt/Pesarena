@@ -103,6 +103,8 @@
 .arena-room-v2 .room-master-mode-number{width:52px;height:52px;border-radius:14px 0 26px 0;font-size:20px;background:linear-gradient(135deg,#ad4afa,#3b145f)}
 .arena-room-v2 .room-master-mode-heading strong{font-size:18px;margin:4px 42px 6px;color:#fff}
 .arena-room-v2 .room-master-mode-heading small{min-height:32px;font-size:11px;color:#fff}
+.arena-room-v2 .room-master-mode-emblem{width:145px;height:130px;margin:4px auto 3px}
+.arena-room-v2 .room-master-mode-emblem img{filter:drop-shadow(0 0 10px rgba(242,170,19,.20))}
 .arena-room-v2 .room-master-unlock-pill{
   min-width:205px;padding:8px 14px;border-color:#08772c;border-radius:9px;background:linear-gradient(180deg,#073d1a,#06170d);
   color:#36f37a;font-size:13px
@@ -174,6 +176,28 @@
 /* BOTTOM MODE STRIP */
 .arena-room-v2 .room-bottom-shell{margin-top:10px;grid-template-columns:minmax(0,1fr)!important;gap:0!important}
 .arena-room-v2 .room-bottom-main{min-width:0}
+.arena-room-v2 .room-master-mode-switcher{
+  padding:30px 18px 16px!important;border:1px solid rgba(31,43,58,.82)!important;border-radius:16px!important;background:rgba(2,8,15,.68)!important
+}
+.arena-room-v2 .room-master-mode-switcher h2{top:6px!important;color:#e9aa16!important;font-size:17px!important}
+.arena-room-v2 .room-master-mode-grid{grid-template-columns:repeat(6,minmax(0,1fr))!important;gap:12px!important}
+.arena-room-v2 .room-master-mode-card{
+  min-height:178px!important;padding:18px 10px 12px!important;border-radius:12px!important;background:linear-gradient(180deg,#07101e,#06101a)!important;color:#fff!important;
+  display:grid!important;grid-template-columns:72px 1fr!important;grid-template-rows:1fr auto!important;align-items:center!important;position:relative!important
+}
+.arena-room-v2 .room-master-card-number{width:42px!important;height:42px!important;padding:7px 0 0 10px!important;border-radius:0 0 22px 0!important;font-size:21px!important}
+.arena-room-v2 .room-master-card-icon{width:78px!important;height:88px!important;align-self:center!important;justify-self:center!important}
+.arena-room-v2 .room-master-card-icon img{width:100%!important;height:100%!important;object-fit:contain!important}
+.arena-room-v2 .room-master-mode-card>strong{font-size:14px!important;line-height:1.35!important;text-align:left!important;padding:0 4px!important;color:#fff!important}
+.arena-room-v2 .room-master-mode-card>small{grid-column:1/-1!important;width:142px!important;justify-self:center!important;padding:8px!important;border-radius:8px!important;color:#43f17c!important;background:#062313!important;border:1px solid #0a7430!important;text-align:center!important}
+.arena-room-v2 .room-master-mode-card[data-mode='rank_random']{border-color:#168dff!important}
+.arena-room-v2 .room-master-mode-card[data-mode='random3_pick1']{border-color:#b456ff!important}
+.arena-room-v2 .room-master-mode-card[data-mode='tactical_bo3']{border-color:#20bd5b!important}
+.arena-room-v2 .room-master-mode-card[data-mode='bo3']{border-color:#e33333!important}
+.arena-room-v2 .room-master-mode-card[data-mode='ban_pick_bo3'],
+.arena-room-v2 .room-master-mode-card[data-mode='home_away']{border-color:#c1841a!important}
+.arena-room-v2 .room-master-mode-card.is-selected{box-shadow:0 0 18px rgba(181,82,255,.24),inset 0 0 20px rgba(151,58,255,.08)!important}
+.arena-room-v2 .room-master-mode-card.is-locked{filter:saturate(.6);opacity:.76}
 
 /* Keep room history/functionality, but move it under the mode strip instead of stealing right-side battle width. */
 .arena-room-v2 .room-bottom-side{margin-top:10px}
@@ -201,6 +225,7 @@
   .arena-room-v2 .room-side-card,.arena-room-v2 .room-center-stage-plain{height:auto;min-height:520px}
   .arena-room-v2 .room-side-rail{display:flex;flex-direction:column}
   .arena-room-v2 .room-master-mode-grid{grid-template-columns:repeat(2,minmax(0,1fr))!important}
+  .arena-room-v2 .room-master-mode-card{min-height:160px!important}
 }
 
 /* ===== V1.3.85 visual fidelity + state/action hotfix ===== */
@@ -224,6 +249,16 @@
   .arena-room-v2 .room-arena-right-rail{height:590px!important}
 }
 
+/* Center mode emblem must use the supplied artwork at a visible size. */
+.arena-room-v2 .room-master-mode-emblem{
+  width:150px!important;height:136px!important;min-width:150px!important;min-height:136px!important;
+  margin:7px auto 5px!important;overflow:visible!important;
+}
+.arena-room-v2 .room-master-mode-emblem img{
+  width:132px!important;height:132px!important;max-width:none!important;max-height:none!important;
+  object-fit:contain!important;transform:none!important;
+  filter:drop-shadow(0 0 13px rgba(241,171,22,.34))!important;
+}
 
 /* Keep the active-mode card shaped like the approved mockup. */
 .arena-room-v2 .room-master-active-mode{

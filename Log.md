@@ -1579,3 +1579,9 @@
 - Khong thay doi backend, JavaScript, RP, luong phong dau, nut Parsec hay nut Tim nhanh/Moi dau/San sang.
 - `APP_VERSION` cap nhat tu 1.3.101 len 1.4.
 
+
+## V1.4.1 — Tra lai kich thuoc logo, chi lam sang khung che do dang chon
+- Khôi phục nguyên trạng CSS kích thước logo và bố cục chế độ của V1.3.101 trong `11-index-layout-reconnect.css` và `12-mockup-layout-lock.css`.
+- `13-mode-visuals.css` không còn quản lý width/height/transform/grid/padding của logo hoặc thẻ chế độ.
+- V1.4.1 chỉ bổ sung hiệu ứng sáng cho đúng thẻ chế độ có trạng thái `is-selected`.
+- Không thay đổi HTML cấu trúc, backend, JavaScript hoặc luồng phòng đấu.
