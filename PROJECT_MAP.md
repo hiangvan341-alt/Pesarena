@@ -69,6 +69,7 @@ Không sửa module khác nếu chưa chứng minh dependency liên quan.
 | Chat | `templates/room/scripts/_room_chat.html` |
 | Dialog | `templates/room/scripts/_room_dialogs.html` |
 | CSS room | `static/css/room/` |
+| Logo chế độ + 6 thẻ chế độ | `static/css/room/13-mode-stability.css` |
 
 ### Backend
 

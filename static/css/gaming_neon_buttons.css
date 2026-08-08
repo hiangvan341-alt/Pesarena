@@ -305,7 +305,6 @@ body[data-ui-scope="player"] :is(.arena-room-v2,.invite-banner,.player-main) :is
    cards/tabs/selectors, not action buttons. The global skin intentionally does NOT target
    bare <button> elements anymore. Their original component CSS must stay authoritative. */
 body[data-ui-scope="player"] :is(
-  .room-master-mode-card,
   .room-mode-select-btn,
   .series-club-btn,
   .password-eye,

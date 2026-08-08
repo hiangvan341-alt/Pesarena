@@ -1,3 +1,13 @@
+# V1.3.102 — On dinh CSS logo va khu vuc che do
+
+- Dừng nâng cấp giao diện V1.4 để xử lý chồng chéo CSS trước.
+- Chỉ xử lý khu vực logo chế độ ở giữa phòng và 6 thẻ chế độ phía dưới.
+- Di chuyển toàn bộ các quy tắc đang điều khiển khu vực này từ `01`, `03`, `04`, `06`, `08`, `11`, `12` sang `static/css/room/13-mode-stability.css`, giữ nguyên thứ tự cũ.
+- Các file cũ không còn chứa selector điều khiển logo/thẻ chế độ; tránh nhiều file cùng đè một thành phần.
+- Không thiết kế lại, không chủ động thay kích thước/màu/bố cục. Mốc hiển thị vẫn là V1.3.101.
+- Không thay backend, JavaScript, RP, luồng phòng, Parsec, Tìm nhanh, Mời đấu hoặc Sẵn sàng.
+- APP_VERSION: 1.3.101 → 1.3.102.
+
 # V1.3.89 — Sửa bố cục bắt đầu trận gọn gàng
 
 - Dọn riêng trạng thái **Đủ 2 người / Chờ sẵn sàng** ở cột giữa, không thay đổi luồng Backend/Series.
@@ -1569,19 +1579,3 @@
 - `quick_match.js` đổi sang cập nhật trực tiếp `button.textContent`, không còn query hay thao tác `data-quick-match-label`.
 - Giữ nguyên các class chuẩn `btn arena-btn green room-center-action-btn` để giao diện Tìm nhanh dùng đúng cùng hệ nút với Mời đấu / Sẵn Sàng.
 - Cập nhật APP_VERSION thành 1.3.101.
-## V1.4 — Tach CSS che do va sua logo/khung dang chon
-- Ngay: 2026-08-08
-- Pham vi: chi CSS khu vuc 6 che do thi dau, logo che do, trang thai dang chon.
-- Them `static/css/room/13-mode-visuals.css` lam lop dieu khien cuoi cung cho khu vuc che do.
-- Go cac chuoi CSS va cu trong `11-index-layout-reconnect.css` va `12-mockup-layout-lock.css` lien quan truc tiep den logo/card che do.
-- Chuan hoa 6 khung logo ve cung mot kich thuoc hien thi.
-- Khung che do dang chon sang ro theo mau rieng cua tung che do; khung khong chon giu toi hon.
-- Khong thay doi backend, JavaScript, RP, luong phong dau, nut Parsec hay nut Tim nhanh/Moi dau/San sang.
-- `APP_VERSION` cap nhat tu 1.3.101 len 1.4.
-
-
-## V1.4.1 — Tra lai kich thuoc logo, chi lam sang khung che do dang chon
-- Khôi phục nguyên trạng CSS kích thước logo và bố cục chế độ của V1.3.101 trong `11-index-layout-reconnect.css` và `12-mockup-layout-lock.css`.
-- `13-mode-visuals.css` không còn quản lý width/height/transform/grid/padding của logo hoặc thẻ chế độ.
-- V1.4.1 chỉ bổ sung hiệu ứng sáng cho đúng thẻ chế độ có trạng thái `is-selected`.
-- Không thay đổi HTML cấu trúc, backend, JavaScript hoặc luồng phòng đấu.

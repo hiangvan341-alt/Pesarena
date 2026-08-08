@@ -11,31 +11,19 @@
     0 0 10px rgba(0,0,0,.06),
     0 6px 12px rgba(0,0,0,.18) !important;
 }
-.arena-room-v2 .arena-btn.gold,
-.arena-room-v2 .arena-btn.yellow,
-.arena-room-v2 .arena-btn.is-gold,
-.arena-room-v2 .arena-action-invite,
-.arena-room-v2 .room-center-random-trigger{
+.arena-room-v2 .arena-btn.gold, .arena-room-v2 .arena-btn.yellow, .arena-room-v2 .arena-btn.is-gold, .arena-room-v2 .arena-action-invite, .arena-room-v2 .room-center-random-trigger{
   --room-btn-border:rgba(220,174,74,.78);
   --room-btn-glow:rgba(216,167,59,.14);
 }
-.arena-room-v2 .arena-btn.green,
-.arena-room-v2 .arena-btn.is-success,
-.arena-room-v2 .room-submit-result-btn,
-.arena-room-v2 .room-result-btn.confirm{
+.arena-room-v2 .arena-btn.green, .arena-room-v2 .arena-btn.is-success, .arena-room-v2 .room-submit-result-btn, .arena-room-v2 .room-result-btn.confirm{
   --room-btn-border:rgba(29,214,147,.78);
   --room-btn-glow:rgba(20,216,146,.13);
 }
-.arena-room-v2 .arena-btn.red,
-.arena-room-v2 .arena-btn.is-danger,
-.arena-room-v2 .arena-action-exit,
-.arena-room-v2 .room-guest-card-kick-btn{
+.arena-room-v2 .arena-btn.red, .arena-room-v2 .arena-btn.is-danger, .arena-room-v2 .arena-action-exit, .arena-room-v2 .room-guest-card-kick-btn{
   --room-btn-border:rgba(216,78,108,.76);
   --room-btn-glow:rgba(217,67,98,.12);
 }
-.arena-room-v2 .arena-btn.gray,
-.arena-room-v2 .arena-btn.is-secondary,
-.arena-room-v2 .room-result-btn.disagree{
+.arena-room-v2 .arena-btn.gray, .arena-room-v2 .arena-btn.is-secondary, .arena-room-v2 .room-result-btn.disagree{
   --room-btn-border:rgba(116,134,208,.74);
   --room-btn-glow:rgba(102,125,209,.11);
 }
@@ -70,7 +58,7 @@
   text-align:center;
 }
 .arena-room-v2 .room-center-status-note::before{
-  content:'•';
+  content:"•";
   margin-right:7px;
   color:#f0c04f;
   font-size:14px;
@@ -91,25 +79,18 @@
 
 
 /* V1.3.29 — Performance pass: giảm hiệu ứng GPU nặng và repaint khi click. */
-.arena-room-v2 *,
-.arena-room-v2 *::before,
-.arena-room-v2 *::after{
+.arena-room-v2 *, .arena-room-v2 *::before, .arena-room-v2 *::after{
   -webkit-backdrop-filter:none !important;
   backdrop-filter:none !important;
 }
-.arena-room-v2 .arena-btn,
-.arena-room-v2 .room-master-mode-card,
-.arena-room-v2 .room-share-button{
+.arena-room-v2 .arena-btn, .arena-room-v2 .room-share-button{
   transition:transform .12s ease, filter .12s ease, border-color .12s ease !important;
 }
-.arena-room-v2 .arena-btn:hover:not(:disabled):not(.disabled),
-.arena-room-v2 .room-master-mode-card:hover:not(:disabled){
+.arena-room-v2 .arena-btn:hover:not(:disabled):not(.disabled){
   box-shadow:inset 0 1px 0 rgba(255,255,255,.08),0 5px 10px rgba(0,0,0,.16) !important;
 }
 @media (prefers-reduced-motion: reduce){
-  .arena-room-v2 *,
-  .arena-room-v2 *::before,
-  .arena-room-v2 *::after{
+  .arena-room-v2 *, .arena-room-v2 *::before, .arena-room-v2 *::after{
     animation:none !important;
     transition:none !important;
     scroll-behavior:auto !important;
@@ -118,7 +99,7 @@
 
 /* V1.3.97 — removed duplicate three-button dock sizing; 01-shell-layout.css is the single layout owner. */
 .arena-room-v2 .room-bottom-side:empty::before{
-  content:'Lịch sử phòng chưa có dữ liệu.';
+  content:"Lịch sử phòng chưa có dữ liệu.";
   display:block;
   padding:14px;
   border:1px solid rgba(216,165,60,.24);
