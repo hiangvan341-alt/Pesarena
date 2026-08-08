@@ -1,3 +1,4 @@
+/* PES Arena V1.3.106 — central match-stage rules moved to 17-center-match-stability.css. */
 /* PES Arena V1.3.105 — 07-parsec-history-polish.css
  * Side rail / Parsec / room history rules moved to 16-side-rail-history-stability.css.
  * Remaining rules keep this module's other responsibilities.
@@ -29,10 +30,7 @@
 
 
 
-@media (max-width:1450px){
-  
-  
-}
+
 
 /* Lịch sử phòng được ưu tiên diện tích sau khi thu gọn Parsec. */
 

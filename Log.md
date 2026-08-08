@@ -1,3 +1,11 @@
+# V1.3.106 — On dinh CSS khu vuc giua phong dau
+
+- Gom CSS khu vuc giua phong: khung trung tam, VS, dong ho/trang thai, bang ty so/ket qua, vi tri HUD series vao `static/css/room/17-center-match-stability.css`.
+- Go cac selector tuong ung khoi CSS room 01..12 sau khi chuyen, giu nguyen thu tu cascade lich su.
+- Nap module 17 ngay sau 12 va truoc 13 de khong doi thu tu hien thi voi cac module stability da co.
+- Khong thay doi giao dien, kich thuoc, mau sac, backend, RP hay JavaScript.
+- APP_VERSION: 1.3.105 -> 1.3.106.
+
 # V1.3.105 — On dinh CSS rail thong tin Parsec va lich su phong
 
 - Ngay: 2026-08-08.

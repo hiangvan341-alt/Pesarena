@@ -1,8 +1,9 @@
+/* PES Arena V1.3.106 — central match-stage rules moved to 17-center-match-stability.css. */
 /* PES Arena V1.3.38 — Room CSS module: 02-club-visuals.css
    Scope: Club headers, stadium visual layers, separators and branding cleanup.
    IMPORTANT: load order is defined in templates/room_detail.html. */
 /* V1.3.14 - Thanh tiêu đề chọn CLB bằng HTML + CSS */
-.arena-room-v2 .club-selection-title {
+.arena-room-v2 .club-selection-title{
   position: relative;
   z-index: 3;
   display: flex;
@@ -19,20 +20,19 @@
   white-space: nowrap;
   text-shadow: 0 0 9px rgba(246,183,43,.22);
 }
-.arena-room-v2 .club-selection-title::before,
-.arena-room-v2 .club-selection-title::after {
+.arena-room-v2 .club-selection-title::before, .arena-room-v2 .club-selection-title::after{
   content: "";
   height: 1px;
   min-width: 18px;
   flex: 1 1 auto;
 }
-.arena-room-v2 .club-selection-title::before {
+.arena-room-v2 .club-selection-title::before{
   background: linear-gradient(to right, transparent, rgba(216,148,22,.45) 28%, #d89416);
 }
-.arena-room-v2 .club-selection-title::after {
+.arena-room-v2 .club-selection-title::after{
   background: linear-gradient(to left, transparent, rgba(216,148,22,.45) 28%, #d89416);
 }
-.arena-room-v2 .title-diamond {
+.arena-room-v2 .title-diamond{
   width: 7px;
   height: 7px;
   flex: 0 0 7px;
@@ -40,18 +40,18 @@
   transform: rotate(45deg);
   box-shadow: 0 0 6px rgba(243,181,37,.24);
 }
-.arena-room-v2 .club-selection-title-text {
+.arena-room-v2 .club-selection-title-text{
   display: inline-block;
 }
 @media (max-width: 1450px) {
-  .arena-room-v2 .club-selection-title {
+  .arena-room-v2 .club-selection-title{
     width: calc(100% - 18px);
     gap: 6px;
     font-size: 13px;
   }
 }
 @media (max-width: 760px) {
-  .arena-room-v2 .club-selection-title {
+  .arena-room-v2 .club-selection-title{
     font-size: 12px;
   }
 }
@@ -59,20 +59,8 @@
 
 /* V1.3.16 - remove legacy player separators and expose VS stadium background */
 
-.arena-room-v2 .room-center-stage-plain {
-  background-image:
-    linear-gradient(180deg, rgba(2, 8, 18, .18) 0%, rgba(2, 8, 18, .42) 42%, rgba(2, 8, 18, .68) 100%),
-    var(--arena-center-stadium, url("https://wlnvdfghatgeygecwrqb.supabase.co/storage/v1/object/public/pes-assets/room-assets/v1.3.18/center-stadium.webp"));
-  background-size: cover;
-  background-position: center 55%;
-  background-repeat: no-repeat;
-}
-.arena-room-v2 .room-center-stage-plain::before {
-  background:
-    radial-gradient(circle at 50% 61%, rgba(216, 165, 60, .12), transparent 34%),
-    linear-gradient(90deg, rgba(1, 6, 14, .34), transparent 24%, transparent 76%, rgba(1, 6, 14, .34));
-  opacity: 1;
-}
+
+
 
 /* V1.3.17 — remove obsolete light-effect image layers and balance the room brand. */
 .arena-room-v2 .room-master-brand{width:min(380px,34vw)}
@@ -80,7 +68,7 @@
 @media (max-width:1450px){.arena-room-v2 .room-master-brand{width:min(330px,31vw)}.arena-room-v2 .room-master-brand img{height:58px}}
 
 /* V1.3.18 — full-room dark texture, neon-only mode frames, larger mode logos. */
-.arena-room-v2 {
+.arena-room-v2{
   position: relative;
   padding: 12px;
   border: 1px solid rgba(35, 103, 176, .24);

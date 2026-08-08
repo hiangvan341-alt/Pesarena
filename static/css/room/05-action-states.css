@@ -1,3 +1,4 @@
+/* PES Arena V1.3.106 — central match-stage rules moved to 17-center-match-stability.css. */
 /* PES Arena V1.3.104 — 05-action-states.css
  * Room action-control rules moved to 15-room-actions-stability.css.
  * Remaining rules keep this module's non-action responsibility.
@@ -81,14 +82,8 @@
 
 
 
-@media (max-width:1450px){
-  
-  
-  }
-@media (max-width:820px){
-  
-  
-}
+
+
 
 /* V1.3.27 — Bỏ hai vùng khung ở đáy cột giữa, chuyển thành trạng thái chữ + thanh nút nổi. */
 
@@ -102,7 +97,5 @@
 
 
 
-@media (max-width: 820px){
-  
-}
+
 

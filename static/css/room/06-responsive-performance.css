@@ -1,3 +1,4 @@
+/* PES Arena V1.3.106 — central match-stage rules moved to 17-center-match-stability.css. */
 /* PES Arena V1.3.105 — 06-responsive-performance.css
  * Side rail / Parsec / room history rules moved to 16-side-rail-history-stability.css.
  * Remaining rules keep this module's other responsibilities.
@@ -29,34 +30,14 @@
   border-color:rgba(147,164,201,.16);
   border-radius:12px;
 }
-.arena-room-v2 .room-center-status-note{
-  display:inline-flex;
-  align-items:center;
-  justify-content:center;
-  min-height:40px;
-  margin-top:6px;
-  padding:8px 14px;
-  border:1px solid rgba(255,214,113,.16);
-  border-radius:999px;
-  background:linear-gradient(180deg, rgba(10,18,34,.88), rgba(4,10,22,.92));
-  color:#dce6f5;
-  font-size:12px;
-  font-weight:800;
-  letter-spacing:.01em;
-  text-align:center;
-}
-.arena-room-v2 .room-center-status-note::before{
-  content:"•";
-  margin-right:7px;
-  color:#f0c04f;
-  font-size:14px;
-}
+
+
 
 
 
 @media (max-width:1450px){
   .arena-room-v2 .room-master-unlock-pill{min-width:176px;padding:7px 12px;font-size:10.5px}
-  .arena-room-v2 .room-center-status-note{font-size:11px}
+  
 }
 
 

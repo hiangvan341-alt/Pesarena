@@ -1,3 +1,4 @@
+/* PES Arena V1.3.106 — central match-stage rules moved to 17-center-match-stability.css. */
 /* PES Arena V1.3.105 — 11-index-layout-reconnect.css
  * Side rail / Parsec / room history rules moved to 16-side-rail-history-stability.css.
  * Remaining rules keep this module's other responsibilities.
@@ -37,7 +38,7 @@
 
 /* MAIN 4-COLUMN SHELL — same proportions as the approved mockup. */
 
-.arena-room-v2 .room-side-card, .arena-room-v2 .room-center-stage-plain{height:578px;border-radius:16px}
+.arena-room-v2 .room-side-card{height:578px;border-radius:16px}
 
 
 
@@ -69,9 +70,7 @@
 
 
 /* CENTER MODE CARD */
-.arena-room-v2 .room-center-stage-plain{
-  padding-bottom:74px;border-color:rgba(81,116,155,.32);background-position:center center
-}
+
 .arena-room-v2 .room-master-active-mode{
   width:calc(100% - 12px);min-height:310px;margin:6px 6px 0;padding:16px 13px 10px;
   border-color:#a94bea;border-radius:14px;
@@ -94,17 +93,14 @@
 .arena-room-v2 .room-master-room-ready span{color:#39e979}.arena-room-v2 .room-master-room-ready strong{font-size:14px;color:#ffbd28}
 
 /* VS & state-specific center sections */
-.arena-room-v2 .room-center-vs-image{width:205px;height:150px;margin:auto 0 2px;filter:drop-shadow(0 0 15px rgba(255,181,26,.30))}
-.arena-room-v2 .room-center-countdown-label{color:#f2f4f7;font-size:11px}
-.arena-room-v2 .room-center-countdown{color:#fff;text-shadow:0 0 14px rgba(255,190,45,.24)}
-.arena-room-v2 .room-result-review, .arena-room-v2 .room-center-score-panel{
-  width:calc(100% - 18px);border:1px solid rgba(172,75,236,.68);border-radius:14px;
-  background:linear-gradient(180deg,rgba(8,10,25,.96),rgba(3,8,17,.98));box-shadow:0 0 16px rgba(161,72,231,.12)
-}
+
+
+
+
 .arena-room-v2 .room-result-score{color:#fff;font-size:42px;font-weight:900}
 .arena-room-v2 .room-result-score span{color:#fff}
-.arena-room-v2 .room-score-title{color:#fff;text-transform:uppercase;letter-spacing:.02em}
-.arena-room-v2 .room-score-fields input{color:#fff!important;background:#050d17!important}
+
+
 
 /* ACTION DOCK — same gold / green / red hierarchy as index.html. */
 
@@ -153,17 +149,17 @@
 
 
 /* State treatment: keep one layout, let backend status drive only the center content. */
-.arena-room-v2[data-room-status="waiting_ready"] .room-center-stage-plain{border-color:rgba(169,75,234,.72)}
-.arena-room-v2[data-room-status="playing"] .room-center-stage-plain{border-color:rgba(64,142,255,.55)}
-.arena-room-v2[data-room-status="waiting_result_confirm"] .room-center-stage-plain{border-color:rgba(173,75,236,.80)}
-.arena-room-v2[data-room-status="confirmed"] .room-center-stage-plain{border-color:rgba(227,166,24,.78);box-shadow:0 0 18px rgba(227,166,24,.12)}
+
+
+
+
 
 /* Extra legacy/admin/friendly controls stay functional, visually separated from the core mockup shell. */
 .arena-room-v2 .room-extra-controls{margin-top:10px!important;border-radius:14px!important;background:#06101a!important}
 
 @media (max-width:1280px){
   
-  .arena-room-v2 .room-side-card, .arena-room-v2 .room-center-stage-plain{height:560px}
+  .arena-room-v2 .room-side-card{height:560px}
   
   .arena-room-v2 .room-master-brand{width:340px}
 }
@@ -171,7 +167,7 @@
   
   .arena-room-v2 .room-stage-title-wrap, .arena-room-v2 .room-stage-share-wrap, .arena-room-v2 .room-master-brand{justify-self:center}
   
-  .arena-room-v2 .room-side-card, .arena-room-v2 .room-center-stage-plain{height:auto;min-height:520px}
+  .arena-room-v2 .room-side-card{height:auto;min-height:520px}
   
   
   
@@ -186,7 +182,7 @@
     object-fit:contain!important;transform:none!important;
   }
   
-  .arena-room-v2 .room-side-card, .arena-room-v2 .room-center-stage-plain{height:590px!important}
+  .arena-room-v2 .room-side-card{height:590px!important}
 }
 
 /* Center mode emblem must use the supplied artwork at a visible size. */
@@ -209,10 +205,7 @@
 
 
 
-.arena-room-v2 .room-center-vs-image{
-  width:230px!important;height:160px!important;max-width:none!important;max-height:none!important;
-  object-fit:contain!important;
-}
+
 
 /* Right rail: room information + Parsec as two clean stacked panels. */
 

@@ -1,3 +1,4 @@
+/* PES Arena V1.3.106 — central match-stage rules moved to 17-center-match-stability.css. */
 /* PES Arena V1.3.104 — 08-action-layout-guard.css
  * Room action-control rules moved to 15-room-actions-stability.css.
  * Remaining rules keep this module's non-action responsibility.
@@ -13,49 +14,17 @@
 
 /* Waiting-ready contains mode card + countdown + VS + random control + room actions.
    Compact only this state so all controls fit inside the fixed desktop arena height. */
-.arena-room-v2 .room-center-stage-plain.room-state-waiting_ready{
-  gap: 4px;
-  padding-bottom: 8px;
-  justify-content: flex-start;
-}
-.arena-room-v2 .room-center-stage-plain.room-state-waiting_ready > .room-master-active-mode{
-  min-height: 188px;
-  padding-top: 10px;
-  padding-bottom: 8px;
-}
-.arena-room-v2 .room-center-stage-plain.room-state-waiting_ready .room-master-mode-heading strong{
-  margin-bottom: 3px;
-  font-size: 14px;
-}
-.arena-room-v2 .room-center-stage-plain.room-state-waiting_ready .room-master-mode-heading small{
-  min-height: 0;
-  font-size: 9px;
-  line-height: 1.25;
-}
 
 
-.arena-room-v2 .room-center-stage-plain.room-state-waiting_ready .room-master-unlock-pill{
-  min-width: 150px;
-  padding: 5px 10px;
-}
-.arena-room-v2 .room-center-stage-plain.room-state-waiting_ready .room-master-room-ready{
-  margin-top: 5px;
-  padding: 5px 9px;
-}
-.arena-room-v2 .room-center-stage-plain.room-state-waiting_ready .room-center-countdown-label{
-  margin-top: 1px;
-  font-size: 10px;
-}
-.arena-room-v2 .room-center-stage-plain.room-state-waiting_ready .room-center-countdown{
-  margin: 0;
-  font-size: 38px;
-  line-height: 1;
-}
-.arena-room-v2 .room-center-stage-plain.room-state-waiting_ready .room-center-vs-image{
-  width: 92px;
-  height: 92px;
-  margin: 1px auto;
-}
+
+
+
+
+
+
+
+
+
 
 
 
@@ -63,12 +32,7 @@
 /* Playing/result states: score/result panel and exit actions must stack, never overlap. */
 
 
-@media (max-width: 820px){
-  
-  .arena-room-v2 .room-center-stage-plain.room-state-waiting_ready{
-    min-height: 500px;
-  }
-}
+
 
 
 /* V1.3.97 — removed old room-specific Mời đấu/Thoát styling; trio uses standard gold/green/red button variants. */
@@ -78,54 +42,25 @@
    role-specific controls below the clipped viewport. Compact action-bearing states and reserve
    a visible footer lane for both host and guest controls. */
 @media (min-width: 821px){
-  .arena-room-v2 .room-center-stage-plain.room-state-playing, .arena-room-v2 .room-center-stage-plain.room-state-waiting_result_confirm, .arena-room-v2 .room-center-stage-plain.room-state-disputed, .arena-room-v2 .room-center-stage-plain.room-state-confirmed{
-    gap: 4px;
-    padding-bottom: 10px;
-    justify-content: flex-start;
-  }
+  
 
-  .arena-room-v2 .room-center-stage-plain.room-state-playing > .room-master-active-mode, .arena-room-v2 .room-center-stage-plain.room-state-waiting_result_confirm > .room-master-active-mode, .arena-room-v2 .room-center-stage-plain.room-state-disputed > .room-master-active-mode, .arena-room-v2 .room-center-stage-plain.room-state-confirmed > .room-master-active-mode{
-    min-height: 178px;
-    padding-top: 9px;
-    padding-bottom: 7px;
-  }
-
-  .arena-room-v2 .room-center-stage-plain.room-state-playing .room-master-mode-heading small, .arena-room-v2 .room-center-stage-plain.room-state-waiting_result_confirm .room-master-mode-heading small, .arena-room-v2 .room-center-stage-plain.room-state-disputed .room-master-mode-heading small, .arena-room-v2 .room-center-stage-plain.room-state-confirmed .room-master-mode-heading small{
-    min-height: 0;
-    font-size: 8.8px;
-    line-height: 1.22;
-  }
+  
 
   
 
   
 
-  .arena-room-v2 .room-center-stage-plain.room-state-playing .room-master-unlock-pill, .arena-room-v2 .room-center-stage-plain.room-state-waiting_result_confirm .room-master-unlock-pill, .arena-room-v2 .room-center-stage-plain.room-state-disputed .room-master-unlock-pill, .arena-room-v2 .room-center-stage-plain.room-state-confirmed .room-master-unlock-pill{
-    min-width: 145px;
-    padding: 4px 9px;
-  }
+  
 
-  .arena-room-v2 .room-center-stage-plain.room-state-playing .room-master-room-ready, .arena-room-v2 .room-center-stage-plain.room-state-waiting_result_confirm .room-master-room-ready, .arena-room-v2 .room-center-stage-plain.room-state-disputed .room-master-room-ready, .arena-room-v2 .room-center-stage-plain.room-state-confirmed .room-master-room-ready{
-    margin-top: 4px;
-    padding: 4px 8px;
-  }
+  
 
-  .arena-room-v2 .room-center-stage-plain.room-state-playing .room-center-countdown-label, .arena-room-v2 .room-center-stage-plain.room-state-waiting_result_confirm .room-center-countdown-label, .arena-room-v2 .room-center-stage-plain.room-state-disputed .room-center-countdown-label, .arena-room-v2 .room-center-stage-plain.room-state-confirmed .room-center-countdown-label{
-    margin-top: 0;
-    font-size: 9px;
-  }
+  
 
-  .arena-room-v2 .room-center-stage-plain.room-state-playing .room-center-countdown, .arena-room-v2 .room-center-stage-plain.room-state-waiting_result_confirm .room-center-countdown, .arena-room-v2 .room-center-stage-plain.room-state-disputed .room-center-countdown, .arena-room-v2 .room-center-stage-plain.room-state-confirmed .room-center-countdown{
-    margin: 0;
-    font-size: 32px;
-    line-height: 1;
-  }
+  
 
-  .arena-room-v2 .room-center-stage-plain.room-state-playing .room-center-vs-image{
-    width: 88px;
-    height: 88px;
-    margin: 1px auto;
-  }
+  
+
+  
 
   
 
@@ -146,37 +81,21 @@
    Desktop: pin direct action groups to a dedicated bottom lane and reserve space above it.
    Host playing uses the score panel as its action dock. Mobile remains normal-flow. */
 @media (min-width: 821px){
-  .arena-room-v2 .room-center-stage-plain.room-state-waiting_ready, .arena-room-v2 .room-center-stage-plain.room-state-playing, .arena-room-v2 .room-center-stage-plain.room-state-waiting_result_confirm, .arena-room-v2 .room-center-stage-plain.room-state-disputed, .arena-room-v2 .room-center-stage-plain.room-state-confirmed{
-    position: relative;
-  }
+  
 
   /* Sẵn sàng / Hủy sẵn sàng / Thoát phòng / Bỏ cuộc / Thoát an toàn /
      Đá tiếp + Về sảnh always own the bottom action lane. */
   
 
   /* Reserve a guaranteed lane so normal content cannot sit under the dock. */
-  .arena-room-v2 .room-center-stage-plain.room-state-waiting_ready, .arena-room-v2 .room-center-stage-plain.room-state-playing, .arena-room-v2 .room-center-stage-plain.room-state-waiting_result_confirm, .arena-room-v2 .room-center-stage-plain.room-state-disputed, .arena-room-v2 .room-center-stage-plain.room-state-confirmed{
-    padding-bottom: 76px !important;
-  }
+  
 
   /* Waiting-ready random/start control ends above the action dock. */
   
 
   /* Host playing: Gửi Kết Quả is itself the dock and needs a taller reserved area. */
-  .arena-room-v2 .room-center-stage-plain.room-state-playing:has(> .room-center-score-panel){
-    padding-bottom: 158px !important;
-  }
-  .arena-room-v2 .room-center-stage-plain.room-state-playing > .room-center-score-panel{
-    position: absolute !important;
-    left: 10px !important;
-    right: 10px !important;
-    bottom: 10px !important;
-    z-index: 31 !important;
-    width: auto !important;
-    margin: 0 !important;
-    visibility: visible !important;
-    opacity: 1 !important;
-  }
+  
+  
 
   /* Opponent-card host action is independent from readiness text and always stays above club area. */
   .arena-room-v2[data-viewer-role="host"] .room-side-card.away .room-player-heading-plain{
@@ -196,12 +115,7 @@
   }
 }
 
-@media (max-width: 820px){
-  .arena-room-v2 .room-center-stage-plain.room-state-waiting_ready, .arena-room-v2 .room-center-stage-plain.room-state-playing, .arena-room-v2 .room-center-stage-plain.room-state-waiting_result_confirm, .arena-room-v2 .room-center-stage-plain.room-state-disputed, .arena-room-v2 .room-center-stage-plain.room-state-confirmed{
-    padding-bottom: 12px !important;
-  }
-  
-}
+
 
 /* V1.3.75 — unify every player-facing room action with the established V1.3.71 glass/neon language.
    Scope is intentionally limited to Room action docks/result controls/opponent kick; Parsec is untouched. */
