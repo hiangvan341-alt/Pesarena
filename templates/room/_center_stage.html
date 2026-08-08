@@ -231,7 +231,7 @@
                 <div class="room-center-primary-actions room-action-zone room-center-primary-actions-three">
                     <a class="btn arena-btn gold room-center-action-btn" href="{{ url_for('players') }}">Mời đấu</a>
                     {% if system_features.get('quick_match_enabled', true) %}
-                    <button type="button" class="btn arena-btn green room-center-action-btn"
+                    <button type="button" class="room-quick-flat"
                             data-quick-match-url="{{ url_for('quick_match_invite') }}">
                         <span data-quick-match-label>Tìm nhanh</span>
                     </button>

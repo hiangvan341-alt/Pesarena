@@ -65,6 +65,51 @@
   text-overflow:ellipsis!important;
 }
 
+/* V1.3.99 — Tìm nhanh: flat button only. No glow, shadow, gradient, 3D or hover movement.
+   It intentionally does not use .btn/.arena-btn/.green so global button skins cannot touch it. */
+.arena-room-v2 .room-center-primary-actions-three > .room-quick-flat{
+  all:unset !important;
+  display:flex !important;
+  align-items:center !important;
+  justify-content:center !important;
+  width:100% !important;
+  min-width:0 !important;
+  height:52px !important;
+  min-height:52px !important;
+  margin:0 !important;
+  padding:9px 8px !important;
+  box-sizing:border-box !important;
+  border:1px solid #20d889 !important;
+  border-radius:10px !important;
+  background:#07512f !important;
+  color:#fff !important;
+  font:850 13px/1.1 inherit !important;
+  text-align:center !important;
+  white-space:nowrap !important;
+  overflow:hidden !important;
+  text-overflow:ellipsis !important;
+  box-shadow:none !important;
+  text-shadow:none !important;
+  filter:none !important;
+  transform:none !important;
+  transition:none !important;
+  outline:none !important;
+  appearance:none !important;
+  -webkit-appearance:none !important;
+  cursor:pointer !important;
+}
+.arena-room-v2 .room-center-primary-actions-three > .room-quick-flat:hover,
+.arena-room-v2 .room-center-primary-actions-three > .room-quick-flat:focus,
+.arena-room-v2 .room-center-primary-actions-three > .room-quick-flat:active{
+  background:#07512f !important;
+  border-color:#20d889 !important;
+  box-shadow:none !important;
+  text-shadow:none !important;
+  filter:none !important;
+  transform:none !important;
+  transition:none !important;
+}
+
 
 .arena-room-v2 .room-center-primary-actions .btn.gold,.arena-room-v2 .room-center-primary-actions .btn.yellow{border:1px solid rgba(241,189,88,.78);background:linear-gradient(180deg,#72500d,#3d2907);color:#fff;box-shadow:inset 0 0 12px rgba(255,205,88,.12),0 0 8px rgba(216,165,60,.13)}.arena-room-v2 .room-center-primary-actions .btn.green{border:1px solid rgba(42,225,137,.75);background:linear-gradient(180deg,#0f7d4b,#07512f);color:#fff;box-shadow:inset 0 0 12px rgba(46,232,146,.13),0 0 8px rgba(24,200,120,.12)}.arena-room-v2 .room-center-primary-actions .btn.red{border:1px solid rgba(255,75,94,.76);background:linear-gradient(180deg,#8b1e30,#53101d);color:#fff;box-shadow:inset 0 0 12px rgba(255,75,94,.11),0 0 8px rgba(239,48,71,.11)}
 .arena-room-v2 .room-arena-right-rail{display:flex;flex-direction:column;gap:10px;height:535px;min-width:0;overflow:hidden}.arena-room-v2 .room-arena-right-rail>.panel{margin:0;padding:13px;border:1px solid rgba(216,165,60,.43);border-radius:15px;background:linear-gradient(180deg,rgba(7,18,32,.99),rgba(4,12,22,.99));box-shadow:inset 0 0 18px rgba(0,0,0,.18)}.arena-room-v2 .room-side-info-panel{flex:0 0 auto}.arena-room-v2 .room-side-info-panel h3,.arena-room-v2 .parsec-room-panel h3{margin:0 0 11px;color:#edf0f4;font-size:14px;text-transform:uppercase}.arena-room-v2 .room-side-info-list{display:grid;gap:7px}.arena-room-v2 .room-side-info-list>div{padding:9px 10px;border:1px solid rgba(255,255,255,.095);border-radius:8px;background:rgba(2,9,17,.75)}.arena-room-v2 .room-side-info-list span{display:block;margin-bottom:3px;color:#adb8c7;font-size:8px;text-transform:uppercase}.arena-room-v2 .room-side-info-list strong{display:block;color:#f2f4f7;font-size:11px;line-height:1.25}.arena-room-v2 .parsec-room-panel{flex:1 1 auto;min-height:0;font-size:10px}.arena-room-v2 .parsec-room-panel label{font-size:10px}.arena-room-v2 .parsec-room-panel input{min-height:35px;padding:7px 8px;font-size:10px}.arena-room-v2 .parsec-room-panel .btn{min-height:35px;padding:7px 11px;font-size:10px}.arena-room-v2 .room-chat-side{display:none}

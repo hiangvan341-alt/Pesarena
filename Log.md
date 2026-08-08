@@ -1552,3 +1552,11 @@
 - Giữ nguyên toàn bộ kích thước/cân đối cụm 3 nút từ V1.3.97.
 - Bỏ icon ⚡ khỏi nút `Tìm nhanh` ở template render chính và template polling.
 - Không sửa CSS, không thay route, JS gọi Quick Match, backend hay luồng xử lý.
+
+
+## V1.3.99 - Bo_hoan_toan_hieu_ung_CSS_nut_Tim_nhanh (2026-08-08)
+- Chỉ xử lý giao diện nút Tìm nhanh; giữ nguyên Quick Match JS/route/backend.
+- Bỏ các class chung `btn`, `arena-btn`, `green`, `room-center-action-btn` khỏi trigger Tìm nhanh để tránh mọi skin CSS toàn cục.
+- Nút Tìm nhanh chỉ còn một class riêng `room-quick-flat` dùng cho kích thước + nền xanh phẳng + viền + chữ.
+- Ép `box-shadow:none`, `text-shadow:none`, `filter:none`, `transform:none`, `transition:none`; không gradient, không glow, không hiệu ứng 3D, không hover dịch chuyển.
+- Giữ kích thước 52px và cột 1/3 trong cụm Mời đấu / Tìm nhanh / Thoát phòng.
