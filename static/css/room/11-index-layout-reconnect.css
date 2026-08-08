@@ -142,7 +142,6 @@
 .arena-room-v2 .arena-action-invite,.arena-room-v2 .arena-btn.gold,.arena-room-v2 .arena-btn.is-gold{
   border-color:#cf9208!important;background:linear-gradient(180deg,#4a3503,#111007)!important;box-shadow:0 0 17px rgba(240,174,21,.26)!important;color:#fff!important
 }
-.arena-room-v2 .room-quick-match-btn{border-color:#188bff!important;background:linear-gradient(180deg,#083766,#07121f)!important;box-shadow:0 0 17px rgba(24,139,255,.22)!important;color:#fff!important}
 .arena-room-v2 .arena-btn.green,.arena-room-v2 .arena-btn.is-success{
   border-color:#20d852!important;background:linear-gradient(180deg,#0d672a,#06160c)!important;box-shadow:0 0 17px rgba(32,216,82,.24)!important;color:#fff!important
 }

@@ -1497,3 +1497,16 @@
 - `gaming_neon_buttons.css`: random trigger không còn bị mặc định ép màu vàng; màu được quyết định bởi class semantic (`green` / `is-gold` / `random3-trigger`) để tránh cascade chồng màu.
 - Đồng bộ template render đầu và template live polling.
 - Kiểm tra: `python -m py_compile app.py` PASS; 23 test Room/CSS liên quan PASS. Test legacy `test_gaming_neon_buttons_v1377.py::test_version` không dùng vì kiểm tra cứng APP_VERSION 1.3.77.
+
+## V1.3.92 - 2026-08-08 15:08 (Asia/Bangkok) - Sua_nut_bam_con_1_khoi_xanh
+- Nền sửa: tiếp tục từ V1.3.91, chỉ xử lý đúng lỗi CSS nút trong Room UI.
+- Giữ nguyên backend, route, JS, RP và toàn bộ luồng xử lý của các nút.
+- `BẮT ĐẦU TRẬN`: Series không còn dùng class `room-center-random-trigger` vốn kéo theo nhiều lớp CSS random cũ. Nút chuyển sang đúng bộ class hành động xanh giống `Sẵn Sàng`; icon ▶ và chữ nằm trực tiếp trong một button duy nhất.
+- Form `room-center-random-form` vẫn giữ action/submit cũ nhưng chỉ là wrapper không nền/không viền/không shadow theo rule sẵn có trong `10-prestart-flow.css`.
+- `Tìm nhanh`: bỏ class legacy `room-quick-match-btn` khỏi template vì class này còn bị rule cũ trong `11-index-layout-reconnect.css` ép nền xanh dương riêng.
+- Xóa rule `.room-quick-match-btn` ép nền xanh dương trong `11-index-layout-reconnect.css`.
+- Xóa block room-specific `.gaming-quick-action` trong `gaming_neon_buttons.css` vì nó tạo thêm một lớp skin riêng; `Tìm nhanh` giờ đi cùng semantic `.green` như `Sẵn Sàng` nhưng vẫn giữ `gaming-quick-action` để role màu Admin còn hoạt động.
+- Không thêm file CSS mới, không chèn override vá ở cuối chuỗi CSS.
+- Đồng bộ `templates/room/_center_stage.html` và `templates/_room_live_content.html` để render đầu và live polling giống nhau.
+- APP_VERSION: 1.3.92.
+- Kiểm tra: app.py compile PASS; 23 test CSS/Room PASS; 14 test Quick Match/Room action PASS.

@@ -415,14 +415,3 @@ body[data-ui-scope="player"] .arena-room-v2 .gaming-invite-action{
     )!important;
   box-shadow:0 0 14px color-mix(in srgb,var(--gn-role-invite) 35%,transparent),0 7px 15px rgba(0,0,0,.28),inset 0 1px 0 rgba(255,255,255,.23),inset 0 -5px 10px rgba(0,0,0,.40)!important;
 }
-body[data-ui-scope="player"] .arena-room-v2 .gaming-quick-action{
-  border-color:var(--gn-role-quick)!important;
-  background:
-    linear-gradient(180deg,rgba(255,255,255,.18),rgba(255,255,255,0) 34%),
-    linear-gradient(180deg,
-      color-mix(in srgb,var(--gn-role-quick) 34%,#071019),
-      color-mix(in srgb,var(--gn-role-quick) 20%,#06101a) 48%,
-      color-mix(in srgb,var(--gn-role-quick) 7%,#02060a)
-    )!important;
-  box-shadow:0 0 14px color-mix(in srgb,var(--gn-role-quick) 35%,transparent),0 7px 15px rgba(0,0,0,.28),inset 0 1px 0 rgba(255,255,255,.23),inset 0 -5px 10px rgba(0,0,0,.40)!important;
-}
