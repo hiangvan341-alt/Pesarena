@@ -1569,3 +1569,13 @@
 - `quick_match.js` đổi sang cập nhật trực tiếp `button.textContent`, không còn query hay thao tác `data-quick-match-label`.
 - Giữ nguyên các class chuẩn `btn arena-btn green room-center-action-btn` để giao diện Tìm nhanh dùng đúng cùng hệ nút với Mời đấu / Sẵn Sàng.
 - Cập nhật APP_VERSION thành 1.3.101.
+## V1.4 — Tach CSS che do va sua logo/khung dang chon
+- Ngay: 2026-08-08
+- Pham vi: chi CSS khu vuc 6 che do thi dau, logo che do, trang thai dang chon.
+- Them `static/css/room/13-mode-visuals.css` lam lop dieu khien cuoi cung cho khu vuc che do.
+- Go cac chuoi CSS va cu trong `11-index-layout-reconnect.css` va `12-mockup-layout-lock.css` lien quan truc tiep den logo/card che do.
+- Chuan hoa 6 khung logo ve cung mot kich thuoc hien thi.
+- Khung che do dang chon sang ro theo mau rieng cua tung che do; khung khong chon giu toi hon.
+- Khong thay doi backend, JavaScript, RP, luong phong dau, nut Parsec hay nut Tim nhanh/Moi dau/San sang.
+- `APP_VERSION` cap nhat tu 1.3.101 len 1.4.
+
