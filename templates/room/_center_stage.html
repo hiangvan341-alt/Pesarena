@@ -139,13 +139,26 @@
                         </div>
                         {% endif %}
                         {% if (room_room_viewer_is_host or current_user.role == 'admin') and room.guest_ready and not daily_rank_limit_blocked %}
-                        <form class="room-center-random-form {% if selected_rank_mode in ['home_away','bo3','tactical_bo3','ban_pick_bo3'] %}series-primary-form{% endif %}" method="post" action="{% if selected_rank_mode == 'random3_pick1' %}{{ url_for('room_start_random3_friendly', room_id=room.id) }}{% elif selected_rank_mode in ['home_away','bo3','tactical_bo3','ban_pick_bo3'] %}{{ url_for('room_series_start_next_game', room_id=room.id) }}{% else %}{{ url_for('room_random_teams', room_id=room.id) }}{% endif %}" onsubmit="const b=this.querySelector('button'); b.disabled=true; b.classList.add('loading');">
-                            {% if selected_rank_mode == 'rank_random' %}<input type="hidden" name="match_mode" value="ranked">{% endif %}
-                            <button class="room-center-random-trigger arena-btn is-gold {% if selected_rank_mode == 'random3_pick1' %}random3-trigger{% endif %}" type="submit" {% if selected_rank_mode in ['tactical_bo3','ban_pick_bo3'] and rank_series and rank_series.phase in ['choose','ban_pick'] %}disabled{% endif %}>
-                                <span class="room-center-random-title room-random-button-label">{% if selected_rank_mode in ['home_away','bo3','tactical_bo3','ban_pick_bo3'] %}BẮT ĐẦU TRẬN {{ rank_series.game_no if rank_series else 1 }}{% else %}QUAY QUÂN{% endif %}</span>
-                                <span class="room-center-random-sub">{% if selected_rank_mode == 'random3_pick1' %}Random 3 CLB cho mỗi người{% elif selected_rank_mode == 'rank_random' %}Random trực tiếp 1 CLB cho mỗi bên{% elif selected_rank_mode == 'home_away' %}Điều phối lượt đi/lượt về và tổng tỷ số{% elif selected_rank_mode == 'bo3' %}Điều phối BO3 • thắng 2 trận trước{% elif selected_rank_mode == 'tactical_bo3' %}Tạo 3 lựa chọn CLB không lặp cho mỗi trận{% else %}Cấm 3 CLB mỗi bên rồi chọn đội thi đấu{% endif %}</span>
-                            </button>
-                        </form>
+                        <div class="room-prestart-launch" data-series-launch="1">
+                            <div class="room-prestart-action-row">
+                                <form class="room-center-random-form {% if selected_rank_mode in ['home_away','bo3','tactical_bo3','ban_pick_bo3'] %}series-primary-form{% endif %} room-prestart-mainform" method="post" action="{% if selected_rank_mode == 'random3_pick1' %}{{ url_for('room_start_random3_friendly', room_id=room.id) }}{% elif selected_rank_mode in ['home_away','bo3','tactical_bo3','ban_pick_bo3'] %}{{ url_for('room_series_start_next_game', room_id=room.id) }}{% else %}{{ url_for('room_random_teams', room_id=room.id) }}{% endif %}" onsubmit="const b=this.querySelector('button'); b.disabled=true; b.classList.add('loading');">
+                                    {% if selected_rank_mode == 'rank_random' %}<input type="hidden" name="match_mode" value="ranked">{% endif %}
+                                    <button class="room-center-random-trigger arena-btn is-gold {% if selected_rank_mode == 'random3_pick1' %}random3-trigger{% endif %} room-prestart-trigger" type="submit" {% if selected_rank_mode in ['tactical_bo3','ban_pick_bo3'] and rank_series and rank_series.phase in ['choose','ban_pick'] %}disabled{% endif %}>
+                                        <span class="room-center-random-title room-random-button-label">{% if selected_rank_mode in ['home_away','bo3','tactical_bo3','ban_pick_bo3'] %}BẮT ĐẦU TRẬN {{ rank_series.game_no if rank_series else 1 }}{% else %}QUAY QUÂN{% endif %}</span>
+                                    </button>
+                                </form>
+                                <form class="room-exit-confirm-form room-prestart-exit-form" method="post" action="{{ url_for('room_leave', room_id=room.id) }}"
+                                      data-modal-tone="safe"
+                                      data-modal-icon="🚪"
+                                      data-modal-title="Đóng phòng đấu?"
+                                      data-modal-message="Trận chưa bắt đầu nên bạn có thể đóng phòng an toàn. Nếu đang có khách trong phòng, hệ thống sẽ đưa khách về sảnh."
+                                      data-modal-note="KHÔNG TRỪ RP"
+                                      data-modal-confirm-label="Thoát và đóng phòng">
+                                    <button class="btn arena-btn red room-center-action-btn room-prestart-exit-btn" type="submit">Thoát Phòng</button>
+                                </form>
+                            </div>
+                            <div class="room-prestart-note">{% if selected_rank_mode == 'home_away' %}Điều phối lượt đi/lượt về và tổng tỷ số{% elif selected_rank_mode == 'bo3' %}Điều phối BO3 • thắng 2 trận trước{% elif selected_rank_mode == 'tactical_bo3' %}Tạo 3 lựa chọn CLB không lặp cho mỗi trận{% else %}Cấm 3 CLB mỗi bên rồi chọn đội thi đấu{% endif %}</div>
+                        </div>
                         {% else %}
                         {# Readiness is shown once on the guest player card; no duplicate center-stage waiting label. #}
                         {% endif %}
@@ -170,19 +183,6 @@
                                 <button class="btn arena-btn red room-center-action-btn" type="submit">Thoát Phòng</button>
                             </form>
                         </div>
-                        {% elif room_room_viewer_is_host %}
-                        <div class="room-center-primary-actions room-action-zone">
-                            <form class="room-exit-confirm-form" method="post" action="{{ url_for('room_leave', room_id=room.id) }}"
-                                  data-modal-tone="safe"
-                                  data-modal-icon="🚪"
-                                  data-modal-title="Đóng phòng đấu?"
-                                  data-modal-message="Trận chưa bắt đầu nên bạn có thể đóng phòng an toàn. Nếu đang có khách trong phòng, hệ thống sẽ đưa khách về sảnh."
-                                  data-modal-note="KHÔNG TRỪ RP"
-                                  data-modal-confirm-label="Thoát và đóng phòng">
-                                <button class="btn arena-btn red room-center-action-btn" type="submit">Thoát Phòng</button>
-                            </form>
-                        </div>
-                        {% endif %}
                     {% else %}
                         {% if room.status in ['waiting_result_confirm', 'disputed'] and room_room_viewer_is_host %}
                         <div class="room-center-primary-actions room-action-zone">

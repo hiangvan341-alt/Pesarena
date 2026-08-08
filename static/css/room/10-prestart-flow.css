@@ -56,3 +56,79 @@
     position:relative!important;left:auto!important;bottom:auto!important;transform:none!important;width:calc(100% - 20px)!important;margin:8px auto!important;
   }
 }
+
+
+/* V1.3.83 — prestart orchestration cleanup: keep only one primary CTA lane,
+   move helper description out of the button, and align exit CTA cleanly. */
+@media (min-width:821px){
+  .arena-room-v2 .room-center-stage-plain.room-state-waiting_ready > .room-prestart-launch{
+    position:absolute!important;
+    left:50%!important;
+    bottom:calc(var(--room-prestart-dock-h) + 18px)!important;
+    transform:translateX(-50%)!important;
+    z-index:29!important;
+    width:min(calc(100% - 28px), 356px)!important;
+    margin:0!important;
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    gap:8px;
+  }
+  .arena-room-v2 .room-center-stage-plain.room-state-waiting_ready:has(> .room-prestart-launch){
+    padding-bottom:186px!important;
+  }
+}
+.arena-room-v2 .room-prestart-launch .room-center-random-form,
+.arena-room-v2 .room-prestart-launch .room-prestart-exit-form{margin:0!important;}
+.arena-room-v2 .room-prestart-action-row{
+  width:100%;
+  display:flex;
+  align-items:stretch;
+  justify-content:center;
+  gap:10px;
+}
+.arena-room-v2 .room-prestart-mainform{flex:1 1 0; min-width:0;}
+.arena-room-v2 .room-prestart-mainform .room-prestart-trigger{
+  width:100%!important;
+  min-height:56px!important;
+  padding:10px 16px!important;
+  border-radius:16px!important;
+}
+.arena-room-v2 .room-prestart-mainform .room-random-button-label{
+  font-size:16px!important;
+  line-height:1.08!important;
+  letter-spacing:.02em!important;
+}
+.arena-room-v2 .room-prestart-mainform .room-center-random-sub{display:none!important;}
+.arena-room-v2 .room-prestart-exit-form{flex:0 0 118px;}
+.arena-room-v2 .room-prestart-exit-btn{
+  width:100%!important;
+  min-height:56px!important;
+  border-radius:16px!important;
+  padding:10px 14px!important;
+}
+.arena-room-v2 .room-prestart-note{
+  width:100%;
+  text-align:center;
+  color:rgba(235,243,255,.80);
+  font-size:12px;
+  line-height:1.35;
+  letter-spacing:.01em;
+  text-shadow:0 1px 1px rgba(0,0,0,.55);
+  padding:0 14px;
+}
+@media (max-width:820px){
+  .arena-room-v2 .room-center-stage-plain.room-state-waiting_ready > .room-prestart-launch{
+    position:relative!important;
+    left:auto!important;
+    bottom:auto!important;
+    transform:none!important;
+    width:calc(100% - 20px)!important;
+    margin:8px auto!important;
+    display:flex;
+    flex-direction:column;
+    gap:8px;
+  }
+  .arena-room-v2 .room-prestart-action-row{flex-direction:column; gap:8px;}
+  .arena-room-v2 .room-prestart-exit-form{flex:1 1 auto;}
+}
