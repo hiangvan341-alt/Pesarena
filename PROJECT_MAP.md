@@ -289,3 +289,11 @@ Không chạy SQL thay đổi dữ liệu thật trong test nếu chưa có guar
 - Room có cascade guard riêng; Admin và Parsec vẫn loại trừ.
 - Khi sửa màu nút sau V1.3.80, ưu tiên chỉnh file này thay vì thêm một lớp `!important` mới trong Room legacy.
 
+
+
+## V1.3.81 — Quy tắc scope Gaming Neon
+
+- `static/css/gaming_neon_buttons.css` KHÔNG được target bare `button` toàn cục.
+- Chỉ action button có class rõ (`.btn`, `.arena-btn`, CTA chuyên dụng) mới nhận Gaming Neon.
+- Các component dùng thẻ `button` nhưng là card/tab/selector (đặc biệt `room-master-mode-card`, `room-mode-select-btn`, `series-club-btn`) phải giữ CSS component riêng.
+- Admin và Parsec tiếp tục nằm ngoài Gaming Neon scope.

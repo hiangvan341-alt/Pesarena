@@ -1,3 +1,12 @@
+# V1.3.81 — Gaming Neon Scope Isolation Hotfix
+
+- FIX NHANH CSS cascade sau ảnh production V1.3.80: các card chế độ Room bị Gaming Neon phủ nền xanh/đục vì global selector bắt mọi thẻ `<button>`.
+- `static/css/gaming_neon_buttons.css`: bỏ bare `<button>` khỏi global visual/hover/active selectors; chỉ skin action button có class rõ (`.btn`, `.arena-btn`, CTA chuyên dụng, input submit/button).
+- Không skin các component dùng `<button>` nhưng thực chất là card/tab/selector: `room-master-mode-card`, `room-mode-select-btn`, `series-club-btn` và các icon/control cấu trúc.
+- Loại `.mode-random3` khỏi purple skin toàn cục; chỉ `random3-trigger`/Lucky Box action thật mới nhận màu tím.
+- Giữ nguyên Gaming Neon cho các nút thao tác, giữ nguyên Admin/Parsec exclusion. Không sửa HTML, route, ID, JS, backend, RP hay Supabase.
+- Thêm `test_gaming_neon_scope_v1381.py` để chặn regression kiểu "button-card bị skin như CTA".
+
 # V1.3.80 — Button Cascade Reality Fix
 
 - Chế độ: FIX NHANH giao diện.
