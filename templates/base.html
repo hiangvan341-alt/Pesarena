@@ -98,7 +98,9 @@ function toggleTheme(){
 {% block page_styles %}{% endblock %}
 <link rel="stylesheet" href="{{ static_asset('css/gaming_neon_buttons.css') }}">
 </head>
-<body data-page="{{ request.endpoint|default('unknown') }}" data-ui-scope="{{ 'admin' if (request.endpoint and (request.endpoint == 'admin' or request.endpoint.startswith('admin_') or request.endpoint == 'backup_preview')) else 'player' }}">
+{% set btn_theme = button_theme_config|default({}) %}
+<body data-page="{{ request.endpoint|default('unknown') }}" data-ui-scope="{{ 'admin' if (request.endpoint and (request.endpoint == 'admin' or request.endpoint.startswith('admin_') or request.endpoint == 'backup_preview')) else 'player' }}"
+      style="--gn-role-invite:var(--gn-palette-{{ btn_theme.get('invite','gold') }});--gn-role-quick:var(--gn-palette-{{ btn_theme.get('quick','green') }});--gn-role-success:var(--gn-palette-{{ btn_theme.get('success','green') }});--gn-role-danger:var(--gn-palette-{{ btn_theme.get('danger','red') }});--gn-role-primary:var(--gn-palette-{{ btn_theme.get('primary','gold') }});--gn-role-secondary:var(--gn-palette-{{ btn_theme.get('secondary','gray') }});--gn-role-default:var(--gn-palette-{{ btn_theme.get('default','blue') }});--gn-role-special:var(--gn-palette-{{ btn_theme.get('special','purple') }});">
 {% if is_test_mode %}<div style="position:fixed;z-index:99999;left:0;right:0;top:0;text-align:center;background:#ffcc00;color:#111;font-weight:800;padding:6px">🧪 PES ARENA TEST MODE — KHÔNG DÙNG DATABASE PRODUCTION</div><div style="height:34px"></div>{% endif %}
 {% if maintenance_status and maintenance_status.countdown %}
 <div class="server-transition-banner {{ 'server-closing' if maintenance_status.countdown.kind == 'close' else 'server-opening' }}">

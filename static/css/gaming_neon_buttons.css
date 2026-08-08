@@ -321,3 +321,109 @@ body[data-ui-scope="player"] :is(
 ) {
   /* Documentation-only guard: no visual override here. */
 }
+
+/* V1.3.82 — ADMIN-CONTROLLABLE SEMANTIC BUTTON PALETTE
+   The visual shape stays Gaming Neon 3D. Admin only changes which palette color
+   each semantic role uses. Admin and Parsec remain outside this scope. */
+body[data-ui-scope="player"]{
+  --gn-palette-blue:#29a8ff;
+  --gn-palette-green:#1ff07c;
+  --gn-palette-gold:#e9b735;
+  --gn-palette-red:#ff4b45;
+  --gn-palette-gray:#7ca4c8;
+  --gn-palette-purple:#c164ff;
+  --gn-role-invite:var(--gn-palette-gold);
+  --gn-role-quick:var(--gn-palette-green);
+  --gn-role-success:var(--gn-palette-green);
+  --gn-role-danger:var(--gn-palette-red);
+  --gn-role-primary:var(--gn-palette-gold);
+  --gn-role-secondary:var(--gn-palette-gray);
+  --gn-role-default:var(--gn-palette-blue);
+  --gn-role-special:var(--gn-palette-purple);
+}
+
+/* Only true action controls receive the semantic role engine. */
+body[data-ui-scope="player"] :is(
+  .btn,.arena-btn,a.btn,.profile-v2-action,.guide-start-button,.profile-share-button,
+  .reward-primary-button,.lb3-open-button,.public-theme-button,.public-login-button,
+  .auth-submit,.invite-mini,.room-share-button,input[type="button"],input[type="submit"],input[type="reset"]
+):not(.parsec-room-panel *):not(#parsec-profile *):not([class*="parsec-"]){
+  --gn-role-color:var(--gn-role-default);
+  --gn-line:var(--gn-role-color);
+  --gn-glow:color-mix(in srgb,var(--gn-role-color) 32%,transparent);
+  --gn-glow-strong:color-mix(in srgb,var(--gn-role-color) 60%,transparent);
+  border-color:var(--gn-role-color)!important;
+  background:
+    linear-gradient(180deg,rgba(255,255,255,.18) 0%,rgba(255,255,255,.045) 31%,rgba(255,255,255,0) 32%),
+    linear-gradient(180deg,
+      color-mix(in srgb,var(--gn-role-color) 34%,#071019),
+      color-mix(in srgb,var(--gn-role-color) 20%,#06101a) 48%,
+      color-mix(in srgb,var(--gn-role-color) 7%,#02060a)
+    )!important;
+  box-shadow:
+    0 0 13px color-mix(in srgb,var(--gn-role-color) 33%,transparent),
+    0 6px 14px rgba(0,0,0,.25),
+    inset 0 1px 0 rgba(255,255,255,.23),
+    inset 0 -5px 10px rgba(0,0,0,.40)!important;
+}
+
+/* Semantic roles — Admin can remap each role to any palette color. */
+body[data-ui-scope="player"] :is(
+  .btn.green,.btn.ready,.btn.success,.btn.confirm,
+  .arena-btn.green,.arena-btn.ready,.arena-btn.is-success,.arena-btn.is-accept,
+  .room-submit-result-btn,.room-result-btn.confirm,.invite-action-btn.is-accept,
+  input[type="submit"].green,input[type="button"].green
+):not(.parsec-room-panel *):not(#parsec-profile *):not([class*="parsec-"]){--gn-role-color:var(--gn-role-success)!important;}
+
+body[data-ui-scope="player"] :is(
+  .btn.red,.btn.danger,.btn.danger-outline,.btn.exit,.btn.reject,
+  .arena-btn.red,.arena-btn.is-danger,.arena-btn.is-reject,.room-guest-card-kick-btn,
+  .invite-action-btn.is-reject,input[type="submit"].red,input[type="button"].red
+):not(.parsec-room-panel *):not(#parsec-profile *):not([class*="parsec-"]){--gn-role-color:var(--gn-role-danger)!important;}
+
+body[data-ui-scope="player"] :is(
+  .btn.gold,.btn.yellow,.btn.invite,.arena-btn.gold,.arena-btn.yellow,.arena-btn.is-gold,
+  .room-center-random-trigger:not(.random3-trigger),.profile-v2-action.is-primary,
+  .guide-start-button,.auth-submit,.reward-primary-button
+):not(.parsec-room-panel *):not(#parsec-profile *):not([class*="parsec-"]){--gn-role-color:var(--gn-role-primary)!important;}
+
+body[data-ui-scope="player"] :is(
+  .btn.gray,.btn.secondary,.btn.cancel,.arena-btn.gray,.arena-btn.is-secondary,.room-result-btn.disagree
+):not(.parsec-room-panel *):not(#parsec-profile *):not([class*="parsec-"]){--gn-role-color:var(--gn-role-secondary)!important;}
+
+body[data-ui-scope="player"] :is(
+  .random3-trigger,.lb3-open-button,.luckybox-open-button,.purple,.btn.purple,.arena-btn.purple
+):not(.parsec-room-panel *):not(#parsec-profile *):not([class*="parsec-"]){--gn-role-color:var(--gn-role-special)!important;}
+
+/* Dedicated roles always win over generic class colors. This makes every
+   "Mời đấu" consistent and makes "Tìm nhanh" green by default everywhere. */
+body[data-ui-scope="player"] .gaming-invite-action:not(.parsec-room-panel *):not(#parsec-profile *){
+  --gn-role-color:var(--gn-role-invite)!important;
+}
+body[data-ui-scope="player"] .gaming-quick-action:not(.parsec-room-panel *):not(#parsec-profile *){
+  --gn-role-color:var(--gn-role-quick)!important;
+}
+
+/* Room-specific cascade guard: legacy Room CSS uses high-specificity !important. */
+body[data-ui-scope="player"] .arena-room-v2 .gaming-invite-action{
+  border-color:var(--gn-role-invite)!important;
+  background:
+    linear-gradient(180deg,rgba(255,255,255,.18),rgba(255,255,255,0) 34%),
+    linear-gradient(180deg,
+      color-mix(in srgb,var(--gn-role-invite) 34%,#071019),
+      color-mix(in srgb,var(--gn-role-invite) 20%,#06101a) 48%,
+      color-mix(in srgb,var(--gn-role-invite) 7%,#02060a)
+    )!important;
+  box-shadow:0 0 14px color-mix(in srgb,var(--gn-role-invite) 35%,transparent),0 7px 15px rgba(0,0,0,.28),inset 0 1px 0 rgba(255,255,255,.23),inset 0 -5px 10px rgba(0,0,0,.40)!important;
+}
+body[data-ui-scope="player"] .arena-room-v2 .gaming-quick-action{
+  border-color:var(--gn-role-quick)!important;
+  background:
+    linear-gradient(180deg,rgba(255,255,255,.18),rgba(255,255,255,0) 34%),
+    linear-gradient(180deg,
+      color-mix(in srgb,var(--gn-role-quick) 34%,#071019),
+      color-mix(in srgb,var(--gn-role-quick) 20%,#06101a) 48%,
+      color-mix(in srgb,var(--gn-role-quick) 7%,#02060a)
+    )!important;
+  box-shadow:0 0 14px color-mix(in srgb,var(--gn-role-quick) 35%,transparent),0 7px 15px rgba(0,0,0,.28),inset 0 1px 0 rgba(255,255,255,.23),inset 0 -5px 10px rgba(0,0,0,.40)!important;
+}

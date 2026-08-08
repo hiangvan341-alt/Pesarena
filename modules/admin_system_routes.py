@@ -23,6 +23,7 @@ def register_routes(context):
             "maintenance_status": get_maintenance_status(),
             "rank_daily_limits_enabled": daily_rank_limits_enabled(),
             "quick_match_config": get_quick_match_config(),
+            "button_theme_config": get_button_theme_config(),
             "repeat_opponent_rp_config": get_repeat_opponent_rp_config(),
             "weekly_rp_reward_config": get_weekly_rp_reward_config(),
             "duplicate_ip_warning_config": get_duplicate_ip_warning_config(),
@@ -90,6 +91,47 @@ def register_routes(context):
         return redirect_admin("users")
 
 
+
+    @app.route("/admin/system/button-theme", methods=["POST"])
+    @login_required
+    @admin_required
+    @admin_permission_required("system_features_manage")
+    def admin_update_button_theme():
+        payload = dict(BUTTON_THEME_DEFAULTS)
+        for key in payload:
+            value = (request.form.get(key) or payload[key]).strip().lower()
+            if value not in BUTTON_COLOR_VALUES:
+                flash("Bộ màu nút không hợp lệ.", "danger")
+                return redirect_admin("system")
+            payload[key] = value
+
+        execute_query(
+            db.table("system_settings").upsert({
+                "setting_key": BUTTON_THEME_SETTING_KEY,
+                "setting_value": payload,
+                "updated_at": now_iso(),
+            }, on_conflict="setting_key"),
+            "update_button_theme_config", attempts=2,
+        )
+        ttl_cache_delete("button_theme_config")
+        cache_delete("_button_theme_config_cached")
+
+        # Keep the old Quick Match setting in sync for legacy templates/classes.
+        quick_color = "green" if payload["quick"] == "green" else "blue"
+        execute_query(
+            db.table("system_settings").upsert({
+                "setting_key": QUICK_MATCH_SETTING_KEY,
+                "setting_value": {"color": quick_color},
+                "updated_at": now_iso(),
+            }, on_conflict="setting_key"),
+            "sync_quick_match_color_from_button_theme", attempts=2,
+        )
+        ttl_cache_delete("quick_match_config")
+        cache_delete("_quick_match_config_cached")
+        log_admin_action("Cập nhật bộ màu nút Gaming Neon", "system", details=payload)
+        flash("Đã lưu bộ màu nút Gaming Neon cho giao diện người chơi.", "success")
+        return redirect_admin("system")
+
     @app.route("/admin/system/quick-match", methods=["POST"])
     @login_required
     @admin_required
@@ -108,6 +150,18 @@ def register_routes(context):
         )
         ttl_cache_delete("quick_match_config")
         cache_delete("_quick_match_config_cached")
+        theme = get_button_theme_config()
+        theme["quick"] = color
+        execute_query(
+            db.table("system_settings").upsert({
+                "setting_key": BUTTON_THEME_SETTING_KEY,
+                "setting_value": theme,
+                "updated_at": now_iso(),
+            }, on_conflict="setting_key"),
+            "sync_button_theme_from_quick_match", attempts=2,
+        )
+        ttl_cache_delete("button_theme_config")
+        cache_delete("_button_theme_config_cached")
         log_admin_action("Cập nhật màu nút Tìm Nhanh", "system", details={"color": color})
         flash("Đã lưu màu nút Tìm Nhanh.", "success")
         return redirect_admin("system")

@@ -254,9 +254,9 @@
                 <img class="room-center-vs-image" src="{{ asset_url('vs.webp') }}?v={{ APP_VERSION }}" alt="VS" loading="eager">
                 {% if room_room_viewer_is_host or current_user.role == 'admin' %}
                 <div class="room-center-primary-actions room-action-zone{% if system_features.get('quick_match_enabled', true) %} room-center-primary-actions-three{% endif %}">
-                    <a class="btn arena-btn gold room-center-action-btn arena-action-invite" href="{{ url_for('players') }}">Mời đấu</a>
+                    <a class="btn arena-btn gold room-center-action-btn arena-action-invite gaming-invite-action" href="{{ url_for('players') }}">Mời đấu</a>
                     {% if system_features.get('quick_match_enabled', true) %}
-                    <button class="btn arena-btn room-center-action-btn room-quick-match-btn arena-action-quick room-quick-match-{{ quick_match_config.get('color', 'blue') }}" type="button"
+                    <button class="btn arena-btn room-center-action-btn room-quick-match-btn arena-action-quick gaming-quick-action room-quick-match-{{ quick_match_config.get('color', 'blue') }}" type="button"
                             data-quick-match-url="{{ url_for('quick_match_invite') }}">
                         <span class="quick-match-icon" aria-hidden="true">⚡</span><span class="quick-match-label">Tìm nhanh</span>
                     </button>

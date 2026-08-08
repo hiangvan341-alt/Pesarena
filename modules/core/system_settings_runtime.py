@@ -48,8 +48,21 @@ SYSTEM_FEATURE_DEFAULTS = {
     "rank_ban_pick_bo3_enabled": True, "rank_home_away_enabled": True,
 }
 QUICK_MATCH_SETTING_KEY = "quick_match_config"
-QUICK_MATCH_COLOR_DEFAULT = "blue"
+QUICK_MATCH_COLOR_DEFAULT = "green"
 QUICK_MATCH_COLOR_VALUES = {"blue", "green"}
+
+BUTTON_THEME_SETTING_KEY = "gaming_neon_button_theme"
+BUTTON_COLOR_VALUES = {"blue", "green", "gold", "red", "gray", "purple"}
+BUTTON_THEME_DEFAULTS = {
+    "invite": "gold",
+    "quick": "green",
+    "success": "green",
+    "danger": "red",
+    "primary": "gold",
+    "secondary": "gray",
+    "default": "blue",
+    "special": "purple",
+}
 REPEAT_OPPONENT_CONFIG_SETTING_KEY = "repeat_opponent_rp_config"
 REPEAT_OPPONENT_WINNER_FACTOR_DEFAULTS = [100, 60, 30, 0]
 REPEAT_OPPONENT_LOSER_FACTOR_DEFAULTS = [100, 70, 40, 10]
@@ -60,9 +73,9 @@ _maintenance_cache = {"value": None, "expires_at": 0.0}
 EXPORTED_NAMES = (
     "ADMIN_PERMISSION_GROUPS", "ADMIN_PERMISSION_LABELS", "LEGACY_ADMIN_PERMISSION_FIELDS",
     "SYSTEM_FEATURE_DEFAULTS", "QUICK_MATCH_SETTING_KEY", "QUICK_MATCH_COLOR_DEFAULT",
-    "QUICK_MATCH_COLOR_VALUES", "REPEAT_OPPONENT_CONFIG_SETTING_KEY",
+    "QUICK_MATCH_COLOR_VALUES", "BUTTON_THEME_SETTING_KEY", "BUTTON_COLOR_VALUES", "BUTTON_THEME_DEFAULTS", "REPEAT_OPPONENT_CONFIG_SETTING_KEY",
     "REPEAT_OPPONENT_WINNER_FACTOR_DEFAULTS", "REPEAT_OPPONENT_LOSER_FACTOR_DEFAULTS", "MAINTENANCE_SETTING_KEY", "VN_TIMEZONE",
-    "_admin_permissions", "has_admin_permission", "get_system_features", "system_feature_enabled", "get_quick_match_config",
+    "_admin_permissions", "has_admin_permission", "get_system_features", "system_feature_enabled", "get_quick_match_config", "get_button_theme_config",
     "get_repeat_opponent_rp_config", "_maintenance_default_config", "_parse_maintenance_time",
     "_normalize_maintenance_input", "get_maintenance_config", "get_maintenance_status",
 )
@@ -159,6 +172,42 @@ def get_quick_match_config():
     except Exception as exc:
         _get("log_system_event")("quick_match_config_load_failed", level=30, error_type=type(exc).__name__, error=str(exc))
     ttl_cache_set("quick_match_config", dict(config), 60)
+    return cache_set(request_key, dict(config))
+
+
+def get_button_theme_config():
+    """Return the Gaming Neon semantic color map used by player-side action buttons.
+
+    The setting is stored as one JSON object in system_settings so Admin can change
+    colors without touching CSS. Unknown/missing values safely fall back to defaults.
+    """
+    cache_get, cache_set = _get("cache_get"), _get("cache_set")
+    ttl_cache_get, ttl_cache_set = _get("ttl_cache_get"), _get("ttl_cache_set")
+    request_key = "_button_theme_config_cached"
+    cached = cache_get(request_key)
+    if isinstance(cached, dict):
+        return dict(cached)
+    cached = ttl_cache_get("button_theme_config")
+    if isinstance(cached, dict):
+        return cache_set(request_key, dict(cached))
+
+    config = dict(BUTTON_THEME_DEFAULTS)
+    try:
+        result = _get("execute_query")(
+            _get("db").table("system_settings").select("setting_value").eq("setting_key", BUTTON_THEME_SETTING_KEY).limit(1),
+            "get_button_theme_config", attempts=2,
+        )
+        raw = ((result.data or [{}])[0]).get("setting_value")
+        if isinstance(raw, str):
+            raw = json.loads(raw)
+        if isinstance(raw, dict):
+            for key in config:
+                value = str(raw.get(key) or "").strip().lower()
+                if value in BUTTON_COLOR_VALUES:
+                    config[key] = value
+    except Exception as exc:
+        _get("log_system_event")("button_theme_config_load_failed", level=30, error_type=type(exc).__name__, error=str(exc))
+    ttl_cache_set("button_theme_config", dict(config), 60)
     return cache_set(request_key, dict(config))
 
 

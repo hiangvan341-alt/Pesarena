@@ -1,3 +1,12 @@
+# V1.3.82 — Gaming Neon Semantic Color Admin
+
+- Mời đấu được đồng bộ role riêng, mặc định **Vàng** trên Room / Player list / Profile / Dashboard.
+- Tìm nhanh dùng role riêng, mặc định **Xanh lá**.
+- Thêm cấu hình Admin `Hệ thống → Bộ màu nút Gaming Neon` cho 8 nhóm màu chức năng.
+- Cấu hình lưu bằng `system_settings.gaming_neon_button_theme`; không cần migration mới.
+- CSS dùng semantic variables và cascade guard riêng cho Room; không thay logic, ID, route, kích thước.
+- Admin và Parsec tiếp tục bị loại khỏi Gaming Neon.
+
 # V1.3.81 — Gaming Neon Scope Isolation Hotfix
 
 - FIX NHANH CSS cascade sau ảnh production V1.3.80: các card chế độ Room bị Gaming Neon phủ nền xanh/đục vì global selector bắt mọi thẻ `<button>`.

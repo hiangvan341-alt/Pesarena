@@ -174,16 +174,33 @@
         </form>
     </div>
     <div class="panel">
-        <h2>⚡ Giao diện nút Tìm Nhanh</h2>
-        <p class="muted">Chọn màu nổi bật cho nút Tìm Nhanh trong phòng đấu.</p>
-        <form method="post" action="{{ url_for('admin_update_quick_match') }}" class="system-toggle-grid">
-            <label><span>Màu nút</span>
-                <select name="color">
-                    <option value="blue" {% if quick_match_config.get('color') == 'blue' %}selected{% endif %}>Xanh dương sáng</option>
-                    <option value="green" {% if quick_match_config.get('color') == 'green' %}selected{% endif %}>Xanh lá sáng</option>
+        <h2>🎮 Bộ màu nút Gaming Neon</h2>
+        <p class="muted">Đổi màu theo chức năng cho toàn bộ giao diện người chơi. Admin và Parsec không bị ảnh hưởng.</p>
+        {% set button_colors = {
+            'green':'🟢 Xanh lá', 'red':'🔴 Đỏ', 'gold':'🟡 Vàng',
+            'gray':'🔵 Xám xanh', 'blue':'🔷 Xanh dương', 'purple':'🟣 Tím'
+        } %}
+        {% set button_theme = button_theme_config or {} %}
+        <form method="post" action="{{ url_for('admin_update_button_theme') }}" class="grid-form">
+            {% for key,label,default_color in [
+                ('invite','Mời đấu','gold'),
+                ('quick','Tìm nhanh','green'),
+                ('success','Sẵn sàng / Xác nhận / Lưu','green'),
+                ('danger','Thoát / Bỏ cuộc / Từ chối / Xóa','red'),
+                ('primary','Đá tiếp / CTA chính','gold'),
+                ('secondary','Hủy / Phụ / Secondary','gray'),
+                ('default','Nút mặc định','blue'),
+                ('special','Random3 / Lucky Box','purple')
+            ] %}
+            <label><span>{{ label }}</span>
+                <select name="{{ key }}">
+                    {% for value,color_label in button_colors.items() %}
+                    <option value="{{ value }}" {% if button_theme.get(key, default_color) == value %}selected{% endif %}>{{ color_label }}</option>
+                    {% endfor %}
                 </select>
             </label>
-            <button class="btn" type="submit">Lưu màu nút</button>
+            {% endfor %}
+            <button class="btn green" type="submit">Lưu bộ màu nút</button>
         </form>
     </div>
     {% endif %}

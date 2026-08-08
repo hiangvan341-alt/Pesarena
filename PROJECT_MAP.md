@@ -297,3 +297,13 @@ Không chạy SQL thay đổi dữ liệu thật trong test nếu chưa có guar
 - Chỉ action button có class rõ (`.btn`, `.arena-btn`, CTA chuyên dụng) mới nhận Gaming Neon.
 - Các component dùng thẻ `button` nhưng là card/tab/selector (đặc biệt `room-master-mode-card`, `room-mode-select-btn`, `series-club-btn`) phải giữ CSS component riêng.
 - Admin và Parsec tiếp tục nằm ngoài Gaming Neon scope.
+
+
+## V1.3.82 — Gaming Neon button theme
+- `modules/core/system_settings_runtime.py`: đọc cấu hình màu semantic từ `system_settings` key `gaming_neon_button_theme`.
+- `modules/admin_system_routes.py`: Admin lưu bộ màu tại `/admin/system/button-theme`.
+- `templates/admin/tabs/system.html`: bảng chọn màu cho Mời đấu, Tìm nhanh, success, danger, primary, secondary, default, Random3/Lucky Box.
+- `templates/base.html`: truyền semantic palette xuống player UI bằng CSS variables; Admin/Parsec không nhận skin.
+- `static/css/gaming_neon_buttons.css`: Gaming Neon 3D dùng màu semantic do Admin cấu hình.
+- `.gaming-invite-action`: mọi nút Mời đấu phải dùng role `invite` (mặc định vàng).
+- `.gaming-quick-action`: nút Tìm nhanh dùng role `quick` (mặc định xanh lá).

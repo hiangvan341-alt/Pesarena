@@ -69,7 +69,7 @@ from modules.win_streaks import (
 load_dotenv()
 
 APP_NAME = "PES Arena – Bản Lĩnh Sân Cỏ"
-APP_VERSION = "1.3.81"
+APP_VERSION = "1.3.82"
 DEFAULT_POINTS = 1000
 DEVICE_COOKIE_NAME = "rankzone_device_id"
 COOLDOWN_MINUTES = 3
@@ -1199,6 +1199,7 @@ def inject_globals():
         "bell_notifications": bell_notifications,
         "unread_notification_count": unread_notification_count,
         "quick_match_config": get_quick_match_config(),
+        "button_theme_config": get_button_theme_config(),
         "blackbox_runtime_config": _safe_blackbox_runtime_config(),
     }
 
