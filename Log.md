@@ -1,3 +1,14 @@
+# V1.3.86 – Sửa logo chế độ và nền đục
+
+- Sửa lỗi khu vực **CÁC CHẾ ĐỘ KHÁC** rơi về giao diện button mặc định của trình duyệt.
+- Xóa nền xám/đục của thẻ chế độ và form chứa thẻ.
+- Khóa logo 6 chế độ ở 52 × 52 px, không còn phóng to toàn khung.
+- CSS bảo vệ không phụ thuộc wrapper `.arena-room-v2`, tránh lỗi khi fragment DOM bị tách scope.
+- Cập nhật phiên bản hiển thị trên web thành **V1.3.86**.
+- Hiển thị thêm tên bản sửa: **Sửa logo chế độ và nền đục**.
+- Không thay đổi route, công thức RP, trạng thái phòng hoặc logic xử lý backend.
+- `app.py` chỉ đổi hằng số `APP_VERSION` từ 1.3.84 → 1.3.86 để đồng bộ phiên bản/cache.
+
 # V1.3.85 – Thu gọn khu vực chế độ thi đấu
 
 - Thu nhỏ 6 thẻ chế độ ở khu vực **CÁC CHẾ ĐỘ KHÁC**.
