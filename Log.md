@@ -1,3 +1,11 @@
+# V1.3.80 — Button Cascade Reality Fix
+
+- Chế độ: FIX NHANH giao diện.
+- Nguyên nhân: V1.3.77 chỉ đổi custom properties semantic, trong khi Room legacy có các declaration `background: ... !important` với specificity cao hơn; kết quả class red/green/gold tồn tại nhưng màu render vẫn có thể là cyan/dark.
+- Sửa `static/css/gaming_neon_buttons.css`: thêm FINAL CASCADE GUARD với background/border/glow cụ thể cho từng màu chức năng; thêm specificity riêng cho Room, Invite; vẫn loại Admin và Parsec.
+- Không thay ID, route, logic, position, width/height layout.
+- Giữ V1.3.79 rollback an toàn đối với phần dead-code cleanup.
+
 # V1.3.79 — Emergency Rollback V1.3.78 Cleanup
 
 - Chế độ: FIX NHANH khẩn cấp.

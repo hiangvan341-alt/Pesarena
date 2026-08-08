@@ -281,3 +281,11 @@ Không chạy SQL thay đổi dữ liệu thật trong test nếu chưa có guar
 - `static/css/legacy/`: loại selector có class/ID không còn tồn tại trong templates/JS/Python runtime; không prune selector động/không chắc chắn.
 - Đã bỏ `static/css/admin.css` vì không được load ở runtime.
 - Đã bỏ compatibility Python cũ `modules/zcoin_service.py` và `modules/zcoin_routes.py`; runtime dùng `modules/zcoin/`.
+
+## V1.3.80 — Button CSS final cascade
+
+- `static/css/gaming_neon_buttons.css` là lớp visual cuối cho nút phía người chơi.
+- Semantic màu được ghi bằng giá trị `background/border/box-shadow` cụ thể để thắng các legacy `!important` có specificity cao.
+- Room có cascade guard riêng; Admin và Parsec vẫn loại trừ.
+- Khi sửa màu nút sau V1.3.80, ưu tiên chỉnh file này thay vì thêm một lớp `!important` mới trong Room legacy.
+
