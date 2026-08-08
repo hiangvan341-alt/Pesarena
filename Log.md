@@ -1,3 +1,10 @@
+# V1.3.111 — Sua dung thu tu logo 6 che do
+
+- Sua map logo 6 che do trong `modules/static_asset_service.py` theo dung thu tu ten 1 -> 6.
+- Thu tu logo moi: 1 Random | 2 Random 3 chon 1 | 3 Luot di/ve | 4 BO3 | 5 Chien thuat BO3 | 6 Cam chon BO3.
+- Dong bo lai so thu tu che do dang chon trong `templates/_room_live_content.html` va `templates/room/_center_stage.html` de khop thu tu ten/logo.
+- Khong sua kich thuoc, CSS, bo cuc, backend hay luong tran dau.
+
 # V1.3.110 — Hoàn tất ổn định CSS phòng đấu
 
 - Chốt `.arena-room-v2` về một nơi quản lý duy nhất: `static/css/room/00-room-core.css`.
