@@ -3,35 +3,10 @@
    Scope: Club headers, stadium visual layers, separators and branding cleanup.
    IMPORTANT: load order is defined in templates/room_detail.html. */
 /* V1.3.14 - Thanh tiêu đề chọn CLB bằng HTML + CSS */
-.arena-room-v2 .club-selection-title{
-  position: relative;
-  z-index: 3;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: calc(100% - 26px);
-  margin: 4px auto 0;
-  gap: 7px;
-  color: #f6b72b;
-  font-size: 15px;
-  font-weight: 700;
-  line-height: 1;
-  letter-spacing: .02em;
-  white-space: nowrap;
-  text-shadow: 0 0 9px rgba(246,183,43,.22);
-}
-.arena-room-v2 .club-selection-title::before, .arena-room-v2 .club-selection-title::after{
-  content: "";
-  height: 1px;
-  min-width: 18px;
-  flex: 1 1 auto;
-}
-.arena-room-v2 .club-selection-title::before{
-  background: linear-gradient(to right, transparent, rgba(216,148,22,.45) 28%, #d89416);
-}
-.arena-room-v2 .club-selection-title::after{
-  background: linear-gradient(to left, transparent, rgba(216,148,22,.45) 28%, #d89416);
-}
+
+
+
+
 .arena-room-v2 .title-diamond{
   width: 7px;
   height: 7px;
@@ -43,18 +18,8 @@
 .arena-room-v2 .club-selection-title-text{
   display: inline-block;
 }
-@media (max-width: 1450px) {
-  .arena-room-v2 .club-selection-title{
-    width: calc(100% - 18px);
-    gap: 6px;
-    font-size: 13px;
-  }
-}
-@media (max-width: 760px) {
-  .arena-room-v2 .club-selection-title{
-    font-size: 12px;
-  }
-}
+
+
 
 
 /* V1.3.16 - remove legacy player separators and expose VS stadium background */
@@ -63,9 +28,9 @@
 
 
 /* V1.3.17 — remove obsolete light-effect image layers and balance the room brand. */
-.arena-room-v2 .room-master-brand{width:min(380px,34vw)}
-.arena-room-v2 .room-master-brand img{height:66px}
-@media (max-width:1450px){.arena-room-v2 .room-master-brand{width:min(330px,31vw)}.arena-room-v2 .room-master-brand img{height:58px}}
+
+
+
 
 /* V1.3.18 — full-room dark texture, neon-only mode frames, larger mode logos. */
 .arena-room-v2{

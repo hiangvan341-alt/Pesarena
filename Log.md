@@ -1,3 +1,11 @@
+# V1.3.108 — On dinh CSS khung ngoai va tieu de phong
+
+- Nen sua: V1.3.107.
+- Chi don CSS frontend; khong thay doi backend, JS, RP, kich thuoc/logo/chuc nang.
+- Gom quyen quan ly: logo PES ARENA tren phong, khung nguoi choi, tieu de chon CLB, can le tieu de/chia se phong ve `static/css/room/14-shell-player-stability.css`.
+- Go cac khai bao cu tu 01/02/11/12 sau khi chuyen nguyen khai bao va thu tu cascade sang file 14.
+- Muc tieu: giam CSS chong cheo, giu giao dien V1.3.107 nguyen trang.
+
 # V1.3.107 — On dinh CSS che do dang choi va trang thai san sang
 
 - Ngay: 2026-08-08.
