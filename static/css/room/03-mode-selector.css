@@ -11,24 +11,8 @@
    Scope: Rank mode selector, neon mode frames and random-spin presentation.
    IMPORTANT: load order is defined in templates/room_detail.html. */
 /* The mode areas use neon outlines instead of blurred/opaque panels. */
-.arena-room-v2 .room-master-active-mode{
-  border-color: rgba(177, 83, 255, .98);
-  background: rgba(5, 7, 18, .48);
-  -webkit-backdrop-filter: none;
-  backdrop-filter: none;
-  box-shadow:
-    inset 0 0 22px rgba(155, 79, 224, .10),
-    0 0 8px rgba(155, 79, 224, .34),
-    0 0 20px rgba(155, 79, 224, .13);
-}
-.arena-room-v2 .room-master-active-mode::after{
-  content: "";
-  position: absolute;
-  inset: 5px;
-  border: 1px solid rgba(155, 79, 224, .20);
-  border-radius: 11px;
-  pointer-events: none;
-}
+
+
 
 
 
@@ -106,6 +90,3 @@
 /* V1.3.44 — ACTIVE MODE LOGO ONLY.
    Source WebP files are 3:2 canvases whose visible artwork uses only ~35–45% of the width.
    Magnify the artwork itself, not the layout box, so the center panel keeps its proportions. */
-
-
-

@@ -65,18 +65,15 @@
 
 /* Center card + VS, sized like the approved composition. */
 
-.arena-room-v2 .room-master-active-mode{
-  width:calc(100% - 12px)!important;min-height:335px!important;margin:6px 6px 0!important;
-  padding:16px 14px 10px!important;border-radius:14px!important;border-color:var(--ui-purple)!important;
-}
-.arena-room-v2 .room-master-mode-number{width:52px!important;height:52px!important;font-size:20px!important}
-.arena-room-v2 .room-master-mode-heading strong{font-size:18px!important;color:#fff!important;margin:4px 42px 6px!important}
-.arena-room-v2 .room-master-mode-heading small{font-size:11px!important;line-height:1.4!important;color:#fff!important;min-height:32px!important}
 
 
-.arena-room-v2 .room-master-unlock-pill{min-width:205px!important;padding:8px 14px!important;font-size:13px!important}
-.arena-room-v2 .room-master-room-ready{min-height:41px!important;margin-top:10px!important;padding:9px 12px!important;font-size:12px!important}
-.arena-room-v2 .room-master-room-ready strong{font-size:14px!important}
+
+
+
+
+
+
+
 
 
 
@@ -212,4 +209,3 @@
 
 
 /* V1.3.89 — Don lai khu vuc truoc tran: khong khung thua, khong de VS/thoi gian/nut chong len nhau. */
-

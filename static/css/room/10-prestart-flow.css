@@ -13,19 +13,9 @@
 /* Series waiting screen: reduce decorative VS footprint so orchestration and actions never compete for vertical space. */
 
 /* The participant counter is informational only; readiness is shown once on the guest player card. */
-.arena-room-v2 .room-master-room-ready span{white-space:nowrap}
+
 
 
 
 /* V1.3.83 — prestart orchestration cleanup: keep only one primary CTA lane,
    move helper description out of the button, and align exit CTA cleanly. */
-
-
-
-
-
-
-
-
-
-

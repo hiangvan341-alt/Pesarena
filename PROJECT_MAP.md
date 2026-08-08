@@ -73,6 +73,8 @@ Không sửa module khác nếu chưa chứng minh dependency liên quan.
 | Bố cục khung phòng + Chủ phòng/Đối thủ + topbar/chia sẻ | `static/css/room/14-shell-player-stability.css` |
 | Nút/trạng thái hành động trong phòng | `static/css/room/15-room-actions-stability.css` |
 | Rail thông tin + Parsec + lịch sử phòng | `static/css/room/16-side-rail-history-stability.css` |
+| Khu vực giữa phòng / VS / tỷ số / HUD trạng thái | `static/css/room/17-center-match-stability.css` |
+| Chế độ đang chơi + trạng thái sẵn sàng/mở khóa | `static/css/room/18-active-mode-status-stability.css` |
 
 ### Backend
 

@@ -55,7 +55,7 @@
 
 
 
-.arena-room-v2 .room-ready-status{margin-top:7px;padding:5px 12px;border-radius:12px;background:rgba(1,8,15,.64);font-size:12px;color:#fff}
+
 
 /* CLUB VISUALS — do not expose hidden Random3 data; only restyle data already rendered by backend. */
 .arena-room-v2 .club-selection-title{position:relative;z-index:3;margin:0 0 3px;color:#f0b51d;font-size:16px}
@@ -71,26 +71,16 @@
 
 /* CENTER MODE CARD */
 
-.arena-room-v2 .room-master-active-mode{
-  width:calc(100% - 12px);min-height:310px;margin:6px 6px 0;padding:16px 13px 10px;
-  border-color:#a94bea;border-radius:14px;
-  background:radial-gradient(circle at 8% 0,rgba(113,43,177,.34),transparent 36%),linear-gradient(180deg,rgba(9,8,24,.98),rgba(2,8,17,.98));
-  box-shadow:inset 0 0 30px rgba(129,42,215,.13),0 0 16px rgba(164,75,235,.17)
-}
-.arena-room-v2 .room-master-mode-number{width:52px;height:52px;border-radius:14px 0 26px 0;font-size:20px;background:linear-gradient(135deg,#ad4afa,#3b145f)}
-.arena-room-v2 .room-master-mode-heading strong{font-size:18px;margin:4px 42px 6px;color:#fff}
-.arena-room-v2 .room-master-mode-heading small{min-height:32px;font-size:11px;color:#fff}
 
 
-.arena-room-v2 .room-master-unlock-pill{
-  min-width:205px;padding:8px 14px;border-color:#08772c;border-radius:9px;background:linear-gradient(180deg,#073d1a,#06170d);
-  color:#36f37a;font-size:13px
-}
-.arena-room-v2 .room-master-unlock-pill::before{content:"🔒";margin-right:7px}
-.arena-room-v2 .room-master-room-ready{
-  margin-top:10px;padding:9px 12px;border-color:#243344;border-radius:9px;background:rgba(2,10,19,.82);font-size:12px
-}
-.arena-room-v2 .room-master-room-ready span{color:#39e979}.arena-room-v2 .room-master-room-ready strong{font-size:14px;color:#ffbd28}
+
+
+
+
+
+
+
+
 
 /* VS & state-specific center sections */
 
@@ -190,13 +180,11 @@
 
 
 /* Keep the active-mode card shaped like the approved mockup. */
-.arena-room-v2 .room-master-active-mode{
-  min-height:335px!important;padding:17px 15px 11px!important;
-}
-.arena-room-v2 .room-master-mode-heading strong{font-size:18px!important;line-height:1.18!important}
-.arena-room-v2 .room-master-mode-heading small{font-size:11px!important;line-height:1.45!important}
-.arena-room-v2 .room-master-unlock-pill{font-size:13px!important;min-width:205px!important}
-.arena-room-v2 .room-master-room-ready{font-size:12px!important;min-height:41px!important}
+
+
+
+
+
 
 /* Match the original: TOTAL SCORE caption and number are white on both sides. */
 
@@ -220,5 +208,3 @@
 
 
 /* Ensure modal is always above the room and visibly communicates RP penalty. */
-
-

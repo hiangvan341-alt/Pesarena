@@ -1,3 +1,16 @@
+# V1.3.107 — On dinh CSS che do dang choi va trang thai san sang
+
+- Ngay: 2026-08-08.
+- Nen sua: V1.3.106.
+- Muc tieu: tiep tuc don CSS tung khu vuc, khong thay doi giao dien.
+- Tao owner moi: `static/css/room/18-active-mode-status-stability.css`.
+- Gom CSS cua: khung che do dang choi, so che do, tieu de/mo ta che do, nhan mo khoa, trang thai san sang/so nguoi.
+- Go cac selector cung pham vi khoi `01`, `03`, `05`, `06`, `10`, `11`, `12`, `17`; giu nguyen thu tu cascade lich su trong module 18.
+- Khong sua logo 6 che do, nut hanh dong, Parsec, backend, RP, JavaScript hoac gameplay.
+- Visual regression: 1920 / 1280 / 820 / 600, 4 trang thai phong = 0 khac biet tren cac thanh phan vua di chuyen.
+- CSS audit: Room cross-file ownership conflicts 25 -> 16; exact cross-file duplicate selectors 162 -> 153.
+- APP_VERSION: 1.3.106 -> 1.3.107.
+
 # V1.3.106 — On dinh CSS khu vuc giua phong dau
 
 - Gom CSS khu vuc giua phong: khung trung tam, VS, dong ho/trang thai, bang ty so/ket qua, vi tri HUD series vao `static/css/room/17-center-match-stability.css`.

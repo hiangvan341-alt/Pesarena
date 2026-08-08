@@ -28,10 +28,10 @@
 
 
 
-.arena-room-v2 .room-ready-status{margin-top:7px;font-size:11px}
+
 
 .arena-room-v2 .room-center-mode-zone{display:none}
-.arena-room-v2 .room-master-active-mode{position:relative;z-index:1;width:calc(100% - 14px);min-height:245px;margin:7px 7px 0;padding:19px 13px 11px;border:1px solid rgba(155,79,224,.8);border-radius:16px;background:radial-gradient(circle at 8% 0,rgba(109,41,178,.37),transparent 36%),linear-gradient(180deg,rgba(20,11,35,.98),rgba(4,9,18,.99));text-align:center;box-shadow:inset 0 0 24px rgba(111,43,177,.12),0 0 10px rgba(155,79,224,.11)}.arena-room-v2 .room-master-mode-number{position:absolute;top:0;left:0;display:grid;place-items:center;width:47px;height:47px;border-radius:15px 0 15px 0;background:linear-gradient(135deg,#7135b4,#341257);font-size:20px;font-weight:900}.arena-room-v2 .room-master-mode-heading strong{display:block;margin:0 34px 6px;color:#f7f7f9;font-size:17px;line-height:1.2;text-transform:uppercase}.arena-room-v2 .room-master-mode-heading small{display:block;min-height:32px;color:#d0d7e1;font-size:10px;line-height:1.45}.arena-room-v2 .room-master-unlock-pill{display:inline-flex;justify-content:center;min-width:166px;padding:7px 12px;border:1px solid rgba(24,200,120,.6);border-radius:8px;background:rgba(3,82,45,.3);color:#32e992;font-size:11px;font-weight:850}.arena-room-v2 .room-master-room-ready{display:flex;align-items:center;justify-content:space-between;margin-top:9px;padding:8px 9px;border:1px solid rgba(255,255,255,.095);border-radius:8px;background:rgba(2,8,16,.74);font-size:10px}.arena-room-v2 .room-master-room-ready span{color:#2bdd88}.arena-room-v2 .room-master-room-ready strong{color:#f2bd54;font-size:12px}
+
 
 
 
@@ -48,7 +48,7 @@
 
 
 
-.arena-room-v2 .room-master-active-mode{box-shadow:inset 0 0 20px rgba(155,79,224,.10),0 0 9px rgba(155,79,224,.12)}
+
 
 @media (max-width:1450px){.arena-room-v2 .room-master-brand{width:320px}}
 
@@ -100,20 +100,13 @@
   
 
   
-  .arena-room-v2 .room-master-active-mode{
-    width: calc(100% - 14px);
-    min-height: 257px;
-    margin-top: 7px;
-    padding: 20px 14px 11px;
-    border-radius: 15px;
-    box-shadow: inset 0 0 22px rgba(var(--arena-purple), .10), 0 0 10px rgba(var(--arena-purple), .13);
-  }
-  .arena-room-v2 .room-master-mode-number{ width: 50px; height: 50px; font-size: 21px; }
-  .arena-room-v2 .room-master-mode-heading strong{ margin-bottom: 7px; font-size: 17px; }
-  .arena-room-v2 .room-master-mode-heading small{ min-height: 31px; font-size: 10px; }
   
-  .arena-room-v2 .room-master-unlock-pill{ min-width: 172px; padding: 7px 13px; font-size: 11px; }
-  .arena-room-v2 .room-master-room-ready{ margin-top: 9px; padding: 8px 10px; }
+  
+  
+  
+  
+  
+  
   
 
   
@@ -145,7 +138,7 @@
   
   
   
-  .arena-room-v2 .room-master-active-mode{ min-height: 244px; }
+  
   
   
   
@@ -165,4 +158,3 @@
   background-size: cover;
   background-position: center;
 }
-
