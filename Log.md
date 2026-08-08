@@ -1,14 +1,26 @@
+# V1.3.105 — On dinh CSS rail thong tin Parsec va lich su phong
+
+- Ngay: 2026-08-08.
+- Nen sua: V1.3.104.
+- Muc tieu: tiep tuc don CSS theo tung khu vuc, khong thay doi giao dien.
+- Tao owner moi: `static/css/room/16-side-rail-history-stability.css`.
+- Gom CSS cua: cot thong tin ben phai, thong tin phong, Parsec trong Room, vi tri Chat rail, khung day va lich su ty so trong phong.
+- Go cac selector cung pham vi khoi `01`, `03`, `04`, `06`, `07`, `11`, `12`; giu `static/css/parsec_room.css` lam skin component Parsec dung chung.
+- Khong sua: mode/logo, the nguoi choi, nut hanh dong, gameplay, backend, route, RP.
+- Visual regression: 1920 / 1280 / 820 / 600 = 0 khac biet tren cac thanh phan vua di chuyen.
+- CSS audit: Room cross-file ownership conflicts 58 -> 40; exact cross-file duplicate selectors 195 -> 177.
+- APP_VERSION: 1.3.104 -> 1.3.105.
+
 # V1.3.104 — On dinh CSS nut va trang thai phong dau
 
-- Mục tiêu: tiếp tục dọn CSS, **không đổi giao diện**.
-- Tạo `static/css/room/15-room-actions-stability.css` làm nơi duy nhất quản lý bố cục/trạng thái riêng của các nút Room: Mời đấu, Sẵn sàng, Thoát, Quay quân, Gửi kết quả, Xác nhận kết quả, pre-start và action modal.
-- Chuyển các rule action cũ ra khỏi 11 module Room: `01`, `03`, `04`, `05`, `06`, `07`, `08`, `09`, `10`, `11`, `12`; các file này chỉ giữ phần trách nhiệm còn lại.
-- Giữ `static/css/gaming_neon_buttons.css` làm nơi quản lý màu/skin Gaming Neon dùng chung; không tạo lớp màu mới để đè lên nó.
-- Cập nhật `PROJECT_MAP.md` với quyền sở hữu CSS mới.
-- APP_VERSION: 1.3.103 → 1.3.104.
-- Kiểm tra hiển thị trước/sau bằng Chromium tại 1920 / 1280 / 820 / 600: **0 khác biệt computed-style** cho các nút/trạng thái đã dọn.
-- CSS audit: selector trùng giữa các file chạm Room giảm **104 → 58**; tổng selector trùng giữa file giảm **241 → 195**.
-- Không thay backend, JS, RP, gameplay, Parsec, logo, kích thước logo hay bố cục player card.
+- Muc tieu: gom CSS nut va trang thai hanh dong trong Room ve mot noi quan ly, giu nguyen giao dien V1.3.103.
+- Tao owner: `static/css/room/15-room-actions-stability.css`.
+- Gom cac rule lien quan Moi dau / San sang / Thoat / Quay quan / Gui ket qua / Xac nhan / Khong dong y / Da tiep / action modal.
+- Skin mau nut dung chung van do `static/css/gaming_neon_buttons.css` quan ly.
+- Khong sua backend, route, RP, logo, bo cuc nguoi choi hay Parsec.
+- Visual regression: 1920 / 1280 / 820 / 600 = 0 khac biet.
+- CSS audit: Room cross-file ownership conflicts 104 -> 58; exact cross-file duplicate selectors 241 -> 195.
+- APP_VERSION: 1.3.103 -> 1.3.104.
 
 # V1.3.103 — On dinh CSS bo cuc phong va the nguoi choi
 

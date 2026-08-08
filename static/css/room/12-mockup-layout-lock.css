@@ -1,3 +1,7 @@
+/* PES Arena V1.3.105 — 12-mockup-layout-lock.css
+ * Side rail / Parsec / room history rules moved to 16-side-rail-history-stability.css.
+ * Remaining rules keep this module's other responsibilities.
+ */
 /* PES Arena V1.3.104 — 12-mockup-layout-lock.css
  * Room action-control rules moved to 15-room-actions-stability.css.
  * Remaining rules keep this module's non-action responsibility.
@@ -37,7 +41,7 @@
 
 /* One fixed four-column battle layout. */
 
-.arena-room-v2 .room-side-card, .arena-room-v2 .room-center-stage-plain, .arena-room-v2 .room-arena-right-rail{height:578px!important;min-height:578px!important}
+.arena-room-v2 .room-side-card, .arena-room-v2 .room-center-stage-plain{height:578px!important;min-height:578px!important}
 
 /* Host / opponent panels. */
 
@@ -94,25 +98,18 @@
 
 
 /* Right rail aligned with mockup. */
-.arena-room-v2 .room-arena-right-rail{display:flex!important;flex-direction:column!important;gap:10px!important;overflow:auto!important}
-.arena-room-v2 .room-side-info-panel, .arena-room-v2 .parsec-room-panel, .arena-room-v2 .room-chat-side{
-  border:1px solid rgba(185,119,22,.72)!important;border-radius:14px!important;
-  background:linear-gradient(180deg,rgba(4,13,23,.98),rgba(3,10,18,.98))!important;
-}
-.arena-room-v2 .room-side-info-panel{padding:12px 14px!important}
-.arena-room-v2 .room-side-info-panel h3, .arena-room-v2 .parsec-room-panel h2, .arena-room-v2 .parsec-room-panel h3{font-size:16px!important;color:#fff!important;text-transform:uppercase!important}
-.arena-room-v2 .room-side-info-list{gap:7px!important}
-.arena-room-v2 .room-side-info-list>div{padding:10px 12px!important;border-radius:10px!important;border:1px solid #303b49!important;background:#07111b!important}
-.arena-room-v2 .room-side-info-list span{font-size:10px!important;color:#b8bec7!important}
-.arena-room-v2 .room-side-info-list strong{font-size:14px!important;color:#fff!important}
-.arena-room-v2 .parsec-room-panel{padding:12px 14px!important;color:#fff!important}
-.arena-room-v2 .parsec-room-panel input{color:#fff!important;background:#07101a!important}
+
+
+
+
+
+
+
+
+
+
 
 /* Bottom strip is OUTSIDE the battle grid now, exactly like the approved mockup. */
-.arena-room-v2 .room-bottom-shell{
-  display:grid!important;grid-template-columns:minmax(0,1fr) 250px!important;gap:10px!important;
-  width:100%!important;margin-top:10px!important;align-items:start!important;
-}
 
 
 
@@ -124,7 +121,8 @@
 
 
 
-.arena-room-v2 .room-bottom-side{margin-top:0!important;min-width:0!important}
+
+
 
 /* Do not let legacy helper blocks sit on top of the approved core layout. */
 .arena-room-v2 .guest-forfeit-box, .arena-room-v2 .host-forfeit-box, .arena-room-v2 .room-finished-summary{position:relative!important;z-index:4!important;margin:8px auto!important;max-width:820px!important}
@@ -134,15 +132,15 @@
   .arena-room-v2 .room-master-brand, .arena-room-v2 .room-master-brand img{width:360px!important}
   
   .arena-room-v2 .room-side-card, .arena-room-v2 .room-center-stage-plain{height:560px!important;min-height:560px!important}
-  .arena-room-v2 .room-arena-right-rail{height:auto!important;min-height:0!important;display:grid!important;grid-template-columns:repeat(2,minmax(0,1fr))!important}
-  .arena-room-v2 .room-bottom-shell{grid-template-columns:1fr!important}
+  
+  
   
 }
 @media (max-width:820px){
   
   .arena-room-v2 .room-stage-title-wrap, .arena-room-v2 .room-stage-share-wrap, .arena-room-v2 .room-master-brand{justify-self:center!important}
   
-  .arena-room-v2 .room-side-card, .arena-room-v2 .room-center-stage-plain, .arena-room-v2 .room-arena-right-rail{height:auto!important;min-height:520px!important}
+  .arena-room-v2 .room-side-card, .arena-room-v2 .room-center-stage-plain{height:auto!important;min-height:520px!important}
   
 }
 
@@ -176,13 +174,8 @@
    Quy tắc này cố ý không phụ thuộc .arena-room-v2 để vẫn an toàn
    nếu fragment HTML bị browser tự tách khỏi wrapper.
    ========================================================= */
-.room-bottom-shell{
-  width:100% !important;
-  background:transparent !important;
-}
-.room-bottom-main{
-  background:transparent !important;
-}
+
+
 
 
 

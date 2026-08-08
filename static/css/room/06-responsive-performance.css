@@ -1,3 +1,7 @@
+/* PES Arena V1.3.105 — 06-responsive-performance.css
+ * Side rail / Parsec / room history rules moved to 16-side-rail-history-stability.css.
+ * Remaining rules keep this module's other responsibilities.
+ */
 /* PES Arena V1.3.104 — 06-responsive-performance.css
  * Room action-control rules moved to 15-room-actions-stability.css.
  * Remaining rules keep this module's non-action responsibility.
@@ -72,14 +76,5 @@
 }
 
 /* V1.3.97 — removed duplicate three-button dock sizing; 01-shell-layout.css is the single layout owner. */
-.arena-room-v2 .room-bottom-side:empty::before{
-  content:"Lịch sử phòng chưa có dữ liệu.";
-  display:block;
-  padding:14px;
-  border:1px solid rgba(216,165,60,.24);
-  border-radius:14px;
-  background:rgba(4,11,21,.82);
-  color:#aeb9c7;
-  font-size:12px;
-}
+
 
