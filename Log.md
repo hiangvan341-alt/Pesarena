@@ -1511,14 +1511,10 @@
 - APP_VERSION: 1.3.92.
 - Kiểm tra: app.py compile PASS; 23 test CSS/Room PASS; 14 test Quick Match/Room action PASS.
 
-
-## V1.3.93 - Xoa_CSS_rieng_nut_bat_dau_tran_va_tim_nhanh (2026-08-08)
-- Làm lại từ V1.3.92.
-- Xóa các class CSS riêng khỏi nút `BẮT ĐẦU TRẬN`: nút chỉ còn dùng bộ class nút xanh chung `btn arena-btn green room-center-action-btn`.
-- Với Series, form bắt đầu trận không còn class `room-center-random-form` / `series-primary-form` nên không còn khung Random bọc ngoài.
-- Xóa CSS riêng `room-prestart-trigger` / `room-start-icon` áp vào nút bắt đầu; không thêm CSS vá mới.
-- Nút `Tìm nhanh` bỏ `arena-action-quick`, `gaming-quick-action`, và bỏ hook `room-center-primary-actions-three`; nút chỉ dùng style xanh chung giống Sẵn Sàng.
-- `quick_match.css` xóa toàn bộ CSS trang trí nút Quick Match; chỉ giữ CSS modal thông báo.
-- Xóa các rule Quick Match còn sót trong Room CSS / gaming neon / legacy CSS.
-- Giữ nguyên `data-quick-match-url`, `.quick-match-icon`, `.quick-match-label` để JavaScript và luồng Tìm nhanh hoạt động như cũ.
-- Không thay route, JavaScript nghiệp vụ, backend, RP hoặc luồng xử lý nút.
+## V1.3.94 - Xoa_toan_bo_CSS_nut_bat_dau_tran_va_tim_nhanh (2026-08-08)
+- Quét toàn bộ `static/css`, legacy CSS, Room CSS và Gaming Neon để xác định các rule có thể đè nút.
+- `BẮT ĐẦU TRẬN`: bỏ toàn bộ class giao diện (`btn`, `arena-btn`, `green`, `room-center-action-btn`) và bỏ `series-primary-form` khỏi form Series để không còn CSS Series/Random bọc ngoài.
+- `Tìm nhanh`: bỏ toàn bộ class giao diện khỏi button; chỉ giữ `data-quick-match-url` cho JavaScript.
+- Hai nút chỉ còn inline reset `all: unset !important` + chữ + 1 border + padding cơ bản; background/shadow/filter/transform/text-shadow đều bị reset về không.
+- Quick Match JS đổi hook icon/label từ class sang `data-quick-match-icon` / `data-quick-match-label`, không phụ thuộc CSS.
+- Không thay endpoint, route, RP, trạng thái, polling hay luồng submit/click.

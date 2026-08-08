@@ -30,7 +30,7 @@ def test_all_series_modes_keep_orchestrator_path():
     for code in ["home_away", "bo3", "tactical_bo3", "ban_pick_bo3"]:
         assert code in text
     assert "room_series_start_next_game" in text
-    assert "series-primary-form" in text
+    assert "data-bare-action=\"series-start\"" in text
 
 
 def test_invite_actions_use_synced_centered_style_everywhere():

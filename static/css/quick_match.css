@@ -1,6 +1,4 @@
-/* Quick Match module — button styling intentionally removed in V1.3.93.
-   The Tìm nhanh trigger now inherits the same generic .arena-btn.green style as Sẵn Sàng.
-   Only the result/notice modal styles remain here. */
+/* Quick Match module — only result/notice modal styles. The trigger has no stylesheet skin. */
 
 .game-notice-open { overflow: hidden; }
 .game-notice-modal[hidden] { display: none !important; }
