@@ -2,7 +2,7 @@
 
 > **BẮT BUỘC:** trước khi dùng file map này, đọc `AGENTS.md` ở thư mục gốc để tự chọn chế độ **FIX NHANH / NÂNG CẤP MODULE / AUDIT TOÀN HỆ THỐNG**.
 > Mục đích: tra nhanh **lỗi nào → đọc file nào**, tránh phải quét toàn bộ dự án mỗi lần sửa.
-> Cập nhật: V1.3.69 — 08/08/2026 (Asia/Bangkok)
+> Cập nhật: V1.3.78 — 08/08/2026 (Asia/Bangkok)
 
 ## 1. Quy tắc FIX NHANH
 
@@ -179,7 +179,7 @@ Khi sửa Invite/Quick Match: **không chuyển route sang file khác trong cùn
 | Khu vực | File |
 |---|---|
 | Compatibility CSS entry | `static/style.css` |
-| Legacy CSS frozen | `static/css/legacy/` |
+| Legacy CSS đã prune | `static/css/legacy/` — chỉ giữ selector còn tồn tại trong runtime source |
 | Room CSS | `static/css/room/` |
 | Admin CSS | `static/css/admin/` nếu có |
 | Asset helper | `modules/static_asset_service.py` |
@@ -273,3 +273,9 @@ Không chạy SQL thay đổi dữ liệu thật trong test nếu chưa có guar
 - `static/css/gaming_neon_buttons.css`: lớp visual cuối cho nút giao diện người chơi.
 - `templates/base.html`: gắn `data-ui-scope=player/admin` và nạp Gaming Neon CSS sau page CSS.
 - Quy tắc: không áp dụng cho Admin và mọi control trong khu Parsec; không sửa logic/ID/route/kích thước layout.
+
+
+## V1.3.78 — Dead-code cleanup
+- `static/css/legacy/`: loại selector có class/ID không còn tồn tại trong templates/JS/Python runtime; không prune selector động/không chắc chắn.
+- Đã bỏ `static/css/admin.css` vì không được load ở runtime.
+- Đã bỏ compatibility Python cũ `modules/zcoin_service.py` và `modules/zcoin_routes.py`; runtime dùng `modules/zcoin/`.

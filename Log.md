@@ -1,3 +1,16 @@
+# V1.3.78 — CSS/Python Dead-Code Cleanup
+
+- Chế độ: AUDIT TOÀN HỆ THỐNG có dọn mã.
+- Prune CSS legacy theo bằng chứng runtime: chỉ bỏ selector có class/ID không còn xuất hiện trong `templates/`, `static/js/`, `modules/` hoặc `app.py`; giữ selector động/không chắc chắn.
+- Xóa `static/css/admin.css` vì không có runtime reference.
+- Xóa `modules/zcoin_service.py`: bản sao byte-for-byte của `modules/zcoin/service.py`.
+- Xóa `modules/zcoin_routes.py`: route compatibility cũ không còn được import; `app.py` dùng `modules.zcoin.register_routes`.
+- Không thay gameplay, RP, schema Supabase, route hiện hành, HTML/JS hoặc visual mới Gaming Neon.
+- Cập nhật APP_VERSION 1.3.77 → 1.3.78.
+- Kết quả: CSS 537,174 → 432,491 bytes (-104,683 bytes, khoảng -19.5% toàn CSS); 9,006 → 7,138 dòng CSS; module Python 18,523 → 18,242 dòng (-281 dòng); tổng source loại cache 378 → 375 file và 2,527,566 → 2,413,022 bytes.
+- Audit CSS: `!important` 1,470 → 1,279; cross-file duplicate selector 197 → 177; selector có thể hide UI 131 → 102.
+- Validation: Python compile PASS; CSS parse 0 lỗi; CSS reference/import thiếu = 0; Jinja parse 0 lỗi; Zcoin package smoke PASS. Nhóm regression rộng: 70 PASS + 7 baseline FAIL y hệt V1.3.77 (test lịch sử ghim version/source monolith).
+
 # V1.3.77 — Global Gaming Neon 3D Button Sync
 
 - Ngày: 2026-08-08 (Asia/Bangkok)
