@@ -1,3 +1,15 @@
+# V1.3.103 — On dinh CSS bo cuc phong va the nguoi choi
+
+- Ngay: 2026-08-08
+- Muc tieu: tiep tuc don CSS theo tung khu vuc, giu nguyen giao dien V1.3.102.
+- Tao owner moi: `static/css/room/14-shell-player-stability.css`.
+- Gom CSS cua: khung phong, topbar, chia se link, the Chu phong/Doi thu, avatar/rank, CLB, tong diem.
+- Go cac rule cung pham vi khoi `01-shell-layout.css`, `02-club-visuals.css`, `11-index-layout-reconnect.css`, `12-mockup-layout-lock.css`.
+- Khong sua: mode/logo, nut hanh dong, Parsec, ket qua, gameplay, backend.
+- Visual regression: 1920 / 1280 / 820 khong phat hien khac biet tren cac thanh phan vua di chuyen.
+- CSS audit: Room cross-file duplicate selectors 129 -> 104; exact cross-file duplicate selectors 266 -> 241.
+- APP_VERSION: 1.3.102 -> 1.3.103.
+
 # V1.3.102 — On dinh CSS logo va khu vuc che do
 
 - Dừng nâng cấp giao diện V1.4 để xử lý chồng chéo CSS trước.

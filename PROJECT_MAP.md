@@ -70,6 +70,7 @@ Không sửa module khác nếu chưa chứng minh dependency liên quan.
 | Dialog | `templates/room/scripts/_room_dialogs.html` |
 | CSS room | `static/css/room/` |
 | Logo chế độ + 6 thẻ chế độ | `static/css/room/13-mode-stability.css` |
+| Bố cục khung phòng + Chủ phòng/Đối thủ + topbar/chia sẻ | `static/css/room/14-shell-player-stability.css` |
 
 ### Backend
 
