@@ -1,0 +1,155 @@
+/* PES Arena V1.3.90 — prestart compact refine
+   Scope: only room waiting_ready center stage.
+   Goal: start-match CTA matches Exit button (same size, green tone, no outer frame)
+   and the active mode block (#6 / Lượt đi lượt về, etc.) becomes more compact. */
+
+@media (min-width:821px){
+  /* Active mode block: compact and cleaner so it no longer wastes space. */
+  .arena-room-v2 .room-center-stage-plain.room-state-waiting_ready > .room-master-active-mode{
+    min-height:164px !important;
+    padding:10px 12px 8px !important;
+    margin-top:4px !important;
+  }
+  .arena-room-v2 .room-center-stage-plain.room-state-waiting_ready .room-master-mode-number{
+    width:38px !important;
+    height:38px !important;
+    border-radius:12px 0 12px 0 !important;
+    font-size:18px !important;
+  }
+  .arena-room-v2 .room-center-stage-plain.room-state-waiting_ready .room-master-mode-heading strong{
+    margin:0 28px 4px !important;
+    font-size:13px !important;
+    line-height:1.15 !important;
+  }
+  .arena-room-v2 .room-center-stage-plain.room-state-waiting_ready .room-master-mode-heading small{
+    min-height:0 !important;
+    max-width:236px;
+    margin:0 auto;
+    font-size:9px !important;
+    line-height:1.22 !important;
+  }
+  .arena-room-v2 .room-center-stage-plain.room-state-waiting_ready .room-master-mode-emblem{
+    width:58px !important;
+    height:58px !important;
+    margin:6px auto 5px !important;
+  }
+  .arena-room-v2 .room-center-stage-plain.room-state-waiting_ready .room-master-mode-emblem img{
+    width:58px !important;
+    height:58px !important;
+    max-width:58px !important;
+    max-height:58px !important;
+  }
+  .arena-room-v2 .room-center-stage-plain.room-state-waiting_ready .room-master-unlock-pill{
+    min-width:128px !important;
+    padding:5px 10px !important;
+    font-size:10px !important;
+    border-radius:9px !important;
+  }
+  .arena-room-v2 .room-center-stage-plain.room-state-waiting_ready .room-master-room-ready{
+    margin-top:5px !important;
+    padding:5px 8px !important;
+    border-radius:9px !important;
+    font-size:9.5px !important;
+  }
+  .arena-room-v2 .room-center-stage-plain.room-state-waiting_ready .room-master-room-ready span{
+    font-size:10px !important;
+  }
+  .arena-room-v2 .room-center-stage-plain.room-state-waiting_ready .room-master-room-ready strong{
+    font-size:11px !important;
+  }
+
+  /* Countdown / VS lane: tighten a little so the center looks less crowded. */
+  .arena-room-v2 .room-center-stage-plain.room-state-waiting_ready .room-center-countdown-label{
+    margin-top:2px !important;
+    font-size:11px !important;
+  }
+  .arena-room-v2 .room-center-stage-plain.room-state-waiting_ready .room-center-countdown{
+    font-size:34px !important;
+  }
+  .arena-room-v2 .room-center-stage-plain.room-state-waiting_ready .room-center-vs-image{
+    width:min(46%,170px) !important;
+    max-height:96px !important;
+    margin-top:2px !important;
+  }
+
+  /* Remove the extra gold framed wrapper around the start button. */
+  .arena-room-v2 .room-prestart-launch .room-prestart-mainform,
+  .arena-room-v2 .room-prestart-launch .room-prestart-mainform.room-center-random-form,
+  .arena-room-v2 .room-prestart-launch .room-prestart-mainform.series-primary-form{
+    width:100% !important;
+    margin:0 !important;
+    padding:0 !important;
+    border:0 !important;
+    border-radius:0 !important;
+    background:transparent !important;
+    box-shadow:none !important;
+    backdrop-filter:none !important;
+    -webkit-backdrop-filter:none !important;
+  }
+
+  /* Start and exit buttons must have the same size and same layout weight. */
+  .arena-room-v2 .room-prestart-action-row{
+    gap:12px !important;
+    align-items:stretch !important;
+  }
+  .arena-room-v2 .room-prestart-mainform,
+  .arena-room-v2 .room-prestart-exit-form{
+    flex:1 1 0 !important;
+    max-width:none !important;
+  }
+  .arena-room-v2 .room-prestart-mainform .room-prestart-trigger,
+  .arena-room-v2 .room-prestart-exit-btn{
+    width:100% !important;
+    min-height:50px !important;
+    height:50px !important;
+    padding:10px 14px !important;
+    border-radius:14px !important;
+  }
+  .arena-room-v2 .room-prestart-mainform .room-random-button-label{
+    font-size:14px !important;
+    line-height:1 !important;
+    letter-spacing:.01em !important;
+  }
+
+  /* Force the start CTA to look exactly like a green action button, not a gold CTA. */
+  body[data-ui-scope="player"] .arena-room-v2 .room-prestart-start-btn.room-center-random-trigger,
+  .arena-room-v2 .room-prestart-start-btn.room-center-random-trigger{
+    border-color:#1ff07c !important;
+    background:
+      linear-gradient(180deg,rgba(255,255,255,.17),rgba(255,255,255,0) 34%),
+      linear-gradient(180deg,#0d542f,#07351e 48%,#04130c) !important;
+    box-shadow:0 0 14px rgba(31,240,124,.36),0 7px 15px rgba(0,0,0,.28),inset 0 1px 0 rgba(255,255,255,.23),inset 0 -5px 10px rgba(0,0,0,.40) !important;
+    color:#f3fff9 !important;
+  }
+  body[data-ui-scope="player"] .arena-room-v2 .room-prestart-start-btn.room-center-random-trigger:hover,
+  .arena-room-v2 .room-prestart-start-btn.room-center-random-trigger:hover{
+    filter:brightness(1.08) !important;
+    transform:translateY(-1px) !important;
+  }
+
+  /* Helper note stays but takes less visual space. */
+  .arena-room-v2 .room-prestart-note{
+    font-size:11px !important;
+    line-height:1.25 !important;
+    color:rgba(230,238,248,.74) !important;
+    padding:0 8px !important;
+  }
+}
+
+@media (max-width:820px){
+  .arena-room-v2 .room-prestart-launch .room-prestart-mainform,
+  .arena-room-v2 .room-prestart-launch .room-prestart-mainform.room-center-random-form,
+  .arena-room-v2 .room-prestart-launch .room-prestart-mainform.series-primary-form{
+    padding:0 !important;
+    border:0 !important;
+    background:transparent !important;
+    box-shadow:none !important;
+  }
+  .arena-room-v2 .room-prestart-mainform,
+  .arena-room-v2 .room-prestart-exit-form{flex:1 1 auto !important;}
+  .arena-room-v2 .room-prestart-mainform .room-prestart-trigger,
+  .arena-room-v2 .room-prestart-exit-btn{
+    min-height:48px !important;
+    height:48px !important;
+  }
+}

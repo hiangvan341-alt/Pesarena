@@ -1,17 +1,3 @@
-# V1.3.89 — Sửa bố cục bắt đầu trận gọn gàng
-
-- Dọn riêng trạng thái **Đủ 2 người / Chờ sẵn sàng** ở cột giữa, không thay đổi luồng Backend/Series.
-- Bỏ khung/viền thừa bao quanh cụm **BẮT ĐẦU TRẬN + Thoát Phòng**.
-- Thu gọn nút **BẮT ĐẦU TRẬN 1**, đổi về tông vàng đậm đồng bộ PES Arena; giữ **Thoát Phòng** màu đỏ.
-- Thu gọn phần thời gian, không để số đếm lấn xuống khu vực nút.
-- Thu nhỏ VS ở trạng thái trước trận và đặt theo luồng tự nhiên để không còn bị nút/thời gian đè lên.
-- Ẩn Series HUD ở màn hình chờ bắt đầu vì thông tin chế độ đã có ngay phía trên; HUD vẫn giữ nguyên ở các trạng thái thi đấu/kết quả.
-- Chỉ sửa CSS scope `.room-state-waiting_ready`; không sửa RP, random, Parsec, lời mời, kết quả hay điều phối Series.
-
-**File sửa:** `app.py`, `static/css/room/12-mockup-layout-lock.css`, `Log.md`.
-
----
-
 # V1.3.88 – Sửa logo chế độ hiển thị đúng kích thước
 
 - Xác định nguyên nhân logo vẫn bé: file logo nguồn 1536×1024 có khoảng trống trong suốt rất lớn quanh artwork.
@@ -1484,3 +1470,14 @@
 - `room/_bottom_modes_history.html`: giữ 6 mode cards luôn hiện để layout không nhảy giữa các trạng thái; khi trận/series đang chạy card chỉ xem, không gửi form đổi mode.
 - Thêm `static/css/room/12-mockup-layout-lock.css` tải cuối để khóa tỷ lệ desktop, logo PES ARENA, VS, player cards, center mode, sidebar, action buttons và mode strip theo ảnh đã chốt.
 - Giữ nguyên toàn bộ endpoint/form action hiện tại, gồm ready/start/result/confirm/rematch/forfeit/leave/Parsec.
+
+## V1.3.90 - Sua_nut_bat_dau_tran_mau_xanh_va_gon_the_cho_room (2026-08-08)
+- Phạm vi: frontend Room UI, không sửa backend / route / RP / Supabase.
+- Đổi nút `BẮT ĐẦU TRẬN` từ tông vàng sang tông xanh lá.
+- Nút `BẮT ĐẦU TRẬN` và `Thoát Phòng` cùng kích thước, cùng hàng, cùng chiều cao.
+- Bỏ khung/form vàng bọc ngoài nút bắt đầu; chỉ còn 1 lớp nút rõ ràng.
+- Thu gọn block mode trung tâm (`#6`, tên mode, mô tả, logo mode, pill mở khóa, trạng thái 2/2) để bớt tốn diện tích.
+- Giảm nhẹ chiều cao countdown / VS / note để tổng thể trước trận gọn hơn.
+- Đồng bộ cả 2 template: `templates/room/_center_stage.html` và `templates/_room_live_content.html`.
+- Thêm CSS refine cuối chuỗi: `static/css/room/13-prestart-compact-refine.css` và load sau `12-mockup-layout-lock.css`.
+- Test đã chạy: `test_room_prestart_hierarchy_v1376.py`, `test_room_action_button_style_v1375.py`, `test_room_action_visibility_v1374.py`, `test_module_css_structure_v138.py` -> 19 PASS.
