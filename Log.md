@@ -1,3 +1,12 @@
+# V1.3.85 – Thu gọn khu vực chế độ thi đấu
+
+- Thu nhỏ 6 thẻ chế độ ở khu vực **CÁC CHẾ ĐỘ KHÁC**.
+- Logo chế độ khóa ở kích thước 54 × 54 px, không còn bị phóng to.
+- Giảm chiều cao thẻ, cỡ chữ và nút **Đã mở khóa** để gần ảnh mẫu.
+- Giữ nguyên logo chế độ đang chọn ở khu vực trung tâm.
+- Không thay đổi backend, route, form action, JavaScript hoặc luồng phòng đang chạy.
+- File sửa: `static/css/room/12-mockup-layout-lock.css`.
+
 # V1.3.84 — Room Jinja Nesting Hotfix
 
 - Date: 2026-08-08 Asia/Bangkok
