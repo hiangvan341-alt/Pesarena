@@ -539,12 +539,7 @@
   }
   .arena-room-v2 .room-prestart-mainform{flex:1 1 0!important;min-width:0!important;}
   .arena-room-v2 .room-prestart-exit-form{flex:1 1 0!important;min-width:0!important;}
-  .arena-room-v2 .room-prestart-mainform .room-prestart-trigger{
-    min-height:46px!important;
-    height:46px!important;
-    padding:7px 10px!important;
-    border-radius:10px!important;
-  }
+  
   .arena-room-v2 .room-prestart-mainform .room-random-button-label{
     color:#fff!important;
     font-size:13.5px!important;

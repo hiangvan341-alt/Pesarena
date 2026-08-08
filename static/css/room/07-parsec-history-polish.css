@@ -63,7 +63,6 @@
 
 /* Nút chính: sáng hơn nhưng nền kính trong hơn, tránh đè màu và tránh viền gắt. */
 .arena-room-v2 .arena-action-invite,
-.arena-room-v2 .arena-action-quick,
 .arena-room-v2 .arena-action-exit{
   border-color:rgba(255,255,255,.22) !important;
   color:#fff !important;
@@ -74,14 +73,10 @@
 .arena-room-v2 .arena-action-invite{
   background:linear-gradient(180deg,rgba(244,190,70,.52),rgba(157,98,12,.38)) !important;
 }
-.arena-room-v2 .arena-action-quick{
-  background:linear-gradient(180deg,rgba(44,218,148,.50),rgba(7,112,74,.36)) !important;
-}
 .arena-room-v2 .arena-action-exit{
   background:linear-gradient(180deg,rgba(241,83,111,.50),rgba(128,22,48,.36)) !important;
 }
 .arena-room-v2 .arena-action-invite:hover,
-.arena-room-v2 .arena-action-quick:hover,
 .arena-room-v2 .arena-action-exit:hover{
   filter:brightness(1.13) saturate(1.08);
   border-color:rgba(255,255,255,.34) !important;

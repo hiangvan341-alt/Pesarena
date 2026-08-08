@@ -21,7 +21,6 @@
 }
 .arena-room-v2 .arena-btn.green,
 .arena-room-v2 .arena-btn.is-success,
-.arena-room-v2 .arena-action-quick,
 .arena-room-v2 .room-submit-result-btn,
 .arena-room-v2 .room-result-btn.confirm{
   --room-btn-border:rgba(29,214,147,.78);
@@ -141,10 +140,6 @@
 .arena-room-v2 .room-center-primary-actions-three .arena-btn.gold{
   --room-btn-top:rgba(91,65,15,.54);
   --room-btn-bottom:rgba(40,25,5,.62);
-}
-.arena-room-v2 .room-center-primary-actions-three .arena-action-quick{
-  --room-btn-top:rgba(6,74,48,.52);
-  --room-btn-bottom:rgba(3,35,24,.62);
 }
 .arena-room-v2 .room-center-primary-actions-three .arena-action-exit{
   --room-btn-top:rgba(82,18,35,.50);

@@ -1243,10 +1243,6 @@ html[data-theme="light"] .account-presence-control select{background:#fff!import
 .room-layout-v137 .room-arena-frame::after {
   background-position: 0 0 !important;
 }
-.room-layout-v137 .room-quick-match-row .room-quick-match-btn.is-searching {
-  animation: none !important;
-  filter: brightness(1.08);
-}
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after {
     scroll-behavior: auto !important;

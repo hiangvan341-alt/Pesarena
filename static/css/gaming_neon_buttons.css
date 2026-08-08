@@ -395,12 +395,9 @@ body[data-ui-scope="player"] :is(
 ):not(.parsec-room-panel *):not(#parsec-profile *):not([class*="parsec-"]){--gn-role-color:var(--gn-role-special)!important;}
 
 /* Dedicated roles always win over generic class colors. This makes every
-   "Mời đấu" consistent and makes "Tìm nhanh" green by default everywhere. */
+   "Mời đấu" consistent. */
 body[data-ui-scope="player"] .gaming-invite-action:not(.parsec-room-panel *):not(#parsec-profile *){
   --gn-role-color:var(--gn-role-invite)!important;
-}
-body[data-ui-scope="player"] .gaming-quick-action:not(.parsec-room-panel *):not(#parsec-profile *){
-  --gn-role-color:var(--gn-role-quick)!important;
 }
 
 /* Room-specific cascade guard: legacy Room CSS uses high-specificity !important. */
