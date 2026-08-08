@@ -1546,3 +1546,9 @@
 - Gỡ class riêng `arena-action-invite`, `arena-action-exit`, `gaming-invite-action` khỏi cụm Room để tránh cascade từ nhiều file CSS khác.
 - Giữ nguyên route/JS/Quick Match/modal/luồng xử lý.
 - Test liên quan Room/Quick Match: 32 PASS. `app.py` compile PASS.
+
+
+## V1.3.98 - Bo_icon_Tim_nhanh_giu_nguyen_kich_thuoc (2026-08-08)
+- Giữ nguyên toàn bộ kích thước/cân đối cụm 3 nút từ V1.3.97.
+- Bỏ icon ⚡ khỏi nút `Tìm nhanh` ở template render chính và template polling.
+- Không sửa CSS, không thay route, JS gọi Quick Match, backend hay luồng xử lý.
