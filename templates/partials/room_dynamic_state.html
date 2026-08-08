@@ -218,7 +218,7 @@
                         {% if (room_room_viewer_is_host or current_user.role == 'admin') and room.guest_ready and not daily_rank_limit_blocked %}
                         <form class="room-center-random-form {% if selected_rank_mode in ['home_away','bo3','tactical_bo3','ban_pick_bo3'] %}series-primary-form{% endif %}" method="post" action="{% if selected_rank_mode == 'random3_pick1' %}{{ url_for('room_start_random3_friendly', room_id=room.id) }}{% elif selected_rank_mode in ['home_away','bo3','tactical_bo3','ban_pick_bo3'] %}{{ url_for('room_series_start_next_game', room_id=room.id) }}{% else %}{{ url_for('room_random_teams', room_id=room.id) }}{% endif %}" data-room-async="1" onsubmit="const b=this.querySelector('button'); b.disabled=true; b.classList.add('loading');">
                             <input type="hidden" name="match_mode" value="ranked">
-                            <button class="room-center-random-trigger" type="submit">
+                            <button class="room-center-random-trigger arena-btn is-gold" type="submit">
                                 <span class="room-center-random-title room-random-button-label">QUAY RANDOM ĐỘI</span>
                                 <span class="room-center-random-sub">Nhấn để đổi đội ngẫu nhiên cho cả hai bên</span>
                             </button>

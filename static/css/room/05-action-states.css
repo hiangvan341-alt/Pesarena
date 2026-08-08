@@ -86,8 +86,8 @@
 .arena-room-v2 .room-center-stage-plain > .room-action-zone:has(> :only-child){
   width:min(calc(100% - 26px), 230px);
 }
-.arena-room-v2 .room-center-stage-plain > .room-center-primary-actions .room-center-action-btn,
-.arena-room-v2 .room-center-stage-plain > .room-action-zone .room-center-action-btn{
+.arena-room-v2 .room-center-stage-plain > .room-center-primary-actions:not(.room-center-primary-actions-three) .room-center-action-btn,
+.arena-room-v2 .room-center-stage-plain > .room-action-zone:not(.room-center-primary-actions-three) .room-center-action-btn{
   min-height:48px;
   height:48px;
   padding:9px 12px;

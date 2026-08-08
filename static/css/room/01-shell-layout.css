@@ -83,9 +83,21 @@
   box-sizing: border-box;
   border-radius: 9px;
   white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
+  overflow: visible;
+  text-overflow: clip;
   line-height: 1;
+  gap: 5px;
+}
+.arena-room-v2 .room-center-primary-actions-three .quick-match-icon {
+  flex: 0 0 auto;
+  font-size: 13px;
+  line-height: 1;
+}
+.arena-room-v2 .room-center-primary-actions-three .quick-match-label {
+  min-width: 0;
+  white-space: nowrap;
+  overflow: visible;
+  text-overflow: clip;
 }
 .arena-room-v2 .arena-action-invite {
   background: linear-gradient(180deg, #6f4b09, #332103) !important;

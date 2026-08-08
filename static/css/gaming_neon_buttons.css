@@ -195,7 +195,6 @@ body[data-ui-scope="player"] :is(
   button.gold,button.yellow,button.invite,
   .btn.gold,.btn.yellow,.btn.invite,
   .arena-btn.gold,.arena-btn.yellow,.arena-btn.is-gold,
-  .room-center-random-trigger,
   .profile-v2-action.is-primary,.guide-start-button,.auth-submit,.reward-primary-button
 ):not(.parsec-room-panel *):not(#parsec-profile *):not([class*="parsec-"]) {
   --gn-line:#e9b735; --gn-glow:rgba(233,183,53,.30); --gn-glow-strong:rgba(233,183,53,.56);
@@ -255,7 +254,7 @@ body[data-ui-scope="player"] .arena-room-v2 :is(.room-center-primary-actions,.ro
 }
 body[data-ui-scope="player"] .arena-room-v2 :is(.room-center-primary-actions,.room-action-zone,.room-confirmed-center-actions)
 .arena-btn.gold,
-body[data-ui-scope="player"] .arena-room-v2 .room-center-random-trigger:not(.random3-trigger) {
+body[data-ui-scope="player"] .arena-room-v2 .room-center-random-trigger.is-gold:not(.random3-trigger) {
   border-color:#e9b735 !important;
   background:linear-gradient(180deg,rgba(255,255,255,.17),rgba(255,255,255,0) 34%),linear-gradient(180deg,#4b3407,#291d05 48%,#0d0a03) !important;
   box-shadow:0 0 14px rgba(233,183,53,.34),0 7px 15px rgba(0,0,0,.28),inset 0 1px 0 rgba(255,255,255,.22),inset 0 -5px 10px rgba(0,0,0,.40) !important;
@@ -383,7 +382,7 @@ body[data-ui-scope="player"] :is(
 
 body[data-ui-scope="player"] :is(
   .btn.gold,.btn.yellow,.btn.invite,.arena-btn.gold,.arena-btn.yellow,.arena-btn.is-gold,
-  .room-center-random-trigger:not(.random3-trigger),.profile-v2-action.is-primary,
+  .profile-v2-action.is-primary,
   .guide-start-button,.auth-submit,.reward-primary-button
 ):not(.parsec-room-panel *):not(#parsec-profile *):not([class*="parsec-"]){--gn-role-color:var(--gn-role-primary)!important;}
 
