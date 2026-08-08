@@ -1,4 +1,12 @@
-# V1.3.108 — On dinh CSS khung ngoai va tieu de phong
+
+## V1.3.109 — 2026-08-08
+- Tiếp tục ổn định CSS, không thiết kế lại giao diện.
+- Gom quyền quản lý: bảng nhập tỷ số/kết quả về 17-center-match-stability.css.
+- Gom nút chia sẻ về 14-shell-player-stability.css.
+- Gom khu vực chế độ phía dưới về 13-mode-stability.css.
+- Gom điều khiển phụ + modal xác nhận về 15-room-actions-stability.css.
+- Gỡ các selector tương ứng khỏi CSS cũ sau khi chuyển.
+# V1.3.109 — On dinh CSS khung ngoai va tieu de phong
 
 - Nen sua: V1.3.107.
 - Chi don CSS frontend; khong thay doi backend, JS, RP, kich thuoc/logo/chuc nang.

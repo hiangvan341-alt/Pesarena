@@ -416,3 +416,6 @@
     width:118px!important;
     height:118px!important;
   }}
+
+/* V1.3.109 — canonical mode-section shell ownership; visual output preserved */
+.arena-room-v2 .room-master-modes-section{background:rgba(2,8,17,.28);-webkit-backdrop-filter:none;backdrop-filter:none}

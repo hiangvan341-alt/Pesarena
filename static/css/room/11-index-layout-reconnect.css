@@ -87,7 +87,7 @@
 
 
 
-.arena-room-v2 .room-result-score{color:#fff;font-size:42px;font-weight:900}
+
 .arena-room-v2 .room-result-score span{color:#fff}
 
 
@@ -145,7 +145,7 @@
 
 
 /* Extra legacy/admin/friendly controls stay functional, visually separated from the core mockup shell. */
-.arena-room-v2 .room-extra-controls{margin-top:10px!important;border-radius:14px!important;background:#06101a!important}
+
 
 
 

@@ -192,3 +192,5 @@
     grid-template-columns:minmax(300px,1fr) minmax(270px,.78fr) minmax(300px,1fr)!important;
     grid-template-areas:"home center away" "rail rail rail"!important;height:auto!important;min-height:0!important;
   }}@media (max-width:820px){.arena-room-v2 .room-stage-topbar{grid-template-columns:1fr!important;text-align:center!important}.arena-room-v2 .room-arena-frame{display:flex!important;flex-direction:column!important}}
+/* V1.3.109 — share button interaction remains owned by shell/topbar module */
+.arena-room-v2 .room-share-button{transition:transform .12s ease,filter .12s ease,border-color .12s ease!important}

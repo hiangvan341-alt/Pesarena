@@ -198,3 +198,14 @@
     flex:0 0 68px!important;
     opacity:.92!important;
     filter:drop-shadow(0 0 9px rgba(236,190,72,.18))!important;}}
+
+/* V1.3.109 — canonical result score ownership; 12-lock final size preserved */
+.arena-room-v2 .room-result-score{font-size:44px!important;color:#fff!important;font-weight:900}
+
+
+/* V1.3.109 — historical mobile score-panel step retained inside center owner */
+@media (max-width:820px){.arena-room-v2 .room-center-stage-plain > .room-center-score-panel{position:relative;left:auto;right:auto;bottom:auto;width:calc(100% - 16px);margin:10px auto}}
+
+/* V1.3.109 — score panel layout ownership moved fully into center-match module */
+.arena-room-v2 .room-center-stage-plain > .room-center-score-panel{position:relative;flex:0 0 auto;margin-left:auto;margin-right:auto}
+@media (max-width:820px){.arena-room-v2 .room-center-stage-plain > .room-center-score-panel{position:relative!important;left:auto!important;right:auto!important;bottom:auto!important;transform:none!important;width:calc(100% - 20px)!important;margin:8px auto!important}}

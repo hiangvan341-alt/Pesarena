@@ -39,7 +39,7 @@
 
 
 
-.arena-room-v2 .room-extra-controls{margin-top:0}
+
 
 
 
@@ -149,10 +149,4 @@
 /* V1.3.13 — user-supplied WebP stadium set. */
 
 
-.arena-room-v2 .room-master-modes-section{
-  background-image:
-    linear-gradient(180deg, rgba(3,10,20,.86), rgba(2,8,16,.94)),
-    var(--arena-room-texture, url("https://wlnvdfghatgeygecwrqb.supabase.co/storage/v1/object/public/pes-assets/room-assets/v1.3.18/room-texture-dark.webp"));
-  background-size: cover;
-  background-position: center;
-}
+
