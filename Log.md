@@ -1,3 +1,17 @@
+# V1.3.89 — Sửa bố cục bắt đầu trận gọn gàng
+
+- Dọn riêng trạng thái **Đủ 2 người / Chờ sẵn sàng** ở cột giữa, không thay đổi luồng Backend/Series.
+- Bỏ khung/viền thừa bao quanh cụm **BẮT ĐẦU TRẬN + Thoát Phòng**.
+- Thu gọn nút **BẮT ĐẦU TRẬN 1**, đổi về tông vàng đậm đồng bộ PES Arena; giữ **Thoát Phòng** màu đỏ.
+- Thu gọn phần thời gian, không để số đếm lấn xuống khu vực nút.
+- Thu nhỏ VS ở trạng thái trước trận và đặt theo luồng tự nhiên để không còn bị nút/thời gian đè lên.
+- Ẩn Series HUD ở màn hình chờ bắt đầu vì thông tin chế độ đã có ngay phía trên; HUD vẫn giữ nguyên ở các trạng thái thi đấu/kết quả.
+- Chỉ sửa CSS scope `.room-state-waiting_ready`; không sửa RP, random, Parsec, lời mời, kết quả hay điều phối Series.
+
+**File sửa:** `app.py`, `static/css/room/12-mockup-layout-lock.css`, `Log.md`.
+
+---
+
 # V1.3.88 – Sửa logo chế độ hiển thị đúng kích thước
 
 - Xác định nguyên nhân logo vẫn bé: file logo nguồn 1536×1024 có khoảng trống trong suốt rất lớn quanh artwork.
