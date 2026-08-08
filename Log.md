@@ -1409,3 +1409,11 @@
 - Phạm vi: chỉ dependency binding cho Room Runtime; không đổi logic RP, gameplay, Supabase hay CSS.
 - Kiểm tra: compile + smoke test dependency Rank Mode/Room.
 
+
+## Room UI reconnect — 2026-08-08
+- Nối giao diện phòng đấu với mẫu `index.html + styles.css` đã chốt bằng lớp CSS frontend cuối cùng `static/css/room/11-index-layout-reconnect.css`.
+- Giữ nguyên toàn bộ endpoint, form action, data attribute, ID, polling/AJAX và backend hiện tại.
+- Đồng bộ bố cục Header / Chủ phòng / Trung tâm / Đối thủ / Thông tin phòng / Parsec / 6 chế độ theo mockup.
+- `Tổng điểm` và giá trị điểm được ép về màu trắng như ảnh gốc.
+- Chỉ đổi text hiển thị trạng thái phía frontend: Chờ đối thủ → Chờ sẵn sàng → Sẵn sàng bắt đầu → Đang thi đấu/Gửi kết quả → Xác nhận kết quả → Đá tiếp.
+- Không làm lộ dữ liệu Random 3 chọn 1 bị backend giữ bí mật; chỉ style những dữ liệu backend đang cho phép render.

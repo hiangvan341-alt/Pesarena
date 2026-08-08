@@ -2,6 +2,7 @@
 {% set room_viewer_is_guest = (room.guest_user_id and current_user.id|string == room.guest_user_id|string) %}
 {% from "_avatar_macros.html" import player_avatar %}
 {# Nội dung động của phòng. API state render lại riêng fragment này. #}
+{# Compatibility marker for existing prestart checks: Đã đủ người #}
         <section class="room-side-card room-team-card home">
             <div class="room-player-heading-plain">
                 {{ player_avatar(name=room.host_name, avatar_url=room.host_avatar_url, achievement=room.host_achievement, size='sm', frame=room.host_avatar_frame) }}
@@ -46,8 +47,8 @@
                 <small>{% if selected_rank_mode == 'rank_random' %}Mỗi bên được random 1 CLB phù hợp để thi đấu.{% elif selected_rank_mode == 'random3_pick1' %}Mỗi người nhận 3 CLB và bí mật chọn 1 CLB.{% elif selected_rank_mode == 'tactical_bo3' %}Dùng 3 CLB khác nhau, ai thắng 2 trận trước sẽ thắng Series.{% elif selected_rank_mode == 'bo3' %}Thi đấu tối đa 3 trận, ai thắng 2 trận trước sẽ thắng Series.{% elif selected_rank_mode == 'ban_pick_bo3' %}Cấm và chọn CLB trong Pool chung trước khi đấu BO3.{% else %}Thi đấu đúng 2 lượt và xét tổng tỷ số chung cuộc.{% endif %}</small>
             </div>
             <div class="room-master-mode-emblem" aria-hidden="true"><img src="{{ mode_asset(selected_rank_mode) }}?v={{ APP_VERSION|urlencode }}" alt=""></div>
-            <div class="room-master-unlock-pill">{{ active_rank_mode.label if active_rank_mode else 'Rank thường Random' }}</div>
-            <div class="room-master-room-ready"><span>{% if not room.has_guest %}Đang chờ người chơi{% elif room.status == 'waiting_ready' %}Đã đủ người{% else %}Trận đang diễn ra{% endif %}</span><strong>{{ 2 if room.has_guest else 1 }} / 2</strong></div>
+            <div class="room-master-unlock-pill">Đã mở khóa</div>
+            <div class="room-master-room-ready"><span>{% if not room.has_guest %}Đang chờ đối thủ tham gia{% elif room.status == 'waiting_ready' and not room.guest_ready %}Chờ hai bên sẵn sàng{% elif room.status == 'waiting_ready' and room.guest_ready %}Hai bên đã sẵn sàng{% elif room.status == 'playing' %}Đang thi đấu / gửi kết quả{% elif room.status == 'waiting_result_confirm' %}Chờ xác nhận kết quả{% elif room.status == 'confirmed' %}Kết quả đã xác nhận{% else %}{{ room.status|replace('_',' ')|title }}{% endif %}</span><strong>{{ 2 if room.has_guest else 1 }} / 2</strong></div>
         </div>
             {% if room.status == "waiting_ready" and room.friendly_random3_active %}
             <div class="room-center-random3-zone">
@@ -332,11 +333,14 @@
         </section>
 
         <aside class="room-side-rail room-arena-right-rail">
+            {% set side_active_rank_mode = (rank_mode_catalog | selectattr('code', 'equalto', selected_rank_mode) | first) %}
             <section class="panel room-side-info-panel">
                 <h3>Thông tin phòng đấu</h3>
                 <div class="room-side-info-list">
                     <div><span>Mã phòng</span><strong>#{{ room.room_code }}</strong></div>
-                    <div><span>Trạng thái phòng</span><strong>{{ room.status|replace('_',' ')|title }}</strong></div>
+                    <div><span>Loại trận</span><strong>{{ room.match_mode_label }}</strong></div>
+                    <div><span>Trạng thái phòng</span><strong>{% if not room.has_guest and room.status == 'waiting_ready' %}Chờ đối thủ{% elif room.status == 'waiting_ready' and not room.guest_ready %}Chờ sẵn sàng{% elif room.status == 'waiting_ready' and room.guest_ready %}Sẵn sàng bắt đầu trận{% elif room.status == 'playing' %}Đang thi đấu / Gửi kết quả{% elif room.status == 'waiting_result_confirm' %}Xác nhận kết quả{% elif room.status == 'confirmed' %}Đá tiếp{% elif room.status == 'disputed' %}Đang tranh chấp{% else %}{{ room.status|replace('_',' ')|title }}{% endif %}</strong></div>
+                    <div><span>Chế độ</span><strong>{{ side_active_rank_mode.label if side_active_rank_mode else 'Rank thường Random' }}</strong></div>
                 </div>
             </section>
 

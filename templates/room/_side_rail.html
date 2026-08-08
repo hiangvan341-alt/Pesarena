@@ -1,10 +1,12 @@
         <aside class="room-side-rail room-arena-right-rail" aria-label="Thông tin bổ sung của phòng">
+            {% set side_active_rank_mode = (rank_mode_catalog | selectattr('code', 'equalto', selected_rank_mode) | first) %}
             <section class="panel room-side-info-panel">
                 <h3>Thông tin phòng đấu</h3>
                 <div class="room-side-info-list">
                     <div><span>Mã phòng</span><strong>#{{ room.room_code }}</strong></div>
-                    <div><span>Trạng thái phòng</span><strong>{{ room.status|replace('_',' ')|title }}</strong></div>
-                    <div><span>Chế độ</span><strong>{{ active_rank_mode.label if active_rank_mode else 'Rank thường Random' }}</strong></div>
+                    <div><span>Loại trận</span><strong>{{ room.match_mode_label }}</strong></div>
+                    <div><span>Trạng thái phòng</span><strong>{% if not room.has_guest and room.status == 'waiting_ready' %}Chờ đối thủ{% elif room.status == 'waiting_ready' and not room.guest_ready %}Chờ sẵn sàng{% elif room.status == 'waiting_ready' and room.guest_ready %}Sẵn sàng bắt đầu trận{% elif room.status == 'playing' %}Đang thi đấu / Gửi kết quả{% elif room.status == 'waiting_result_confirm' %}Xác nhận kết quả{% elif room.status == 'confirmed' %}Đá tiếp{% elif room.status == 'disputed' %}Đang tranh chấp{% else %}{{ room.status|replace('_',' ')|title }}{% endif %}</strong></div>
+                    <div><span>Chế độ</span><strong>{{ side_active_rank_mode.label if side_active_rank_mode else 'Rank thường Random' }}</strong></div>
                 </div>
             </section>
 
