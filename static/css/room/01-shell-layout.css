@@ -11,13 +11,6 @@
    Scope: Room shell, player cards, center stage, core responsive/layout foundations.
    IMPORTANT: load order is defined in templates/room_detail.html. */
 /* PES Arena V1.3.7 — UI MASTER with user-supplied WebP logos. Scoped to .arena-room-v2 only. */
-.arena-room-v2{
-  --ar-gold:#d8a53c;--ar-gold-strong:#f1bd58;--ar-blue:#0b7df4;--ar-red:#ef3047;
-  --ar-green:#18c878;--ar-purple:#9b4fe0;--ar-bg:#020812;--ar-panel:#06111f;
-  --ar-line:rgba(255,255,255,.095);--ar-radius-lg:18px;--ar-radius-md:12px;
-  display:grid;gap:12px;min-width:0;color:#f3f6fa;font-family:inherit;
-}
-
 
 
 
@@ -58,14 +51,6 @@
    This block owns only the room-detail namespace and refines scale, rhythm,
    neon hierarchy and desktop proportions without changing room logic. */
 @media (min-width: 1181px){
-  .arena-room-v2{
-    --arena-gap: 12px;
-    --arena-main-height: 548px;
-    --arena-blue: 11, 125, 244;
-    --arena-red: 239, 48, 71;
-    --arena-purple: 155, 79, 224;
-    --arena-gold: 216, 165, 60;
-  }
 
   
   
@@ -131,7 +116,6 @@
 }
 
 @media (min-width: 1181px) and (max-width: 1450px){
-  .arena-room-v2{ --arena-gap: 9px; --arena-main-height: 526px; }
   
   
   

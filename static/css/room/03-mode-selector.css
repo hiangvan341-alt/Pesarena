@@ -29,7 +29,6 @@
 
 
 @media (max-width: 760px){
-  .arena-room-v2{ padding: 7px; border-radius: 14px; }
 }
 
 /* V1.3.19 — keep state-dependent room actions visible inside the fixed center stage. */

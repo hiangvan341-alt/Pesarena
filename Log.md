@@ -1,3 +1,13 @@
+# V1.3.110 — Hoàn tất ổn định CSS phòng đấu
+
+- Chốt `.arena-room-v2` về một nơi quản lý duy nhất: `static/css/room/00-room-core.css`.
+- Chuyển nguyên trạng các biến, nền, viền, kích thước khung gốc và quy tắc responsive của root shell từ các file 01/02/03/11/12 sang core.
+- Xác nhận giá trị CSS cuối cùng của root shell trước/sau giống nhau ở tất cả context đang có.
+- Rà soát selector Room theo từng module: 0 selector trùng giữa hai file quản lý khác nhau.
+- Thêm `CSS_OWNERSHIP.md` làm bản đồ nơi quản lý CSS và quy tắc nâng cấp về sau.
+- Thêm `test_css_ownership_v13110.py` để chặn việc CSS Room bị chồng module trở lại.
+- Không thay đổi thiết kế, chức năng, backend, RP hoặc JavaScript.
+
 
 ## V1.3.109 — 2026-08-08
 - Tiếp tục ổn định CSS, không thiết kế lại giao diện.

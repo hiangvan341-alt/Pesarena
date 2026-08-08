@@ -69,6 +69,7 @@ Không sửa module khác nếu chưa chứng minh dependency liên quan.
 | Chat | `templates/room/scripts/_room_chat.html` |
 | Dialog | `templates/room/scripts/_room_dialogs.html` |
 | CSS room | `static/css/room/` |
+| Khung gốc Room + biến nền tảng + responsive root | `static/css/room/00-room-core.css` |
 | Logo chế độ + 6 thẻ chế độ | `static/css/room/13-mode-stability.css` |
 | Bố cục khung phòng + Chủ phòng/Đối thủ + topbar/chia sẻ + logo PES ARENA + tiêu đề chọn CLB | `static/css/room/14-shell-player-stability.css` |
 | Nút/trạng thái hành động trong phòng | `static/css/room/15-room-actions-stability.css` |
@@ -265,7 +266,7 @@ Không chạy SQL thay đổi dữ liệu thật trong test nếu chưa có guar
 
 
 ## V1.3.74 — Room action visibility
-- Guard cuối cho nút phòng đấu: `static/css/room/08-action-layout-guard.css`.
+- V1.3.110: quyền quản lý nút phòng đấu đã chuyển sang `static/css/room/15-room-actions-stability.css`; `08-action-layout-guard.css` chỉ còn phần legacy chưa chuyển.
 - Nút theo trạng thái render ở `templates/room/_center_stage.html`; bản polling tương ứng ở `templates/_room_live_content.html`.
 - Nút host đưa khách khỏi phòng ở `templates/room/_guest_card.html`.
 
@@ -274,7 +275,7 @@ Không chạy SQL thay đổi dữ liệu thật trong test nếu chưa có guar
 
 - Invite accept/reject visual module: `static/css/invite_center.css`; dynamic markup: `static/js/invite_center.js`; server markup: `templates/base.html`, `templates/invites.html`.
 - Room waiting/Series orchestration: readiness state belongs to player card; center stage no longer renders duplicate fake disabled status buttons.
-- Final pre-start cascade is owned by `static/css/room/10-prestart-flow.css` loaded after Series CSS. Host start control uses a dedicated lane above the bottom action dock; guest Ready state uses only a compact flow line when waiting for Host.
+- V1.3.110: phần hiển thị pre-start/action đã được gom về `static/css/room/15-room-actions-stability.css`; `10-prestart-flow.css` chỉ giữ phần legacy chưa chuyển. Host start control uses a dedicated lane above the bottom action dock; guest Ready state uses only a compact flow line when waiting for Host.
 - Applies to `home_away`, `bo3`, `tactical_bo3`, `ban_pick_bo3` as well as single-match modes.
 
 ## V1.3.77 — Global Gaming Neon 3D Buttons

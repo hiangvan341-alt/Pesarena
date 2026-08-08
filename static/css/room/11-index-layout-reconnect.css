@@ -10,21 +10,6 @@
 /* PES Arena — Room UI reconnect layer
    Source: user-approved index.html + styles.css mockup.
    Frontend-only: keeps existing Jinja data, form actions, IDs and JS hooks intact. */
-
-.arena-room-v2{
-  --mock-gold:#f0b51d;
-  --mock-gold-soft:#d89a18;
-  --mock-blue:#168dff;
-  --mock-red:#ff2f27;
-  --mock-green:#27e76f;
-  --mock-violet:#b456ff;
-  --mock-panel:#06101d;
-  --mock-panel-2:#020914;
-  --mock-line:#273344;
-  --mock-white:#f7f8fb;
-  gap:10px;
-}
-
 /* TOP BAR */
 
 

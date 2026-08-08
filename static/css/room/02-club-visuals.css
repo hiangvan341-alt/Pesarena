@@ -33,17 +33,3 @@
 
 
 /* V1.3.18 — full-room dark texture, neon-only mode frames, larger mode logos. */
-.arena-room-v2{
-  position: relative;
-  padding: 12px;
-  border: 1px solid rgba(35, 103, 176, .24);
-  border-radius: 20px;
-  background-image:
-    linear-gradient(180deg, rgba(1, 7, 15, .54), rgba(1, 7, 15, .72)),
-    var(--arena-room-texture, url("https://wlnvdfghatgeygecwrqb.supabase.co/storage/v1/object/public/pes-assets/room-assets/v1.3.18/room-texture-dark.webp"));
-  background-size: cover;
-  background-position: center;
-  background-repeat: no-repeat;
-  box-shadow: inset 0 0 42px rgba(0, 24, 58, .28);
-}
-

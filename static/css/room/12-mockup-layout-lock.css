@@ -10,19 +10,6 @@
 /* PES Arena — approved room mockup layout lock
    Frontend only. Loaded LAST intentionally so legacy room CSS cannot pull the room back
    to the older compact layout. Backend/Jinja actions and JS hooks are untouched. */
-
-.arena-room-v2{
-  --ui-gold:#f1b722;
-  --ui-blue:#168dff;
-  --ui-red:#ff2d25;
-  --ui-purple:#b653ff;
-  --ui-green:#27e96d;
-  width:100%;
-  max-width:1600px;
-  margin:0 auto;
-  gap:10px!important;
-}
-
 /* Header: match the approved screenshot proportions. */
 
 

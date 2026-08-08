@@ -2,6 +2,7 @@
 {% from "_avatar_macros.html" import player_avatar %}
 {% block head_extra %}
 {# V1.3.38: Room CSS is split by responsibility. Keep this order: later modules intentionally refine earlier ones. #}
+<link rel="stylesheet" href="{{ static_asset('css/room/00-room-core.css') }}">
 <link rel="stylesheet" href="{{ static_asset('css/room/01-shell-layout.css') }}">
 <link rel="stylesheet" href="{{ static_asset('css/room/02-club-visuals.css') }}">
 <link rel="stylesheet" href="{{ static_asset('css/room/03-mode-selector.css') }}">
