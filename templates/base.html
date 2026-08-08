@@ -8,6 +8,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     {# Thứ tự CSS: nền tảng trước, module sau; module ở sau chỉ được phép tác động trong phạm vi class riêng. #}
     <link rel="stylesheet" href="{{ static_asset('style.css') }}">
+    <link rel="stylesheet" href="{{ static_asset('css/invite_center.css') }}">
     <link rel="stylesheet" href="{{ static_asset('css/zcoin.css') }}">
     {% if request.endpoint == 'admin' %}
     <link rel="stylesheet" href="{{ static_asset('css/admin_weekly_rewards.css') }}">
@@ -255,9 +256,9 @@ function toggleTheme(){
                         <span class="small">Rank: {{ inv.from_rank }} • Điểm: {{ inv.from_points }} • Tier: {{ inv.tier }}</span>
                     </div>
                 </div>
-                <form method="post" action="{{ url_for('respond_invite', invite_id=inv.id) }}">
-                    <button class="btn green" name="action" value="accept" type="submit">Chấp nhận</button>
-                    <button class="btn red" name="action" value="reject" type="submit">Từ chối</button>
+                <form class="invite-response-actions" method="post" action="{{ url_for('respond_invite', invite_id=inv.id) }}">
+                    <button class="btn invite-action-btn is-accept" name="action" value="accept" type="submit">Chấp nhận</button>
+                    <button class="btn invite-action-btn is-reject" name="action" value="reject" type="submit">Từ chối</button>
                 </form>
             </div>
             {% endfor %}

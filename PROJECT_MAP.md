@@ -260,3 +260,11 @@ Không chạy SQL thay đổi dữ liệu thật trong test nếu chưa có guar
 - Guard cuối cho nút phòng đấu: `static/css/room/08-action-layout-guard.css`.
 - Nút theo trạng thái render ở `templates/room/_center_stage.html`; bản polling tương ứng ở `templates/_room_live_content.html`.
 - Nút host đưa khách khỏi phòng ở `templates/room/_guest_card.html`.
+
+
+## V1.3.76 — Room pre-start hierarchy + Invite response
+
+- Invite accept/reject visual module: `static/css/invite_center.css`; dynamic markup: `static/js/invite_center.js`; server markup: `templates/base.html`, `templates/invites.html`.
+- Room waiting/Series orchestration: readiness state belongs to player card; center stage no longer renders duplicate fake disabled status buttons.
+- Final pre-start cascade is owned by `static/css/room/10-prestart-flow.css` loaded after Series CSS. Host start control uses a dedicated lane above the bottom action dock; guest Ready state uses only a compact flow line when waiting for Host.
+- Applies to `home_away`, `bo3`, `tactical_bo3`, `ban_pick_bo3` as well as single-match modes.

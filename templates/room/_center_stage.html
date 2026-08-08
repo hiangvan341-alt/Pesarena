@@ -9,7 +9,7 @@
                 <div class="room-master-mode-emblem" aria-hidden="true"><img src="{{ mode_asset(selected_rank_mode) }}?v={{ APP_VERSION|urlencode }}" alt=""></div>
                 <div class="room-master-unlock-pill">{{ active_rank_mode.label if active_rank_mode else 'Rank thường Random' }}</div>
                 <div class="room-master-room-ready">
-                    <span>{% if not room.has_guest %}Đang chờ đối thủ{% elif room.status == 'waiting_ready' and not room.guest_ready %}Chờ đối thủ sẵn sàng{% elif room.status == 'waiting_ready' %}Hai người đã sẵn sàng{% else %}Trận đang diễn ra{% endif %}</span>
+                    <span>{% if not room.has_guest %}Đang chờ người chơi{% elif room.status == 'waiting_ready' %}Đã đủ người{% else %}Trận đang diễn ra{% endif %}</span>
                     <strong>{{ 2 if room.has_guest else 1 }} / 2</strong>
                 </div>
             </div>
@@ -37,7 +37,7 @@
                 <div class="room-center-countdown-label">Thời gian để chủ phòng quay quân</div>
                 <div class="room-center-countdown" id="roomStartCountdown" data-seconds="{{ room.start_countdown_seconds }}" data-mode="down">05:00</div>
                 {% elif room.status == 'waiting_ready' %}
-                <div class="room-center-status-note">{% if room.has_guest %}Chờ đối thủ sẵn sàng{% else %}Đang chờ đối thủ vào phòng{% endif %}</div>
+                {% if not room.has_guest %}<div class="room-center-status-note">Đang chờ đối thủ vào phòng</div>{% endif %}
                 {% else %}
                 <div class="room-center-countdown-label">Thời gian thi đấu</div>
                 <div class="room-center-countdown" id="roomStartCountdown" data-seconds="{{ room.match_elapsed_seconds }}" data-mode="up">00:00</div>
@@ -147,10 +147,7 @@
                             </button>
                         </form>
                         {% else %}
-                        <div class="room-center-random-trigger arena-btn is-gold disabled">
-                            <span class="room-center-random-title room-random-button-label">{% if room_viewer_is_guest %}ĐỢI QUAY RANDOM ĐỘI{% elif not room.guest_ready %}ĐỢI KHÁCH SẴN SÀNG{% else %}QUAY RANDOM ĐỘI{% endif %}</span>
-                            <span class="room-center-random-sub">{% if room_viewer_is_guest %}Đang chờ chủ phòng quay đội{% elif not room.guest_ready %}Khách chưa sẵn sàng{% else %}Đang chờ chủ phòng quay đội{% endif %}</span>
-                        </div>
+                        {# Readiness is shown once on the guest player card; no duplicate center-stage waiting label. #}
                         {% endif %}
                         {% if room_viewer_is_guest %}
                         <div class="room-center-primary-actions room-action-zone">

@@ -224,10 +224,7 @@
                             </button>
                         </form>
                         {% else %}
-                        <div class="room-center-random-trigger disabled">
-                            <span class="room-center-random-title room-random-button-label">{% if room_viewer_is_guest %}ĐỢI QUAY RANDOM ĐỘI{% elif not room.guest_ready %}ĐỢI KHÁCH SẴN SÀNG{% else %}QUAY RANDOM ĐỘI{% endif %}</span>
-                            <span class="room-center-random-sub">{% if room_viewer_is_guest %}Đang chờ chủ phòng quay đội{% elif not room.guest_ready %}Khách chưa sẵn sàng{% else %}Đang chờ chủ phòng quay đội{% endif %}</span>
-                        </div>
+                        {# Readiness is shown once on the guest player card. #}
                         {% endif %}
                     {% else %}
                         <div class="room-center-state-pill">{{ room.status|replace('_',' ')|title }}</div>

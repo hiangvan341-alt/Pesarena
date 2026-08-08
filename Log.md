@@ -1,3 +1,14 @@
+# V1.3.76 — Room Pre-start Hierarchy + Invite Buttons
+
+- Ngày: 2026-08-08 (Asia/Bangkok)
+- Chế độ: NÂNG CẤP MODULE — Room UI / Invite UI.
+- Đồng bộ `Chấp nhận` / `Từ chối` sang glass-neon và căn giữa trong popup/banner/trang lời mời.
+- Loại trạng thái lặp `Chờ đối thủ sẵn sàng` khỏi center stage; readiness chỉ còn tại player card, counter giữa chỉ hiển thị số người.
+- Bỏ pseudo-button `ĐỢI QUAY RANDOM ĐỘI` / `ĐỢI KHÁCH SẴN SÀNG`; readiness chỉ hiển thị một lần tại card người chơi, không lặp ở center stage.
+- Host `BẮT ĐẦU TRẬN` có lane riêng phía trên action dock; `Thoát Phòng` nằm trong dock nền kính đậm riêng, tránh chồng chữ/trạng thái.
+- Giảm footprint VS ở trạng thái waiting_ready để đủ không gian cho Series HUD + start/action controls.
+- Áp dụng cùng cấu trúc cho Home/Away, BO3, Tactical BO3, Ban/Pick BO3 và các mode trận đơn.
+
 # V1.3.75 — Room Action Button Visual Sync
 
 - Chế độ: NÂNG CẤP MODULE giao diện phòng đấu.

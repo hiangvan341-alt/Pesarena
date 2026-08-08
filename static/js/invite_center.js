@@ -53,10 +53,10 @@
       </div>
       <div class="invite-modal-actions">
         <form method="post" action="${esc(invite.accept_url)}">
-          <button class="btn green" name="action" value="accept" type="submit">Chấp nhận</button>
+          <button class="btn invite-action-btn is-accept" name="action" value="accept" type="submit">Chấp nhận</button>
         </form>
         <form method="post" action="${esc(invite.reject_url)}">
-          <button class="btn red" name="action" value="reject" type="submit">Từ chối</button>
+          <button class="btn invite-action-btn is-reject" name="action" value="reject" type="submit">Từ chối</button>
         </form>
       </div>`;
 
