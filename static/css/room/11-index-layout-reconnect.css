@@ -228,3 +228,83 @@
   .arena-room-v2 .room-master-mode-grid{grid-template-columns:repeat(2,minmax(0,1fr))!important}
   .arena-room-v2 .room-master-mode-card{min-height:160px!important}
 }
+
+/* ===== V1.3.85 visual fidelity + state/action hotfix ===== */
+@media (min-width:1181px){
+  .arena-room-v2 .room-stage-topbar{
+    grid-template-columns:minmax(320px,1fr) minmax(420px,auto) minmax(300px,1fr)!important;
+    min-height:104px!important;
+    padding:10px 26px!important;
+  }
+  .arena-room-v2 .room-master-brand{width:470px!important;max-width:470px!important}
+  .arena-room-v2 .room-master-brand img{
+    width:100%!important;height:72px!important;max-width:none!important;max-height:none!important;
+    object-fit:contain!important;transform:none!important;
+  }
+  .arena-room-v2 .room-arena-frame{
+    grid-template-columns:minmax(390px,31fr) minmax(300px,23fr) minmax(300px,23fr) minmax(260px,20fr)!important;
+    gap:12px!important;height:590px!important;
+  }
+  .arena-room-v2 .room-side-card,
+  .arena-room-v2 .room-center-stage-plain,
+  .arena-room-v2 .room-arena-right-rail{height:590px!important}
+}
+
+/* Center mode emblem must use the supplied artwork at a visible size. */
+.arena-room-v2 .room-master-mode-emblem{
+  width:150px!important;height:136px!important;min-width:150px!important;min-height:136px!important;
+  margin:7px auto 5px!important;overflow:visible!important;
+}
+.arena-room-v2 .room-master-mode-emblem img{
+  width:132px!important;height:132px!important;max-width:none!important;max-height:none!important;
+  object-fit:contain!important;transform:none!important;
+  filter:drop-shadow(0 0 13px rgba(241,171,22,.34))!important;
+}
+
+/* Keep the active-mode card shaped like the approved mockup. */
+.arena-room-v2 .room-master-active-mode{
+  min-height:335px!important;padding:17px 15px 11px!important;
+}
+.arena-room-v2 .room-master-mode-heading strong{font-size:18px!important;line-height:1.18!important}
+.arena-room-v2 .room-master-mode-heading small{font-size:11px!important;line-height:1.45!important}
+.arena-room-v2 .room-master-unlock-pill{font-size:13px!important;min-width:205px!important}
+.arena-room-v2 .room-master-room-ready{font-size:12px!important;min-height:41px!important}
+
+/* Match the original: TOTAL SCORE caption and number are white on both sides. */
+.arena-room-v2 .room-team-card.home .room-team-points-value,
+.arena-room-v2 .room-team-card.home .room-team-points-value::before,
+.arena-room-v2 .room-team-card.away .room-team-points-value,
+.arena-room-v2 .room-team-card.away .room-team-points-value::before{
+  color:#fff!important;text-shadow:none!important;
+}
+
+/* Make the player/opponent cards more balanced, closer to the approved screenshot. */
+.arena-room-v2 .room-player-heading-plain{min-height:255px!important}
+.arena-room-v2 .room-card-club-area{padding-top:10px!important}
+.arena-room-v2 .room-club-logo-large{width:132px!important;height:132px!important}
+.arena-room-v2 .room-center-vs-image{
+  width:230px!important;height:160px!important;max-width:none!important;max-height:none!important;
+  object-fit:contain!important;
+}
+
+/* Right rail: room information + Parsec as two clean stacked panels. */
+.arena-room-v2 .room-arena-right-rail{display:flex!important;flex-direction:column!important;gap:12px!important}
+.arena-room-v2 .room-side-info-panel{flex:0 0 auto!important}
+.arena-room-v2 .parsec-room-panel{flex:0 0 auto!important}
+.arena-room-v2 .room-side-info-panel h3,
+.arena-room-v2 .parsec-room-panel h2,
+.arena-room-v2 .parsec-room-panel h3{font-size:17px!important;color:#fff!important}
+
+/* Keep action buttons visually explicit and readable. */
+.arena-room-v2 .room-prestart-action-row,
+.arena-room-v2 .room-center-primary-actions{align-items:stretch!important}
+.arena-room-v2 .room-prestart-action-row .arena-btn,
+.arena-room-v2 .room-center-primary-actions .arena-btn{min-height:54px!important}
+.arena-room-v2 .room-prestart-mainform{flex:1 1 auto!important}
+.arena-room-v2 .room-prestart-exit-form{flex:0 0 128px!important}
+
+/* Ensure modal is always above the room and visibly communicates RP penalty. */
+.room-action-modal{z-index:200000!important}
+.room-action-modal[data-tone="danger"] .room-action-modal-note{
+  font-size:20px!important;font-weight:950!important;letter-spacing:.04em!important;
+}

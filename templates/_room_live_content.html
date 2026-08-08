@@ -41,7 +41,7 @@
         <section class="room-center-stage-plain room-state-{{ room.status }}">
         {% set active_rank_mode = (rank_mode_catalog | selectattr('code', 'equalto', selected_rank_mode) | first) %}
         <div class="room-master-active-mode" data-active-mode="{{ selected_rank_mode }}">
-            <span class="room-master-mode-number">{{ {'rank_random':1,'random3_pick1':2,'home_away':3,'bo3':4,'tactical_bo3':5,'ban_pick_bo3':6}.get(selected_rank_mode,1) }}</span>
+            <span class="room-master-mode-number">{{ {'rank_random':1,'random3_pick1':2,'tactical_bo3':3,'bo3':4,'ban_pick_bo3':5,'home_away':6}.get(selected_rank_mode,1) }}</span>
             <div class="room-master-mode-heading">
                 <strong>{{ active_rank_mode.label if active_rank_mode else 'Rank thường Random' }}</strong>
                 <small>{% if selected_rank_mode == 'rank_random' %}Mỗi bên được random 1 CLB phù hợp để thi đấu.{% elif selected_rank_mode == 'random3_pick1' %}Mỗi người nhận 3 CLB và bí mật chọn 1 CLB.{% elif selected_rank_mode == 'tactical_bo3' %}Dùng 3 CLB khác nhau, ai thắng 2 trận trước sẽ thắng Series.{% elif selected_rank_mode == 'bo3' %}Thi đấu tối đa 3 trận, ai thắng 2 trận trước sẽ thắng Series.{% elif selected_rank_mode == 'ban_pick_bo3' %}Cấm và chọn CLB trong Pool chung trước khi đấu BO3.{% else %}Thi đấu đúng 2 lượt và xét tổng tỷ số chung cuộc.{% endif %}</small>
@@ -181,13 +181,13 @@
                                         <span class="room-center-random-title room-random-button-label">{% if selected_rank_mode in ['home_away','bo3','tactical_bo3','ban_pick_bo3'] %}BẮT ĐẦU TRẬN {{ rank_series.game_no if rank_series else 1 }}{% else %}QUAY QUÂN{% endif %}</span>
                                     </button>
                                 </form>
-                                <form class="room-exit-confirm-form room-prestart-exit-form" method="post" action="{{ url_for('room_leave', room_id=room.id) }}"
-                                      data-modal-tone="safe"
-                                      data-modal-icon="🚪"
-                                      data-modal-title="Đóng phòng đấu?"
-                                      data-modal-message="Trận chưa bắt đầu nên bạn có thể đóng phòng an toàn. Nếu đang có khách trong phòng, hệ thống sẽ đưa khách về sảnh."
-                                      data-modal-note="KHÔNG TRỪ RP"
-                                      data-modal-confirm-label="Thoát và đóng phòng">
+                                <form class="room-exit-confirm-form room-prestart-exit-form" method="post" action="{{ url_for('room_host_forfeit', room_id=room.id) }}"
+                                      data-modal-tone="danger"
+                                      data-modal-icon="⚠"
+                                      data-modal-title="Bỏ cuộc và thoát phòng?"
+                                      data-modal-message="Khách đã Sẵn Sàng. Nếu Chủ phòng thoát lúc này, hệ thống tính là bỏ cuộc và trừ 20 RP."
+                                      data-modal-note="−20 RP"
+                                      data-modal-confirm-label="Bỏ cuộc và thoát">
                                     <button class="btn arena-btn red room-center-action-btn room-prestart-exit-btn" type="submit">Thoát Phòng</button>
                                 </form>
                             </div>
@@ -207,13 +207,13 @@
                                 <button class="btn arena-btn gray room-center-action-btn" type="submit">Hủy Sẵn Sàng</button>
                             </form>
                             {% endif %}
-                            <form class="room-exit-confirm-form" method="post" action="{{ url_for('room_leave', room_id=room.id) }}"
-                                  data-modal-tone="safe"
-                                  data-modal-icon="🚪"
-                                  data-modal-title="Rời phòng đấu?"
-                                  data-modal-message="Trận chưa bắt đầu nên bạn có thể rời phòng an toàn. Phòng của chủ phòng vẫn được giữ lại."
-                                  data-modal-note="KHÔNG TRỪ RP"
-                                  data-modal-confirm-label="Rời phòng">
+                            <form class="room-exit-confirm-form" method="post" action="{{ url_for('room_guest_forfeit' if room.guest_ready and not daily_rank_limit_blocked else 'room_leave', room_id=room.id) }}"
+                                  data-modal-tone="{{ 'danger' if room.guest_ready and not daily_rank_limit_blocked else 'safe' }}"
+                                  data-modal-icon="{{ '⚠' if room.guest_ready and not daily_rank_limit_blocked else '🚪' }}"
+                                  data-modal-title="{{ 'Bỏ cuộc và thoát phòng?' if room.guest_ready and not daily_rank_limit_blocked else 'Rời phòng đấu?' }}"
+                                  data-modal-message="{{ 'Bạn đã Sẵn Sàng. Thoát lúc này được tính là bỏ cuộc và hệ thống trừ 20 RP.' if room.guest_ready and not daily_rank_limit_blocked else 'Trận chưa bắt đầu nên bạn có thể rời phòng an toàn. Phòng của chủ phòng vẫn được giữ lại.' }}"
+                                  data-modal-note="{{ '−20 RP' if room.guest_ready and not daily_rank_limit_blocked else 'KHÔNG TRỪ RP' }}"
+                                  data-modal-confirm-label="{{ 'Bỏ cuộc và thoát' if room.guest_ready and not daily_rank_limit_blocked else 'Rời phòng' }}">
                                 <button class="btn arena-btn red room-center-action-btn" type="submit">Thoát Phòng</button>
                             </form>
                         </div>

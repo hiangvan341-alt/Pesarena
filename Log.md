@@ -1410,10 +1410,11 @@
 - Kiểm tra: compile + smoke test dependency Rank Mode/Room.
 
 
-## Room UI reconnect — 2026-08-08
-- Nối giao diện phòng đấu với mẫu `index.html + styles.css` đã chốt bằng lớp CSS frontend cuối cùng `static/css/room/11-index-layout-reconnect.css`.
-- Giữ nguyên toàn bộ endpoint, form action, data attribute, ID, polling/AJAX và backend hiện tại.
-- Đồng bộ bố cục Header / Chủ phòng / Trung tâm / Đối thủ / Thông tin phòng / Parsec / 6 chế độ theo mockup.
-- `Tổng điểm` và giá trị điểm được ép về màu trắng như ảnh gốc.
-- Chỉ đổi text hiển thị trạng thái phía frontend: Chờ đối thủ → Chờ sẵn sàng → Sẵn sàng bắt đầu → Đang thi đấu/Gửi kết quả → Xác nhận kết quả → Đá tiếp.
-- Không làm lộ dữ liệu Random 3 chọn 1 bị backend giữ bí mật; chỉ style những dữ liệu backend đang cho phép render.
+## Room UI Fidelity + Exit Penalty Frontend Hotfix — 2026-08-08
+- Không sửa backend Python / database / route logic.
+- Sửa template để nút Thoát ở trạng thái khách đã Sẵn Sàng gọi đúng route bỏ cuộc hiện có (`room_host_forfeit` / `room_guest_forfeit`) thay vì gọi `room_leave` rồi bị backend từ chối.
+- Modal cảnh báo hiển thị rõ `−20 RP` trước khi xác nhận bỏ cuộc.
+- Khi chưa Sẵn Sàng vẫn dùng `room_leave` và hiển thị `KHÔNG TRỪ RP`.
+- Đồng bộ logic trên cả template lần đầu và `_room_live_content.html` dùng cho polling.
+- Sửa số thứ tự 6 chế độ: 1 Rank Random, 2 Random 3 chọn 1, 3 Đấu chiến thuật BO3, 4 BO3, 5 Cấm chọn CLB, 6 Lượt đi–lượt về.
+- Tăng độ giống mockup: PES ARENA lớn hơn, logo chế độ trung tâm đúng kích thước, cân lại 4 cột, VS lớn hơn, panel phải cân đối hơn, Tổng điểm ép màu trắng.
