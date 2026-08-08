@@ -1,3 +1,10 @@
+# V1.3.112 — Don pycache va lam sang khung che do dang chon
+
+- Xoa toan bo thu muc `__pycache__` va file `.pyc` thua khoi goi du an.
+- Chi bo sung hieu ung sang vien cho `.room-master-mode-card.is-selected` trong `static/css/room/13-mode-stability.css`.
+- Khung sang theo mau san co cua tung che do, ke ca khi card o trang thai `disabled/view-only`.
+- Khong thay doi kich thuoc logo, kich thuoc card, bo cuc, noi dung, backend, JS hay luong tran dau.
+
 # V1.3.111 — Sua dung thu tu logo 6 che do
 
 - Sua map logo 6 che do trong `modules/static_asset_service.py` theo dung thu tu ten 1 -> 6.

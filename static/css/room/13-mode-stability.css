@@ -419,3 +419,38 @@
 
 /* V1.3.109 — canonical mode-section shell ownership; visual output preserved */
 .arena-room-v2 .room-master-modes-section{background:rgba(2,8,17,.28);-webkit-backdrop-filter:none;backdrop-filter:none}
+
+
+/* V1.3.112 — Chỉ làm sáng KHUNG của chế độ đang được chọn.
+ * Đặt cuối file để thắng các rule :disabled/view-only cũ mà không đổi kích thước/bố cục/logo. */
+.arena-room-v2 .room-master-mode-card.is-selected,
+.arena-room-v2 .room-master-mode-card.is-selected:disabled{
+  border-width:2px !important;
+}
+.arena-room-v2 .room-master-mode-card[data-mode="rank_random"].is-selected,
+.arena-room-v2 .room-master-mode-card[data-mode="rank_random"].is-selected:disabled{
+  border-color:#3bb2ff !important;
+  box-shadow:0 0 8px rgba(59,178,255,.92),0 0 22px rgba(22,141,255,.62),inset 0 0 14px rgba(59,178,255,.12) !important;
+}
+.arena-room-v2 .room-master-mode-card[data-mode="random3_pick1"].is-selected,
+.arena-room-v2 .room-master-mode-card[data-mode="random3_pick1"].is-selected:disabled{
+  border-color:#c873ff !important;
+  box-shadow:0 0 8px rgba(200,115,255,.92),0 0 22px rgba(180,86,255,.62),inset 0 0 14px rgba(200,115,255,.12) !important;
+}
+.arena-room-v2 .room-master-mode-card[data-mode="home_away"].is-selected,
+.arena-room-v2 .room-master-mode-card[data-mode="home_away"].is-selected:disabled,
+.arena-room-v2 .room-master-mode-card[data-mode="ban_pick_bo3"].is-selected,
+.arena-room-v2 .room-master-mode-card[data-mode="ban_pick_bo3"].is-selected:disabled{
+  border-color:#f0b641 !important;
+  box-shadow:0 0 8px rgba(240,182,65,.92),0 0 22px rgba(193,132,26,.62),inset 0 0 14px rgba(240,182,65,.12) !important;
+}
+.arena-room-v2 .room-master-mode-card[data-mode="bo3"].is-selected,
+.arena-room-v2 .room-master-mode-card[data-mode="bo3"].is-selected:disabled{
+  border-color:#ff5252 !important;
+  box-shadow:0 0 8px rgba(255,82,82,.92),0 0 22px rgba(227,51,51,.62),inset 0 0 14px rgba(255,82,82,.12) !important;
+}
+.arena-room-v2 .room-master-mode-card[data-mode="tactical_bo3"].is-selected,
+.arena-room-v2 .room-master-mode-card[data-mode="tactical_bo3"].is-selected:disabled{
+  border-color:#3be878 !important;
+  box-shadow:0 0 8px rgba(59,232,120,.92),0 0 22px rgba(32,189,91,.62),inset 0 0 14px rgba(59,232,120,.12) !important;
+}
