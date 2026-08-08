@@ -1,3 +1,5 @@
+> **V1.3.79 Emergency Safety Rule:** Không prune/xóa CSS legacy hoặc compatibility Python chỉ dựa trên static grep. Mọi cleanup giao diện phải có visual regression thực tế Host/Guest/Profile/History/Players trước khi phát hành.
+
 # PES ARENA — PROJECT MAP
 
 > **BẮT BUỘC:** trước khi dùng file map này, đọc `AGENTS.md` ở thư mục gốc để tự chọn chế độ **FIX NHANH / NÂNG CẤP MODULE / AUDIT TOÀN HỆ THỐNG**.

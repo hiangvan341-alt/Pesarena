@@ -1,3 +1,17 @@
+# V1.3.79 — Emergency Rollback V1.3.78 Cleanup
+
+- Chế độ: FIX NHANH khẩn cấp.
+- Người dùng báo V1.3.78 lỗi nặng ngay sau đợt dọn CSS/Python dead-code.
+- Rollback TOÀN BỘ thay đổi cleanup rủi ro của V1.3.78 về baseline V1.3.77:
+  - khôi phục nguyên vẹn 6 file `static/css/legacy/*.css`;
+  - khôi phục `static/css/admin.css`;
+  - khôi phục `modules/zcoin_service.py`;
+  - khôi phục `modules/zcoin_routes.py`.
+- Không rollback các tính năng/bugfix V1.3.70–V1.3.77.
+- Không thay gameplay, RP, database hoặc Supabase.
+- Black Box Safety V1.3.78 vẫn PASS toàn bộ critical server modules; production không có incident ghi `app_version=1.3.78`, nên rollback tập trung UI/compatibility là phương án an toàn nhất.
+- APP_VERSION: 1.3.78 → 1.3.79.
+
 # V1.3.78 — CSS/Python Dead-Code Cleanup
 
 - Chế độ: AUDIT TOÀN HỆ THỐNG có dọn mã.
